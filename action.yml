@@ -1,0 +1,26 @@
+name: 'Deploy to Kubernetes cluster'
+description: 'Deploy to Kubernetes cluster'
+inputs: 
+# Please ensure you have used either azure/k8s-actions/aks-set-context or azure/k8s-actions/k8s-set-context in the workflow before this action
+  namespace:
+    description: 'Choose the target Kubernetes namespace. If the namespace is not provided, the commands will run in the default namespace.'
+    required: false
+  manifests:
+    description: 'Path to the manifest files which will be used for deployment.'
+    required: true
+    default: ''
+  images: 
+    description: 'Fully qualified resource URL of the image(s) to be used for substitutions on the manifest files
+Example: contosodemo.azurecr.io/helloworld:test'
+    required: false
+  imagepullsecrets:
+    description: 'Name of a docker-registry secret that has already been set up within the cluster. Each of these secret names are added under imagePullSecrets field for the workloads found in the input manifest files'
+    required: false
+  kubectl-version:
+      description: 'Version of kubectl. Installs a specific version of kubectl binary'
+      required: false
+branding:
+  color: 'green' # optional, decorates the entry in the GitHub Marketplace
+runs:
+  using: 'node12'
+  main: 'lib/run.js'
