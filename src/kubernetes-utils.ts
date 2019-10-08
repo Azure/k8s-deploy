@@ -100,7 +100,10 @@ function substituteImageNameInSpecContent(currentString: string, imageName: stri
 export function updateContainerImagesInManifestFiles(contents, containers: string[]): string {
     if (!!containers && containers.length > 0) {
         containers.forEach((container: string) => {
-            let imageName = container.split(':')[0];
+            let imageName = container;
+            if (imageName.indexOf(':') > 0) {
+                imageName = imageName.substring(0, imageName.lastIndexOf(':'));
+            }
             if (imageName.indexOf('@') > 0) {
                 imageName = imageName.split('@')[0];
             }
