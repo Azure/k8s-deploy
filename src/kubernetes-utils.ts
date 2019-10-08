@@ -82,11 +82,16 @@ function substituteImageNameInSpecContent(currentString: string, imageName: stri
     return currentString.split('\n').reduce((acc, line) => {
         const imageKeyword = line.match(/^ *image:/);
         if (imageKeyword) {
-            const [currentImageName, currentImageTag] = line
+            let currentImageName = line
                 .substring(imageKeyword[0].length) // consume the line from keyword onwards
                 .trim()
-                .replace(/[',"]/g, '') // replace allowed quotes with nothing
-                .split(':');
+                .replace(/[',"]/g, '');
+
+            const registrySplitIndex = currentImageName.indexOf('/');
+            const lastTagSplitIndex = currentImageName.lastIndexOf(':');
+            if(lastTagSplitIndex > registrySplitIndex) {
+                currentImageName = currentImageName.substring(0, lastTagSplitIndex)
+            }
 
             if (currentImageName === imageName) {
                 return acc + `${imageKeyword[0]} ${imageNameWithNewTag}\n`;
@@ -101,8 +106,10 @@ export function updateContainerImagesInManifestFiles(contents, containers: strin
     if (!!containers && containers.length > 0) {
         containers.forEach((container: string) => {
             let imageName = container;
-            if (imageName.indexOf(':') > 0) {
-                imageName = imageName.substring(0, imageName.lastIndexOf(':'));
+            const registrySplitIndex = imageName.indexOf('/');
+            const lastTagSplitIndex = imageName.lastIndexOf(':');
+            if (lastTagSplitIndex > registrySplitIndex) {
+                imageName = imageName.substring(0, lastTagSplitIndex);
             }
             if (imageName.indexOf('@') > 0) {
                 imageName = imageName.split('@')[0];
