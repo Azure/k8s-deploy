@@ -80,7 +80,7 @@ function substituteImageNameInSpecContent(currentString: string, imageName: stri
     }
 
     return currentString.split('\n').reduce((acc, line) => {
-        const imageKeyword = line.match(/^ *image:/);
+        const imageKeyword = line.match(/^ *(- )?image:/);
         if (imageKeyword) {
             let currentImageName = line
                 .substring(imageKeyword[0].length) // consume the line from keyword onwards
