@@ -565,9 +565,16 @@ export class ToolRunner extends events.EventEmitter {
         var r = child.spawnSync(this._getSpawnFileName(), this._getSpawnArgs(options as IExecOptions), this._getSpawnSyncOptions(options));
 
         var res: IExecSyncResult = <IExecSyncResult>{ code: r.status, error: r.error };
+        if (!options.silent && r.stdout && r.stdout.length > 0) {
+            options.outStream.write(r.stdout);
+        }
+
+        if (!options.silent && r.stderr && r.stderr.length > 0) {
+            options.errStream.write(r.stderr);
+        }
         res.stdout = (r.stdout) ? r.stdout.toString() : '';
         res.stderr = (r.stderr) ? r.stderr.toString() : '';
-        core.debug(JSON.stringify(res));
+        
         return res;
     }
 }
@@ -613,10 +620,6 @@ class ExecState extends events.EventEmitter {
         else if (this.processExited) {
             this.timeout = setTimeout(ExecState.HandleTimeout, this.delay, this);
         }
-    }
-
-    private _debug(message: any): void {
-        this.emit('debug', message);
     }
 
     private _setResult(): void {
