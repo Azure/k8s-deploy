@@ -12,11 +12,11 @@ import * as fileHelper from './FileHelper';
 import * as utils from './utilities';
 import * as KubernetesManifestUtility from '../kubernetes-manifest-utility';
 import * as KubernetesConstants from '../kubernetesconstants';
-// import { IExecSyncResult } from 'azure-pipelines-task-lib/toolrunner';
 import { Kubectl, Resource } from '../kubectl-object-model';
 
 import { deployPodCanary } from './PodCanaryDeploymentHelper';
 import { deploySMICanary } from './SMICanaryDeploymentHelper';
+import { checkForErrors } from "../utility";
 
 
 export async function deploy(kubectl: Kubectl, manifestFilePaths: string[], deploymentStrategy: string) {
@@ -75,7 +75,7 @@ function deployManifests(files: string[], kubectl: Kubectl, isCanaryDeploymentSt
             result = kubectl.apply(files);
         }
     }
-    utils.checkForErrors([result]);
+    checkForErrors([result]);
     return files;
 }
 

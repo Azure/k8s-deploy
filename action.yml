@@ -10,8 +10,7 @@ inputs:
     required: true
     default: ''
   images: 
-    description: 'Fully qualified resource URL of the image(s) to be used for substitutions on the manifest files
-Example: contosodemo.azurecr.io/helloworld:test'
+    description: 'Fully qualified resource URL of the image(s) to be used for substitutions on the manifest files Example: contosodemo.azurecr.io/helloworld:test'
     required: false
   imagepullsecrets:
     description: 'Name of a docker-registry secret that has already been set up within the cluster. Each of these secret names are added under imagePullSecrets field for the workloads found in the input manifest files'
@@ -19,6 +18,26 @@ Example: contosodemo.azurecr.io/helloworld:test'
   kubectl-version:
       description: 'Version of kubectl. Installs a specific version of kubectl binary'
       required: false
+  strategy:
+    description: 'Deployment strategy to be used. Allowed values are none, canary'
+    required: false
+    default: 'none'
+  traffic-split-method:
+    description: "Traffic split method to be used. Allowed values are pod, smi"
+    required: false
+    default: 'pod'
+  baseline-and-canary-replicas:
+    description: 'Baseline and canary replicas count; valid value i.e between 0 to 100.'
+    required: false
+    default: 0
+  percentage: 
+    description: 'Percentage of traffic redirect to canary deployment'
+    required: false
+    default: 0
+  args:
+    description: 'Arguments'
+    required: false
+
 branding:
   color: 'green' # optional, decorates the entry in the GitHub Marketplace
 runs:

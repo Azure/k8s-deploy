@@ -11,6 +11,7 @@ import * as fileHelper from './FileHelper';
 import * as helper from './KubernetesObjectUtility';
 import * as utils from './utilities';
 import * as canaryDeploymentHelper from './CanaryDeploymentHelper';
+import { checkForErrors } from "../utility";
 
 const TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX = '-azure-pipelines-rollout';
 const TRAFFIC_SPLIT_OBJECT = 'TrafficSplit';
@@ -119,7 +120,7 @@ function createCanaryService(kubectl: Kubectl, filePaths: string[]) {
     const manifestFiles = fileHelper.writeObjectsToFile(newObjectsList);
     manifestFiles.push(...trafficObjectsList);
     const result = kubectl.apply(manifestFiles);
-    utils.checkForErrors([result]);
+    checkForErrors([result]);
 }
 
 export function redirectTrafficToCanaryDeployment(kubectl: Kubectl, manifestFilePaths: string[]) {
@@ -158,7 +159,7 @@ function adjustTraffic(kubectl: Kubectl, manifestFilePaths: string[], stableWeig
 
     const result = kubectl.apply(trafficSplitManifests);
     tl.debug('serviceObjects:' + serviceObjects.join(',') + ' result:' + result);
-    utils.checkForErrors([result]);
+    checkForErrors([result]);
 }
 
 function updateTrafficSplitObject(serviceName: string): string {

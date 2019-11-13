@@ -50,3 +50,11 @@ export function checkForErrors(execResults, warnIfError?: boolean) {
 export function sleep(timeout: number) {
     return new Promise(resolve => setTimeout(resolve, timeout));
 }
+
+export function getRandomInt(max: number) {
+    return Math.floor(Math.random() * Math.floor(max));
+}
+
+export function getCurrentTime(): number {
+    return new Date().getTime();
+}

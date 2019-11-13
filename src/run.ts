@@ -1,18 +1,12 @@
 import * as toolCache from '@actions/tool-cache';
 import * as core from '@actions/core';
 import * as io from '@actions/io';
-import { ToolRunner } from "@actions/exec/lib/toolrunner";
-
 import * as path from 'path';
-import * as fs from 'fs';
-import * as yaml from 'js-yaml';
 
-import { getExecutableExtension, isEqual, getCurrentTime } from "./utils";
-import { isWorkloadEntity, updateContainerImagesInManifestFiles, updateImagePullSecrets } from "./kubernetes-utils";
+import { getExecutableExtension, isEqual } from "./utility";
 import { downloadKubectl, getStableKubectlVersion } from "./kubectl-util";
-
 import { deploy } from './strategy/DeploymentHelper';
-import { Kubectl, Resource } from './kubectl-object-model';
+import { Kubectl } from './kubectl-object-model';
 
 let kubectlPath = "";
 

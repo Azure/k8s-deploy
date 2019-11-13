@@ -1,5 +1,5 @@
 import * as core from '@actions/core';
-import { isEqual } from "./utils";
+import { isEqual } from "./utility";
 
 function getImagePullSecrets(inputObject: any) {
     if (!inputObject || !inputObject.spec) {

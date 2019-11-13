@@ -52,28 +52,6 @@ export function getDeleteCmdArgs(argsPrefix: string, inputArgs: string): string 
     return args;
 }
 
-export function checkForErrors(execResults, warnIfError?: boolean) {
-    if (execResults.length !== 0) {
-        let stderr = '';
-        execResults.forEach(result => {
-            if (result.stderr) {
-                if (result.code !== 0) {
-                    stderr += result.stderr + '\n';
-                } else {
-                    tl.warning(result.stderr);
-                }
-            }
-        });
-        if (stderr.length > 0) {
-            if (!!warnIfError) {
-                tl.warning(stderr.trim());
-            } else {
-                throw new Error(stderr.trim());
-            }
-        }
-    }
-}
-
 /*
     For example,
         currentString: `image: "example/example-image"`

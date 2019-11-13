@@ -9,6 +9,8 @@ import * as TaskInputParameters from '../input-parameters';
 import * as helper from './KubernetesObjectUtility';
 import { KubernetesWorkload } from '../kubernetesconstants';
 import { StringComparer, isEqual } from './StringComparison';
+import { checkForErrors } from "../utility";
+
 import * as utils from './utilities';
 
 export const CANARY_DEPLOYMENT_STRATEGY = 'CANARY';
@@ -41,7 +43,7 @@ export function deleteCanaryDeployment(kubectl: Kubectl, manifestFilePaths: stri
     if (!!args && args.length > 0) {
         // run kubectl delete cmd
         const result = kubectl.delete(args);
-        utils.checkForErrors([result]);
+        checkForErrors([result]);
     }
 }
 
@@ -59,11 +61,11 @@ export function markResourceAsStable(inputObject: any): object {
     return newObject;
 }
 
-export function isResourceMarkedAsStable(inputObject: any): boolean {    
-    return inputObject && 
-            inputObject.metadata && 
-            inputObject.metadata.labels &&
-            inputObject.metadata.labels[CANARY_VERSION_LABEL] == STABLE_LABEL_VALUE;
+export function isResourceMarkedAsStable(inputObject: any): boolean {
+    return inputObject &&
+        inputObject.metadata &&
+        inputObject.metadata.labels &&
+        inputObject.metadata.labels[CANARY_VERSION_LABEL] == STABLE_LABEL_VALUE;
 }
 
 export function getStableResource(inputObject: any): object {
@@ -177,8 +179,8 @@ function getNewCanaryObject(inputObject: any, replicas: number, type: string): o
 
 function isSpecContainsReplicas(kind: string) {
     return !isEqual(kind, KubernetesWorkload.pod, StringComparer.OrdinalIgnoreCase) &&
-            !isEqual(kind, KubernetesWorkload.daemonSet, StringComparer.OrdinalIgnoreCase) && 
-            !helper.isServiceEntity(kind)
+        !isEqual(kind, KubernetesWorkload.daemonSet, StringComparer.OrdinalIgnoreCase) &&
+        !helper.isServiceEntity(kind)
 }
 
 function addCanaryLabelsAndAnnotations(inputObject: any, type: string) {

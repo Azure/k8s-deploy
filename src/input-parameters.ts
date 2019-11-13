@@ -8,8 +8,8 @@ export const imagePullSecrets: string[] = tl.getInput('imagepullsecrets').split(
 export const manifests = tl.getInput('manifests').split('\n');
 export const canaryPercentage: string = tl.getInput('percentage');
 export const deploymentStrategy: string = tl.getInput('strategy');
-export const trafficSplitMethod: string = tl.getInput('trafficSplitMethod');
-export const baselineAndCanaryReplicas: string = tl.getInput('baselineAndCanaryReplicas');
+export const trafficSplitMethod: string = tl.getInput('traffic-split-method');
+export const baselineAndCanaryReplicas: string = tl.getInput('baseline-and-canary-replicas');
 export const args: string = tl.getInput('arguments');
 
 if (!namespace) {
