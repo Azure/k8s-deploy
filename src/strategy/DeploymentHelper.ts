@@ -2,7 +2,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import * as tl from '@actions/core';
+import * as core from '@actions/core';
 import * as yaml from 'js-yaml';
 import * as canaryDeploymentHelper from './CanaryDeploymentHelper';
 import * as KubernetesObjectUtility from './KubernetesObjectUtility';
@@ -150,7 +150,7 @@ function updateImagePullSecretsInManifestFiles(filePaths: string[], imagePullSec
                 }
             });
         });
-        tl.debug('New K8s objects after addin imagePullSecrets are :' + JSON.stringify(newObjectsList));
+        core.debug('New K8s objects after addin imagePullSecrets are :' + JSON.stringify(newObjectsList));
         const newFilePaths = fileHelper.writeObjectsToFile(newObjectsList);
         return newFilePaths;
     }

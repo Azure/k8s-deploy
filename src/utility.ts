@@ -1,5 +1,5 @@
 import * as os from 'os';
-import * as tl from '@actions/core';
+import * as core from '@actions/core';
 
 export function getExecutableExtension(): string {
     if (os.type().match(/^Win/)) {
@@ -33,13 +33,13 @@ export function checkForErrors(execResults, warnIfError?: boolean) {
                 if (result.code !== 0) {
                     stderr += result.stderr + '\n';
                 } else {
-                    tl.warning(result.stderr);
+                    core.warning(result.stderr);
                 }
             }
         });
         if (stderr.length > 0) {
             if (!!warnIfError) {
-                tl.warning(stderr.trim());
+                core.warning(stderr.trim());
             } else {
                 throw new Error(stderr.trim());
             }

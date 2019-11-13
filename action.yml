@@ -37,6 +37,10 @@ inputs:
   args:
     description: 'Arguments'
     required: false
+  action:
+    description: 'deploy/promote/reject'
+    required: true
+    default: 'deploy'
 
 branding:
   color: 'green' # optional, decorates the entry in the GitHub Marketplace

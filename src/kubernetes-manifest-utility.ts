@@ -1,6 +1,6 @@
 'use strict';
 
-import * as tl from '@actions/core';
+import * as core from '@actions/core';
 import * as utils from './utility';
 import * as KubernetesConstants from './kubernetesconstants';
 import { Kubectl, Resource } from './kubectl-object-model';
@@ -17,7 +17,7 @@ export async function checkManifestStability(kubectl: Kubectl, resources: Resour
             try {
                 await checkPodStatus(kubectl, resource.name);
             } catch (ex) {
-                tl.warning(`CouldNotDeterminePodStatus ${JSON.stringify(ex)}`);
+                core.warning(`CouldNotDeterminePodStatus ${JSON.stringify(ex)}`);
             }
         }
         if (utils.isEqual(resource.type, KubernetesConstants.DiscoveryAndLoadBalancerResource.service, true)) {
@@ -33,7 +33,7 @@ export async function checkManifestStability(kubectl: Kubectl, resources: Resour
                     }
                 }
             } catch (ex) {
-                tl.warning(`CouldNotDetermineServiceStatus of: ${resource.name} Error: ${JSON.stringify(ex)}`);
+                core.warning(`CouldNotDetermineServiceStatus of: ${resource.name} Error: ${JSON.stringify(ex)}`);
             }
         }
     }
@@ -47,7 +47,7 @@ export async function checkPodStatus(kubectl: Kubectl, podName: string): Promise
     let podStatus;
     for (let i = 0; i < iterations; i++) {
         await utils.sleep(sleepTimeout);
-        tl.debug(`Polling for pod status: ${podName}`);
+        core.debug(`Polling for pod status: ${podName}`);
         podStatus = getPodStatus(kubectl, podName);
         if (podStatus.phase && podStatus.phase !== 'Pending' && podStatus.phase !== 'Unknown') {
             break;
@@ -63,14 +63,14 @@ export async function checkPodStatus(kubectl: Kubectl, podName: string): Promise
             break;
         case 'Pending':
             if (!isPodReady(podStatus)) {
-                tl.warning(`pod/${podName} rollout status check timedout`);
+                core.warning(`pod/${podName} rollout status check timedout`);
             }
             break;
         case 'Failed':
-            tl.error(`pod/${podName} rollout failed`);
+            core.error(`pod/${podName} rollout failed`);
             break;
         default:
-            tl.warning(`pod/${podName} rollout status: ${podStatus.phase}`);
+            core.warning(`pod/${podName} rollout status: ${podStatus.phase}`);
     }
 }
 
@@ -78,7 +78,7 @@ function getPodStatus(kubectl: Kubectl, podName: string) {
     const podResult = kubectl.getResource('pod', podName);
     utils.checkForErrors([podResult]);
     const podStatus = JSON.parse(podResult.stdout).status;
-    tl.debug(`Pod Status: ${JSON.stringify(podStatus)}`);
+    core.debug(`Pod Status: ${JSON.stringify(podStatus)}`);
     return podStatus;
 }
 
@@ -91,7 +91,7 @@ function isPodReady(podStatus: any): boolean {
         }
     });
     if (!allContainersAreReady) {
-        tl.warning('AllContainersNotInReadyState');
+        core.warning('AllContainersNotInReadyState');
     }
     return allContainersAreReady;
 }
@@ -115,7 +115,7 @@ async function waitForServiceExternalIPAssignment(kubectl: Kubectl, serviceName:
             return;
         }
     }
-    tl.warning(`waitForServiceIpAssignmentTimedOut ${serviceName}`);
+    core.warning(`waitForServiceIpAssignmentTimedOut ${serviceName}`);
 }
 
 function isLoadBalancerIPAssigned(status: any) {

@@ -2,7 +2,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import * as tl from '@actions/core';
+import * as core from '@actions/core';
 import * as os from 'os';
 
 export function getTempDirectory(): string {
@@ -27,7 +27,7 @@ export function ensureDirExists(dirPath: string): void {
 
 export function assertFileExists(path: string) {
     if (!fs.existsSync(path)) {
-        tl.error(`FileNotFoundException : ${path}`);
+        core.error(`FileNotFoundException : ${path}`);
         throw new Error(`FileNotFoundException:  ${path}`);
     }
 }
@@ -44,10 +44,10 @@ export function writeObjectsToFile(inputObjects: any[]): string[] {
                     fs.writeFileSync(path.join(fileName), inputObjectString);
                     newFilePaths.push(fileName);
                 } else {
-                    tl.debug('Input object is not proper K8s resource object. Object: ' + inputObjectString);
+                    core.debug('Input object is not proper K8s resource object. Object: ' + inputObjectString);
                 }
             } catch (ex) {
-                tl.debug('Exception occurred while writing object to file : ' + inputObject + ' . Exception: ' + ex);
+                core.debug('Exception occurred while writing object to file : ' + inputObject + ' . Exception: ' + ex);
             }
         });
     }
@@ -62,7 +62,7 @@ export function writeManifestToFile(inputObjectString: string, kind: string, nam
             fs.writeFileSync(path.join(fileName), inputObjectString);
             return fileName;
         } catch (ex) {
-            tl.debug('Exception occurred while writing object to file : ' + inputObjectString + ' . Exception: ' + ex);
+            core.debug('Exception occurred while writing object to file : ' + inputObjectString + ' . Exception: ' + ex);
         }
     }
     return '';

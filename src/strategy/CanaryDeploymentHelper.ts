@@ -3,7 +3,7 @@
 import { Kubectl } from '../kubectl-object-model';
 import * as fs from 'fs';
 import * as yaml from 'js-yaml';
-import * as tl from '@actions/core';
+import * as core from '@actions/core';
 
 import * as TaskInputParameters from '../input-parameters';
 import * as helper from './KubernetesObjectUtility';
@@ -38,7 +38,7 @@ export function deleteCanaryDeployment(kubectl: Kubectl, manifestFilePaths: stri
 
     // append delete cmd args as suffix (if present)
     const args = utils.getDeleteCmdArgs(argsPrefix, TaskInputParameters.args);
-    tl.debug('Delete cmd args : ' + args);
+    core.debug('Delete cmd args : ' + args);
 
     if (!!args && args.length > 0) {
         // run kubectl delete cmd
@@ -57,7 +57,7 @@ export function markResourceAsStable(inputObject: any): object {
     // Adding labels and annotations.
     addCanaryLabelsAndAnnotations(newObject, STABLE_LABEL_VALUE);
 
-    tl.debug("Added stable label: " + JSON.stringify(newObject));
+    core.debug("Added stable label: " + JSON.stringify(newObject));
     return newObject;
 }
 
@@ -98,8 +98,8 @@ export function fetchResource(kubectl: Kubectl, kind: string, name: string) {
             UnsetsClusterSpecficDetails(resource);
             return resource;
         } catch (ex) {
-            tl.debug('Exception occurred while Parsing ' + resource + ' in Json object');
-            tl.debug(`Exception:${ex}`);
+            core.debug('Exception occurred while Parsing ' + resource + ' in Json object');
+            core.debug(`Exception:${ex}`);
         }
     }
     return null;
@@ -216,7 +216,7 @@ function createCanaryObjectsArgumentString(files: string[], includeServices: boo
     });
 
     if (kindList.size === 0) {
-        tl.debug('CanaryDeploymentHelper : No deployment objects found');
+        core.debug('CanaryDeploymentHelper : No deployment objects found');
     }
 
     const args = utils.createKubectlArgs(kindList, nameList);

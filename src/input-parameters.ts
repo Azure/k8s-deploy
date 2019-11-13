@@ -1,18 +1,18 @@
 'use strict';
 
-import * as tl from '@actions/core';
+import * as core from '@actions/core';
 
-export let namespace: string = tl.getInput('namespace');
-export const containers: string[] = tl.getInput('images').split('\n');
-export const imagePullSecrets: string[] = tl.getInput('imagepullsecrets').split('\n');
-export const manifests = tl.getInput('manifests').split('\n');
-export const canaryPercentage: string = tl.getInput('percentage');
-export const deploymentStrategy: string = tl.getInput('strategy');
-export const trafficSplitMethod: string = tl.getInput('traffic-split-method');
-export const baselineAndCanaryReplicas: string = tl.getInput('baseline-and-canary-replicas');
-export const args: string = tl.getInput('arguments');
+export let namespace: string = core.getInput('namespace');
+export const containers: string[] = core.getInput('images').split('\n');
+export const imagePullSecrets: string[] = core.getInput('imagepullsecrets').split('\n');
+export const manifests = core.getInput('manifests').split('\n');
+export const canaryPercentage: string = core.getInput('percentage');
+export const deploymentStrategy: string = core.getInput('strategy');
+export const trafficSplitMethod: string = core.getInput('traffic-split-method');
+export const baselineAndCanaryReplicas: string = core.getInput('baseline-and-canary-replicas');
+export const args: string = core.getInput('arguments');
 
 if (!namespace) {
-    tl.debug('Namespace was not supplied; using "default" namespace instead.');
+    core.debug('Namespace was not supplied; using "default" namespace instead.');
     namespace = 'default';
 }

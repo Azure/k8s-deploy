@@ -1,7 +1,7 @@
 'use strict';
 
 import { Kubectl } from '../kubectl-object-model';
-import * as tl from '@actions/core';
+import * as core from '@actions/core';
 import * as fs from 'fs';
 import * as yaml from 'js-yaml';
 import * as util from 'util';
@@ -19,7 +19,7 @@ const TRAFFIC_SPLIT_OBJECT = 'TrafficSplit';
 export function deploySMICanary(kubectl: Kubectl, filePaths: string[]) {
     const newObjectsList = [];
     const canaryReplicaCount = parseInt(TaskInputParameters.baselineAndCanaryReplicas);
-    tl.debug('Replica count is ' + canaryReplicaCount);
+    core.debug('Replica count is ' + canaryReplicaCount);
 
     filePaths.forEach((filePath: string) => {
         const fileContents = fs.readFileSync(filePath);
@@ -28,25 +28,25 @@ export function deploySMICanary(kubectl: Kubectl, filePaths: string[]) {
             const kind = inputObject.kind;
             if (helper.isDeploymentEntity(kind)) {
                 // Get stable object
-                tl.debug('Querying stable object');
+                core.debug('Querying stable object');
                 const stableObject = canaryDeploymentHelper.fetchResource(kubectl, kind, name);
                 if (!stableObject) {
-                    tl.debug('Stable object not found. Creating only canary object');
+                    core.debug('Stable object not found. Creating only canary object');
                     // If stable object not found, create canary deployment.
                     const newCanaryObject = canaryDeploymentHelper.getNewCanaryResource(inputObject, canaryReplicaCount);
-                    tl.debug('New canary object is: ' + JSON.stringify(newCanaryObject));
+                    core.debug('New canary object is: ' + JSON.stringify(newCanaryObject));
                     newObjectsList.push(newCanaryObject);
                 } else {
                     if (!canaryDeploymentHelper.isResourceMarkedAsStable(stableObject)) {
                         throw (`StableSpecSelectorNotExist : ${name}`);
                     }
 
-                    tl.debug('Stable object found. Creating canary and baseline objects');
+                    core.debug('Stable object found. Creating canary and baseline objects');
                     // If canary object not found, create canary and baseline object.
                     const newCanaryObject = canaryDeploymentHelper.getNewCanaryResource(inputObject, canaryReplicaCount);
                     const newBaselineObject = canaryDeploymentHelper.getNewBaselineResource(stableObject, canaryReplicaCount);
-                    tl.debug('New canary object is: ' + JSON.stringify(newCanaryObject));
-                    tl.debug('New baseline object is: ' + JSON.stringify(newBaselineObject));
+                    core.debug('New canary object is: ' + JSON.stringify(newCanaryObject));
+                    core.debug('New baseline object is: ' + JSON.stringify(newBaselineObject));
                     newObjectsList.push(newCanaryObject);
                     newObjectsList.push(newBaselineObject);
                 }
@@ -75,23 +75,23 @@ function createCanaryService(kubectl: Kubectl, filePaths: string[]) {
             const kind = inputObject.kind;
             if (helper.isServiceEntity(kind)) {
                 const newCanaryServiceObject = canaryDeploymentHelper.getNewCanaryResource(inputObject);
-                tl.debug('New canary service object is: ' + JSON.stringify(newCanaryServiceObject));
+                core.debug('New canary service object is: ' + JSON.stringify(newCanaryServiceObject));
                 newObjectsList.push(newCanaryServiceObject);
 
                 const newBaselineServiceObject = canaryDeploymentHelper.getNewBaselineResource(inputObject);
-                tl.debug('New baseline object is: ' + JSON.stringify(newBaselineServiceObject));
+                core.debug('New baseline object is: ' + JSON.stringify(newBaselineServiceObject));
                 newObjectsList.push(newBaselineServiceObject);
 
-                tl.debug('Querying for stable service object');
+                core.debug('Querying for stable service object');
                 const stableObject = canaryDeploymentHelper.fetchResource(kubectl, kind, canaryDeploymentHelper.getStableResourceName(name));
                 if (!stableObject) {
                     const newStableServiceObject = canaryDeploymentHelper.getStableResource(inputObject);
-                    tl.debug('New stable service object is: ' + JSON.stringify(newStableServiceObject));
+                    core.debug('New stable service object is: ' + JSON.stringify(newStableServiceObject));
                     newObjectsList.push(newStableServiceObject);
 
-                    tl.debug('Creating the traffic object for service: ' + name);
+                    core.debug('Creating the traffic object for service: ' + name);
                     const trafficObject = createTrafficSplitManifestFile(name, 0, 0, 1000);
-                    tl.debug('Creating the traffic object for service: ' + trafficObject);
+                    core.debug('Creating the traffic object for service: ' + trafficObject);
                     trafficObjectsList.push(trafficObject);
                 } else {
                     let updateTrafficObject = true;
@@ -101,7 +101,7 @@ function createCanaryService(kubectl: Kubectl, filePaths: string[]) {
                         if (trafficJObject && trafficJObject.spec && trafficJObject.spec.backends) {
                             trafficJObject.spec.backends.forEach((s) => {
                                 if (s.service === canaryDeploymentHelper.getCanaryResourceName(name) && s.weight === "1000m") {
-                                    tl.debug('Update traffic objcet not required');
+                                    core.debug('Update traffic objcet not required');
                                     updateTrafficObject = false;
                                 }
                             })
@@ -109,7 +109,7 @@ function createCanaryService(kubectl: Kubectl, filePaths: string[]) {
                     }
 
                     if (updateTrafficObject) {
-                        tl.debug('Stable service object present so updating the traffic object for service: ' + name);
+                        core.debug('Stable service object present so updating the traffic object for service: ' + name);
                         trafficObjectsList.push(updateTrafficSplitObject(name));
                     }
                 }
@@ -158,7 +158,7 @@ function adjustTraffic(kubectl: Kubectl, manifestFilePaths: string[], stableWeig
     }
 
     const result = kubectl.apply(trafficSplitManifests);
-    tl.debug('serviceObjects:' + serviceObjects.join(',') + ' result:' + result);
+    core.debug('serviceObjects:' + serviceObjects.join(',') + ' result:' + result);
     checkForErrors([result]);
 }
 
@@ -166,7 +166,7 @@ function updateTrafficSplitObject(serviceName: string): string {
     const percentage = parseInt(TaskInputParameters.canaryPercentage) * 10;
     const baselineAndCanaryWeight = percentage / 2;
     const stableDeploymentWeight = 1000 - percentage;
-    tl.debug('Creating the traffic object with canary weight: ' + baselineAndCanaryWeight + ',baseling weight: ' + baselineAndCanaryWeight + ',stable: ' + stableDeploymentWeight);
+    core.debug('Creating the traffic object with canary weight: ' + baselineAndCanaryWeight + ',baseling weight: ' + baselineAndCanaryWeight + ',stable: ' + stableDeploymentWeight);
     return createTrafficSplitManifestFile(serviceName, stableDeploymentWeight, baselineAndCanaryWeight, baselineAndCanaryWeight);
 }
 

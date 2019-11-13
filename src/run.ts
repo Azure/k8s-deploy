@@ -6,6 +6,8 @@ import * as path from 'path';
 import { getExecutableExtension, isEqual } from "./utility";
 import { downloadKubectl, getStableKubectlVersion } from "./kubectl-util";
 import { deploy } from './strategy/DeploymentHelper';
+import { promote } from './strategy/promote';
+import { reject } from './strategy/reject';
 import { Kubectl } from './kubectl-object-model';
 
 let kubectlPath = "";
@@ -54,11 +56,23 @@ async function run() {
     if (!namespace) {
         namespace = 'default';
     }
-
+    let action = core.getInput('action');
     let manifests = manifestsInput.split('\n');
-    let strategy = core.getInput('deployment-strategy');
-    console.log("strategy: ", strategy)
-    await deploy(new Kubectl(kubectlPath, namespace), manifests, strategy);
+
+    if (action === 'deploy') {
+        let strategy = core.getInput('deployment-strategy');
+        console.log("strategy: ", strategy)
+        await deploy(new Kubectl(kubectlPath, namespace), manifests, strategy);
+    }
+    else if (action === 'promote') {
+        await promote(true);
+    }
+    else if (action === 'reject') {
+        await reject(true);
+    }
+    else {
+        core.setFailed('Not a valid action. The allowed actions are deploy, promote, reject');
+    }
 }
 
 run().catch(core.setFailed);

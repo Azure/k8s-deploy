@@ -1,12 +1,12 @@
 'use strict';
 
-import * as tl from '@actions/core';
+import * as core from '@actions/core';
 import * as kubectlutility from '../kubectl-util';
 import * as io from '@actions/io';
 
 export function getManifestFiles(manifestFilePaths: string[]): string[] {
     if (!manifestFilePaths) {
-        tl.debug('file input is not present');
+        core.debug('file input is not present');
         return null;
     }
 
@@ -64,7 +64,7 @@ export function getDeleteCmdArgs(argsPrefix: string, inputArgs: string): string 
 
 export function substituteImageNameInSpecFile(currentString: string, imageName: string, imageNameWithNewTag: string) {
     if (currentString.indexOf(imageName) < 0) {
-        tl.debug(`No occurence of replacement token: ${imageName} found`);
+        core.debug(`No occurence of replacement token: ${imageName} found`);
         return currentString;
     }
 

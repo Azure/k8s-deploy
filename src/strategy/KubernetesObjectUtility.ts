@@ -1,6 +1,6 @@
 'use strict';
 import * as fs from 'fs';
-import * as tl from '@actions/core';
+import * as core from '@actions/core';
 import * as yaml from 'js-yaml';
 import { Resource } from '../kubectl-object-model';
 import { KubernetesWorkload, deploymentTypes, workloadTypes } from '../kubernetesconstants';
@@ -215,7 +215,7 @@ function getImagePullSecrets(inputObject: any) {
         try {
             return inputObject.spec.jobTemplate.spec.template.spec.imagePullSecrets;
         } catch (ex) {
-            tl.debug(`Fetching imagePullSecrets failed due to this error: ${JSON.stringify(ex)}`);
+            core.debug(`Fetching imagePullSecrets failed due to this error: ${JSON.stringify(ex)}`);
             return null;
         }
     }
@@ -245,7 +245,7 @@ function setImagePullSecrets(inputObject: any, newImagePullSecrets: any) {
         try {
             inputObject.spec.jobTemplate.spec.template.spec.imagePullSecrets = newImagePullSecrets;
         } catch (ex) {
-            tl.debug(`Overriding imagePullSecrets failed due to this error: ${JSON.stringify(ex)}`);
+            core.debug(`Overriding imagePullSecrets failed due to this error: ${JSON.stringify(ex)}`);
             //Do nothing
         }
         return;
