@@ -103,7 +103,6 @@ function appendStableVersionLabelToResource(files: string[], kubectl: Kubectl): 
 
 async function checkManifestStability(kubectl: Kubectl, resources: Resource[]): Promise<void> {
     await KubernetesManifestUtility.checkManifestStability(kubectl, resources);
-
 }
 
 function updateContainerImagesInManifestFiles(filePaths: string[], containers: string[]): string[] {

@@ -1,4 +1,4 @@
-import { ToolRunner } from "@actions/exec/lib/toolrunner";
+import { ToolRunner, IExecOptions } from "./toolrunner";
 
 export interface Resource {
     name: string;
@@ -89,23 +89,10 @@ export class Kubectl {
             args.push('--insecure-skip-tls-verify');
         }
         args = args.concat(['--namespace', this.namespace]);
-        const command = new ToolRunner(this.kubectlPath, args, { silent: !!silent, failOnStdErr: false });
-        let stdout = "";
-        let stderr = "";
-        command.addListener('stdout', (data) => {
-            stdout += data;
-        });
-        command.addListener('stderr', (data) => {
-            stderr += data;
-        });
+        const command = new ToolRunner(this.kubectlPath);
+        command.arg(args);
 
-        return command.exec().then((code) => {
-            return {
-                stderr: stderr,
-                stdout: stdout,
-                code: code
-            };
-        });
+        return command.execSync({ silent: !!silent } as IExecOptions);
     }
 
     private createInlineArray(str: string | string[]): string {

@@ -22,7 +22,7 @@ export async function checkManifestStability(kubectl: Kubectl, resources: Resour
         }
         if (utils.isEqual(resource.type, KubernetesConstants.DiscoveryAndLoadBalancerResource.service, true)) {
             try {
-                const service = await getService(kubectl, resource.name);
+                const service = getService(kubectl, resource.name);
                 const spec = service.spec;
                 const status = service.status;
                 if (utils.isEqual(spec.type, KubernetesConstants.ServiceTypes.loadBalancer, true)) {
@@ -74,8 +74,8 @@ export async function checkPodStatus(kubectl: Kubectl, podName: string): Promise
     }
 }
 
-async function getPodStatus(kubectl: Kubectl, podName: string) {
-    const podResult = await kubectl.getResource('pod', podName);
+function getPodStatus(kubectl: Kubectl, podName: string) {
+    const podResult = kubectl.getResource('pod', podName);
     utils.checkForErrors([podResult]);
     const podStatus = JSON.parse(podResult.stdout).status;
     tl.debug(`Pod Status: ${JSON.stringify(podStatus)}`);
@@ -96,8 +96,8 @@ function isPodReady(podStatus: any): boolean {
     return allContainersAreReady;
 }
 
-async function getService(kubectl: Kubectl, serviceName) {
-    const serviceResult = await kubectl.getResource(KubernetesConstants.DiscoveryAndLoadBalancerResource.service, serviceName);
+function getService(kubectl: Kubectl, serviceName) {
+    const serviceResult = kubectl.getResource(KubernetesConstants.DiscoveryAndLoadBalancerResource.service, serviceName);
     utils.checkForErrors([serviceResult]);
     return JSON.parse(serviceResult.stdout);
 }
@@ -109,7 +109,7 @@ async function waitForServiceExternalIPAssignment(kubectl: Kubectl, serviceName:
     for (let i = 0; i < iterations; i++) {
         console.log(`waitForServiceIpAssignment : ${serviceName}`);
         await utils.sleep(sleepTimeout);
-        let status = (await getService(kubectl, serviceName)).status;
+        let status = (getService(kubectl, serviceName)).status;
         if (isLoadBalancerIPAssigned(status)) {
             console.log('ServiceExternalIP', serviceName, status.loadBalancer.ingress[0].ip);
             return;

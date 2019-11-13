@@ -83,8 +83,8 @@ export function fetchCanaryResource(kubectl: Kubectl, kind: string, name: string
     return fetchResource(kubectl, kind, getCanaryResourceName(name));
 }
 
-export async function fetchResource(kubectl: Kubectl, kind: string, name: string) {
-    const result = await kubectl.getResource(kind, name);
+export function fetchResource(kubectl: Kubectl, kind: string, name: string) {
+    const result = kubectl.getResource(kind, name);
 
     if (result == null || !!result.stderr) {
         return null;
