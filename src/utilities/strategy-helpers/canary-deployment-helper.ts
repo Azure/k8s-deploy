@@ -33,11 +33,11 @@ export function deleteCanaryDeployment(kubectl: Kubectl, manifestFilePaths: stri
     }
 
     // create delete cmd prefix
-    let argsPrefix: string;
-    argsPrefix = createCanaryObjectsArgumentString(inputManifestFiles, includeServices);
+    let args;
+    args = createCanaryObjectsArgumentString(inputManifestFiles, includeServices);
 
     // append delete cmd args as suffix (if present)
-    const args = utils.getDeleteCmdArgs(argsPrefix, TaskInputParameters.args);
+    // const args = utils.getDeleteCmdArgs(argsPrefix, TaskInputParameters.args);
     core.debug('Delete cmd args : ' + args);
 
     if (!!args && args.length > 0) {
@@ -221,6 +221,6 @@ function createCanaryObjectsArgumentString(files: string[], includeServices: boo
         core.debug('CanaryDeploymentHelper : No deployment objects found');
     }
 
-    const args = utils.createKubectlArgs(kindList, nameList);
+    const args = [Array.from(kindList).join(',')].concat(Array.from(nameList));
     return args;
 }

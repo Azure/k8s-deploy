@@ -80,8 +80,11 @@ export class Kubectl {
     }
 
 
-    public delete(args: string) {
-        return this.execute(['delete', args]);
+    public delete(args: string | string[]) {
+        if (typeof args === 'string')
+            return this.execute(['delete', args]);
+        else
+            return this.execute(['delete'].concat(args));
     }
 
     private execute(args: string[], silent?: boolean) {
