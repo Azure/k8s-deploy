@@ -171,6 +171,7 @@ function getNewCanaryObject(inputObject: any, replicas: number, type: string): o
 
     // Updating no. of replicas
     if (isSpecContainsReplicas(newObject.kind)) {
+        console.log('replicas: ', replicas, JSON.stringify(newObject));
         newObject.spec.replicas = replicas;
     }
 
