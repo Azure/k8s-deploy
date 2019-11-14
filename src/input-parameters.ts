@@ -16,3 +16,25 @@ if (!namespace) {
     core.debug('Namespace was not supplied; using "default" namespace instead.');
     namespace = 'default';
 }
+
+try {
+    const pe = parseInt(canaryPercentage);
+    if (pe <= 0 || pe >= 100) {
+        core.setFailed('A valid percentage value is between 0 and 100');
+        process.exit(1);
+    }
+} catch (ex) {
+    core.setFailed("Enter a valid 'percentage' integer value ");
+    process.exit(1);
+}
+
+try {
+    const pe = parseInt(baselineAndCanaryReplicas);
+    if (pe <= 0 || pe >= 100) {
+        core.setFailed('A valid baseline-and-canary-replicas value is between 0 and 100');
+        process.exit(1);
+    }
+} catch (ex) {
+    core.setFailed("Enter a valid 'baseline-and-canary-replicas' integer value");
+    process.exit(1);
+}
