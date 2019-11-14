@@ -19,7 +19,7 @@ if (!namespace) {
 
 try {
     const pe = parseInt(canaryPercentage);
-    if (pe <= 0 || pe >= 100) {
+    if (pe < 0 || pe > 100) {
         core.setFailed('A valid percentage value is between 0 and 100');
         process.exit(1);
     }
@@ -30,7 +30,7 @@ try {
 
 try {
     const pe = parseInt(baselineAndCanaryReplicas);
-    if (pe <= 0 || pe >= 100) {
+    if (pe < 0 || pe > 100) {
         core.setFailed('A valid baseline-and-canary-replicas value is between 0 and 100');
         process.exit(1);
     }
