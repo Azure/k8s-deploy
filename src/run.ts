@@ -14,7 +14,7 @@ let kubectlPath = "";
 
 async function setKubectlPath() {
     if (core.getInput('kubectl-version')) {
-        const version = core.getInput('kubect-version');
+        const version = core.getInput('kubectl-version');
         kubectlPath = toolCache.find('kubectl', version);
         if (!kubectlPath) {
             kubectlPath = await installKubectl(version);
