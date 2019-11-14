@@ -12,7 +12,7 @@ Rollout status is checked for the Kubernetes objects deployed. This is done to i
 #### Secret handling 
  The manifest files specfied as inputs are augmented with appropriate imagePullSecrets before deploying to the cluster.
 
-
+#### Sample YAML to run a basic deployment
 
 ```yaml
 - uses: Azure/k8s-deploy@v1
@@ -25,6 +25,74 @@ Rollout status is checked for the Kubernetes objects deployed. This is done to i
     manifests: '/manifests/*.*'
     kubectl-version: 'latest' # optional
 ```
+
+### Deployment Strategies
+
+#### Pod Canary
+
+```yaml
+- uses: Azure/k8s-deploy@v1
+  with:
+    namespace: 'myapp' # optional
+    images: 'contoso.azurecr.io/myapp:${{ event.run_id }} '
+    imagepullsecrets: |
+      image-pull-secret1
+      image-pull-secret2
+    manifests: '/manifests/*.*'
+    strategy: canary
+    percentage: 20
+```
+
+Inorder to promote or reject your canary deployment use the following:
+```yaml
+- uses: Azure/k8s-deploy@v1
+  with:
+    namespace: 'myapp' # optional
+    images: 'contoso.azurecr.io/myapp:${{ event.run_id }} '
+    imagepullsecrets: |
+      image-pull-secret1
+      image-pull-secret2
+    manifests: '/manifests/*.*'
+    strategy: canary
+    percentage: 20
+    action: promote # set to reject if you want to reject it
+```
+
+#### SMI Canary
+
+```yaml
+- uses: Azure/k8s-deploy@v1
+  with:
+    namespace: 'myapp' # optional
+    images: 'contoso.azurecr.io/myapp:${{ event.run_id }} '
+    imagepullsecrets: |
+      image-pull-secret1
+      image-pull-secret2
+    manifests: '/manifests/*.*'
+    strategy: canary
+    traffic-split-method: smi
+    percentage: 20
+    baseline-and-canary-replicas: 1
+```
+
+Inorder to promote or reject your canary deployment use the following:
+
+```yaml
+- uses: Azure/k8s-deploy@v1
+  with:
+    namespace: 'myapp' # optional
+    images: 'contoso.azurecr.io/myapp:${{ event.run_id }} '
+    imagepullsecrets: |
+      image-pull-secret1
+      image-pull-secret2
+    manifests: '/manifests/*.*'
+    strategy: canary
+    traffic-split-method: smi
+    percentage: 20
+    baseline-and-canary-replicas: 1
+    action: promote # set to reject if you want to reject it
+```
+
 Refer to the action metadata file for details about all the inputs https://github.com/Azure/k8s-deploy/blob/master/action.yml
 
 ## End to end workflow for building container images and deploying to an Azure Kubernetes Service cluster
