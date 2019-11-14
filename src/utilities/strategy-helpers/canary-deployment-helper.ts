@@ -188,8 +188,12 @@ function addCanaryLabelsAndAnnotations(inputObject: any, type: string) {
 
 function cleanUpCanary(kubectl: Kubectl, files: string[], includeServices: boolean) {
     var deleteObject = function (kind, name) {
-        const result = kubectl.delete([kind, name]);
-        checkForErrors([result]);
+        try {
+            const result = kubectl.delete([kind, name]);
+            checkForErrors([result]);
+        } catch (ex) {
+            // Ignore failures of delete if doesn't exist
+        }
     }
 
     files.forEach((filePath: string) => {
