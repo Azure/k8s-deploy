@@ -112,6 +112,7 @@ export function isCanaryDeploymentStrategy() {
 
 export function isSMICanaryStrategy() {
     const deploymentStrategy = TaskInputParameters.trafficSplitMethod;
+    console.log(isCanaryDeploymentStrategy(), deploymentStrategy, deploymentStrategy.toUpperCase() === TRAFFIC_SPLIT_STRATEGY)
     return isCanaryDeploymentStrategy() && deploymentStrategy && deploymentStrategy.toUpperCase() === TRAFFIC_SPLIT_STRATEGY;
 }
 

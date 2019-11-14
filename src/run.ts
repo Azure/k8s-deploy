@@ -60,7 +60,7 @@ async function run() {
     let manifests = manifestsInput.split('\n');
 
     if (action === 'deploy') {
-        let strategy = core.getInput('deployment-strategy');
+        let strategy = core.getInput('strategy');
         console.log("strategy: ", strategy)
         await deploy(new Kubectl(kubectlPath, namespace), manifests, strategy);
     }
