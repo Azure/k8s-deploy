@@ -33,18 +33,7 @@ export function deleteCanaryDeployment(kubectl: Kubectl, manifestFilePaths: stri
     }
 
     // create delete cmd prefix
-    let args;
-    args = createCanaryObjectsArgumentString(inputManifestFiles, includeServices);
-
-    // append delete cmd args as suffix (if present)
-    // const args = utils.getDeleteCmdArgs(argsPrefix, TaskInputParameters.args);
-    core.debug('Delete cmd args : ' + args);
-
-    if (!!args && args.length > 0) {
-        // run kubectl delete cmd
-        const result = kubectl.delete(args);
-        checkForErrors([result]);
-    }
+    cleanUpCanary(kubectl, inputManifestFiles, includeServices);
 }
 
 export function markResourceAsStable(inputObject: any): object {
@@ -197,30 +186,23 @@ function addCanaryLabelsAndAnnotations(inputObject: any, type: string) {
     }
 }
 
-function createCanaryObjectsArgumentString(files: string[], includeServices: boolean) {
-    const kindList = new Set<string>();
-    const nameList = new Set<string>();
+function cleanUpCanary(kubectl: Kubectl, files: string[], includeServices: boolean) {
+    var deleteObject = function (kind, name) {
+        const result = kubectl.delete([kind, name]);
+        checkForErrors([result]);
+    }
 
     files.forEach((filePath: string) => {
         const fileContents = fs.readFileSync(filePath);
         yaml.safeLoadAll(fileContents, function (inputObject) {
             const name = inputObject.metadata.name;
             const kind = inputObject.kind;
-            if (helper.isDeploymentEntity(kind)
-                || (includeServices && helper.isServiceEntity(kind))) {
+            if (helper.isDeploymentEntity(kind) || (includeServices && helper.isServiceEntity(kind))) {
                 const canaryObjectName = getCanaryResourceName(name);
                 const baselineObjectName = getBaselineResourceName(name);
-                kindList.add(kind);
-                nameList.add(canaryObjectName);
-                nameList.add(baselineObjectName);
+                deleteObject(kind, canaryObjectName);
+                deleteObject(kind, baselineObjectName);
             }
         });
     });
-
-    if (kindList.size === 0) {
-        core.debug('CanaryDeploymentHelper : No deployment objects found');
-    }
-
-    const args = [Array.from(kindList).join(',')].concat(Array.from(nameList));
-    return args;
 }
