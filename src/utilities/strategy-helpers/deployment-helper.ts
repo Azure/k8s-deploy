@@ -30,7 +30,6 @@ export async function deploy(kubectl: Kubectl, manifestFilePaths: string[], depl
     // imagePullSecrets addition
     inputManifestFiles = updateImagePullSecretsInManifestFiles(inputManifestFiles, TaskInputParameters.imagePullSecrets);
 
-    console.log("isCanary: ", isCanaryDeploymentStrategy(deploymentStrategy))
     // deployment
     const deployedManifestFiles = deployManifests(inputManifestFiles, kubectl, isCanaryDeploymentStrategy(deploymentStrategy));
 
