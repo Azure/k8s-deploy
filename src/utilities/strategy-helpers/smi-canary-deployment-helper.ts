@@ -13,7 +13,7 @@ import * as utils from '../manifest-utilities';
 import * as canaryDeploymentHelper from './canary-deployment-helper';
 import { checkForErrors } from "../utility";
 
-const TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX = '-azure-pipelines-rollout';
+const TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX = '-workflow-rollout';
 const TRAFFIC_SPLIT_OBJECT = 'TrafficSplit';
 
 export function deploySMICanary(kubectl: Kubectl, filePaths: string[]) {

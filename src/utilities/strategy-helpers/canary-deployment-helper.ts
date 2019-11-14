@@ -15,7 +15,7 @@ import * as utils from '../manifest-utilities';
 
 export const CANARY_DEPLOYMENT_STRATEGY = 'CANARY';
 export const TRAFFIC_SPLIT_STRATEGY = 'SMI';
-export const CANARY_VERSION_LABEL = 'azure-pipelines/version';
+export const CANARY_VERSION_LABEL = 'workflow/version';
 const BASELINE_SUFFIX = '-baseline';
 export const BASELINE_LABEL_VALUE = 'baseline';
 const CANARY_SUFFIX = '-canary';
