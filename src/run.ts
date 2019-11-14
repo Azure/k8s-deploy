@@ -3,11 +3,11 @@ import * as core from '@actions/core';
 import * as io from '@actions/io';
 import * as path from 'path';
 
-import { getExecutableExtension, isEqual } from "./utility";
+import { getExecutableExtension, isEqual } from "./utilities/utility";
 import { downloadKubectl, getStableKubectlVersion } from "./kubectl-util";
-import { deploy } from './strategy/DeploymentHelper';
-import { promote } from './strategy/promote';
-import { reject } from './strategy/reject';
+import { deploy } from './utilities/strategy-helpers/deployment-helper';
+import { promote } from './actions/promote';
+import { reject } from './actions/reject';
 import { Kubectl } from './kubectl-object-model';
 
 let kubectlPath = "";

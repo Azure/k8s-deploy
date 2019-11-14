@@ -1,17 +1,17 @@
 'use strict';
 
-import { Kubectl } from '../kubectl-object-model';
+import { Kubectl } from '../../kubectl-object-model';
 import * as fs from 'fs';
 import * as yaml from 'js-yaml';
 import * as core from '@actions/core';
 
-import * as TaskInputParameters from '../input-parameters';
-import * as helper from './KubernetesObjectUtility';
-import { KubernetesWorkload } from '../kubernetesconstants';
-import { StringComparer, isEqual } from './StringComparison';
+import * as TaskInputParameters from '../../input-parameters';
+import * as helper from '../resource-object-utility';
+import { KubernetesWorkload } from '../../constants';
+import { StringComparer, isEqual } from '../string-comparison';
 import { checkForErrors } from "../utility";
 
-import * as utils from './utilities';
+import * as utils from '../manifest-utilities';
 
 export const CANARY_DEPLOYMENT_STRATEGY = 'CANARY';
 export const TRAFFIC_SPLIT_STRATEGY = 'SMI';

@@ -2,8 +2,8 @@
 
 import * as core from '@actions/core';
 import * as utils from './utility';
-import * as KubernetesConstants from './kubernetesconstants';
-import { Kubectl, Resource } from './kubectl-object-model';
+import * as KubernetesConstants from '../constants';
+import { Kubectl, Resource } from '../kubectl-object-model';
 
 export async function checkManifestStability(kubectl: Kubectl, resources: Resource[]): Promise<void> {
     const rolloutStatusResults = [];

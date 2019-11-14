@@ -1,9 +1,9 @@
 'use strict';
 import * as core from '@actions/core';
-import * as canaryDeploymentHelper from './CanaryDeploymentHelper';
-import * as SMICanaryDeploymentHelper from './SMICanaryDeploymentHelper';
+import * as canaryDeploymentHelper from '../utilities/strategy-helpers/canary-deployment-helper';
+import * as SMICanaryDeploymentHelper from '../utilities/strategy-helpers/smi-canary-deployment-helper';
 import { Kubectl } from '../kubectl-object-model';
-import * as utils from './utilities';
+import * as utils from '../utilities/manifest-utilities';
 import * as TaskInputParameters from '../input-parameters';
 
 export async function reject(ignoreSslErrors?: boolean) {

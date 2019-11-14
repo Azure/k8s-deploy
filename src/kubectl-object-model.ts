@@ -1,4 +1,4 @@
-import { ToolRunner, IExecOptions } from "./toolrunner";
+import { ToolRunner, IExecOptions } from "./utilities/tool-runner";
 
 export interface Resource {
     name: string;

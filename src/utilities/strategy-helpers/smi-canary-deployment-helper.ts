@@ -1,22 +1,27 @@
 'use strict';
-Object.defineProperty(exports, "__esModule", { value: true });
-const core = require("@actions/core");
-const fs = require("fs");
-const yaml = require("js-yaml");
-const util = require("util");
-const TaskInputParameters = require("../input-parameters");
-const fileHelper = require("./FileHelper");
-const helper = require("./KubernetesObjectUtility");
-const utils = require("./utilities");
-const canaryDeploymentHelper = require("./CanaryDeploymentHelper");
-const utility_1 = require("../utility");
+
+import { Kubectl } from '../../kubectl-object-model';
+import * as core from '@actions/core';
+import * as fs from 'fs';
+import * as yaml from 'js-yaml';
+import * as util from 'util';
+
+import * as TaskInputParameters from '../../input-parameters';
+import * as fileHelper from '../files-helper';
+import * as helper from '../resource-object-utility';
+import * as utils from '../manifest-utilities';
+import * as canaryDeploymentHelper from './canary-deployment-helper';
+import { checkForErrors } from "../utility";
+
 const TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX = '-azure-pipelines-rollout';
 const TRAFFIC_SPLIT_OBJECT = 'TrafficSplit';
-function deploySMICanary(kubectl, filePaths) {
+
+export function deploySMICanary(kubectl: Kubectl, filePaths: string[]) {
     const newObjectsList = [];
     const canaryReplicaCount = parseInt(TaskInputParameters.baselineAndCanaryReplicas);
     core.debug('Replica count is ' + canaryReplicaCount);
-    filePaths.forEach((filePath) => {
+
+    filePaths.forEach((filePath: string) => {
         const fileContents = fs.readFileSync(filePath);
         yaml.safeLoadAll(fileContents, function (inputObject) {
             const name = inputObject.metadata.name;
@@ -31,11 +36,11 @@ function deploySMICanary(kubectl, filePaths) {
                     const newCanaryObject = canaryDeploymentHelper.getNewCanaryResource(inputObject, canaryReplicaCount);
                     core.debug('New canary object is: ' + JSON.stringify(newCanaryObject));
                     newObjectsList.push(newCanaryObject);
-                }
-                else {
+                } else {
                     if (!canaryDeploymentHelper.isResourceMarkedAsStable(stableObject)) {
                         throw (`StableSpecSelectorNotExist : ${name}`);
                     }
+
                     core.debug('Stable object found. Creating canary and baseline objects');
                     // If canary object not found, create canary and baseline object.
                     const newCanaryObject = canaryDeploymentHelper.getNewCanaryResource(inputObject, canaryReplicaCount);
@@ -45,46 +50,50 @@ function deploySMICanary(kubectl, filePaths) {
                     newObjectsList.push(newCanaryObject);
                     newObjectsList.push(newBaselineObject);
                 }
-            }
-            else {
+            } else {
                 // Updating non deployment entity as it is.
                 newObjectsList.push(inputObject);
             }
         });
     });
+
     const manifestFiles = fileHelper.writeObjectsToFile(newObjectsList);
     const result = kubectl.apply(manifestFiles);
     createCanaryService(kubectl, filePaths);
     return { 'result': result, 'newFilePaths': manifestFiles };
 }
-exports.deploySMICanary = deploySMICanary;
-function createCanaryService(kubectl, filePaths) {
+
+function createCanaryService(kubectl: Kubectl, filePaths: string[]) {
     const newObjectsList = [];
     const trafficObjectsList = [];
-    filePaths.forEach((filePath) => {
+
+    filePaths.forEach((filePath: string) => {
         const fileContents = fs.readFileSync(filePath);
         yaml.safeLoadAll(fileContents, function (inputObject) {
+
             const name = inputObject.metadata.name;
             const kind = inputObject.kind;
             if (helper.isServiceEntity(kind)) {
                 const newCanaryServiceObject = canaryDeploymentHelper.getNewCanaryResource(inputObject);
                 core.debug('New canary service object is: ' + JSON.stringify(newCanaryServiceObject));
                 newObjectsList.push(newCanaryServiceObject);
+
                 const newBaselineServiceObject = canaryDeploymentHelper.getNewBaselineResource(inputObject);
                 core.debug('New baseline object is: ' + JSON.stringify(newBaselineServiceObject));
                 newObjectsList.push(newBaselineServiceObject);
+
                 core.debug('Querying for stable service object');
                 const stableObject = canaryDeploymentHelper.fetchResource(kubectl, kind, canaryDeploymentHelper.getStableResourceName(name));
                 if (!stableObject) {
                     const newStableServiceObject = canaryDeploymentHelper.getStableResource(inputObject);
                     core.debug('New stable service object is: ' + JSON.stringify(newStableServiceObject));
                     newObjectsList.push(newStableServiceObject);
+
                     core.debug('Creating the traffic object for service: ' + name);
                     const trafficObject = createTrafficSplitManifestFile(name, 0, 0, 1000);
                     core.debug('Creating the traffic object for service: ' + trafficObject);
                     trafficObjectsList.push(trafficObject);
-                }
-                else {
+                } else {
                     let updateTrafficObject = true;
                     const trafficObject = canaryDeploymentHelper.fetchResource(kubectl, TRAFFIC_SPLIT_OBJECT, getTrafficSplitResourceName(name));
                     if (trafficObject) {
@@ -95,9 +104,10 @@ function createCanaryService(kubectl, filePaths) {
                                     core.debug('Update traffic objcet not required');
                                     updateTrafficObject = false;
                                 }
-                            });
+                            })
                         }
                     }
+
                     if (updateTrafficObject) {
                         core.debug('Stable service object present so updating the traffic object for service: ' + name);
                         trafficObjectsList.push(updateTrafficSplitObject(name));
@@ -106,28 +116,32 @@ function createCanaryService(kubectl, filePaths) {
             }
         });
     });
+
     const manifestFiles = fileHelper.writeObjectsToFile(newObjectsList);
     manifestFiles.push(...trafficObjectsList);
     const result = kubectl.apply(manifestFiles);
-    utility_1.checkForErrors([result]);
+    checkForErrors([result]);
 }
-function redirectTrafficToCanaryDeployment(kubectl, manifestFilePaths) {
+
+export function redirectTrafficToCanaryDeployment(kubectl: Kubectl, manifestFilePaths: string[]) {
     adjustTraffic(kubectl, manifestFilePaths, 0, 1000);
 }
-exports.redirectTrafficToCanaryDeployment = redirectTrafficToCanaryDeployment;
-function redirectTrafficToStableDeployment(kubectl, manifestFilePaths) {
+
+export function redirectTrafficToStableDeployment(kubectl: Kubectl, manifestFilePaths: string[]) {
     adjustTraffic(kubectl, manifestFilePaths, 1000, 0);
 }
-exports.redirectTrafficToStableDeployment = redirectTrafficToStableDeployment;
-function adjustTraffic(kubectl, manifestFilePaths, stableWeight, canaryWeight) {
+
+function adjustTraffic(kubectl: Kubectl, manifestFilePaths: string[], stableWeight: number, canaryWeight: number) {
     // get manifest files
-    const inputManifestFiles = utils.getManifestFiles(manifestFilePaths);
+    const inputManifestFiles: string[] = utils.getManifestFiles(manifestFilePaths);
+
     if (inputManifestFiles == null || inputManifestFiles.length == 0) {
         return;
     }
+
     const trafficSplitManifests = [];
     const serviceObjects = [];
-    inputManifestFiles.forEach((filePath) => {
+    inputManifestFiles.forEach((filePath: string) => {
         const fileContents = fs.readFileSync(filePath);
         yaml.safeLoadAll(fileContents, function (inputObject) {
             const name = inputObject.metadata.name;
@@ -138,29 +152,35 @@ function adjustTraffic(kubectl, manifestFilePaths, stableWeight, canaryWeight) {
             }
         });
     });
+
     if (trafficSplitManifests.length <= 0) {
         return;
     }
+
     const result = kubectl.apply(trafficSplitManifests);
     core.debug('serviceObjects:' + serviceObjects.join(',') + ' result:' + result);
-    utility_1.checkForErrors([result]);
+    checkForErrors([result]);
 }
-function updateTrafficSplitObject(serviceName) {
+
+function updateTrafficSplitObject(serviceName: string): string {
     const percentage = parseInt(TaskInputParameters.canaryPercentage) * 10;
     const baselineAndCanaryWeight = percentage / 2;
     const stableDeploymentWeight = 1000 - percentage;
     core.debug('Creating the traffic object with canary weight: ' + baselineAndCanaryWeight + ',baseling weight: ' + baselineAndCanaryWeight + ',stable: ' + stableDeploymentWeight);
     return createTrafficSplitManifestFile(serviceName, stableDeploymentWeight, baselineAndCanaryWeight, baselineAndCanaryWeight);
 }
-function createTrafficSplitManifestFile(serviceName, stableWeight, baselineWeight, canaryWeight) {
+
+function createTrafficSplitManifestFile(serviceName: string, stableWeight: number, baselineWeight: number, canaryWeight: number): string {
     const smiObjectString = getTrafficSplitObject(serviceName, stableWeight, baselineWeight, canaryWeight);
     const manifestFile = fileHelper.writeManifestToFile(smiObjectString, TRAFFIC_SPLIT_OBJECT, serviceName);
     if (!manifestFile) {
         throw new Error('UnableToCreateTrafficSplitManifestFile');
     }
+
     return manifestFile;
 }
-function getTrafficSplitObject(name, stableWeight, baselineWeight, canaryWeight) {
+
+function getTrafficSplitObject(name: string, stableWeight: number, baselineWeight: number, canaryWeight: number): string {
     const trafficSplitObjectJson = `{
         "apiVersion": "split.smi-spec.io/v1alpha1",
         "kind": "TrafficSplit",
@@ -185,9 +205,11 @@ function getTrafficSplitObject(name, stableWeight, baselineWeight, canaryWeight)
             "service": "%s"
         }
     }`;
+
     const trafficSplitObject = util.format(trafficSplitObjectJson, getTrafficSplitResourceName(name), canaryDeploymentHelper.getStableResourceName(name), stableWeight, canaryDeploymentHelper.getBaselineResourceName(name), baselineWeight, canaryDeploymentHelper.getCanaryResourceName(name), canaryWeight, name);
     return trafficSplitObject;
 }
-function getTrafficSplitResourceName(name) {
+
+function getTrafficSplitResourceName(name: string) {
     return name + TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX;
 }

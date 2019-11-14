@@ -1,10 +1,10 @@
 'use strict';
 import * as core from '@actions/core';
 
-import * as deploymentHelper from './DeploymentHelper';
-import * as canaryDeploymentHelper from './CanaryDeploymentHelper';
-import * as SMICanaryDeploymentHelper from './SMICanaryDeploymentHelper';
-import * as utils from './utilities';
+import * as deploymentHelper from '../utilities/strategy-helpers/deployment-helper';
+import * as canaryDeploymentHelper from '../utilities/strategy-helpers/canary-deployment-helper';
+import * as SMICanaryDeploymentHelper from '../utilities/strategy-helpers/smi-canary-deployment-helper';
+import * as utils from '../utilities/manifest-utilities';
 import * as TaskInputParameters from '../input-parameters';
 
 import { Kubectl } from '../kubectl-object-model';

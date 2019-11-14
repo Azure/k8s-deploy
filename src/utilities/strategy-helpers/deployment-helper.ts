@@ -4,18 +4,18 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as core from '@actions/core';
 import * as yaml from 'js-yaml';
-import * as canaryDeploymentHelper from './CanaryDeploymentHelper';
-import * as KubernetesObjectUtility from './KubernetesObjectUtility';
-import * as TaskInputParameters from '../input-parameters';
-import * as models from '../kubernetesconstants';
-import * as fileHelper from './FileHelper';
-import * as utils from './utilities';
-import * as KubernetesManifestUtility from '../kubernetes-manifest-utility';
-import * as KubernetesConstants from '../kubernetesconstants';
-import { Kubectl, Resource } from '../kubectl-object-model';
+import * as canaryDeploymentHelper from './canary-deployment-helper';
+import * as KubernetesObjectUtility from '../resource-object-utility';
+import * as TaskInputParameters from '../../input-parameters';
+import * as models from '../../constants';
+import * as fileHelper from '../files-helper';
+import * as utils from '../manifest-utilities';
+import * as KubernetesManifestUtility from '../manifest-stability-utility';
+import * as KubernetesConstants from '../../constants';
+import { Kubectl, Resource } from '../../kubectl-object-model';
 
-import { deployPodCanary } from './PodCanaryDeploymentHelper';
-import { deploySMICanary } from './SMICanaryDeploymentHelper';
+import { deployPodCanary } from './pod-canary-deployment-helper';
+import { deploySMICanary } from './smi-canary-deployment-helper';
 import { checkForErrors } from "../utility";
 
 
