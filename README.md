@@ -20,6 +20,7 @@ Following are the key capabilities of this action:
 
 
 ## Action inputs
+
 <table>
   <thead>
     <tr>
@@ -116,7 +117,7 @@ To promote/reject the canary created by the above snippet, the following YAML sn
     action: promote # substitute reject if you want to reject
 ```
 
-#### Deployment Strategies - Canary deployment based on Service Mesh Interface
+### Deployment Strategies - Canary deployment based on Service Mesh Interface
 
 ```yaml
 - uses: Azure/k8s-deploy@v1
@@ -199,7 +200,7 @@ jobs:
           demo-k8s-secret
 ```
 
-## Build container image and deploy to any Azure Kubernetes Service cluster
+### Build container image and deploy to any Azure Kubernetes Service cluster
 
 ```yaml
 on: [push]
