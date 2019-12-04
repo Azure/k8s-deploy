@@ -79,7 +79,9 @@ Following are the key capabilities of this action:
 - uses: Azure/k8s-deploy@v1
   with:
     namespace: 'myapp'
-    manifests: '/manifests/*.*'
+    manifests: |
+        deployment.yaml
+        service.yaml
     images: 'contoso.azurecr.io/myapp:${{ event.run_id }}'
     imagepullsecrets: |
       image-pull-secret1
@@ -97,7 +99,9 @@ Following are the key capabilities of this action:
     imagepullsecrets: |
       image-pull-secret1
       image-pull-secret2
-    manifests: '/manifests/*.*'
+    manifests: |
+        deployment.yaml
+        service.yaml
     strategy: canary
     percentage: 20
 ```
@@ -112,7 +116,9 @@ To promote/reject the canary created by the above snippet, the following YAML sn
     imagepullsecrets: |
       image-pull-secret1
       image-pull-secret2
-    manifests: '/manifests/*.*'
+    manifests: |
+        deployment.yaml
+        service.yaml
     strategy: canary
     action: promote # substitute reject if you want to reject
 ```
@@ -127,7 +133,9 @@ To promote/reject the canary created by the above snippet, the following YAML sn
     imagepullsecrets: |
       image-pull-secret1
       image-pull-secret2
-    manifests: '/manifests/*.*'
+    manifests: |
+        deployment.yaml
+        service.yaml
     strategy: canary
     traffic-split-method: smi
     percentage: 20
@@ -144,7 +152,9 @@ To promote/reject the canary created by the above snippet, the following YAML sn
     imagepullsecrets: |
       image-pull-secret1
       image-pull-secret2
-    manifests: '/manifests/*.*'
+    manifests: |
+        deployment.yaml
+        service.yaml
     strategy: canary
     traffic-split-method: smi
     action: reject # substitute reject if you want to reject
