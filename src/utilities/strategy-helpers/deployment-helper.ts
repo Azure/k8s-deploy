@@ -102,36 +102,6 @@ async function checkManifestStability(kubectl: Kubectl, resources: Resource[]): 
     await KubernetesManifestUtility.checkManifestStability(kubectl, resources);
 }
 
-function updateContainerImagesInManifestFiles(filePaths: string[], containers: string[]): string[] {
-    if (!!containers && containers.length > 0) {
-        const newFilePaths = [];
-        const tempDirectory = fileHelper.getTempDirectory();
-        filePaths.forEach((filePath: string) => {
-            let contents = fs.readFileSync(filePath).toString();
-            containers.forEach((container: string) => {
-                let imageName = container.split(':')[0];
-                if (imageName.indexOf('@') > 0) {
-                    imageName = imageName.split('@')[0];
-                }
-                if (contents.indexOf(imageName) > 0) {
-                    contents = utils.substituteImageNameInSpecFile(contents, imageName, container);
-                }
-            });
-
-            const fileName = path.join(tempDirectory, path.basename(filePath));
-            fs.writeFileSync(
-                path.join(fileName),
-                contents
-            );
-            newFilePaths.push(fileName);
-        });
-
-        return newFilePaths;
-    }
-
-    return filePaths;
-}
-
 function updateResourcesObjects(filePaths: string[], imagePullSecrets: string[], containers: string[]): string[] {
     const newObjectsList = [];
     filePaths.forEach((filePath: string) => {
