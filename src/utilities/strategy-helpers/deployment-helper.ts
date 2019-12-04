@@ -24,11 +24,9 @@ export async function deploy(kubectl: Kubectl, manifestFilePaths: string[], depl
     // get manifest files
     let inputManifestFiles: string[] = getManifestFiles(manifestFilePaths);
 
-    // artifact substitution
-    inputManifestFiles = updateContainerImagesInManifestFiles(inputManifestFiles, TaskInputParameters.containers);
 
     // imagePullSecrets addition
-    inputManifestFiles = updateImagePullSecretsInManifestFiles(inputManifestFiles, TaskInputParameters.imagePullSecrets);
+    inputManifestFiles = updateResourcesObjects(inputManifestFiles, TaskInputParameters.imagePullSecrets, TaskInputParameters.containers);
 
     // deployment
     const deployedManifestFiles = deployManifests(inputManifestFiles, kubectl, isCanaryDeploymentStrategy(deploymentStrategy));
@@ -134,25 +132,25 @@ function updateContainerImagesInManifestFiles(filePaths: string[], containers: s
     return filePaths;
 }
 
-function updateImagePullSecretsInManifestFiles(filePaths: string[], imagePullSecrets: string[]): string[] {
-    if (!!imagePullSecrets && imagePullSecrets.length > 0) {
-        const newObjectsList = [];
-        filePaths.forEach((filePath: string) => {
-            const fileContents = fs.readFileSync(filePath).toString();
-            yaml.safeLoadAll(fileContents, function (inputObject: any) {
-                if (!!inputObject && !!inputObject.kind) {
-                    const kind = inputObject.kind;
-                    if (KubernetesObjectUtility.isWorkloadEntity(kind)) {
+function updateResourcesObjects(filePaths: string[], imagePullSecrets: string[], containers: string[]): string[] {
+    const newObjectsList = [];
+    filePaths.forEach((filePath: string) => {
+        const fileContents = fs.readFileSync(filePath).toString();
+        yaml.safeLoadAll(fileContents, function (inputObject: any) {
+            if (!!inputObject && !!inputObject.kind) {
+                const kind = inputObject.kind;
+                if (KubernetesObjectUtility.isWorkloadEntity(kind)) {
+                    if (!!imagePullSecrets && imagePullSecrets.length > 0) {
                         KubernetesObjectUtility.updateImagePullSecrets(inputObject, imagePullSecrets, false);
                     }
-                    newObjectsList.push(inputObject);
+                    if (!!containers && containers.length > 0) {
+                        KubernetesObjectUtility.updateImageDetails(inputObject, containers);
+                    }
                 }
-            });
+                newObjectsList.push(inputObject);
+            }
         });
-        core.debug('New K8s objects after addin imagePullSecrets are :' + JSON.stringify(newObjectsList));
-        const newFilePaths = fileHelper.writeObjectsToFile(newObjectsList);
-        return newFilePaths;
-    }
+    });
     return filePaths;
 }
 

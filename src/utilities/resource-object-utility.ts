@@ -189,6 +189,49 @@ export function getResources(filePaths: string[], filterResourceTypes: string[])
     return resources;
 }
 
+export function updateImageDetails(inputObject: any, containers: string[]) {
+    if (!inputObject || !inputObject.spec || !containers) {
+        return;
+    }
+
+    if (!!inputObject.spec.template && !!inputObject.spec.template.spec) {
+        if (!!inputObject.spec.template.spec.containers) {
+            updateContainers(inputObject.spec.template.spec.containers, containers);
+        }
+        if (!!inputObject.spec.template.spec.initContainers) {
+            updateContainers(inputObject.spec.template.spec.initContainers, containers);
+        }
+        return;
+    }
+
+    if (!!inputObject.spec.containers) {
+        updateContainers(inputObject.spec.containers, containers);
+    }
+
+    if (!!inputObject.spec.initContainers) {
+        updateContainers(inputObject.spec.initContainers, containers);
+    }
+}
+
+function updateContainers(containers: any[], images: string[]) {
+    if (!containers || containers.length === 0) {
+        return containers;
+    }
+    containers.forEach((container) => {
+        const imageName: string = container.image.trim();
+        const imgParts = imageName.split(':');
+        let img = imgParts[0];
+        if (imgParts.length > 2) {
+            img = imgParts.slice(0, imgParts.length - 1).join(':');
+        }
+        
+        images.forEach(image => {
+            if (image.startsWith(img + ':') || image === img) {
+                container.image = image;
+            }
+        });
+    });
+}
 function getSpecLabels(inputObject: any) {
 
     if (!inputObject) {
