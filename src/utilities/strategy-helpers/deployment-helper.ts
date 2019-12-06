@@ -17,6 +17,7 @@ import { Kubectl, Resource } from '../../kubectl-object-model';
 import { deployPodCanary } from './pod-canary-deployment-helper';
 import { deploySMICanary } from './smi-canary-deployment-helper';
 import { checkForErrors } from "../utility";
+import { isEqual, StringComparer } from '../string-comparison';
 
 
 export async function deploy(kubectl: Kubectl, manifestFilePaths: string[], deploymentStrategy: string) {
@@ -104,17 +105,27 @@ async function checkManifestStability(kubectl: Kubectl, resources: Resource[]): 
 
 function updateResourcesObjects(filePaths: string[], imagePullSecrets: string[], containers: string[]): string[] {
     const newObjectsList = [];
+    const updateResourceObject = (inputObject) => {
+        if (!!imagePullSecrets && imagePullSecrets.length > 0) {
+            KubernetesObjectUtility.updateImagePullSecrets(inputObject, imagePullSecrets, false);
+        }
+        if (!!containers && containers.length > 0) {
+            KubernetesObjectUtility.updateImageDetails(inputObject, containers);
+        }
+    }
+
     filePaths.forEach((filePath: string) => {
         const fileContents = fs.readFileSync(filePath).toString();
         yaml.safeLoadAll(fileContents, function (inputObject: any) {
             if (!!inputObject && !!inputObject.kind) {
                 const kind = inputObject.kind;
                 if (KubernetesObjectUtility.isWorkloadEntity(kind)) {
-                    if (!!imagePullSecrets && imagePullSecrets.length > 0) {
-                        KubernetesObjectUtility.updateImagePullSecrets(inputObject, imagePullSecrets, false);
-                    }
-                    if (!!containers && containers.length > 0) {
-                        KubernetesObjectUtility.updateImageDetails(inputObject, containers);
+                    updateResourceObject(inputObject);
+                }
+                else if (isEqual(kind, 'list', StringComparer.OrdinalIgnoreCase)) {
+                    let items = inputObject.items;
+                    if (items.length > 0) {
+                        items.forEach((item) => updateResourceObject(item));
                     }
                 }
                 newObjectsList.push(inputObject);
