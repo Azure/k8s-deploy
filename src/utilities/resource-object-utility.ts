@@ -213,25 +213,33 @@ export function updateImageDetails(inputObject: any, containers: string[]) {
     }
 }
 
+function extractImageName(imageName) {
+    let img = '';
+    if (imageName.indexOf('/') > 0) {
+        const imgParts = imageName.split('/');
+        const registry = imgParts[0];
+        const imgName = imgParts[1].split(':')[0];
+        img = `${registry}/${imgName}`;
+    } else {
+        img = imageName.split(':')[0];
+    }
+    return img;
+}
+
 function updateContainers(containers: any[], images: string[]) {
     if (!containers || containers.length === 0) {
         return containers;
     }
     containers.forEach((container) => {
-        const imageName: string = container.image.trim();
-        const imgParts = imageName.split(':');
-        let img = imgParts[0];
-        if (imgParts.length > 2) {
-            img = imgParts.slice(0, imgParts.length - 1).join(':');
-        }
-        
+        const imageName: string = extractImageName(container.image.trim());
         images.forEach(image => {
-            if (image.startsWith(img + ':') || image === img) {
+            if (extractImageName(image) === imageName) {
                 container.image = image;
             }
         });
     });
 }
+
 function getSpecLabels(inputObject: any) {
 
     if (!inputObject) {
