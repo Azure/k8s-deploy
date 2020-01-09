@@ -79,6 +79,9 @@ export class Kubectl {
         return results;
     }
 
+    public executeCommand(customCommand: string, args?: string) {
+        return args ? this.execute([customCommand, args]) : this.execute([customCommand]);
+    }
 
     public delete(args: string | string[]) {
         if (typeof args === 'string')
