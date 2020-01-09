@@ -183,8 +183,7 @@ function createTrafficSplitManifestFile(kubectl: Kubectl, serviceName: string, s
 }
 
 function getTrafficSplitObject(kubectl: Kubectl, name: string, stableWeight: number, baselineWeight: number, canaryWeight: number): string {
-    if(!trafficSplitAPIVersion)
-    {
+    if (!trafficSplitAPIVersion) {
         trafficSplitAPIVersion = kubectlUtils.getTrafficSplitAPIVersion(kubectl);
     }
     const trafficSplitObjectJson = `{

@@ -65,13 +65,12 @@ export async function downloadKubectl(version: string): Promise<string> {
     return kubectlPath;
 }
 
-export function getTrafficSplitAPIVersion(kubectl: Kubectl): string
-{
+export function getTrafficSplitAPIVersion(kubectl: Kubectl): string {
     const result = kubectl.executeCommand('api-versions');
     const trafficSplitAPIVersion = result.stdout.split('\n').find(version => version.startsWith('split.smi-spec.io'));
     if (trafficSplitAPIVersion == null || typeof trafficSplitAPIVersion == 'undefined') {
         throw new Error('UnableToCreateTrafficSplitManifestFile');
     }
-    
+
     return trafficSplitAPIVersion;
 }
