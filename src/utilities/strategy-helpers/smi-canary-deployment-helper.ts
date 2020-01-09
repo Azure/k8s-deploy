@@ -10,11 +10,13 @@ import * as TaskInputParameters from '../../input-parameters';
 import * as fileHelper from '../files-helper';
 import * as helper from '../resource-object-utility';
 import * as utils from '../manifest-utilities';
+import * as kubectlUtils from '../../kubectl-util';
 import * as canaryDeploymentHelper from './canary-deployment-helper';
 import { checkForErrors } from "../utility";
 
 const TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX = '-workflow-rollout';
 const TRAFFIC_SPLIT_OBJECT = 'TrafficSplit';
+var trafficSplitAPIVersion = null;
 
 export function deploySMICanary(kubectl: Kubectl, filePaths: string[]) {
     const newObjectsList = [];
@@ -90,7 +92,7 @@ function createCanaryService(kubectl: Kubectl, filePaths: string[]) {
                     newObjectsList.push(newStableServiceObject);
 
                     core.debug('Creating the traffic object for service: ' + name);
-                    const trafficObject = createTrafficSplitManifestFile(name, 0, 0, 1000);
+                    const trafficObject = createTrafficSplitManifestFile(kubectl, name, 0, 0, 1000);
                     core.debug('Creating the traffic object for service: ' + trafficObject);
                     trafficObjectsList.push(trafficObject);
                 } else {
@@ -110,7 +112,7 @@ function createCanaryService(kubectl: Kubectl, filePaths: string[]) {
 
                     if (updateTrafficObject) {
                         core.debug('Stable service object present so updating the traffic object for service: ' + name);
-                        trafficObjectsList.push(updateTrafficSplitObject(name));
+                        trafficObjectsList.push(updateTrafficSplitObject(kubectl, name));
                     }
                 }
             }
@@ -147,7 +149,7 @@ function adjustTraffic(kubectl: Kubectl, manifestFilePaths: string[], stableWeig
             const name = inputObject.metadata.name;
             const kind = inputObject.kind;
             if (helper.isServiceEntity(kind)) {
-                trafficSplitManifests.push(createTrafficSplitManifestFile(name, stableWeight, 0, canaryWeight));
+                trafficSplitManifests.push(createTrafficSplitManifestFile(kubectl, name, stableWeight, 0, canaryWeight));
                 serviceObjects.push(name);
             }
         });
@@ -162,16 +164,16 @@ function adjustTraffic(kubectl: Kubectl, manifestFilePaths: string[], stableWeig
     checkForErrors([result]);
 }
 
-function updateTrafficSplitObject(serviceName: string): string {
+function updateTrafficSplitObject(kubectl: Kubectl, serviceName: string): string {
     const percentage = parseInt(TaskInputParameters.canaryPercentage) * 10;
     const baselineAndCanaryWeight = percentage / 2;
     const stableDeploymentWeight = 1000 - percentage;
     core.debug('Creating the traffic object with canary weight: ' + baselineAndCanaryWeight + ',baseling weight: ' + baselineAndCanaryWeight + ',stable: ' + stableDeploymentWeight);
-    return createTrafficSplitManifestFile(serviceName, stableDeploymentWeight, baselineAndCanaryWeight, baselineAndCanaryWeight);
+    return createTrafficSplitManifestFile(kubectl, serviceName, stableDeploymentWeight, baselineAndCanaryWeight, baselineAndCanaryWeight);
 }
 
-function createTrafficSplitManifestFile(serviceName: string, stableWeight: number, baselineWeight: number, canaryWeight: number): string {
-    const smiObjectString = getTrafficSplitObject(serviceName, stableWeight, baselineWeight, canaryWeight);
+function createTrafficSplitManifestFile(kubectl: Kubectl, serviceName: string, stableWeight: number, baselineWeight: number, canaryWeight: number): string {
+    const smiObjectString = getTrafficSplitObject(kubectl, serviceName, stableWeight, baselineWeight, canaryWeight);
     const manifestFile = fileHelper.writeManifestToFile(smiObjectString, TRAFFIC_SPLIT_OBJECT, serviceName);
     if (!manifestFile) {
         throw new Error('UnableToCreateTrafficSplitManifestFile');
@@ -180,9 +182,13 @@ function createTrafficSplitManifestFile(serviceName: string, stableWeight: numbe
     return manifestFile;
 }
 
-function getTrafficSplitObject(name: string, stableWeight: number, baselineWeight: number, canaryWeight: number): string {
+function getTrafficSplitObject(kubectl: Kubectl, name: string, stableWeight: number, baselineWeight: number, canaryWeight: number): string {
+    if(!trafficSplitAPIVersion)
+    {
+        trafficSplitAPIVersion = kubectlUtils.getTrafficSplitAPIVersion(kubectl);
+    }
     const trafficSplitObjectJson = `{
-        "apiVersion": "split.smi-spec.io/v1alpha1",
+        "apiVersion": "${trafficSplitAPIVersion}",
         "kind": "TrafficSplit",
         "metadata": {
             "name": "%s"

@@ -5,6 +5,7 @@ import * as fs from 'fs';
 
 import * as toolCache from '@actions/tool-cache';
 import * as core from '@actions/core';
+import { Kubectl } from 'kubectl-object-model';
 
 const kubectlToolName = 'kubectl';
 const stableKubectlVersion = 'v1.15.0';
@@ -62,4 +63,15 @@ export async function downloadKubectl(version: string): Promise<string> {
     const kubectlPath = path.join(cachedToolpath, kubectlToolName + getExecutableExtension());
     fs.chmodSync(kubectlPath, '777');
     return kubectlPath;
+}
+
+export function getTrafficSplitAPIVersion(kubectl: Kubectl): string
+{
+    const result = kubectl.executeCommand('api-versions');
+    const trafficSplitAPIVersion = result.stdout.split('\n').find(version => version.startsWith('split.smi-spec.io'));
+    if (trafficSplitAPIVersion == null || typeof trafficSplitAPIVersion == 'undefined') {
+        throw new Error('UnableToCreateTrafficSplitManifestFile');
+    }
+    
+    return trafficSplitAPIVersion;
 }
