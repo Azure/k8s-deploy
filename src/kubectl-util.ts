@@ -5,7 +5,7 @@ import * as fs from 'fs';
 
 import * as toolCache from '@actions/tool-cache';
 import * as core from '@actions/core';
-import { Kubectl } from 'kubectl-object-model';
+import { Kubectl } from './kubectl-object-model';
 
 const kubectlToolName = 'kubectl';
 const stableKubectlVersion = 'v1.15.0';
