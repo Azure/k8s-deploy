@@ -1,7 +1,7 @@
 'use strict';
 
 import * as core from '@actions/core';
-import * as kubectlutility from '../kubectl-util';
+import * as kubectlutility from './kubectl-util';
 import * as io from '@actions/io';
 import { isEqual } from "./utility";
 

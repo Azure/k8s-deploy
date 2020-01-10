@@ -4,7 +4,7 @@ import * as io from '@actions/io';
 import * as path from 'path';
 
 import { getExecutableExtension, isEqual } from "./utilities/utility";
-import { downloadKubectl, getStableKubectlVersion } from "./kubectl-util";
+import { downloadKubectl, getStableKubectlVersion } from "./utilities/kubectl-util";
 import { deploy } from './utilities/strategy-helpers/deployment-helper';
 import { promote } from './actions/promote';
 import { reject } from './actions/reject';
