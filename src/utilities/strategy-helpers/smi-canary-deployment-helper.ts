@@ -10,13 +10,13 @@ import * as TaskInputParameters from '../../input-parameters';
 import * as fileHelper from '../files-helper';
 import * as helper from '../resource-object-utility';
 import * as utils from '../manifest-utilities';
-import * as kubectlUtils from '../../kubectl-util';
+import * as kubectlUtils from '../kubectl-util';
 import * as canaryDeploymentHelper from './canary-deployment-helper';
 import { checkForErrors } from "../utility";
 
 const TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX = '-workflow-rollout';
 const TRAFFIC_SPLIT_OBJECT = 'TrafficSplit';
-var trafficSplitAPIVersion = null;
+let trafficSplitAPIVersion = "";
 
 export function deploySMICanary(kubectl: Kubectl, filePaths: string[]) {
     const newObjectsList = [];
