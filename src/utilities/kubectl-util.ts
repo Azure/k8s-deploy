@@ -10,6 +10,7 @@ import { Kubectl } from '../kubectl-object-model';
 const kubectlToolName = 'kubectl';
 const stableKubectlVersion = 'v1.15.0';
 const stableVersionUrl = 'https://storage.googleapis.com/kubernetes-release/release/stable.txt';
+const trafficSplitAPIVersionPrefix = 'split.smi-spec.io';
 
 function getExecutableExtension(): string {
     if (os.type().match(/^Win/)) {
@@ -67,7 +68,7 @@ export async function downloadKubectl(version: string): Promise<string> {
 
 export function getTrafficSplitAPIVersion(kubectl: Kubectl): string {
     const result = kubectl.executeCommand('api-versions');
-    const trafficSplitAPIVersion = result.stdout.split('\n').find(version => version.startsWith('split.smi-spec.io'));
+    const trafficSplitAPIVersion = result.stdout.split('\n').find(version => version.startsWith(trafficSplitAPIVersionPrefix));
     if (trafficSplitAPIVersion == null || typeof trafficSplitAPIVersion == 'undefined') {
         throw new Error('UnableToCreateTrafficSplitManifestFile');
     }
