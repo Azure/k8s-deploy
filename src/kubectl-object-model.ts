@@ -80,6 +80,8 @@ export class Kubectl {
     }
 
     public executeCommand(customCommand: string, args?: string) {
+        if(!customCommand)
+            throw new Error('NullCommandForKubectl');
         return args ? this.execute([customCommand, args]) : this.execute([customCommand]);
     }
 

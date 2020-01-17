@@ -69,7 +69,7 @@ export async function downloadKubectl(version: string): Promise<string> {
 export function getTrafficSplitAPIVersion(kubectl: Kubectl): string {
     const result = kubectl.executeCommand('api-versions');
     const trafficSplitAPIVersion = result.stdout.split('\n').find(version => version.startsWith(trafficSplitAPIVersionPrefix));
-    if (trafficSplitAPIVersion == null || typeof trafficSplitAPIVersion == 'undefined') {
+    if (!trafficSplitAPIVersion) {
         throw new Error('UnableToCreateTrafficSplitManifestFile');
     }
 
