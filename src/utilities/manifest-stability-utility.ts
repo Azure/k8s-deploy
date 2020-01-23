@@ -56,6 +56,7 @@ export async function checkPodStatus(kubectl: Kubectl, podName: string): Promise
     const sleepTimeout = 10 * 1000; // 10 seconds
     const iterations = 60; // 60 * 10 seconds timeout = 10 minutes max timeout
     let podStatus;
+    let kubectlDescribeNeeded = false;
     for (let i = 0; i < iterations; i++) {
         await utils.sleep(sleepTimeout);
         core.debug(`Polling for pod status: ${podName}`);
@@ -71,21 +72,25 @@ export async function checkPodStatus(kubectl: Kubectl, podName: string): Promise
             if (isPodReady(podStatus)) {
                 console.log(`pod/${podName} is successfully rolled out`);
             } else {
-                kubectl.describe('pod', podName);
+                kubectlDescribeNeeded = true;
             }
             break;
         case 'Pending':
             if (!isPodReady(podStatus)) {
                 core.warning(`pod/${podName} rollout status check timedout`);
-                kubectl.describe('pod', podName);
+                kubectlDescribeNeeded = true;
             }
             break;
         case 'Failed':
             core.error(`pod/${podName} rollout failed`);
-            kubectl.describe('pod', podName);
+            kubectlDescribeNeeded = true;
             break;
         default:
             core.warning(`pod/${podName} rollout status: ${podStatus.phase}`);
+    }
+    
+    if(kubectlDescribeNeeded) {
+        kubectl.describe('pod', podName);
     }
 }
 
