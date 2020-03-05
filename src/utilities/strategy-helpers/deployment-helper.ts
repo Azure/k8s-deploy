@@ -26,7 +26,7 @@ export async function deploy(kubectl: Kubectl, manifestFilePaths: string[], depl
     let inputManifestFiles: string[] = getManifestFiles(manifestFilePaths);
 
     // artifact substitution
-    inputManifestFiles = updateResourceObjects(inputManifestFiles, TaskInputParameters.containers, TaskInputParameters.imagePullSecrets);
+    inputManifestFiles = updateResourceObjects(inputManifestFiles, TaskInputParameters.imagePullSecrets, TaskInputParameters.containers);
 
     // deployment
     const deployedManifestFiles = deployManifests(inputManifestFiles, kubectl, isCanaryDeploymentStrategy(deploymentStrategy));
