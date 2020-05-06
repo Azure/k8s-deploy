@@ -1,5 +1,5 @@
 name: 'Deploy to Kubernetes cluster'
-description: 'Deploy to a Kubernetes cluster including, but not limited to Azure Kubernetes Service clusters'
+description: 'Deploy to a Kubernetes cluster including, but not limited to Azure Kubernetes Service (AKS) clusters'
 inputs: 
 # Please ensure you have used either azure/k8s-actions/aks-set-context or azure/k8s-actions/k8s-set-context in the workflow before this action
   namespace:
