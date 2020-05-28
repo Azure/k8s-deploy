@@ -163,6 +163,9 @@ test("run() - deploy", async () => {
         }
         return kubectlVersion;
     });
+
+    jest.spyOn(fs, 'readFileSync').mockImplementation(() => "");
+
     coreMock.setFailed = jest.fn();
     toolCacheMock.find = jest.fn().mockReturnValue(undefined);
     toolCacheMock.downloadTool = jest.fn().mockReturnValue('downloadpath');
