@@ -165,7 +165,7 @@ test("run() - deploy", async () => {
     });
 
     coreMock.setFailed = jest.fn();
-    toolCacheMock.find = jest.fn().mockReturnValue(undefined);
+    toolCacheMock.find = jest.fn().mockReturnValue('validPath');
     toolCacheMock.downloadTool = jest.fn().mockReturnValue('downloadpath');
     toolCacheMock.cacheFile = jest.fn().mockReturnValue('cachepath');
     fileUtility.chmodSync = jest.fn();
@@ -173,8 +173,7 @@ test("run() - deploy", async () => {
 
     //Invoke and assert
     await expect(action.run()).resolves.not.toThrow();
-    const expectedPath = path.join('cachepath', 'kubectl') + '.exe';
-    expect(deploySpy).toBeCalledWith({ "ignoreSSLErrors": false, "kubectlPath": expectedPath, "namespace": "v1.18.0" }, ['manifests/deployment.yaml'], undefined);
+    expect(deploySpy).toBeCalledWith({ "ignoreSSLErrors": false, "kubectlPath": 'validPath', "namespace": "v1.18.0" }, ['manifests/deployment.yaml'], undefined);
     deploySpy.mockRestore();
 });
 
