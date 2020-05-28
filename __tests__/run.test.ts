@@ -164,8 +164,6 @@ test("run() - deploy", async () => {
         return kubectlVersion;
     });
 
-    jest.spyOn(fs, 'readFileSync').mockImplementation(() => "");
-
     coreMock.setFailed = jest.fn();
     toolCacheMock.find = jest.fn().mockReturnValue(undefined);
     toolCacheMock.downloadTool = jest.fn().mockReturnValue('downloadpath');
@@ -175,7 +173,7 @@ test("run() - deploy", async () => {
 
     //Invoke and assert
     await expect(action.run()).resolves.not.toThrow();
-    expect(deploySpy).toBeCalledWith({ "ignoreSSLErrors": false, "kubectlPath": "cachepath\\kubectl.exe", "namespace": "v1.18.0" }, ["manifests/deployment.yaml"], undefined);
+    expect(deploySpy).toBeCalledWith({ "ignoreSSLErrors": false, "kubectlPath": path.join('cachepath','kubectl.exe'), "namespace": "v1.18.0" }, ['manifests/deployment.yaml'], undefined);
     deploySpy.mockRestore();
 });
 
