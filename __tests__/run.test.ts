@@ -145,7 +145,7 @@ test("deployment - deploy() - Invokes with no manifestfiles", async () => {
     const kubeCtl: jest.Mocked<Kubectl> = new Kubectl("") as any;
 
     //Invoke and assert
-    await expect(deployment.deploy(kubeCtl, [], undefined)).rejects.toThrowError('ManifestFileNotFound');;
+    await expect(deployment.deploy(kubeCtl, [], undefined)).rejects.toThrowError('ManifestFileNotFound');
 });
 
 test("run() - deploy", async () => {
