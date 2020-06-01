@@ -1,14 +1,15 @@
-import * as toolCache from '@actions/tool-cache';
 import * as core from '@actions/core';
 import * as io from '@actions/io';
 import * as path from 'path';
+import * as toolCache from '@actions/tool-cache';
 
-import { getExecutableExtension, isEqual } from "./utilities/utility";
 import { downloadKubectl, getStableKubectlVersion } from "./utilities/kubectl-util";
+import { getExecutableExtension, isEqual } from "./utilities/utility";
+
+import { Kubectl } from './kubectl-object-model';
 import { deploy } from './utilities/strategy-helpers/deployment-helper';
 import { promote } from './actions/promote';
 import { reject } from './actions/reject';
-import { Kubectl } from './kubectl-object-model';
 
 let kubectlPath = "";
 
@@ -45,7 +46,7 @@ function checkClusterContext() {
     }
 }
 
-async function run() {
+export async function run() {
     checkClusterContext();
     await setKubectlPath();
     let manifestsInput = core.getInput('manifests');
@@ -57,7 +58,7 @@ async function run() {
         namespace = 'default';
     }
     let action = core.getInput('action');
-    let manifests = manifestsInput.split('\n');
+    let manifests = manifestsInput ? manifestsInput.split('\n') : undefined;
 
     if (action === 'deploy') {
         let strategy = core.getInput('strategy');
