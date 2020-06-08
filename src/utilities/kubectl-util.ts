@@ -1,10 +1,10 @@
+import * as core from '@actions/core';
+import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import * as util from 'util';
-import * as fs from 'fs';
-
 import * as toolCache from '@actions/tool-cache';
-import * as core from '@actions/core';
+import * as util from 'util';
+
 import { Kubectl } from '../kubectl-object-model';
 
 const kubectlToolName = 'kubectl';
@@ -19,7 +19,7 @@ function getExecutableExtension(): string {
     return '';
 }
 
-function getkubectlDownloadURL(version: string): string {
+export function getkubectlDownloadURL(version: string): string {
     switch (os.type()) {
         case 'Linux':
             return util.format('https://storage.googleapis.com/kubernetes-release/release/%s/bin/linux/amd64/kubectl', version);
