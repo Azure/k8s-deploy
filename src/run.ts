@@ -52,13 +52,14 @@ export async function run() {
     let manifestsInput = core.getInput('manifests');
     if (!manifestsInput) {
         core.setFailed('No manifests supplied to deploy');
+        return;
     }
     let namespace = core.getInput('namespace');
     if (!namespace) {
         namespace = 'default';
     }
     let action = core.getInput('action');
-    let manifests = manifestsInput ? manifestsInput.split('\n') : undefined;
+    let manifests = manifestsInput.split('\n');
 
     if (action === 'deploy') {
         let strategy = core.getInput('strategy');
