@@ -159,7 +159,7 @@ test("run() - deploy - Manifiest not provided", async () => {
     fileUtility.chmodSync = jest.fn();
 
     //Invoke and assert
-    await expect(action.run()).rejects.toThrowError();
+    await expect(action.run()).resolves.not.toThrow();
     expect(coreMock.setFailed).toBeCalledWith('No manifests supplied to deploy');
 });
 
