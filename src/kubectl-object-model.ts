@@ -1,5 +1,4 @@
 import { ToolRunner, IExecOptions, IExecSyncResult } from "./utilities/tool-runner";
-import * as core from '@actions/core';
 
 export interface Resource {
     name: string;

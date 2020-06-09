@@ -25,7 +25,7 @@ export const deploymentTypes: string[] = ['deployment', 'replicaset', 'daemonset
 export const workloadTypes: string[] = ['deployment', 'replicaset', 'daemonset', 'pod', 'statefulset', 'job', 'cronjob'];
 export const workloadTypesWithRolloutStatus: string[] = ['deployment', 'daemonset', 'statefulset'];
 
-export let workflowAnnotations = [
+export const workflowAnnotations = [
     `run=${process.env['GITHUB_RUN_ID']}`,
     `workflow="${process.env['GITHUB_WORKFLOW']}"`,
     `jobName="${process.env['GITHUB_JOB']}"`,

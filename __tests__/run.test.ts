@@ -6,6 +6,8 @@ import * as deployment from '../src/utilities/strategy-helpers/deployment-helper
 import * as fs from 'fs';
 import * as io from '@actions/io';
 import * as toolCache from '@actions/tool-cache';
+import * as fileHelper from '../src/utilities/files-helper';
+import { workflowAnnotations } from '../src/constants';
 
 import { Kubectl, Resource } from '../src/kubectl-object-model';
 
@@ -24,9 +26,29 @@ const stableVersionUrl = 'https://storage.googleapis.com/kubernetes-release/rele
 
 var deploymentYaml = "";
 
+const getAllPodsMock = {
+    'code': 0,
+    'stdout': '{"apiVersion": "v1","items": [{"apiVersion": "v1","kind": "Pod","metadata": {"labels": {"app": "testapp","pod-template-hash": "776cbc86f9"},"name": "testpod-776cbc86f9-pjrb6","namespace": "testnamespace","ownerReferences": [{"apiVersion": "apps/v1","blockOwnerDeletion": true,"controller": true,"kind": "ReplicaSet","name": "testpod-776cbc86f9","uid": "de544628-6589-4354-81fe-05faf00d336a"}],"resourceVersion": "12362496","selfLink": "/api/v1/namespaces/akskodey8187/pods/akskodey-776cbc86f9-pjrb6","uid": "c7d5f4c1-11a1-4884-8a66-09b015c72f69"},"spec": {"containers": [{"image": "imageId","imagePullPolicy": "IfNotPresent","name": "containerName","ports": [{"containerPort": 80,"protocol": "TCP"}]}]},"status": {"hostIP": "10.240.0.4","phase": "Running","podIP": "10.244.0.25","qosClass": "BestEffort","startTime": "2020-06-04T07:59:42Z"}}]}'
+};
+
+const getNamespaceMock = {
+    'code': 0,
+    'stdout': '{"apiVersion": "v1","kind": "Namespace","metadata": {"annotations": {"workflow": ".github/workflows/workflow.yml","runUri": "https://github.com/testRepo/actions/runs/12345"}},"spec": {"finalizers": ["kubernetes"]},"status": {"phase": "Active"}}'
+};
+
+const resources: Resource[] = [{ type: "Deployment", name: "AppName" }];
+
 beforeAll(() => {
     deploymentYaml = fs.readFileSync(path.join(__dirname, 'manifests', 'deployment.yml'), 'utf8');
+
     process.env["KUBECONFIG"] = 'kubeConfig';
+    process.env['GITHUB_RUN_ID'] = '12345';
+    process.env['GITHUB_WORKFLOW'] = '.github/workflows/workflow.yml';
+    process.env['GITHUB_JOB'] = 'build-and-deploy';
+    process.env['GITHUB_ACTOR'] = 'testUser';
+    process.env['GITHUB_REPOSITORY'] = 'testRepo';
+    process.env['GITHUB_SHA'] = 'testCommit';
+    process.env['GITHUB_REF'] = 'testBranch';
 })
 
 test("setKubectlPath() - install a particular version", async () => {
@@ -182,9 +204,12 @@ test("deployment - deploy() - Invokes with manifestfiles", async () => {
     const KubernetesObjectUtilityMock = mocked(KubernetesObjectUtility, true);
     const kubeCtl: jest.Mocked<Kubectl> = new Kubectl("") as any;
     kubeCtl.apply = jest.fn().mockReturnValue("");
-    const resources: Resource[] = [{ type: "Deployment", name: "AppName" }];
     KubernetesObjectUtilityMock.getResources = jest.fn().mockReturnValue(resources);
-    kubeCtl.getResource = jest.fn().mockReturnValue("");
+    kubeCtl.getResource = jest.fn().mockReturnValue(getNamespaceMock);
+    kubeCtl.getAllPods = jest.fn().mockReturnValue(getAllPodsMock);
+    kubeCtl.describe = jest.fn().mockReturnValue("");
+    kubeCtl.annotateFiles = jest.fn().mockReturnValue("");
+    kubeCtl.annotate = jest.fn().mockReturnValue("");
     KubernetesManifestUtilityMock.checkManifestStability = jest.fn().mockReturnValue("");
 
     const readFileSpy = jest.spyOn(fs, 'readFileSync').mockImplementation(() => deploymentYaml);
@@ -193,4 +218,25 @@ test("deployment - deploy() - Invokes with manifestfiles", async () => {
     await expect(deployment.deploy(kubeCtl, ['manifests/deployment.yaml'], undefined)).resolves.not.toThrowError();
     expect(readFileSpy).toBeCalledWith("manifests/deployment.yaml");
     expect(kubeCtl.getResource).toBeCalledWith("ingress", "AppName");
+});
+
+test("deployment - deploy() - Annotate resources", async () => {
+    const KubernetesManifestUtilityMock = mocked(KubernetesManifestUtility, true);
+    KubernetesManifestUtilityMock.checkManifestStability = jest.fn().mockReturnValue("");
+    const KubernetesObjectUtilityMock = mocked(KubernetesObjectUtility, true);
+    KubernetesObjectUtilityMock.getResources = jest.fn().mockReturnValue(resources);
+    const fileHelperMock = mocked(fileHelper, true);
+    fileHelperMock.writeObjectsToFile = jest.fn().mockReturnValue(["~/Deployment_testapp_currentTimestamp"]);
+    const kubeCtl: jest.Mocked<Kubectl> = new Kubectl("") as any;
+    kubeCtl.apply = jest.fn().mockReturnValue("");
+    kubeCtl.getResource = jest.fn().mockReturnValue(getNamespaceMock);
+    kubeCtl.getAllPods = jest.fn().mockReturnValue(getAllPodsMock);
+    kubeCtl.getNewReplicaSet = jest.fn().mockReturnValue("testpod-776cbc86f9");
+    kubeCtl.annotateFiles = jest.fn().mockReturnValue("");
+    kubeCtl.annotate = jest.fn().mockReturnValue("");
+
+    //Invoke and assert
+    await expect(deployment.deploy(kubeCtl, ['manifests/deployment.yaml'], undefined)).resolves.not.toThrowError();
+    expect(kubeCtl.annotateFiles).toBeCalledWith(["~/Deployment_testapp_currentTimestamp"], workflowAnnotations, true);
+    expect(kubeCtl.annotate).toBeCalledTimes(2);
 });
