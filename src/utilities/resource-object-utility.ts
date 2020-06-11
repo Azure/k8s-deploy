@@ -81,6 +81,34 @@ export function updateObjectLabels(inputObject: any, newLabels: Map<string, stri
     }
 }
 
+export function updateObjectAnnotations(inputObject: any, newAnnotations: Map<string, string>, override: boolean) {
+    if (!inputObject) {
+        throw ('NullInputObject');
+    }
+
+    if (!inputObject.metadata) {
+        throw ('NullInputObjectMetadata');
+    }
+
+    if (!newAnnotations) {
+        return;
+    }
+    if (override) {
+        inputObject.metadata.annotations = newAnnotations;
+    } else {
+        let existingAnnotations = inputObject.metadata.annotations;
+        if (!existingAnnotations) {
+            existingAnnotations = new Map<string, string>();
+        }
+
+        Object.keys(newAnnotations).forEach(function (key) {
+            existingAnnotations[key] = newAnnotations[key];
+        });
+
+        inputObject.metadata.annotations = existingAnnotations;
+    }
+}
+
 export function updateImagePullSecrets(inputObject: any, newImagePullSecrets: string[], override: boolean) {
     if (!inputObject || !inputObject.spec || !newImagePullSecrets) {
         return;

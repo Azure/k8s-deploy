@@ -1,4 +1,5 @@
-import { ToolRunner, IExecOptions } from "./utilities/tool-runner";
+import { ToolRunner, IExecOptions, IExecSyncResult } from "./utilities/tool-runner";
+import * as core from '@actions/core';
 
 export interface Resource {
     name: string;
@@ -20,17 +21,17 @@ export class Kubectl {
         }
     }
 
-    public apply(configurationPaths: string | string[]) {
+    public apply(configurationPaths: string | string[]): IExecSyncResult {
         return this.execute(['apply', '-f', this.createInlineArray(configurationPaths)]);
     }
 
-    public describe(resourceType: string, resourceName: string, silent?: boolean) {
+    public describe(resourceType: string, resourceName: string, silent?: boolean): IExecSyncResult {
         return this.execute(['describe', resourceType, resourceName], silent);
     }
 
-    public async getNewReplicaSet(deployment: string) {
+    public getNewReplicaSet(deployment: string) {
         let newReplicaSet = '';
-        const result = await this.describe('deployment', deployment, true);
+        const result = this.describe('deployment', deployment, true);
         if (result && result.stdout) {
             const stdout = result.stdout.split('\n');
             stdout.forEach((line: string) => {
@@ -43,19 +44,34 @@ export class Kubectl {
         return newReplicaSet;
     }
 
-    public getAllPods() {
+    public annotate(resourceType: string, resourceName: string, annotations: string[], overwrite?: boolean): IExecSyncResult {
+        let args = ['annotate', resourceType, resourceName];
+        args = args.concat(annotations);
+        if (!!overwrite) { args.push(`--overwrite`); }
+        return this.execute(args);
+    }
+
+    public annotateFiles(files: string | string[], annotations: string[], overwrite?: boolean): IExecSyncResult {
+        let args = ['annotate'];
+        args = args.concat(['-f', this.createInlineArray(files)]);
+        args = args.concat(annotations);
+        if (!!overwrite) { args.push(`--overwrite`); }
+        return this.execute(args);
+    }
+
+    public getAllPods(): IExecSyncResult {
         return this.execute(['get', 'pods', '-o', 'json'], true);
     }
 
-    public getClusterInfo() {
+    public getClusterInfo(): IExecSyncResult {
         return this.execute(['cluster-info'], true);
     }
 
-    public checkRolloutStatus(resourceType: string, name: string) {
+    public checkRolloutStatus(resourceType: string, name: string): IExecSyncResult {
         return this.execute(['rollout', 'status', resourceType + '/' + name]);
     }
 
-    public getResource(resourceType: string, name: string) {
+    public getResource(resourceType: string, name: string): IExecSyncResult {
         return this.execute(['get', resourceType + '/' + name, '-o', 'json']);
     }
 
@@ -80,7 +96,7 @@ export class Kubectl {
     }
 
     public executeCommand(customCommand: string, args?: string) {
-        if(!customCommand)
+        if (!customCommand)
             throw new Error('NullCommandForKubectl');
         return args ? this.execute([customCommand, args]) : this.execute([customCommand]);
     }
