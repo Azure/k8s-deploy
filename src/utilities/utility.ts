@@ -73,6 +73,20 @@ export function annotateChildPods(kubectl: Kubectl, resourceType: string, resour
     return commandExecutionResults;
 }
 
+export function annotateNamespace(kubectl: Kubectl, namespaceName: string): IExecSyncResult {
+    let annotate = true;
+    const result = kubectl.getResource('namespace', namespaceName);
+    this.checkForErrors([result]);
+    const annotationsSet = JSON.parse(result.stdout).metadata.annotations;
+    if (!!annotationsSet && !!annotationsSet.runUri && annotationsSet.runUri.indexOf(process.env['GITHUB_REPOSITORY']) == -1) {
+        annotate = false;
+        core.debug(`Skipping 'annotate namespace' as namespace annotated by other workflow`);
+    }
+    if (annotate) {
+        return kubectl.annotate('namespace', namespaceName, workflowAnnotations, true);
+    }
+}
+
 export function sleep(timeout: number) {
     return new Promise(resolve => setTimeout(resolve, timeout));
 }

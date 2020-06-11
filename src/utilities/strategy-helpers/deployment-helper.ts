@@ -17,7 +17,7 @@ import { IExecSyncResult } from '../../utilities/tool-runner';
 
 import { deployPodCanary } from './pod-canary-deployment-helper';
 import { deploySMICanary } from './smi-canary-deployment-helper';
-import { checkForErrors, annotateChildPods } from "../utility";
+import { checkForErrors, annotateChildPods, annotateNamespace } from "../utility";
 
 
 export async function deploy(kubectl: Kubectl, manifestFilePaths: string[], deploymentStrategy: string) {
@@ -114,6 +114,7 @@ async function checkManifestStability(kubectl: Kubectl, resources: Resource[]): 
 
 function annotateResources(files: string[], kubectl: Kubectl, resourceTypes: Resource[], allPods: any) {
     const annotateResults: IExecSyncResult[] = [];
+    annotateResults.push(annotateNamespace(kubectl, TaskInputParameters.namespace));
     annotateResults.push(kubectl.annotateFiles(files, models.workflowAnnotations, true));
     resourceTypes.forEach(resource => {
         if (resource.type.toUpperCase() !== models.KubernetesWorkload.pod.toUpperCase()) {
@@ -152,7 +153,7 @@ function updateResourceObjects(filePaths: string[], imagePullSecrets: string[], 
             }
         });
     });
-    core.debug('New K8s objects after addin imagePullSecrets are :' + JSON.stringify(newObjectsList));
+    core.debug('New K8s objects after adding imagePullSecrets are :' + JSON.stringify(newObjectsList));
     const newFilePaths = fileHelper.writeObjectsToFile(newObjectsList);
     return newFilePaths;
 }
