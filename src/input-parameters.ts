@@ -11,6 +11,7 @@ export const deploymentStrategy: string = core.getInput('strategy');
 export const trafficSplitMethod: string = core.getInput('traffic-split-method');
 export const baselineAndCanaryReplicas: string = core.getInput('baseline-and-canary-replicas');
 export const args: string = core.getInput('arguments');
+export const forceDeployment: boolean = core.getInput('force') === 'true';
 
 if (!namespace) {
     core.debug('Namespace was not supplied; using "default" namespace instead.');

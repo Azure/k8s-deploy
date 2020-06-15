@@ -9,10 +9,12 @@ export class Kubectl {
     private kubectlPath: string;
     private namespace: string;
     private ignoreSSLErrors: boolean;
+    private forceDeployment: boolean;
 
-    constructor(kubectlPath: string, namespace?: string, ignoreSSLErrors?: boolean) {
+    constructor(kubectlPath: string, namespace?: string, ignoreSSLErrors?: boolean, forceDeployment?: boolean) {
         this.kubectlPath = kubectlPath;
         this.ignoreSSLErrors = !!ignoreSSLErrors;
+        this.forceDeployment = !!forceDeployment;
         if (!!namespace) {
             this.namespace = namespace;
         } else {
@@ -21,7 +23,13 @@ export class Kubectl {
     }
 
     public apply(configurationPaths: string | string[]) {
-        return this.execute(['apply', '-f', this.createInlineArray(configurationPaths)]);
+        if (this.forceDeployment) {
+            console.log("force flag is on, deployment will continue even if previous deployment already exists");
+            return this.execute(['apply', '--force', '-f', this.createInlineArray(configurationPaths)]);
+        }
+        else {
+            return this.execute(['apply', '-f', this.createInlineArray(configurationPaths)]);
+        }
     }
 
     public describe(resourceType: string, resourceName: string, silent?: boolean) {
