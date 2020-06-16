@@ -1,4 +1,5 @@
 import { ToolRunner, IExecOptions } from "./utilities/tool-runner";
+import * as TaskInputParameters from './input-parameters';
 
 export interface Resource {
     name: string;
@@ -21,7 +22,14 @@ export class Kubectl {
     }
 
     public apply(configurationPaths: string | string[]) {
-        return this.execute(['apply', '-f', this.createInlineArray(configurationPaths)]);
+        let applyArgs: string[] = ['apply', '-f', this.createInlineArray(configurationPaths)];
+
+        if (TaskInputParameters.forceDeployment) {
+            console.log("force flag is on, deployment will continue even if previous deployment already exists");
+            applyArgs.push('--force');
+        }
+
+        return this.execute(applyArgs);
     }
 
     public describe(resourceType: string, resourceName: string, silent?: boolean) {

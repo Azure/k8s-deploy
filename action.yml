@@ -41,6 +41,10 @@ inputs:
     description: 'deploy/promote/reject'
     required: true
     default: 'deploy'
+  force:
+    description: 'Deploy when a previous deployment already exists'
+    required: false
+    default: false
 
 branding:
   color: 'green' # optional, decorates the entry in the GitHub Marketplace
