@@ -1,4 +1,5 @@
 import { ToolRunner, IExecOptions } from "./utilities/tool-runner";
+import * as TaskInputParameters from './input-parameters';
 
 export interface Resource {
     name: string;
@@ -9,12 +10,10 @@ export class Kubectl {
     private kubectlPath: string;
     private namespace: string;
     private ignoreSSLErrors: boolean;
-    private forceDeployment: boolean;
 
-    constructor(kubectlPath: string, namespace?: string, ignoreSSLErrors?: boolean, forceDeployment?: boolean) {
+    constructor(kubectlPath: string, namespace?: string, ignoreSSLErrors?: boolean) {
         this.kubectlPath = kubectlPath;
         this.ignoreSSLErrors = !!ignoreSSLErrors;
-        this.forceDeployment = !!forceDeployment;
         if (!!namespace) {
             this.namespace = namespace;
         } else {
@@ -23,13 +22,14 @@ export class Kubectl {
     }
 
     public apply(configurationPaths: string | string[]) {
-        if (this.forceDeployment) {
+        let applyArgs: string[] = ['apply', '-f', this.createInlineArray(configurationPaths)];
+
+        if (TaskInputParameters.forceDeployment) {
             console.log("force flag is on, deployment will continue even if previous deployment already exists");
-            return this.execute(['apply', '--force', '-f', this.createInlineArray(configurationPaths)]);
+            applyArgs.push('--force');
         }
-        else {
-            return this.execute(['apply', '-f', this.createInlineArray(configurationPaths)]);
-        }
+
+        return this.execute(applyArgs);
     }
 
     public describe(resourceType: string, resourceName: string, silent?: boolean) {

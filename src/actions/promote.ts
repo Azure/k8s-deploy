@@ -10,7 +10,7 @@ import * as TaskInputParameters from '../input-parameters';
 import { Kubectl } from '../kubectl-object-model';
 
 export async function promote(ignoreSslErrors?: boolean) {
-    const kubectl = new Kubectl(await utils.getKubectl(), TaskInputParameters.namespace, ignoreSslErrors, TaskInputParameters.forceDeployment)
+    const kubectl = new Kubectl(await utils.getKubectl(), TaskInputParameters.namespace, ignoreSslErrors)
 
     if (!canaryDeploymentHelper.isCanaryDeploymentStrategy()) {
         core.debug('Strategy is not canary deployment. Invalid request.');

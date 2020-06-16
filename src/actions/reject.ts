@@ -7,7 +7,7 @@ import * as utils from '../utilities/manifest-utilities';
 import * as TaskInputParameters from '../input-parameters';
 
 export async function reject(ignoreSslErrors?: boolean) {
-    const kubectl = new Kubectl(await utils.getKubectl(), TaskInputParameters.namespace, ignoreSslErrors, TaskInputParameters.forceDeployment)
+    const kubectl = new Kubectl(await utils.getKubectl(), TaskInputParameters.namespace, ignoreSslErrors)
 
     if (!canaryDeploymentHelper.isCanaryDeploymentStrategy()) {
         core.debug('Strategy is not canary deployment. Invalid request.');
