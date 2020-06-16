@@ -52,7 +52,7 @@ export function deployPodCanary(kubectl: Kubectl, filePaths: string[]) {
     });
 
     const manifestFiles = fileHelper.writeObjectsToFile(newObjectsList);
-    const result = kubectl.apply(manifestFiles);
+    const result = kubectl.apply(manifestFiles, TaskInputParameters.forceDeployment);
     return { 'result': result, 'newFilePaths': manifestFiles };
 }
 
