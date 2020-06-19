@@ -71,6 +71,10 @@ Following are the key capabilities of this action:
     <td><code>kubectl-version</code><br/>Kubectl version</td>
     <td>(Optional) Version of kubectl client to be used for deploying the manifest to the cluster. If this input is left unspecified, latest version is used.</td>
   </tr>
+  <tr>
+    <td><code>force</code><br/>Force</td>
+    <td>(Optional) Deploy when a previous deployment already exists. If true then '--force' argument is added to the apply command. Using '--force' argument is not recommended in production.</td>
+  </tr>
 </table>
 
 ## Examples YAML snippets
