@@ -34,5 +34,6 @@ export const workflowAnnotations = [
     `runUri=https://github.com/${process.env['GITHUB_REPOSITORY']}/actions/runs/${process.env['GITHUB_RUN_ID']}`,
     `commit=${process.env['GITHUB_SHA']}`,
     `branch=${process.env['GITHUB_REF']}`,
-    `deployTimestamp=${Date.now()}`
+    `deployTimestamp=${Date.now()}`,
+    `provider=GitHub`
 ];

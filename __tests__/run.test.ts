@@ -17,6 +17,7 @@ import { getkubectlDownloadURL } from "../src/utilities/kubectl-util";
 import { mocked } from 'ts-jest/utils';
 
 var path = require('path');
+const os = require("os");
 
 const coreMock = mocked(core, true);
 const ioMock = mocked(io, true);
@@ -224,36 +225,30 @@ test("deployment - deploy() - Invokes with manifestfiles", async () => {
     expect(kubeCtl.getResource).toBeCalledWith("ingress", "AppName");
 });
 
-test("run() - deploy force flag on", async () => {
-    const kubectlVersion = 'v1.18.0'
+test("deployment - deploy() - deploy force flag on", async () => {
     //Mocks
-    coreMock.getInput = jest.fn().mockImplementation((name) => {
-        if (name == 'manifests') {
-            return 'manifests/deployment.yaml';
-        }
-        if (name == 'action') {
-            return 'deploy';
-        }
-        if (name == 'strategy') {
-            return undefined;
-        }
-        if (name == 'force') {
-            return 'true';
-        }
-        return kubectlVersion;
-    });
-
     inputParamMock.forceDeployment = true;
-    coreMock.setFailed = jest.fn();
-    toolCacheMock.find = jest.fn().mockReturnValue('validPath');
-    toolCacheMock.downloadTool = jest.fn().mockReturnValue('downloadpath');
-    toolCacheMock.cacheFile = jest.fn().mockReturnValue('cachepath');
-    fileUtility.chmodSync = jest.fn();
-    utilityMock.checkForErrors = jest.fn();
-    const deploySpy = jest.spyOn(Kubectl.prototype, 'apply').mockImplementation();
+    const applyResMock = {
+        'code': 0,
+        'stderr': '',
+        'error': Error(""),
+        'stdout': 'changes configured'
+    };
+    const KubernetesManifestUtilityMock = mocked(KubernetesManifestUtility, true);
+    const KubernetesObjectUtilityMock = mocked(KubernetesObjectUtility, true);
+    const kubeCtl: jest.Mocked<Kubectl> = new Kubectl("") as any;
+    KubernetesObjectUtilityMock.getResources = jest.fn().mockReturnValue(resources);
+    kubeCtl.getResource = jest.fn().mockReturnValue(getNamespaceMock);
+    kubeCtl.getAllPods = jest.fn().mockReturnValue(getAllPodsMock);
+    kubeCtl.describe = jest.fn().mockReturnValue("");
+    kubeCtl.annotateFiles = jest.fn().mockReturnValue("");
+    kubeCtl.annotate = jest.fn().mockReturnValue("");
+    KubernetesManifestUtilityMock.checkManifestStability = jest.fn().mockReturnValue("");
+
+    const deploySpy = jest.spyOn(kubeCtl, 'apply').mockImplementation(() => applyResMock);
 
     //Invoke and assert
-    await expect(action.run()).resolves.not.toThrow();
+    await expect(deployment.deploy(kubeCtl, ['manifests/deployment.yaml'], undefined)).resolves.not.toThrowError();
     expect(deploySpy).toBeCalledWith(expect.anything(), true);
     deploySpy.mockRestore();
 });
@@ -277,4 +272,31 @@ test("deployment - deploy() - Annotate resources", async () => {
     await expect(deployment.deploy(kubeCtl, ['manifests/deployment.yaml'], undefined)).resolves.not.toThrowError();
     expect(kubeCtl.annotateFiles).toBeCalledWith(["~/Deployment_testapp_currentTimestamp"], workflowAnnotations, true);
     expect(kubeCtl.annotate).toBeCalledTimes(2);
+});
+
+test("deployment - deploy() - Annotate resources failed", async () => {
+    //Mocks
+    inputParamMock.forceDeployment = true;
+    const annotateMock = {
+        'code': 1,
+        'stderr': 'kubectl annotate failed',
+        'error': Error(""),
+        'stdout': ''
+    };
+    const KubernetesManifestUtilityMock = mocked(KubernetesManifestUtility, true);
+    const KubernetesObjectUtilityMock = mocked(KubernetesObjectUtility, true);
+    const kubeCtl: jest.Mocked<Kubectl> = new Kubectl("") as any;
+    KubernetesObjectUtilityMock.getResources = jest.fn().mockReturnValue(resources);
+    kubeCtl.apply = jest.fn().mockReturnValue("");
+    kubeCtl.getResource = jest.fn().mockReturnValue(getNamespaceMock);
+    kubeCtl.getAllPods = jest.fn().mockReturnValue(getAllPodsMock);
+    kubeCtl.describe = jest.fn().mockReturnValue("");
+    kubeCtl.annotateFiles = jest.fn().mockReturnValue("");
+    kubeCtl.annotate = jest.fn().mockReturnValue(annotateMock);
+    KubernetesManifestUtilityMock.checkManifestStability = jest.fn().mockReturnValue("");
+
+    const consoleOutputSpy = jest.spyOn(process.stdout, "write").mockImplementation();
+    //Invoke and assert
+    await expect(deployment.deploy(kubeCtl, ['manifests/deployment.yaml'], undefined)).resolves.not.toThrowError();
+    expect(consoleOutputSpy).toHaveBeenNthCalledWith(2, '##[warning]kubectl annotate failed' + os.EOL)
 });
