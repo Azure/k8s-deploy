@@ -60,7 +60,7 @@ export function deploySMICanary(kubectl: Kubectl, filePaths: string[]) {
     });
 
     const manifestFiles = fileHelper.writeObjectsToFile(newObjectsList);
-    const result = kubectl.apply(manifestFiles);
+    const result = kubectl.apply(manifestFiles, TaskInputParameters.forceDeployment);
     createCanaryService(kubectl, filePaths);
     return { 'result': result, 'newFilePaths': manifestFiles };
 }
@@ -121,7 +121,7 @@ function createCanaryService(kubectl: Kubectl, filePaths: string[]) {
 
     const manifestFiles = fileHelper.writeObjectsToFile(newObjectsList);
     manifestFiles.push(...trafficObjectsList);
-    const result = kubectl.apply(manifestFiles);
+    const result = kubectl.apply(manifestFiles, TaskInputParameters.forceDeployment);
     checkForErrors([result]);
 }
 
@@ -159,7 +159,7 @@ function adjustTraffic(kubectl: Kubectl, manifestFilePaths: string[], stableWeig
         return;
     }
 
-    const result = kubectl.apply(trafficSplitManifests);
+    const result = kubectl.apply(trafficSplitManifests, TaskInputParameters.forceDeployment);
     core.debug('serviceObjects:' + serviceObjects.join(',') + ' result:' + result);
     checkForErrors([result]);
 }

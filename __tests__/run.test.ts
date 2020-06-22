@@ -8,6 +8,8 @@ import * as io from '@actions/io';
 import * as toolCache from '@actions/tool-cache';
 import * as fileHelper from '../src/utilities/files-helper';
 import { workflowAnnotations } from '../src/constants';
+import * as utility from '../src/utilities/utility';
+import * as inputParam from '../src/input-parameters';
 
 import { Kubectl, Resource } from '../src/kubectl-object-model';
 
@@ -18,6 +20,8 @@ var path = require('path');
 
 const coreMock = mocked(core, true);
 const ioMock = mocked(io, true);
+const utilityMock = mocked(utility, true);
+const inputParamMock = mocked(inputParam, true);
 
 const toolCacheMock = mocked(toolCache, true);
 const fileUtility = mocked(fs, true);
@@ -218,6 +222,40 @@ test("deployment - deploy() - Invokes with manifestfiles", async () => {
     await expect(deployment.deploy(kubeCtl, ['manifests/deployment.yaml'], undefined)).resolves.not.toThrowError();
     expect(readFileSpy).toBeCalledWith("manifests/deployment.yaml");
     expect(kubeCtl.getResource).toBeCalledWith("ingress", "AppName");
+});
+
+test("run() - deploy force flag on", async () => {
+    const kubectlVersion = 'v1.18.0'
+    //Mocks
+    coreMock.getInput = jest.fn().mockImplementation((name) => {
+        if (name == 'manifests') {
+            return 'manifests/deployment.yaml';
+        }
+        if (name == 'action') {
+            return 'deploy';
+        }
+        if (name == 'strategy') {
+            return undefined;
+        }
+        if (name == 'force') {
+            return 'true';
+        }
+        return kubectlVersion;
+    });
+
+    inputParamMock.forceDeployment = true;
+    coreMock.setFailed = jest.fn();
+    toolCacheMock.find = jest.fn().mockReturnValue('validPath');
+    toolCacheMock.downloadTool = jest.fn().mockReturnValue('downloadpath');
+    toolCacheMock.cacheFile = jest.fn().mockReturnValue('cachepath');
+    fileUtility.chmodSync = jest.fn();
+    utilityMock.checkForErrors = jest.fn();
+    const deploySpy = jest.spyOn(Kubectl.prototype, 'apply').mockImplementation();
+
+    //Invoke and assert
+    await expect(action.run()).resolves.not.toThrow();
+    expect(deploySpy).toBeCalledWith(expect.anything(), true);
+    deploySpy.mockRestore();
 });
 
 test("deployment - deploy() - Annotate resources", async () => {

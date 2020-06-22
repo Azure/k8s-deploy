@@ -20,8 +20,15 @@ export class Kubectl {
         }
     }
 
-    public apply(configurationPaths: string | string[]): IExecSyncResult {
-        return this.execute(['apply', '-f', this.createInlineArray(configurationPaths)]);
+    public apply(configurationPaths: string | string[], force?: boolean): IExecSyncResult {
+        let applyArgs: string[] = ['apply', '-f', this.createInlineArray(configurationPaths)];
+
+        if (!!force) {
+            console.log("force flag is on, deployment will continue even if previous deployment already exists");
+            applyArgs.push('--force');
+        }
+
+        return this.execute(applyArgs);
     }
 
     public describe(resourceType: string, resourceName: string, silent?: boolean): IExecSyncResult {
