@@ -32,7 +32,7 @@ export function checkForErrors(execResults: IExecSyncResult[], warnIfError?: boo
     if (execResults.length !== 0) {
         let stderr = '';
         execResults.forEach(result => {
-            if (result.stderr) {
+            if (result && result.stderr) {
                 if (result.code !== 0) {
                     stderr += result.stderr + '\n';
                 } else {
@@ -74,16 +74,23 @@ export function annotateChildPods(kubectl: Kubectl, resourceType: string, resour
 }
 
 export function annotateNamespace(kubectl: Kubectl, namespaceName: string): IExecSyncResult {
-    let annotate = true;
     const result = kubectl.getResource('namespace', namespaceName);
-    this.checkForErrors([result]);
-    const annotationsSet = JSON.parse(result.stdout).metadata.annotations;
-    if (!!annotationsSet && !!annotationsSet.runUri && annotationsSet.runUri.indexOf(process.env['GITHUB_REPOSITORY']) == -1) {
-        annotate = false;
-        core.debug(`Skipping 'annotate namespace' as namespace annotated by other workflow`);
+    if (result == null) {
+        return <IExecSyncResult>{ code: -1, stderr: 'Failed to get resource' };
     }
-    if (annotate) {
-        return kubectl.annotate('namespace', namespaceName, workflowAnnotations, true);
+    else if (!!result && !!result.stderr) {
+        return result;
+    }
+
+    if (!!result && !!result.stdout) {
+        const annotationsSet = JSON.parse(result.stdout).metadata.annotations;
+        if (!!annotationsSet && !!annotationsSet.runUri && annotationsSet.runUri.indexOf(process.env['GITHUB_REPOSITORY']) == -1) {
+            core.debug(`Skipping 'annotate namespace' as namespace annotated by other workflow`);
+            return <IExecSyncResult>{ code: 0, stdout: '' };
+        }
+        else {
+            return kubectl.annotate('namespace', namespaceName, workflowAnnotations, true);
+        }
     }
 }
 
