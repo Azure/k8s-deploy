@@ -34,6 +34,14 @@ export function isServiceEntity(kind: string): boolean {
     return isEqual("Service", kind, StringComparer.OrdinalIgnoreCase);
 }
 
+export function isIngressEntity(kind: string): boolean {
+    if (!kind) {
+        throw('ResourceKindNotDefined');
+    }
+
+    return isEqual("Ingress", kind, StringComparer.OrdinalIgnoreCase);
+}
+
 export function getReplicaCount(inputObject: any): any {
     if (!inputObject) {
         throw ('NullInputObject');

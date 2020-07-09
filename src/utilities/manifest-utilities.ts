@@ -1,9 +1,15 @@
 'use strict';
 
 import * as core from '@actions/core';
+import * as fs from 'fs';
+import * as yaml from 'js-yaml';
+import * as path from 'path';
 import * as kubectlutility from './kubectl-util';
 import * as io from '@actions/io';
 import { isEqual } from "./utility";
+import * as fileHelper from './files-helper';
+import * as KubernetesObjectUtility from './resource-object-utility';
+import * as TaskInputParameters from '../input-parameters';
 
 export function getManifestFiles(manifestFilePaths: string[]): string[] {
     if (!manifestFilePaths) {
@@ -192,21 +198,34 @@ function substituteImageNameInSpecContent(currentString: string, imageName: stri
     }, '');
 }
 
-export function updateContainerImagesInManifestFiles(contents, containers: string[]): string {
+function updateContainerImagesInManifestFiles(filePaths: string[], containers: string[]): string[] {
     if (!!containers && containers.length > 0) {
-        containers.forEach((container: string) => {
-            let imageName = container.split(':')[0];
-            if (imageName.indexOf('@') > 0) {
-                imageName = imageName.split('@')[0];
-            }
-            if (contents.indexOf(imageName) > 0) {
-                contents = substituteImageNameInSpecContent(contents, imageName, container);
-            }
+        const newFilePaths = [];
+        const tempDirectory = fileHelper.getTempDirectory();
+        filePaths.forEach((filePath: string) => {
+            let contents = fs.readFileSync(filePath).toString();
+            containers.forEach((container: string) => {
+                let imageName = container.split(':')[0];
+                if (imageName.indexOf('@') > 0) {
+                    imageName = imageName.split('@')[0];
+                }
+                if (contents.indexOf(imageName) > 0) {
+                    contents = substituteImageNameInSpecFile(contents, imageName, container);
+                }
+            });
+
+            const fileName = path.join(tempDirectory, path.basename(filePath));
+            fs.writeFileSync(
+                path.join(fileName),
+                contents
+            );
+            newFilePaths.push(fileName);
         });
 
+        return newFilePaths;
     }
 
-    return contents;
+    return filePaths;
 }
 
 export function updateImagePullSecrets(inputObject: any, newImagePullSecrets: string[]) {
@@ -227,6 +246,44 @@ export function updateImagePullSecrets(inputObject: any, newImagePullSecrets: st
 
     existingImagePullSecretObjects = existingImagePullSecretObjects.concat(newImagePullSecretsObjects);
     setImagePullSecrets(inputObject, existingImagePullSecretObjects);
+}
+
+function updateImagePullSecretsInManifestFiles(filePaths: string[], imagePullSecrets: string[]): string[] {
+    if (!!imagePullSecrets && imagePullSecrets.length > 0) {
+        const newObjectsList = [];
+        filePaths.forEach((filePath: string) => {
+            const fileContents = fs.readFileSync(filePath).toString();
+            yaml.safeLoadAll(fileContents, function (inputObject: any) {
+                if (!!inputObject && !!inputObject.kind) {
+                    const kind = inputObject.kind;
+                    if (KubernetesObjectUtility.isWorkloadEntity(kind)) {
+                        KubernetesObjectUtility.updateImagePullSecrets(inputObject, imagePullSecrets, false);
+                    }
+                    newObjectsList.push(inputObject);
+                }
+            });
+        });
+        core.debug('New K8s objects after addin imagePullSecrets are :' + JSON.stringify(newObjectsList));
+        const newFilePaths = fileHelper.writeObjectsToFile(newObjectsList);
+        return newFilePaths;
+    }
+    return filePaths;
+}
+
+export function getUpdatedManifestFiles (manifestFilePaths: string[]) {
+    let inputManifestFiles: string[] = getManifestFiles(manifestFilePaths);
+
+    if (!inputManifestFiles || inputManifestFiles.length === 0) {
+        throw new Error(`ManifestFileNotFound : ${manifestFilePaths}`);
+    }
+
+    // artifact substitution
+    inputManifestFiles = updateContainerImagesInManifestFiles(inputManifestFiles, TaskInputParameters.containers);
+
+    // imagePullSecrets addition
+    inputManifestFiles = updateImagePullSecretsInManifestFiles(inputManifestFiles, TaskInputParameters.imagePullSecrets);
+
+    return inputManifestFiles;
 }
 
 const workloadTypes: string[] = ['deployment', 'replicaset', 'daemonset', 'pod', 'statefulset', 'job', 'cronjob'];
