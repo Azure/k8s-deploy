@@ -10,10 +10,10 @@ import * as KubernetesObjectUtility from '../utilities/resource-object-utility';
 import * as models from '../constants';
 import * as KubernetesManifestUtility from '../utilities/manifest-stability-utility';
 import { getManifestObjects, deleteWorkloadsWithLabel, deleteWorkloadsAndServicesWithLabel } from '../utilities/strategy-helpers/blue-green-helper';
-import { BLUE_GREEN_NEW_LABEL_VALUE, NONE_LABEL_VALUE } from '../utilities/strategy-helpers/blue-green-helper';
-import { isBlueGreenDeploymentStrategy, blueGreenRouteService, blueGreenPromote } from '../utilities/strategy-helpers/service-blue-green-helper';
-import { isIngressRoute, blueGreenRouteIngress, blueGreenPromoteIngress } from '../utilities/strategy-helpers/ingress-blue-green-helper';
-import { isSMIRoute, blueGreenRouteTraffic, blueGreenPromoteSMI, cleanSetUpSMI } from '../utilities/strategy-helpers/smi-blue-green-helper';
+import { isBlueGreenDeploymentStrategy, isIngressRoute, isSMIRoute, BLUE_GREEN_NEW_LABEL_VALUE, NONE_LABEL_VALUE } from '../utilities/strategy-helpers/blue-green-helper';
+import { routeBlueGreenService, blueGreenPromote } from '../utilities/strategy-helpers/service-blue-green-helper';
+import { routeBlueGreenIngress, blueGreenPromoteIngress } from '../utilities/strategy-helpers/ingress-blue-green-helper';
+import { routeBlueGreenSMI, blueGreenPromoteSMI, cleanupSMI } from '../utilities/strategy-helpers/smi-blue-green-helper';
 import { Kubectl, Resource } from '../kubectl-object-model';
 
 export async function promote() {
@@ -79,14 +79,14 @@ async function promoteBlueGreen(kubectl: Kubectl) {
     core.debug('routing to new deployments');
     await KubernetesManifestUtility.checkManifestStability(kubectl, resourceTypes);
     if(isIngressRoute()) {
-        blueGreenRouteIngress(kubectl, null, manifestObjects.serviceNameMap, manifestObjects.serviceEntityList, manifestObjects.ingressEntityList);
+        routeBlueGreenIngress(kubectl, null, manifestObjects.serviceNameMap, manifestObjects.serviceEntityList, manifestObjects.ingressEntityList);
         deleteWorkloadsAndServicesWithLabel(kubectl, BLUE_GREEN_NEW_LABEL_VALUE, manifestObjects.deploymentEntityList, manifestObjects.serviceEntityList);
     } else if (isSMIRoute()) {
-        blueGreenRouteTraffic(kubectl, NONE_LABEL_VALUE, manifestObjects.deploymentEntityList, manifestObjects.serviceEntityList);
+        routeBlueGreenSMI(kubectl, NONE_LABEL_VALUE, manifestObjects.deploymentEntityList, manifestObjects.serviceEntityList);
         deleteWorkloadsWithLabel(kubectl, BLUE_GREEN_NEW_LABEL_VALUE, manifestObjects.deploymentEntityList);
-        cleanSetUpSMI(kubectl, manifestObjects.deploymentEntityList, manifestObjects.serviceEntityList);    
+        cleanupSMI(kubectl, manifestObjects.deploymentEntityList, manifestObjects.serviceEntityList);    
     } else {
-        blueGreenRouteService(kubectl, NONE_LABEL_VALUE, manifestObjects.deploymentEntityList, manifestObjects.serviceEntityList);
+        routeBlueGreenService(kubectl, NONE_LABEL_VALUE, manifestObjects.deploymentEntityList, manifestObjects.serviceEntityList);
         deleteWorkloadsWithLabel(kubectl, BLUE_GREEN_NEW_LABEL_VALUE, manifestObjects.deploymentEntityList);
     }
 }

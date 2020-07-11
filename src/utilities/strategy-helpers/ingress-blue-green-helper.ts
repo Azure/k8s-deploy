@@ -3,28 +3,21 @@
 import * as core from '@actions/core';
 import { Kubectl } from '../../kubectl-object-model';
 import * as fileHelper from '../files-helper';
-import * as TaskInputParameters from '../../input-parameters';
-import { createWorkloadssWithLabel, getManifestObjects, getNewBlueGreenObject, addBlueGreenLabelsAndAnnotations, deleteWorkloadsAndServicesWithLabel, fetchResource } from './blue-green-helper';
+import { createWorkloadsWithLabel, getManifestObjects, getNewBlueGreenObject, addBlueGreenLabelsAndAnnotations, deleteWorkloadsAndServicesWithLabel, fetchResource } from './blue-green-helper';
 import { BLUE_GREEN_NEW_LABEL_VALUE, NONE_LABEL_VALUE, BLUE_GREEN_VERSION_LABEL } from './blue-green-helper';
+const BACKEND = 'BACKEND';
 
-const INGRESS_ROUTE = 'INGRESS';
-
-export function isIngressRoute(): boolean {
-    const routeMethod = TaskInputParameters.routeMethod;
-    return routeMethod && routeMethod.toUpperCase() === INGRESS_ROUTE;
-}
 export function deployBlueGreenIngress(kubectl: Kubectl, filePaths: string[]) {
-
     // get all kubernetes objects defined in manifest files
     const manifestObjects = getManifestObjects(filePaths);
 
     // create deployments with green label value
-    const result = createWorkloadssWithLabel(kubectl, manifestObjects.deploymentEntityList, BLUE_GREEN_NEW_LABEL_VALUE);
+    const result = createWorkloadsWithLabel(kubectl, manifestObjects.deploymentEntityList, BLUE_GREEN_NEW_LABEL_VALUE);
 
     // create new services and other objects 
     let newObjectsList = [];
     manifestObjects.serviceEntityList.forEach(inputObject => {
-        const newBlueGreenObject = getNewBlueGreenObject(inputObject, 0, BLUE_GREEN_NEW_LABEL_VALUE);;
+        const newBlueGreenObject = getNewBlueGreenObject(inputObject, BLUE_GREEN_NEW_LABEL_VALUE);;
         core.debug('New blue-green object is: ' + JSON.stringify(newBlueGreenObject));
         newObjectsList.push(newBlueGreenObject);
     });
@@ -38,7 +31,6 @@ export function deployBlueGreenIngress(kubectl: Kubectl, filePaths: string[]) {
 }
 
 export async function blueGreenPromoteIngress(kubectl: Kubectl, manifestObjects) {
-
     //checking if anything to promote
     if (!validateIngressState(kubectl, manifestObjects.ingressEntityList, manifestObjects.serviceNameMap)) {
         throw('NotInPromoteStateIngress');
@@ -48,12 +40,12 @@ export async function blueGreenPromoteIngress(kubectl: Kubectl, manifestObjects)
     deleteWorkloadsAndServicesWithLabel(kubectl, null, manifestObjects.deploymentEntityList, manifestObjects.serviceEntityList);
 
     // create stable deployments with new configuration
-    const result = createWorkloadssWithLabel(kubectl, manifestObjects.deploymentEntityList, NONE_LABEL_VALUE);
+    const result = createWorkloadsWithLabel(kubectl, manifestObjects.deploymentEntityList, NONE_LABEL_VALUE);
 
     // create stable services
     const newObjectsList = [];
     manifestObjects.serviceEntityList.forEach((inputObject) => {
-        const newBlueGreenObject = getNewBlueGreenObject(inputObject, 0, NONE_LABEL_VALUE);
+        const newBlueGreenObject = getNewBlueGreenObject(inputObject, NONE_LABEL_VALUE);
         core.debug('New blue-green object is: ' + JSON.stringify(newBlueGreenObject));
         newObjectsList.push(newBlueGreenObject);
     });
@@ -66,19 +58,17 @@ export async function blueGreenPromoteIngress(kubectl: Kubectl, manifestObjects)
 }
 
 export async function blueGreenRejectIngress(kubectl: Kubectl, filePaths: string[]) {
-
     // get all kubernetes objects defined in manifest files
     const manifestObjects = getManifestObjects(filePaths);
     
     // routing ingress to stables services
-    blueGreenRouteIngress(kubectl, null, manifestObjects.serviceNameMap, manifestObjects.serviceEntityList, manifestObjects.ingressEntityList);
+    routeBlueGreenIngress(kubectl, null, manifestObjects.serviceNameMap, manifestObjects.serviceEntityList, manifestObjects.ingressEntityList);
     
     // deleting green services and deployments
     deleteWorkloadsAndServicesWithLabel(kubectl, BLUE_GREEN_NEW_LABEL_VALUE, manifestObjects.deploymentEntityList, manifestObjects.serviceEntityList);
 }
 
-export function blueGreenRouteIngress(kubectl: Kubectl, nextLabel: string, serviceNameMap: Map<string, string>, serviceEntityList: any[],  ingressEntityList: any[]) {
-    
+export function routeBlueGreenIngress(kubectl: Kubectl, nextLabel: string, serviceNameMap: Map<string, string>, serviceEntityList: any[],  ingressEntityList: any[]) { 
     let newObjectsList = [];
     if (!nextLabel) {
         newObjectsList = newObjectsList.concat(ingressEntityList);
@@ -109,7 +99,6 @@ export function blueGreenRouteIngress(kubectl: Kubectl, nextLabel: string, servi
 }
 
 export function validateIngressState(kubectl: Kubectl, ingressEntityList: any[], serviceNameMap: Map<string, string>): boolean {
-
     let isIngressTargetingNewServices: boolean = true;
     ingressEntityList.forEach((inputObject) => {
         let isRouted: boolean = false;
@@ -155,7 +144,7 @@ export function getUpdatedBlueGreenIngress(inputObject: any, serviceNameMap: Map
     }
     
     const newObject = JSON.parse(JSON.stringify(inputObject));
-    //adding green labels and values
+    // adding green labels and values
     addBlueGreenLabelsAndAnnotations(newObject, type);
 
     // Updating ingress labels
@@ -165,11 +154,11 @@ export function getUpdatedBlueGreenIngress(inputObject: any, serviceNameMap: Map
 
 export function updateIngressBackend(inputObject: any, serviceNameMap: Map<string, string>): any {
     inputObject = JSON.parse(JSON.stringify(inputObject), (key, value) => {
-        if(key.toUpperCase() === 'BACKEND') {
-            let serName = value.serviceName; 
-            if (serviceNameMap.has(serName)) {
-                //updating srvice name with corresponging bluegreen name only if service is provied in given manifests
-                value.serviceName = serviceNameMap.get(serName);
+        if(key.toUpperCase() === BACKEND) {
+            let serviceName = value.serviceName; 
+            if (serviceNameMap.has(serviceName)) {
+                // updating service name with corresponding bluegreen name only if service is provied in given manifests
+                value.serviceName = serviceNameMap.get(serviceName);
             }
         }
         return value;

@@ -35,7 +35,7 @@ test("deployBlueGreen - checks if deployment can be done, then deploys", () => {
 	const readFileSpy = jest.spyOn(fs, 'readFileSync').mockImplementation(() => deploymentYaml);
 
 	//Invoke and assert
-	expect(blueGreenHelperService.deployBlueGreen(kubeCtl, ['manifests/bg.yaml'])).toMatchObject({
+	expect(blueGreenHelperService.deployBlueGreenService(kubeCtl, ['manifests/bg.yaml'])).toMatchObject({
 		"newFilePaths": "hello",
 		"result": ""
 	});
@@ -157,12 +157,12 @@ test("blueGreenReject - deletes services if old deployment does not exist", () =
 
 test("isIngressRoute() - returns true if route-method is ingress", () => {
 	// default is service
-	expect(blueGreenHelperIngress.isIngressRoute()).toBeFalsy();
+	expect(blueGreenHelper.isIngressRoute()).toBeFalsy();
 });
 
 test("isIngressRoute() - returns true if route-method is ingress", () => {
 	inputParamMock.routeMethod = 'ingress'
-	expect(blueGreenHelperIngress.isIngressRoute()).toBeTruthy();
+	expect(blueGreenHelper.isIngressRoute()).toBeTruthy();
 });
 
 test("deployBlueGreenIngress - creates deployments, services and other non ingress objects", () => {
@@ -246,12 +246,12 @@ test("blueGreenRejectIngress - routes ingress to stable services and deletes new
 
 test("isSMIRoute() - returns true if route-method is smi", () => {
 	inputParamMock.routeMethod = 'smi'
-	expect(blueGreenHelperSMI.isSMIRoute()).toBeTruthy();
+	expect(blueGreenHelper.isSMIRoute()).toBeTruthy();
 });
 
 test("isSMIRoute() - returns true if route-method is smi", () => {
 	inputParamMock.routeMethod = 'ingress'
-	expect(blueGreenHelperSMI.isSMIRoute()).toBeFalsy();
+	expect(blueGreenHelper.isSMIRoute()).toBeFalsy();
 });
 
 test("deployBlueGreenSMI - checks if deployment can be done, then deploys along this auxiliary services and trafficsplit", () => {
@@ -478,7 +478,7 @@ test("blueGreenRouteIngress - routes to green services in nextlabel is green", (
 	kubeCtl.apply = jest.fn().mockReturnValue('');
 
 	//Invoke and assert
-	expect(blueGreenHelperIngress.blueGreenRouteIngress(kubeCtl, 'green', serviceEntityMap, serEntList, ingEntList));
+	expect(blueGreenHelperIngress.routeBlueGreenIngress(kubeCtl, 'green', serviceEntityMap, serEntList, ingEntList));
 	expect(kubeCtl.apply).toBeCalled();
 	expect(fileHelperMock.writeObjectsToFile).toBeCalled();
 });

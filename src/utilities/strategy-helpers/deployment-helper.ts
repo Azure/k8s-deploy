@@ -14,12 +14,11 @@ import { Kubectl, Resource } from '../../kubectl-object-model';
 import { getUpdatedManifestFiles } from '../manifest-utilities';
 import { deployPodCanary } from './pod-canary-deployment-helper';
 import { deploySMICanary } from './smi-canary-deployment-helper';
-import { checkForErrors, sleep } from "../utility";
-import { BLUE_GREEN_NEW_LABEL_VALUE, getManifestObjects } from './blue-green-helper';
-import { deployBlueGreen, blueGreenRouteService, isBlueGreenDeploymentStrategy } from './service-blue-green-helper';
-import { deployBlueGreenIngress, blueGreenRouteIngress, isIngressRoute } from './ingress-blue-green-helper';
-import { deployBlueGreenSMI, blueGreenRouteTraffic, isSMIRoute } from './smi-blue-green-helper';
-
+import { checkForErrors } from "../utility";
+import { isBlueGreenDeploymentStrategy, isIngressRoute, isSMIRoute, routeBlueGreen } from './blue-green-helper';
+import { deployBlueGreenService } from './service-blue-green-helper';
+import { deployBlueGreenIngress } from './ingress-blue-green-helper';
+import { deployBlueGreenSMI } from './smi-blue-green-helper';
 
 export async function deploy(kubectl: Kubectl, manifestFilePaths: string[], deploymentStrategy: string) {
 
@@ -43,30 +42,6 @@ export async function deploy(kubectl: Kubectl, manifestFilePaths: string[], depl
     ingressResources.forEach(ingressResource => {
         kubectl.getResource(KubernetesConstants.DiscoveryAndLoadBalancerResource.ingress, ingressResource.name);
     });
-}
-
-async function routeBlueGreen(kubectl: Kubectl, inputManifestFiles: string[]) {
-    // get buffer time
-    let sleepTime: number = parseInt(TaskInputParameters.versionSwitchBuffer);
-
-    //logging start of buffer time
-    let temp = new Date();
-    console.log('starting buffer time of '+sleepTime+' minute/s at '+temp.getHours()+':'+temp.getMinutes()+':'+temp.getSeconds()+' UTC');
-    // waiting
-    await sleep(sleepTime*1000*60);
-    // logging end of buffer time
-    temp = new Date();
-    console.log('stopping buffer time of '+sleepTime+' minute/s at '+temp.getHours()+':'+temp.getMinutes()+':'+temp.getSeconds()+' UTC');
-    
-    const manifestObjects = getManifestObjects(inputManifestFiles);
-    // routing to new deployments
-    if (isIngressRoute()) {
-        blueGreenRouteIngress(kubectl, BLUE_GREEN_NEW_LABEL_VALUE, manifestObjects.serviceNameMap, manifestObjects.serviceEntityList, manifestObjects.ingressEntityList);    
-    } else if (isSMIRoute()) {
-        blueGreenRouteTraffic(kubectl,  BLUE_GREEN_NEW_LABEL_VALUE, manifestObjects.deploymentEntityList, manifestObjects.serviceEntityList);
-    } else {
-        blueGreenRouteService(kubectl, BLUE_GREEN_NEW_LABEL_VALUE, manifestObjects.deploymentEntityList, manifestObjects.serviceEntityList);
-    }
 }
 
 export function getManifestFiles(manifestFilePaths: string[]): string[] {
@@ -97,7 +72,7 @@ function deployManifests(files: string[], kubectl: Kubectl, isCanaryDeploymentSt
         } else if (isSMIRoute()) {
             blueGreenDeploymentOutput = deployBlueGreenSMI(kubectl, files);
         } else {
-            blueGreenDeploymentOutput = deployBlueGreen(kubectl, files);
+            blueGreenDeploymentOutput = deployBlueGreenService(kubectl, files);
         }
         result = blueGreenDeploymentOutput.result;
         files = blueGreenDeploymentOutput.newFilePaths;
