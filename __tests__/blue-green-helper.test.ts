@@ -73,7 +73,7 @@ test("blueGreenPromote - checks if in deployed state and then promotes", () => {
 	const readFileSpy = jest.spyOn(fs, 'readFileSync').mockImplementation(() => deploymentYaml);
 	//Invoke and assert
 	const manifestObjects = blueGreenHelper.getManifestObjects(['manifests/bg.yaml']);
-	expect(blueGreenHelperService.blueGreenPromote(kubeCtl, manifestObjects)).toMatchObject({});
+	expect(blueGreenHelperService.promoteBlueGreenService(kubeCtl, manifestObjects)).toMatchObject({});
 	expect(readFileSpy).toBeCalledWith("manifests/bg.yaml");
 	expect(kubeCtl.apply).toBeCalledWith("hello");
 	expect(fileHelperMock.writeObjectsToFile).toBeCalled();
@@ -223,7 +223,7 @@ test("blueGreenPromoteIngress - checks if in deployed state and then promotes in
 	kubeCtl.getResource = jest.fn().mockReturnValue(JSON.parse(JSON.stringify(temp)));
 	const manifestObjects = blueGreenHelper.getManifestObjects(['manifests/bg.yaml']);
 	//Invoke and assert
-	expect(blueGreenHelperIngress.blueGreenPromoteIngress(kubeCtl, manifestObjects)).toMatchObject({});
+	expect(blueGreenHelperIngress.promoteBlueGreenIngress(kubeCtl, manifestObjects)).toMatchObject({});
 	expect(readFileSpy).toBeCalledWith("manifests/bg.yaml");
 	expect(kubeCtl.apply).toBeCalledWith("hello");
 });
@@ -306,7 +306,7 @@ test("blueGreenPromoteSMI - checks weights of trafficsplit and then deploys", ()
 	kubeCtl.getResource = jest.fn().mockReturnValue(JSON.parse(JSON.stringify(temp)));
 	const manifestObjects = blueGreenHelper.getManifestObjects(['manifests/bg.yaml']);
 	//Invoke and assert
-	expect(blueGreenHelperSMI.blueGreenPromoteSMI(kubeCtl, manifestObjects)).toMatchObject({});
+	expect(blueGreenHelperSMI.promoteBlueGreenSMI(kubeCtl, manifestObjects)).toMatchObject({});
 	expect(readFileSpy).toBeCalledWith("manifests/bg.yaml");
 });
 
@@ -363,7 +363,7 @@ test("blueGreenRejectSMI - routes servcies to old deployment and deletes new dep
 	expect(kubeCtl.delete).toBeCalledWith(["Deployment", "testapp-green"]);
 	expect(kubeCtl.delete).toBeCalledWith(["Service", "testservice-green"]);
 	expect(kubeCtl.delete).toBeCalledWith(["Service", "testservice-stable"]);
-	expect(kubeCtl.delete).toBeCalledWith(["TrafficSplit", "testservice-rollout"]);
+	expect(kubeCtl.delete).toBeCalledWith(["TrafficSplit", "testservice-trafficsplit"]);
 	expect(readFileSpy).toBeCalledWith("manifests/bg.yaml");
 	expect(kubeCtl.getResource).toBeCalledWith("Deployment", "testapp");
 });
@@ -386,7 +386,7 @@ test("blueGreenRejectSMI - deletes service if stable deployment doesn't exist", 
 	expect(kubeCtl.delete).toBeCalledWith(["Service", "testservice"]);
 	expect(kubeCtl.delete).toBeCalledWith(["Service", "testservice-green"]);
 	expect(kubeCtl.delete).toBeCalledWith(["Service", "testservice-stable"]);
-	expect(kubeCtl.delete).toBeCalledWith(["TrafficSplit", "testservice-rollout"]);
+	expect(kubeCtl.delete).toBeCalledWith(["TrafficSplit", "testservice-trafficsplit"]);
 	expect(readFileSpy).toBeCalledWith("manifests/bg.yaml");
 	expect(kubeCtl.getResource).toBeCalledWith("Deployment", "testapp");
 });
@@ -520,17 +520,17 @@ test("shouldWePromoteIngress - throws if routed ingress does not exist", () => {
 	kubeCtl.getResource = jest.fn().mockReturnValue(JSON.parse(JSON.stringify(temp)));
 
 	//Invoke and assert
-	expect(blueGreenHelperIngress.validateIngressState(kubeCtl, ingEntList, serviceEntityMap)).toBeFalsy();
+	expect(blueGreenHelperIngress.validateIngressesState(kubeCtl, ingEntList, serviceEntityMap)).toBeFalsy();
 });
 
-test("shouldWePromoteSMI - throws if trafficsplit in wrong state", () => {
+test("validateTrafficSplitState - throws if trafficsplit in wrong state", () => {
 	const kubeCtl: jest.Mocked < Kubectl > = new Kubectl("") as any;
 	let temp = {
 		stdout: JSON.stringify({
 			"apiVersion": "split.smi-spec.io/v1alpha2",
 			"kind": "TrafficSplit",
 			"metadata": {
-				"name": "testservice-rollout"
+				"name": "testservice-trafficsplit"
 			},
 			"spec": {
 				"service": "testservice",
@@ -602,14 +602,14 @@ test("shouldWePromoteSMI - throws if trafficsplit in wrong state", () => {
 	expect(blueGreenHelperSMI.validateTrafficSplitState(kubeCtl, depEntList, serEntList)).toBeFalsy();
 });
 
-test("shouldWePromoteSMI - throws if trafficsplit in wrong state", () => {
+test("validateTrafficSplitState - throws if trafficsplit in wrong state", () => {
 	const kubeCtl: jest.Mocked < Kubectl > = new Kubectl("") as any;
 	let temp = {
 		stdout: JSON.stringify({
 			"apiVersion": "split.smi-spec.io/v1alpha2",
 			"kind": "TrafficSplit",
 			"metadata": {
-				"name": "testservice-rollout"
+				"name": "testservice-trafficsplit"
 			},
 			"spec": {
 				"service": "testservice",
@@ -678,7 +678,6 @@ test("shouldWePromoteSMI - throws if trafficsplit in wrong state", () => {
 	kubeCtl.getResource = jest.fn().mockReturnValue(JSON.parse(JSON.stringify(temp)));
 
 	//Invoke and assert
-	const thr = () => 
 	expect(blueGreenHelperSMI.validateTrafficSplitState(kubeCtl, depEntList, serEntList)).toBeFalsy();
 });
 

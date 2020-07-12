@@ -6,7 +6,6 @@ import * as yaml from 'js-yaml';
 import { checkForErrors, sleep } from '../utility';
 import { Kubectl } from '../../kubectl-object-model';
 import { KubernetesWorkload } from '../../constants';
-import { StringComparer, isEqual } from '../string-comparison';
 import * as fileHelper from '../files-helper';
 import * as helper from '../resource-object-utility';
 import * as TaskInputParameters from '../../input-parameters';
@@ -15,10 +14,10 @@ import { routeBlueGreenIngress } from './ingress-blue-green-helper';
 import { routeBlueGreenSMI } from './smi-blue-green-helper';
 
 export const BLUE_GREEN_DEPLOYMENT_STRATEGY = 'BLUE-GREEN';
-export const BLUE_GREEN_NEW_LABEL_VALUE = 'green';
+export const GREEN_LABEL_VALUE = 'green';
 export const NONE_LABEL_VALUE = 'None';
 export const BLUE_GREEN_VERSION_LABEL = 'k8s.deploy.color';
-export const BLUE_GREEN_SUFFIX = '-green';
+export const GREEN_SUFFIX = '-green';
 export const STABLE_SUFFIX = '-stable'
 const INGRESS_ROUTE = 'INGRESS';
 const SMI_ROUTE = 'SMI';
@@ -54,90 +53,77 @@ export async function routeBlueGreen(kubectl: Kubectl, inputManifestFiles: strin
     const manifestObjects = getManifestObjects(inputManifestFiles);
     // routing to new deployments
     if (isIngressRoute()) {
-        routeBlueGreenIngress(kubectl, BLUE_GREEN_NEW_LABEL_VALUE, manifestObjects.serviceNameMap, manifestObjects.serviceEntityList, manifestObjects.ingressEntityList);    
+        routeBlueGreenIngress(kubectl, GREEN_LABEL_VALUE, manifestObjects.serviceNameMap, manifestObjects.serviceEntityList, manifestObjects.ingressEntityList);    
     } else if (isSMIRoute()) {
-        routeBlueGreenSMI(kubectl,  BLUE_GREEN_NEW_LABEL_VALUE, manifestObjects.deploymentEntityList, manifestObjects.serviceEntityList);
+        routeBlueGreenSMI(kubectl,  GREEN_LABEL_VALUE, manifestObjects.deploymentEntityList, manifestObjects.serviceEntityList);
     } else {
-        routeBlueGreenService(kubectl, BLUE_GREEN_NEW_LABEL_VALUE, manifestObjects.deploymentEntityList, manifestObjects.serviceEntityList);
+        routeBlueGreenService(kubectl, GREEN_LABEL_VALUE, manifestObjects.deploymentEntityList, manifestObjects.serviceEntityList);
     }
 }
 
 
 export function deleteWorkloadsWithLabel(kubectl: Kubectl, deleteLabel: string, deploymentEntityList: any[]) {
-    let delList = []
+    let resourcesToDelete = []
     deploymentEntityList.forEach((inputObject) => {
         const name = inputObject.metadata.name;
         const kind = inputObject.kind;
         if (deleteLabel === NONE_LABEL_VALUE) {
             // if dellabel is none, deletes stable deployments
-            const tempObject = { name : name, kind : kind};
-            delList.push(tempObject);
+            const resourceToDelete = { name : name, kind : kind};
+            resourcesToDelete.push(resourceToDelete);
         } else {
             // if dellabel is not none, then deletes new green deployments
-            const tempObject = { name : name+BLUE_GREEN_SUFFIX, kind : kind };
-            delList.push(tempObject);
+            const resourceToDelete = { name : getBlueGreenResourceName(name, GREEN_SUFFIX), kind : kind };
+            resourcesToDelete.push(resourceToDelete);
         }
     });
 
     // deletes the deployments
-    delList.forEach((delObject) => {
-        try {
-            const result = kubectl.delete([delObject.kind, delObject.name]);
-            checkForErrors([result]);
-        } catch (ex) {
-            // Ignore failures of delete if doesn't exist
-        }
-    });
+    deleteObjects(kubectl, resourcesToDelete);
 }
 
 export function cleanUp(kubectl: Kubectl, deploymentEntityList: any[], serviceEntityList: any[]) {
     // checks if services has some stable deployments to target or deletes them too
-    let delList = []; 
-    serviceEntityList.forEach((inputObject) => {
-        deploymentEntityList.forEach((depObject) => {
-            const kind = depObject.kind;
-            const name = depObject.metadata.name;
-            const serviceSelector: string = getServiceSelector(inputObject);
-            const matchLabels: string = getDeploymentMatchLabels(depObject); 
-            if (!!serviceSelector && !!matchLabels && isServiceSelectorSubsetOfMatchLabel(serviceSelector, matchLabels)) {
-                const existingDeploy = fetchResource(kubectl, kind, name);
-                // checking if it has something to target
-                if (!existingDeploy) {
-                    const tempObject = { name : inputObject.metadata.name, kind : inputObject.kind };
-                    delList.push(tempObject);
+    let deleteList = []; 
+    deploymentEntityList.forEach((deploymentObject) => {
+        const existingDeploy = fetchResource(kubectl, deploymentObject.kind, deploymentObject.metadata.name);
+        if (!existingDeploy) {
+            serviceEntityList.forEach((serviceObject) => {
+                const serviceSelector: string = getServiceSelector(serviceObject);
+                const matchLabels: string = getDeploymentMatchLabels(deploymentObject); 
+                if (!!serviceSelector && !!matchLabels && isServiceSelectorSubsetOfMatchLabel(serviceSelector, matchLabels)) {
+                    const resourceToDelete = { name : serviceObject.metadata.name, kind : serviceObject.kind };
+                    deleteList.push(resourceToDelete);
                 } 
-            }
-        });
-    });
-
-    delList.forEach((delObject) => {
-        try {
-            const result = kubectl.delete([delObject.kind, delObject.name]);
-            checkForErrors([result]);
-        } catch (ex) {
-            // Ignore failures of delete if doesn't exist
+            });
         }
     });
+
+    // delete service not targeting a deployment
+    deleteObjects(kubectl, deleteList);
 }
 
 export function deleteWorkloadsAndServicesWithLabel(kubectl: Kubectl, deleteLabel: string, deploymentEntityList: any[], serviceEntityList: any[]) {
     // need to delete services and deployments
     const deletionEntitiesList = deploymentEntityList.concat(serviceEntityList);
-    let deleteList = []
+    let resourcesToDelete = []
     deletionEntitiesList.forEach((inputObject) => {
         const name = inputObject.metadata.name;
         const kind = inputObject.kind;
         if (!deleteLabel) {
             // if not dellabel, delete stable objects
-            const tempObject = { name : name, kind : kind};
-            deleteList.push(tempObject);
+            const resourceToDelete = { name : name, kind : kind};
+            resourcesToDelete.push(resourceToDelete);
         } else {
             // else delete green labels
-            const tempObject = { name : name+BLUE_GREEN_SUFFIX, kind : kind };
-            deleteList.push(tempObject);
+            const resourceToDelete = { name : getBlueGreenResourceName(name, GREEN_SUFFIX), kind : kind };
+            resourcesToDelete.push(resourceToDelete);
         }
     });
+    deleteObjects(kubectl, resourcesToDelete);
+}
 
+export function deleteObjects(kubectl: Kubectl, deleteList: any[]) {
     // delete services and deployments
     deleteList.forEach((delObject) => {
         try {
@@ -150,8 +136,8 @@ export function deleteWorkloadsAndServicesWithLabel(kubectl: Kubectl, deleteLabe
 }
 
 export function getSuffix(label: string): string {
-    if(label === BLUE_GREEN_NEW_LABEL_VALUE) {
-        return BLUE_GREEN_SUFFIX
+    if(label === GREEN_LABEL_VALUE) {
+        return GREEN_SUFFIX
     } else {
         return '';
     }
@@ -185,15 +171,31 @@ export function getManifestObjects (filePaths: string[]): any {
     // find all services and add their names with blue green suffix
     serviceEntityList.forEach(inputObject => {
         const name = inputObject.metadata.name;
-        serviceNameMap.set(name, getBlueGreenResourceName(name, BLUE_GREEN_SUFFIX));
+        serviceNameMap.set(name, getBlueGreenResourceName(name, GREEN_SUFFIX));
     });
      
     return { serviceEntityList: serviceEntityList, serviceNameMap: serviceNameMap, deploymentEntityList: deploymentEntityList, ingressEntityList: ingressEntityList, otherObjects: otherEntitiesList };
 }
 
-export function createWorkloadsWithLabel(kubectl: Kubectl, depObjectList: any[], nextLabel: string) {
+export function isServiceRouted(serviceObject: any[], deploymentEntityList: any[]): boolean {
+    let shouldBeRouted: boolean = false;
+    const serviceSelector: string = getServiceSelector(serviceObject);
+    if (!!serviceSelector) {
+        deploymentEntityList.every((depObject) => {
+            // finding if there is a deployment in the given manifests the service targets
+            const matchLabels: string = getDeploymentMatchLabels(depObject); 
+            if (!!matchLabels && isServiceSelectorSubsetOfMatchLabel(serviceSelector, matchLabels)) {
+                shouldBeRouted = true;
+                return false;
+            }
+        });
+    }
+    return shouldBeRouted;
+}
+
+export function createWorkloadsWithLabel(kubectl: Kubectl, deploymentObjectList: any[], nextLabel: string) {
     const newObjectsList = [];
-    depObjectList.forEach((inputObject) => {
+    deploymentObjectList.forEach((inputObject) => {
         // creating deployment with label
         const newBlueGreenObject = getNewBlueGreenObject(inputObject, nextLabel);
         core.debug('New blue-green object is: ' + JSON.stringify(newBlueGreenObject));
@@ -209,8 +211,8 @@ export function getNewBlueGreenObject(inputObject: any, labelValue: string): obj
     const newObject = JSON.parse(JSON.stringify(inputObject));
 
     // Updating name only if label is green label is given
-    if (labelValue === BLUE_GREEN_NEW_LABEL_VALUE) {
-        newObject.metadata.name = getBlueGreenResourceName(inputObject.metadata.name, BLUE_GREEN_SUFFIX);
+    if (labelValue === GREEN_LABEL_VALUE) {
+        newObject.metadata.name = getBlueGreenResourceName(inputObject.metadata.name, GREEN_SUFFIX);
     }
 
     // Adding labels and annotations
@@ -238,7 +240,6 @@ export function getBlueGreenResourceName(name: string, suffix: string) {
     return `${name}${suffix}`;
 }
 
-
 export function getSpecLabel(inputObject: any): string {
     if(!!inputObject && inputObject.spec && inputObject.spec.selector && inputObject.spec.selector.matchLabels && inputObject.spec.selector.matchLabels[BLUE_GREEN_VERSION_LABEL]) {
         return inputObject.spec.selector.matchLabels[BLUE_GREEN_VERSION_LABEL]; 
@@ -246,18 +247,18 @@ export function getSpecLabel(inputObject: any): string {
     return '';
 }
 
-export function getDeploymentMatchLabels(inputObject): string {
-    if (inputObject.kind.toUpperCase()==KubernetesWorkload.pod && !!inputObject && !!inputObject.metadata && !!inputObject.metadata.labels) {
-        return JSON.stringify(inputObject.metadata.labels);
-    } else if (!!inputObject && inputObject.spec && inputObject.spec.selector && inputObject.spec.selector.matchLabels) {
-        return JSON.stringify(inputObject.spec.selector.matchLabels);
+export function getDeploymentMatchLabels(deploymentObject: any): string {
+    if (!!deploymentObject && deploymentObject.kind.toUpperCase()==KubernetesWorkload.pod && !!deploymentObject && !!deploymentObject.metadata && !!deploymentObject.metadata.labels) {
+        return JSON.stringify(deploymentObject.metadata.labels);
+    } else if (!!deploymentObject && deploymentObject.spec && deploymentObject.spec.selector && deploymentObject.spec.selector.matchLabels) {
+        return JSON.stringify(deploymentObject.spec.selector.matchLabels);
     }
     return '';
 }
 
-export function getServiceSelector(inputObject: any): string {
-    if (!!inputObject && inputObject.spec && inputObject.spec.selector) {
-        return JSON.stringify(inputObject.spec.selector);
+export function getServiceSelector(serviceObject: any): string {
+    if (!!serviceObject && serviceObject.spec && serviceObject.spec.selector) {
+        return JSON.stringify(serviceObject.spec.selector);
     } else return '';
 }
 
@@ -280,7 +281,7 @@ export function isServiceSelectorSubsetOfMatchLabel(serviceSelector: string, mat
     });
   
     return isMatch;
-  }
+}
 
 export function fetchResource(kubectl: Kubectl, kind: string, name: string) {
     const result = kubectl.getResource(kind, name);

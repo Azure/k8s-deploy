@@ -4,7 +4,7 @@ import * as core from '@actions/core';
 import { Kubectl } from '../../kubectl-object-model';
 import * as fileHelper from '../files-helper';
 import { createWorkloadsWithLabel, getManifestObjects, getNewBlueGreenObject, addBlueGreenLabelsAndAnnotations, deleteWorkloadsAndServicesWithLabel, fetchResource } from './blue-green-helper';
-import { BLUE_GREEN_NEW_LABEL_VALUE, NONE_LABEL_VALUE, BLUE_GREEN_VERSION_LABEL } from './blue-green-helper';
+import { GREEN_LABEL_VALUE, NONE_LABEL_VALUE, BLUE_GREEN_VERSION_LABEL } from './blue-green-helper';
 const BACKEND = 'BACKEND';
 
 export function deployBlueGreenIngress(kubectl: Kubectl, filePaths: string[]) {
@@ -12,12 +12,12 @@ export function deployBlueGreenIngress(kubectl: Kubectl, filePaths: string[]) {
     const manifestObjects = getManifestObjects(filePaths);
 
     // create deployments with green label value
-    const result = createWorkloadsWithLabel(kubectl, manifestObjects.deploymentEntityList, BLUE_GREEN_NEW_LABEL_VALUE);
+    const result = createWorkloadsWithLabel(kubectl, manifestObjects.deploymentEntityList, GREEN_LABEL_VALUE);
 
     // create new services and other objects 
     let newObjectsList = [];
     manifestObjects.serviceEntityList.forEach(inputObject => {
-        const newBlueGreenObject = getNewBlueGreenObject(inputObject, BLUE_GREEN_NEW_LABEL_VALUE);;
+        const newBlueGreenObject = getNewBlueGreenObject(inputObject, GREEN_LABEL_VALUE);;
         core.debug('New blue-green object is: ' + JSON.stringify(newBlueGreenObject));
         newObjectsList.push(newBlueGreenObject);
     });
@@ -30,19 +30,16 @@ export function deployBlueGreenIngress(kubectl: Kubectl, filePaths: string[]) {
     return result;
 }
 
-export async function blueGreenPromoteIngress(kubectl: Kubectl, manifestObjects) {
+export async function promoteBlueGreenIngress(kubectl: Kubectl, manifestObjects) {
     //checking if anything to promote
-    if (!validateIngressState(kubectl, manifestObjects.ingressEntityList, manifestObjects.serviceNameMap)) {
+    if (!validateIngressesState(kubectl, manifestObjects.ingressEntityList, manifestObjects.serviceNameMap)) {
         throw('NotInPromoteStateIngress');
     }
-
-    // deleting existing stable deploymetns and services
-    deleteWorkloadsAndServicesWithLabel(kubectl, null, manifestObjects.deploymentEntityList, manifestObjects.serviceEntityList);
 
     // create stable deployments with new configuration
     const result = createWorkloadsWithLabel(kubectl, manifestObjects.deploymentEntityList, NONE_LABEL_VALUE);
 
-    // create stable services
+    // create stable services with new configuration
     const newObjectsList = [];
     manifestObjects.serviceEntityList.forEach((inputObject) => {
         const newBlueGreenObject = getNewBlueGreenObject(inputObject, NONE_LABEL_VALUE);
@@ -65,7 +62,7 @@ export async function blueGreenRejectIngress(kubectl: Kubectl, filePaths: string
     routeBlueGreenIngress(kubectl, null, manifestObjects.serviceNameMap, manifestObjects.serviceEntityList, manifestObjects.ingressEntityList);
     
     // deleting green services and deployments
-    deleteWorkloadsAndServicesWithLabel(kubectl, BLUE_GREEN_NEW_LABEL_VALUE, manifestObjects.deploymentEntityList, manifestObjects.serviceEntityList);
+    deleteWorkloadsAndServicesWithLabel(kubectl, GREEN_LABEL_VALUE, manifestObjects.deploymentEntityList, manifestObjects.serviceEntityList);
 }
 
 export function routeBlueGreenIngress(kubectl: Kubectl, nextLabel: string, serviceNameMap: Map<string, string>, serviceEntityList: any[],  ingressEntityList: any[]) { 
@@ -74,19 +71,8 @@ export function routeBlueGreenIngress(kubectl: Kubectl, nextLabel: string, servi
         newObjectsList = newObjectsList.concat(ingressEntityList);
     } else {
         ingressEntityList.forEach((inputObject) => {
-            let isRouted: boolean = false;
-
-            // sees if ingress targets a service in the given manifests
-            JSON.parse(JSON.stringify(inputObject), (key, value) => {
-                if (key === 'serviceName' && serviceNameMap.has(value)) {
-                    isRouted = true;
-                }
-                return value;
-            });
-
-            // routing to green objects only if ingress is routed
-            if (isRouted) {
-                const newBlueGreenIngressObject = getUpdatedBlueGreenIngress(inputObject, serviceNameMap, BLUE_GREEN_NEW_LABEL_VALUE);
+            if (isIngressRouted(inputObject, serviceNameMap)) {
+                const newBlueGreenIngressObject = getUpdatedBlueGreenIngress(inputObject, serviceNameMap, GREEN_LABEL_VALUE);
                 newObjectsList.push(newBlueGreenIngressObject);
             } else {
                 newObjectsList.push(inputObject);
@@ -98,19 +84,10 @@ export function routeBlueGreenIngress(kubectl: Kubectl, nextLabel: string, servi
     kubectl.apply(manifestFiles);
 }
 
-export function validateIngressState(kubectl: Kubectl, ingressEntityList: any[], serviceNameMap: Map<string, string>): boolean {
-    let isIngressTargetingNewServices: boolean = true;
+export function validateIngressesState(kubectl: Kubectl, ingressEntityList: any[], serviceNameMap: Map<string, string>): boolean {
+    let areIngressesTargetingNewServices: boolean = true;
     ingressEntityList.forEach((inputObject) => {
-        let isRouted: boolean = false;
-        // finding if ingress is targeting a service in given manifests
-        JSON.parse(JSON.stringify(inputObject), (key, value) => {
-            if (key === 'serviceName' && serviceNameMap.has(value)) {
-                isRouted = true;
-            }
-            return value;
-        });
-
-        if (isRouted) {
+        if (isIngressRouted(inputObject, serviceNameMap)) {
             //querying existing ingress
             let existingIngress = fetchResource(kubectl, inputObject.kind, inputObject.metadata.name);
             if(!!existingIngress) {
@@ -120,20 +97,33 @@ export function validateIngressState(kubectl: Kubectl, ingressEntityList: any[],
                     currentLabel = existingIngress.metadata.labels[BLUE_GREEN_VERSION_LABEL];
                 } catch {
                     // if no label exists, then not an ingress targeting green deployments
-                    isIngressTargetingNewServices = false;
+                    areIngressesTargetingNewServices = false;
                 }
-                if (currentLabel != BLUE_GREEN_NEW_LABEL_VALUE) {
+                if (currentLabel != GREEN_LABEL_VALUE) {
                     // if not green label, then wrong configuration
-                    isIngressTargetingNewServices = false;
+                    areIngressesTargetingNewServices = false;
                 }
             } else {
                 // no ingress at all, so nothing to promote
-                isIngressTargetingNewServices = false;
+                areIngressesTargetingNewServices = false;
             }
         }
     });
 
-    return isIngressTargetingNewServices;
+    return areIngressesTargetingNewServices;
+}
+
+
+function isIngressRouted(ingressObject: any, serviceNameMap: Map<string, string>): boolean {
+    let isIngressRouted: boolean = false;
+    // sees if ingress targets a service in the given manifests
+    JSON.parse(JSON.stringify(ingressObject), (key, value) => {
+        if (key === 'serviceName' && serviceNameMap.has(value)) {
+            isIngressRouted = true;
+        }
+        return value;
+    });
+    return isIngressRouted;
 }
 
 
@@ -148,7 +138,7 @@ export function getUpdatedBlueGreenIngress(inputObject: any, serviceNameMap: Map
     addBlueGreenLabelsAndAnnotations(newObject, type);
 
     // Updating ingress labels
-    let finalObject =  updateIngressBackend(newObject, serviceNameMap);
+    let finalObject = updateIngressBackend(newObject, serviceNameMap);
     return finalObject;
 }
 

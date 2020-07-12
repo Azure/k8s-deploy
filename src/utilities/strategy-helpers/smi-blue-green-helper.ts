@@ -1,15 +1,13 @@
 'use strict';
 
-import { checkForErrors } from '../utility';
-import * as util from 'util';
 import { Kubectl } from '../../kubectl-object-model';
 import * as kubectlUtils from '../kubectl-util';
 import * as fileHelper from '../files-helper';
-import { createWorkloadsWithLabel, getManifestObjects, getServiceSelector, getDeploymentMatchLabels, fetchResource, deleteWorkloadsWithLabel, cleanUp, getNewBlueGreenObject, getBlueGreenResourceName, isServiceSelectorSubsetOfMatchLabel } from './blue-green-helper';
-import { BLUE_GREEN_NEW_LABEL_VALUE, NONE_LABEL_VALUE, BLUE_GREEN_SUFFIX, STABLE_SUFFIX } from './blue-green-helper';
+import { createWorkloadsWithLabel, getManifestObjects, fetchResource, deleteWorkloadsWithLabel, cleanUp, getNewBlueGreenObject, getBlueGreenResourceName, isServiceRouted, deleteObjects } from './blue-green-helper';
+import { GREEN_LABEL_VALUE, NONE_LABEL_VALUE, GREEN_SUFFIX, STABLE_SUFFIX } from './blue-green-helper';
 
 let trafficSplitAPIVersion = "";
-const TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX = '-rollout';
+const TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX = '-trafficsplit';
 const TRAFFIC_SPLIT_OBJECT = 'TrafficSplit';
 const MIN_VAL = '0';
 const MAX_VAL = '100';
@@ -27,20 +25,17 @@ export function deployBlueGreenSMI(kubectl: Kubectl, filePaths: string[]) {
     setupSMI(kubectl, manifestObjects.deploymentEntityList, manifestObjects.serviceEntityList);
 
     // create new deloyments
-    const result = createWorkloadsWithLabel(kubectl, manifestObjects.deploymentEntityList, BLUE_GREEN_NEW_LABEL_VALUE);
+    const result = createWorkloadsWithLabel(kubectl, manifestObjects.deploymentEntityList, GREEN_LABEL_VALUE);
 
     // return results to check for manifest stability
     return result;
 }
 
-export async function blueGreenPromoteSMI(kubectl: Kubectl, manifestObjects) {
+export async function promoteBlueGreenSMI(kubectl: Kubectl, manifestObjects) {
     // checking if there is something to promote
     if (!validateTrafficSplitState(kubectl, manifestObjects.deploymentEntityList, manifestObjects.serviceEntityList)) {
         throw('NotInPromoteStateSMI')
     } 
-
-    //deleting old stable deployments
-    deleteWorkloadsWithLabel(kubectl, NONE_LABEL_VALUE, manifestObjects.deploymentEntityList);
 
     // create stable deployments with new configuration
     const result = createWorkloadsWithLabel(kubectl, manifestObjects.deploymentEntityList, NONE_LABEL_VALUE);
@@ -60,7 +55,7 @@ export async function blueGreenRejectSMI(kubectl: Kubectl, filePaths: string[]) 
     cleanUp(kubectl, manifestObjects.deploymentEntityList, manifestObjects.serviceEntityList);
 
     // deleting rejected new bluegreen deplyments 
-    deleteWorkloadsWithLabel(kubectl, BLUE_GREEN_NEW_LABEL_VALUE, manifestObjects.deploymentEntityList);
+    deleteWorkloadsWithLabel(kubectl, GREEN_LABEL_VALUE, manifestObjects.deploymentEntityList);
 
     //deleting trafficsplit and extra services
     cleanupSMI(kubectl, manifestObjects.deploymentEntityList, manifestObjects.serviceEntityList);
@@ -69,22 +64,16 @@ export async function blueGreenRejectSMI(kubectl: Kubectl, filePaths: string[]) 
 export function setupSMI(kubectl: Kubectl, deploymentEntityList: any[], serviceEntityList: any[]) {
     const newObjectsList = [];
     const trafficObjectList = []
-    serviceEntityList.forEach((inputObject) => {
-        deploymentEntityList.forEach((depObject) => {
-            // finding out whether service targets a deployment in given manifests
-            const serviceSelector: string = getServiceSelector(inputObject);
-            const matchLabels: string = getDeploymentMatchLabels(depObject); 
-            if (!!serviceSelector && !!matchLabels && isServiceSelectorSubsetOfMatchLabel(serviceSelector, matchLabels)) {
-                // decided that this service needs to be routed
-                //querying for both services
-                trafficObjectList.push(inputObject);
-                // setting up the services for trafficsplit
-                const newStableService = getSMIServiceResource(inputObject, STABLE_SUFFIX);
-                const newGreenService = getSMIServiceResource(inputObject, BLUE_GREEN_SUFFIX);
-                newObjectsList.push(newStableService);
-                newObjectsList.push(newGreenService);
-            }
-        });
+    serviceEntityList.forEach((serviceObject) => {
+        if (isServiceRouted(serviceObject, deploymentEntityList)) {
+            // create a trafficsplit for service
+            trafficObjectList.push(serviceObject);
+            // setting up the services for trafficsplit
+            const newStableService = getSMIServiceResource(serviceObject, STABLE_SUFFIX);
+            const newGreenService = getSMIServiceResource(serviceObject, GREEN_SUFFIX);
+            newObjectsList.push(newStableService);
+            newObjectsList.push(newGreenService);
+        }
     });
 
     // creating services
@@ -104,7 +93,7 @@ function createTrafficSplitObject(kubectl: Kubectl ,name: string, nextLabel: str
     // deciding weights based on nextlabel
     let stableWeight: number;
     let greenWeight: number;
-    if (nextLabel === BLUE_GREEN_NEW_LABEL_VALUE) {
+    if (nextLabel === GREEN_LABEL_VALUE) {
         stableWeight = parseInt(MIN_VAL);
         greenWeight = parseInt(MAX_VAL);
     } else {
@@ -113,7 +102,7 @@ function createTrafficSplitObject(kubectl: Kubectl ,name: string, nextLabel: str
     }
 
     //traffic split json
-    const trafficSplitObjectJson = `{
+    const trafficSplitObject = `{
         "apiVersion": "${trafficSplitAPIVersion}",
         "kind": "TrafficSplit",
         "metadata": {
@@ -127,17 +116,16 @@ function createTrafficSplitObject(kubectl: Kubectl ,name: string, nextLabel: str
                     "weight": ${stableWeight}
                 },
                 {
-                    "service": "${getBlueGreenResourceName(name, BLUE_GREEN_SUFFIX)}",
+                    "service": "${getBlueGreenResourceName(name, GREEN_SUFFIX)}",
                     "weight": ${greenWeight}
                 }
             ]
         }
     }`;
-    let trafficSplitObject = util.format(trafficSplitObjectJson);
 
     // creating trafficplit object
-    trafficSplitObject = fileHelper.writeManifestToFile(trafficSplitObject, TRAFFIC_SPLIT_OBJECT, getBlueGreenResourceName(name, TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX));
-    kubectl.apply(trafficSplitObject);
+    const trafficSplitManifestFile = fileHelper.writeManifestToFile(trafficSplitObject, TRAFFIC_SPLIT_OBJECT, getBlueGreenResourceName(name, TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX));
+    kubectl.apply(trafficSplitManifestFile);
 }
 
 export function getSMIServiceResource(inputObject: any, suffix: string): object {
@@ -148,61 +136,49 @@ export function getSMIServiceResource(inputObject: any, suffix: string): object 
         return getNewBlueGreenObject(newObject, NONE_LABEL_VALUE);
     } else {
         // green label will be added for these
-        return getNewBlueGreenObject(newObject, BLUE_GREEN_NEW_LABEL_VALUE);
+        return getNewBlueGreenObject(newObject, GREEN_LABEL_VALUE);
     }
 }
 
 export function routeBlueGreenSMI(kubectl: Kubectl, nextLabel: string, deploymentEntityList: any[], serviceEntityList: any[]) {
-    serviceEntityList.forEach((inputObject) => {
-        deploymentEntityList.forEach((depObject) => {
-            // finding out whether service targets a deployment in given manifests
-            const serviceSelector: string = getServiceSelector(inputObject);
-            const matchLabels: string = getDeploymentMatchLabels(depObject); 
-            if (!!serviceSelector && !!matchLabels && isServiceSelectorSubsetOfMatchLabel(serviceSelector, matchLabels)) {
-                // decided that this service needs to be routed
-                // point to blue green entities
-                createTrafficSplitObject(kubectl, inputObject.metadata.name, nextLabel);
-            }
-        });
+    serviceEntityList.forEach((serviceObject) => {
+        if (isServiceRouted(serviceObject, deploymentEntityList)) {
+            // routing trafficsplit to given label
+            createTrafficSplitObject(kubectl, serviceObject.metadata.name, nextLabel);
+        }
     });
 }
 
 export function validateTrafficSplitState(kubectl: Kubectl, deploymentEntityList: any[], serviceEntityList: any[]): boolean {  
     let isTrafficSplitInRightState: boolean = true;
-    serviceEntityList.forEach((inputObject) => {
-        const name: string = inputObject.metadata.name;  
-        deploymentEntityList.forEach((depObject) => {
-            // seeing if given service targets a corresponding deployment in given manifest
-            const serviceSelector: string = getServiceSelector(inputObject);
-            const matchLabels: string = getDeploymentMatchLabels(depObject); 
-            if (!!serviceSelector && !!matchLabels && isServiceSelectorSubsetOfMatchLabel(serviceSelector, matchLabels)) {
-                // querying existing trafficsplit object
-                let trafficSplitObject = fetchResource(kubectl, TRAFFIC_SPLIT_OBJECT, name+TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX);
-                if (!trafficSplitObject) {
-                    // no trafficplit exits
-                    isTrafficSplitInRightState = false;
-                }
-                trafficSplitObject = JSON.parse(JSON.stringify(trafficSplitObject));
-                trafficSplitObject.spec.backends.forEach(element => {
-                    // checking if trafficsplit in right state to deploy
-                    if (element.service === name+BLUE_GREEN_SUFFIX) {
-                        if (element.weight == MAX_VAL) {
-                        } else {
-                            // green service should have max weight
-                            isTrafficSplitInRightState = false;
-                        }
-                    } 
-
-                    if (element.service === name+STABLE_SUFFIX) {
-                        if (element.weight == MIN_VAL) {
-                        } else {
-                            // stable service should have 0 weight
-                            isTrafficSplitInRightState = false;
-                        }
-                    } 
-                });
+    serviceEntityList.forEach((serviceObject) => {
+        if (isServiceRouted(serviceObject, deploymentEntityList)) {
+            const name = serviceObject.metadata.name;
+            let trafficSplitObject = fetchResource(kubectl, TRAFFIC_SPLIT_OBJECT, getBlueGreenResourceName(name, TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX));
+            if (!trafficSplitObject) {
+                // no trafficplit exits
+                isTrafficSplitInRightState = false;
             }
-        });
+            trafficSplitObject = JSON.parse(JSON.stringify(trafficSplitObject));
+            trafficSplitObject.spec.backends.forEach(element => {
+                // checking if trafficsplit in right state to deploy
+                if (element.service === getBlueGreenResourceName(name, GREEN_SUFFIX)) {
+                    if (element.weight == MAX_VAL) {
+                    } else {
+                        // green service should have max weight
+                        isTrafficSplitInRightState = false;
+                    }
+                } 
+
+                if (element.service === getBlueGreenResourceName(name, STABLE_SUFFIX)) {
+                    if (element.weight == MIN_VAL) {
+                    } else {
+                        // stable service should have 0 weight
+                        isTrafficSplitInRightState = false;
+                    }
+                } 
+            });
+        }
     });               
     
     return isTrafficSplitInRightState;
@@ -210,26 +186,14 @@ export function validateTrafficSplitState(kubectl: Kubectl, deploymentEntityList
 
 export function cleanupSMI(kubectl: Kubectl, deploymentEntityList: any[], serviceEntityList: any[]) { 
     const deleteList = [];
-    serviceEntityList.forEach((inputObject) => {
-        deploymentEntityList.forEach((depObject) => {
-            // finding out whether service targets a deployment in given manifests
-            const serviceSelector: string = getServiceSelector(inputObject);
-            const matchLabels: string = getDeploymentMatchLabels(depObject); 
-            if (!!serviceSelector && !!matchLabels && isServiceSelectorSubsetOfMatchLabel(serviceSelector, matchLabels)) {
-                deleteList.push({name: inputObject.metadata.name+BLUE_GREEN_SUFFIX, kind: inputObject.kind});
-                deleteList.push({name: inputObject.metadata.name+STABLE_SUFFIX, kind: inputObject.kind});
-                deleteList.push({name: inputObject.metadata.name+TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX, kind: TRAFFIC_SPLIT_OBJECT});
-            }
-        });
+    serviceEntityList.forEach((serviceObject) => {
+        if (isServiceRouted(serviceObject, deploymentEntityList)) {
+            deleteList.push({name: getBlueGreenResourceName(serviceObject.metadata.name, GREEN_SUFFIX), kind: serviceObject.kind});
+            deleteList.push({name: getBlueGreenResourceName(serviceObject.metadata.name, STABLE_SUFFIX), kind: serviceObject.kind});
+            deleteList.push({name: getBlueGreenResourceName(serviceObject.metadata.name, TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX), kind: TRAFFIC_SPLIT_OBJECT});
+        }
     });
 
     // deleting all objects
-    deleteList.forEach((deleteObject) => {
-        try {
-            const result = kubectl.delete([deleteObject.kind, deleteObject.name]);
-            checkForErrors([result]);
-        } catch (ex) {
-            // Ignore failures of delete if doesn't exist
-        }
-    });
+    deleteObjects(kubectl, deleteList);
 }
