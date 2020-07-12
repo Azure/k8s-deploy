@@ -33,7 +33,7 @@ export function deployBlueGreenSMI(kubectl: Kubectl, filePaths: string[]) {
 
 export async function promoteBlueGreenSMI(kubectl: Kubectl, manifestObjects) {
     // checking if there is something to promote
-    if (!validateTrafficSplitState(kubectl, manifestObjects.deploymentEntityList, manifestObjects.serviceEntityList)) {
+    if (!validateTrafficSplitsState(kubectl, manifestObjects.deploymentEntityList, manifestObjects.serviceEntityList)) {
         throw('NotInPromoteStateSMI')
     } 
 
@@ -149,39 +149,37 @@ export function routeBlueGreenSMI(kubectl: Kubectl, nextLabel: string, deploymen
     });
 }
 
-export function validateTrafficSplitState(kubectl: Kubectl, deploymentEntityList: any[], serviceEntityList: any[]): boolean {  
-    let isTrafficSplitInRightState: boolean = true;
+export function validateTrafficSplitsState(kubectl: Kubectl, deploymentEntityList: any[], serviceEntityList: any[]): boolean {  
+    let areTrafficSplitsInRightState: boolean = true;
     serviceEntityList.forEach((serviceObject) => {
         if (isServiceRouted(serviceObject, deploymentEntityList)) {
             const name = serviceObject.metadata.name;
             let trafficSplitObject = fetchResource(kubectl, TRAFFIC_SPLIT_OBJECT, getBlueGreenResourceName(name, TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX));
             if (!trafficSplitObject) {
                 // no trafficplit exits
-                isTrafficSplitInRightState = false;
+                areTrafficSplitsInRightState = false;
             }
             trafficSplitObject = JSON.parse(JSON.stringify(trafficSplitObject));
             trafficSplitObject.spec.backends.forEach(element => {
                 // checking if trafficsplit in right state to deploy
                 if (element.service === getBlueGreenResourceName(name, GREEN_SUFFIX)) {
-                    if (element.weight == MAX_VAL) {
-                    } else {
+                    if (element.weight != MAX_VAL) {
                         // green service should have max weight
-                        isTrafficSplitInRightState = false;
+                        areTrafficSplitsInRightState = false;
                     }
                 } 
 
                 if (element.service === getBlueGreenResourceName(name, STABLE_SUFFIX)) {
-                    if (element.weight == MIN_VAL) {
-                    } else {
+                    if (element.weight != MIN_VAL) {
                         // stable service should have 0 weight
-                        isTrafficSplitInRightState = false;
+                        areTrafficSplitsInRightState = false;
                     }
                 } 
             });
         }
     });               
     
-    return isTrafficSplitInRightState;
+    return areTrafficSplitsInRightState;
 }
 
 export function cleanupSMI(kubectl: Kubectl, deploymentEntityList: any[], serviceEntityList: any[]) { 

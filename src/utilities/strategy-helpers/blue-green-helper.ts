@@ -248,7 +248,7 @@ export function getSpecLabel(inputObject: any): string {
 }
 
 export function getDeploymentMatchLabels(deploymentObject: any): string {
-    if (!!deploymentObject && deploymentObject.kind.toUpperCase()==KubernetesWorkload.pod && !!deploymentObject && !!deploymentObject.metadata && !!deploymentObject.metadata.labels) {
+    if (!!deploymentObject && deploymentObject.kind.toUpperCase()==KubernetesWorkload.pod.toUpperCase() &&  !!deploymentObject.metadata && !!deploymentObject.metadata.labels) {
         return JSON.stringify(deploymentObject.metadata.labels);
     } else if (!!deploymentObject && deploymentObject.spec && deploymentObject.spec.selector && deploymentObject.spec.selector.matchLabels) {
         return JSON.stringify(deploymentObject.spec.selector.matchLabels);

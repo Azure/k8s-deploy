@@ -599,7 +599,7 @@ test("validateTrafficSplitState - throws if trafficsplit in wrong state", () => 
 	kubeCtl.getResource = jest.fn().mockReturnValue(JSON.parse(JSON.stringify(temp)));
 
 	//Invoke and assert
-	expect(blueGreenHelperSMI.validateTrafficSplitState(kubeCtl, depEntList, serEntList)).toBeFalsy();
+	expect(blueGreenHelperSMI.validateTrafficSplitsState(kubeCtl, depEntList, serEntList)).toBeFalsy();
 });
 
 test("validateTrafficSplitState - throws if trafficsplit in wrong state", () => {
@@ -678,7 +678,7 @@ test("validateTrafficSplitState - throws if trafficsplit in wrong state", () => 
 	kubeCtl.getResource = jest.fn().mockReturnValue(JSON.parse(JSON.stringify(temp)));
 
 	//Invoke and assert
-	expect(blueGreenHelperSMI.validateTrafficSplitState(kubeCtl, depEntList, serEntList)).toBeFalsy();
+	expect(blueGreenHelperSMI.validateTrafficSplitsState(kubeCtl, depEntList, serEntList)).toBeFalsy();
 });
 
 test("getSuffix() - returns BLUE_GREEN_SUFFIX if BLUE_GREEN_NEW_LABEL_VALUE is given, else emrty string", () => {
