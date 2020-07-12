@@ -110,7 +110,7 @@ export function deleteWorkloadsAndServicesWithLabel(kubectl: Kubectl, deleteLabe
     deletionEntitiesList.forEach((inputObject) => {
         const name = inputObject.metadata.name;
         const kind = inputObject.kind;
-        if (!deleteLabel) {
+        if (deleteLabel === NONE_LABEL_VALUE) {
             // if not dellabel, delete stable objects
             const resourceToDelete = { name : name, kind : kind};
             resourcesToDelete.push(resourceToDelete);

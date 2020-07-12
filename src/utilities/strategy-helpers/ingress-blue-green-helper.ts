@@ -54,7 +54,7 @@ export async function promoteBlueGreenIngress(kubectl: Kubectl, manifestObjects)
     return result;
 }
 
-export async function blueGreenRejectIngress(kubectl: Kubectl, filePaths: string[]) {
+export async function rejectBlueGreenIngress(kubectl: Kubectl, filePaths: string[]) {
     // get all kubernetes objects defined in manifest files
     const manifestObjects = getManifestObjects(filePaths);
     

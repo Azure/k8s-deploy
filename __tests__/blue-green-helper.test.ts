@@ -127,7 +127,7 @@ test("blueGreenReject - routes servcies to old deployment and deletes new deploy
 	const readFileSpy = jest.spyOn(fs, 'readFileSync').mockImplementation(() => deploymentYaml);
 
 	//Invoke and assert
-	expect(blueGreenHelperService.blueGreenReject(kubeCtl, ['manifests/bg.yaml'])).toMatchObject({});
+	expect(blueGreenHelperService.rejectBlueGreenService(kubeCtl, ['manifests/bg.yaml'])).toMatchObject({});
 	expect(kubeCtl.delete).toBeCalledWith(["Deployment", "testapp-green"]);
 	expect(readFileSpy).toBeCalledWith("manifests/bg.yaml");
 	expect(fileHelperMock.writeObjectsToFile).toBeCalled();
@@ -147,7 +147,7 @@ test("blueGreenReject - deletes services if old deployment does not exist", () =
 	const readFileSpy = jest.spyOn(fs, 'readFileSync').mockImplementation(() => deploymentYaml);
 
 	//Invoke and assert
-	expect(blueGreenHelperService.blueGreenReject(kubeCtl, ['manifests/bg.yaml'])).toMatchObject({});
+	expect(blueGreenHelperService.rejectBlueGreenService(kubeCtl, ['manifests/bg.yaml'])).toMatchObject({});
 	expect(kubeCtl.delete).toBeCalledWith(["Deployment", "testapp-green"]);
 	expect(kubeCtl.delete).toBeCalledWith(["Service", "testservice"]);
 	expect(readFileSpy).toBeCalledWith("manifests/bg.yaml");
@@ -237,7 +237,7 @@ test("blueGreenRejectIngress - routes ingress to stable services and deletes new
 	const readFileSpy = jest.spyOn(fs, 'readFileSync').mockImplementation(() => deploymentYaml);
 
 	//Invoke and assert
-	expect(blueGreenHelperIngress.blueGreenRejectIngress(kubeCtl, ['manifests/bg.yaml'])).toMatchObject({});
+	expect(blueGreenHelperIngress.rejectBlueGreenIngress(kubeCtl, ['manifests/bg.yaml'])).toMatchObject({});
 	expect(kubeCtl.delete).toBeCalledWith(["Deployment", "testapp-green"]);
 	expect(kubeCtl.delete).toBeCalledWith(["Service", "testservice-green"]);
 	expect(readFileSpy).toBeCalledWith("manifests/bg.yaml");
@@ -359,7 +359,7 @@ test("blueGreenRejectSMI - routes servcies to old deployment and deletes new dep
 	const readFileSpy = jest.spyOn(fs, 'readFileSync').mockImplementation(() => deploymentYaml);
 
 	//Invoke and assert
-	expect(blueGreenHelperSMI.blueGreenRejectSMI(kubeCtl, ['manifests/bg.yaml'])).toMatchObject({});
+	expect(blueGreenHelperSMI.rejectBlueGreenSMI(kubeCtl, ['manifests/bg.yaml'])).toMatchObject({});
 	expect(kubeCtl.delete).toBeCalledWith(["Deployment", "testapp-green"]);
 	expect(kubeCtl.delete).toBeCalledWith(["Service", "testservice-green"]);
 	expect(kubeCtl.delete).toBeCalledWith(["Service", "testservice-stable"]);
@@ -381,7 +381,7 @@ test("blueGreenRejectSMI - deletes service if stable deployment doesn't exist", 
 	const readFileSpy = jest.spyOn(fs, 'readFileSync').mockImplementation(() => deploymentYaml);
 
 	//Invoke and assert
-	expect(blueGreenHelperSMI.blueGreenRejectSMI(kubeCtl, ['manifests/bg.yaml'])).toMatchObject({});
+	expect(blueGreenHelperSMI.rejectBlueGreenSMI(kubeCtl, ['manifests/bg.yaml'])).toMatchObject({});
 	expect(kubeCtl.delete).toBeCalledWith(["Deployment", "testapp-green"]);
 	expect(kubeCtl.delete).toBeCalledWith(["Service", "testservice"]);
 	expect(kubeCtl.delete).toBeCalledWith(["Service", "testservice-green"]);

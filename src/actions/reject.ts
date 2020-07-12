@@ -5,9 +5,9 @@ import * as SMICanaryDeploymentHelper from '../utilities/strategy-helpers/smi-ca
 import { Kubectl } from '../kubectl-object-model';
 import * as utils from '../utilities/manifest-utilities';
 import * as TaskInputParameters from '../input-parameters';
-import { blueGreenReject } from '../utilities/strategy-helpers/service-blue-green-helper';
-import { blueGreenRejectIngress } from '../utilities/strategy-helpers/ingress-blue-green-helper';
-import { blueGreenRejectSMI} from '../utilities/strategy-helpers/smi-blue-green-helper'
+import { rejectBlueGreenService } from '../utilities/strategy-helpers/service-blue-green-helper';
+import { rejectBlueGreenIngress } from '../utilities/strategy-helpers/ingress-blue-green-helper';
+import { rejectBlueGreenSMI } from '../utilities/strategy-helpers/smi-blue-green-helper'
 import { isSMIRoute, isIngressRoute, isBlueGreenDeploymentStrategy } from '../utilities/strategy-helpers/blue-green-helper'
 import { getManifestFiles } from '../utilities/strategy-helpers/deployment-helper'
 
@@ -39,10 +39,10 @@ async function rejectCanary(kubectl: Kubectl) {
 async function rejectBlueGreen(kubectl: Kubectl) {
     let inputManifestFiles: string[] = getManifestFiles(TaskInputParameters.manifests);
     if(isIngressRoute()) {
-        await blueGreenRejectIngress(kubectl, inputManifestFiles);
+        await rejectBlueGreenIngress(kubectl, inputManifestFiles);
     } else if (isSMIRoute()) {
-        await blueGreenRejectSMI(kubectl, inputManifestFiles);
+        await rejectBlueGreenSMI(kubectl, inputManifestFiles);
     } else {
-        await blueGreenReject(kubectl, inputManifestFiles);
+        await rejectBlueGreenService(kubectl, inputManifestFiles);
     }
 }

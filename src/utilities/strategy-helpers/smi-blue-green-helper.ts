@@ -44,7 +44,7 @@ export async function promoteBlueGreenSMI(kubectl: Kubectl, manifestObjects) {
     return result;
 }
 
-export async function blueGreenRejectSMI(kubectl: Kubectl, filePaths: string[]) {
+export async function rejectBlueGreenSMI(kubectl: Kubectl, filePaths: string[]) {
     // get all kubernetes objects defined in manifest files
     const manifestObjects = getManifestObjects(filePaths);
 
