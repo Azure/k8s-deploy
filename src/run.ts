@@ -67,10 +67,10 @@ export async function run() {
         await deploy(new Kubectl(kubectlPath, namespace), manifests, strategy);
     }
     else if (action === 'promote') {
-        await promote(true);
+        await promote();
     }
     else if (action === 'reject') {
-        await reject(true);
+        await reject();
     }
     else {
         core.setFailed('Not a valid action. The allowed actions are deploy, promote, reject');

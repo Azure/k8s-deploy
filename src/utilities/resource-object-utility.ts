@@ -5,6 +5,7 @@ import * as yaml from 'js-yaml';
 import { Resource } from '../kubectl-object-model';
 import { KubernetesWorkload, deploymentTypes, workloadTypes } from '../constants';
 import { StringComparer, isEqual } from './string-comparison';
+const INGRESS = "Ingress";
 
 export function isDeploymentEntity(kind: string): boolean {
     if (!kind) {
@@ -32,6 +33,14 @@ export function isServiceEntity(kind: string): boolean {
     }
 
     return isEqual("Service", kind, StringComparer.OrdinalIgnoreCase);
+}
+
+export function isIngressEntity(kind: string): boolean {
+    if (!kind) {
+        throw('ResourceKindNotDefined');
+    }
+
+    return isEqual(INGRESS, kind, StringComparer.OrdinalIgnoreCase);
 }
 
 export function getReplicaCount(inputObject: any): any {

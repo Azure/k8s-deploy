@@ -19,9 +19,17 @@ inputs:
       description: 'Version of kubectl. Installs a specific version of kubectl binary'
       required: false
   strategy:
-    description: 'Deployment strategy to be used. Allowed values are none, canary'
+    description: 'Deployment strategy to be used. Allowed values are none, canary and blue-green'
     required: false
     default: 'none'
+  route-method:
+    description: 'Route based on service, ingress or SMI for blue-green strategy'
+    required: false
+    default: 'service'
+  version-switch-buffer:
+    description: 'Indicates the buffer time in minutes before the switch is made to the green version (max is 300 min ie. 5hrs)'
+    required: false
+    default: 0
   traffic-split-method:
     description: "Traffic split method to be used. Allowed values are pod, smi"
     required: false
