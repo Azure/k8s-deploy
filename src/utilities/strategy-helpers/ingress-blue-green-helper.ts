@@ -21,7 +21,7 @@ export function deployBlueGreenIngress(kubectl: Kubectl, filePaths: string[]) {
         core.debug('New blue-green object is: ' + JSON.stringify(newBlueGreenObject));
         newObjectsList.push(newBlueGreenObject);
     });
-    newObjectsList = newObjectsList.concat(manifestObjects.otherObjects);
+    newObjectsList = newObjectsList.concat(manifestObjects.otherObjects).concat(manifestObjects.unroutedServiceEntityList);
 
     const manifestFiles = fileHelper.writeObjectsToFile(newObjectsList);
     kubectl.apply(manifestFiles);
@@ -59,13 +59,13 @@ export async function rejectBlueGreenIngress(kubectl: Kubectl, filePaths: string
     const manifestObjects = getManifestObjects(filePaths);
     
     // routing ingress to stables services
-    routeBlueGreenIngress(kubectl, null, manifestObjects.serviceNameMap, manifestObjects.serviceEntityList, manifestObjects.ingressEntityList);
+    routeBlueGreenIngress(kubectl, null, manifestObjects.serviceNameMap, manifestObjects.ingressEntityList);
     
     // deleting green services and deployments
     deleteWorkloadsAndServicesWithLabel(kubectl, GREEN_LABEL_VALUE, manifestObjects.deploymentEntityList, manifestObjects.serviceEntityList);
 }
 
-export function routeBlueGreenIngress(kubectl: Kubectl, nextLabel: string, serviceNameMap: Map<string, string>, serviceEntityList: any[],  ingressEntityList: any[]) { 
+export function routeBlueGreenIngress(kubectl: Kubectl, nextLabel: string, serviceNameMap: Map<string, string>, ingressEntityList: any[]) { 
     let newObjectsList = [];
     if (!nextLabel) {
         newObjectsList = newObjectsList.concat(ingressEntityList);

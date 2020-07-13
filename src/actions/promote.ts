@@ -1,4 +1,5 @@
 'use strict';
+
 import * as core from '@actions/core';
 import * as deploymentHelper from '../utilities/strategy-helpers/deployment-helper';
 import * as canaryDeploymentHelper from '../utilities/strategy-helpers/canary-deployment-helper';
@@ -78,14 +79,14 @@ async function promoteBlueGreen(kubectl: Kubectl) {
     
     core.debug('routing to new deployments');
     if(isIngressRoute()) {
-        routeBlueGreenIngress(kubectl, null, manifestObjects.serviceNameMap, manifestObjects.serviceEntityList, manifestObjects.ingressEntityList);
+        routeBlueGreenIngress(kubectl, null, manifestObjects.serviceNameMap, manifestObjects.ingressEntityList);
         deleteWorkloadsAndServicesWithLabel(kubectl, GREEN_LABEL_VALUE, manifestObjects.deploymentEntityList, manifestObjects.serviceEntityList);
     } else if (isSMIRoute()) {
-        routeBlueGreenSMI(kubectl, NONE_LABEL_VALUE, manifestObjects.deploymentEntityList, manifestObjects.serviceEntityList);
+        routeBlueGreenSMI(kubectl, NONE_LABEL_VALUE, manifestObjects.serviceEntityList);
         deleteWorkloadsWithLabel(kubectl, GREEN_LABEL_VALUE, manifestObjects.deploymentEntityList);
-        cleanupSMI(kubectl, manifestObjects.deploymentEntityList, manifestObjects.serviceEntityList);    
+        cleanupSMI(kubectl, manifestObjects.serviceEntityList);    
     } else {
-        routeBlueGreenService(kubectl, NONE_LABEL_VALUE, manifestObjects.deploymentEntityList, manifestObjects.serviceEntityList);
+        routeBlueGreenService(kubectl, NONE_LABEL_VALUE, manifestObjects.serviceEntityList);
         deleteWorkloadsWithLabel(kubectl, GREEN_LABEL_VALUE, manifestObjects.deploymentEntityList);
     }
 }

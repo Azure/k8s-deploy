@@ -131,7 +131,6 @@ test("blueGreenReject - routes servcies to old deployment and deletes new deploy
 	expect(kubeCtl.delete).toBeCalledWith(["Deployment", "testapp-green"]);
 	expect(readFileSpy).toBeCalledWith("manifests/bg.yaml");
 	expect(fileHelperMock.writeObjectsToFile).toBeCalled();
-	expect(kubeCtl.getResource).toBeCalledWith("Deployment", "testapp");
 });
 
 test("blueGreenReject - deletes services if old deployment does not exist", () => {
@@ -149,10 +148,8 @@ test("blueGreenReject - deletes services if old deployment does not exist", () =
 	//Invoke and assert
 	expect(blueGreenHelperService.rejectBlueGreenService(kubeCtl, ['manifests/bg.yaml'])).toMatchObject({});
 	expect(kubeCtl.delete).toBeCalledWith(["Deployment", "testapp-green"]);
-	expect(kubeCtl.delete).toBeCalledWith(["Service", "testservice"]);
 	expect(readFileSpy).toBeCalledWith("manifests/bg.yaml");
 	expect(fileHelperMock.writeObjectsToFile).toBeCalled();
-	expect(kubeCtl.getResource).toBeCalledWith("Deployment", "testapp");
 });
 
 test("isIngressRoute() - returns true if route-method is ingress", () => {
@@ -365,7 +362,6 @@ test("blueGreenRejectSMI - routes servcies to old deployment and deletes new dep
 	expect(kubeCtl.delete).toBeCalledWith(["Service", "testservice-stable"]);
 	expect(kubeCtl.delete).toBeCalledWith(["TrafficSplit", "testservice-trafficsplit"]);
 	expect(readFileSpy).toBeCalledWith("manifests/bg.yaml");
-	expect(kubeCtl.getResource).toBeCalledWith("Deployment", "testapp");
 });
 
 test("blueGreenRejectSMI - deletes service if stable deployment doesn't exist", () => {
@@ -383,12 +379,10 @@ test("blueGreenRejectSMI - deletes service if stable deployment doesn't exist", 
 	//Invoke and assert
 	expect(blueGreenHelperSMI.rejectBlueGreenSMI(kubeCtl, ['manifests/bg.yaml'])).toMatchObject({});
 	expect(kubeCtl.delete).toBeCalledWith(["Deployment", "testapp-green"]);
-	expect(kubeCtl.delete).toBeCalledWith(["Service", "testservice"]);
 	expect(kubeCtl.delete).toBeCalledWith(["Service", "testservice-green"]);
 	expect(kubeCtl.delete).toBeCalledWith(["Service", "testservice-stable"]);
 	expect(kubeCtl.delete).toBeCalledWith(["TrafficSplit", "testservice-trafficsplit"]);
 	expect(readFileSpy).toBeCalledWith("manifests/bg.yaml");
-	expect(kubeCtl.getResource).toBeCalledWith("Deployment", "testapp");
 });
 
 // other functions and branches
@@ -478,7 +472,7 @@ test("blueGreenRouteIngress - routes to green services in nextlabel is green", (
 	kubeCtl.apply = jest.fn().mockReturnValue('');
 
 	//Invoke and assert
-	expect(blueGreenHelperIngress.routeBlueGreenIngress(kubeCtl, 'green', serviceEntityMap, serEntList, ingEntList));
+	expect(blueGreenHelperIngress.routeBlueGreenIngress(kubeCtl, 'green', serviceEntityMap, ingEntList));
 	expect(kubeCtl.apply).toBeCalled();
 	expect(fileHelperMock.writeObjectsToFile).toBeCalled();
 });
@@ -599,7 +593,7 @@ test("validateTrafficSplitState - throws if trafficsplit in wrong state", () => 
 	kubeCtl.getResource = jest.fn().mockReturnValue(JSON.parse(JSON.stringify(temp)));
 
 	//Invoke and assert
-	expect(blueGreenHelperSMI.validateTrafficSplitsState(kubeCtl, depEntList, serEntList)).toBeFalsy();
+	expect(blueGreenHelperSMI.validateTrafficSplitsState(kubeCtl, serEntList)).toBeFalsy();
 });
 
 test("validateTrafficSplitState - throws if trafficsplit in wrong state", () => {
@@ -678,7 +672,7 @@ test("validateTrafficSplitState - throws if trafficsplit in wrong state", () => 
 	kubeCtl.getResource = jest.fn().mockReturnValue(JSON.parse(JSON.stringify(temp)));
 
 	//Invoke and assert
-	expect(blueGreenHelperSMI.validateTrafficSplitsState(kubeCtl, depEntList, serEntList)).toBeFalsy();
+	expect(blueGreenHelperSMI.validateTrafficSplitsState(kubeCtl, serEntList)).toBeFalsy();
 });
 
 test("getSuffix() - returns BLUE_GREEN_SUFFIX if BLUE_GREEN_NEW_LABEL_VALUE is given, else emrty string", () => {

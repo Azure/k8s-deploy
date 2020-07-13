@@ -43,21 +43,21 @@ export async function routeBlueGreen(kubectl: Kubectl, inputManifestFiles: strin
 
     //logging start of buffer time
     let dateNow = new Date();
-    console.log('starting buffer time of '+bufferTime+' minute/s at '+dateNow.toISOString()+' UTC');
+    console.log('Starting buffer time of '+bufferTime+' minute(s) at '+dateNow.toISOString());
     // waiting
     await sleep(bufferTime*1000*60);
     // logging end of buffer time
     dateNow = new Date();
-    console.log('stopping buffer time of '+bufferTime+' minute/s at '+dateNow.toISOString()+' UTC');
+    console.log('Stopping buffer time of '+bufferTime+' minute(s) at '+dateNow.toISOString());
     
     const manifestObjects = getManifestObjects(inputManifestFiles);
     // routing to new deployments
     if (isIngressRoute()) {
-        routeBlueGreenIngress(kubectl, GREEN_LABEL_VALUE, manifestObjects.serviceNameMap, manifestObjects.serviceEntityList, manifestObjects.ingressEntityList);    
+        routeBlueGreenIngress(kubectl, GREEN_LABEL_VALUE, manifestObjects.serviceNameMap, manifestObjects.ingressEntityList);    
     } else if (isSMIRoute()) {
-        routeBlueGreenSMI(kubectl,  GREEN_LABEL_VALUE, manifestObjects.deploymentEntityList, manifestObjects.serviceEntityList);
+        routeBlueGreenSMI(kubectl,  GREEN_LABEL_VALUE, manifestObjects.serviceEntityList);
     } else {
-        routeBlueGreenService(kubectl, GREEN_LABEL_VALUE, manifestObjects.deploymentEntityList, manifestObjects.serviceEntityList);
+        routeBlueGreenService(kubectl, GREEN_LABEL_VALUE, manifestObjects.serviceEntityList);
     }
 }
 
@@ -80,27 +80,6 @@ export function deleteWorkloadsWithLabel(kubectl: Kubectl, deleteLabel: string, 
 
     // deletes the deployments
     deleteObjects(kubectl, resourcesToDelete);
-}
-
-export function cleanUp(kubectl: Kubectl, deploymentEntityList: any[], serviceEntityList: any[]) {
-    // checks if services has some stable deployments to target or deletes them too
-    let deleteList = []; 
-    deploymentEntityList.forEach((deploymentObject) => {
-        const existingDeploy = fetchResource(kubectl, deploymentObject.kind, deploymentObject.metadata.name);
-        if (!existingDeploy) {
-            serviceEntityList.forEach((serviceObject) => {
-                const serviceSelector: string = getServiceSelector(serviceObject);
-                const matchLabels: string = getDeploymentMatchLabels(deploymentObject); 
-                if (!!serviceSelector && !!matchLabels && isServiceSelectorSubsetOfMatchLabel(serviceSelector, matchLabels)) {
-                    const resourceToDelete = { name : serviceObject.metadata.name, kind : serviceObject.kind };
-                    deleteList.push(resourceToDelete);
-                } 
-            });
-        }
-    });
-
-    // delete service not targeting a deployment
-    deleteObjects(kubectl, deleteList);
 }
 
 export function deleteWorkloadsAndServicesWithLabel(kubectl: Kubectl, deleteLabel: string, deploymentEntityList: any[], serviceEntityList: any[]) {
@@ -146,7 +125,7 @@ export function getSuffix(label: string): string {
 // other common functions
 export function getManifestObjects (filePaths: string[]): any {
     const deploymentEntityList = [];
-    const serviceEntityList = [];
+    const allServiceEntityList = [];
     const ingressEntityList = [];
     const otherEntitiesList = [];
     filePaths.forEach((filePath: string) => {
@@ -157,7 +136,7 @@ export function getManifestObjects (filePaths: string[]): any {
                 if (helper.isDeploymentEntity(kind)) {
                     deploymentEntityList.push(inputObject);
                 } else if (helper.isServiceEntity(kind)) {
-                    serviceEntityList.push(inputObject);
+                    allServiceEntityList.push(inputObject);
                 } else if (helper.isIngressEntity(kind)) {
                     ingressEntityList.push(inputObject);
                 } else {
@@ -167,6 +146,17 @@ export function getManifestObjects (filePaths: string[]): any {
         });
     })
 
+    const serviceEntityList = [];
+    const unroutedServiceEntityList = [];
+
+    allServiceEntityList.forEach((serviceObject) => {
+        if (isServiceRouted(serviceObject, deploymentEntityList)) {
+            serviceEntityList.push(serviceObject);
+        } else {
+            unroutedServiceEntityList.push(serviceObject);
+        }
+    })
+
     let serviceNameMap = new Map<string, string>();
     // find all services and add their names with blue green suffix
     serviceEntityList.forEach(inputObject => {
@@ -174,7 +164,7 @@ export function getManifestObjects (filePaths: string[]): any {
         serviceNameMap.set(name, getBlueGreenResourceName(name, GREEN_SUFFIX));
     });
      
-    return { serviceEntityList: serviceEntityList, serviceNameMap: serviceNameMap, deploymentEntityList: deploymentEntityList, ingressEntityList: ingressEntityList, otherObjects: otherEntitiesList };
+    return { serviceEntityList: serviceEntityList, serviceNameMap: serviceNameMap, unroutedServiceEntityList: unroutedServiceEntityList, deploymentEntityList: deploymentEntityList, ingressEntityList: ingressEntityList, otherObjects: otherEntitiesList };
 }
 
 export function isServiceRouted(serviceObject: any[], deploymentEntityList: any[]): boolean {
