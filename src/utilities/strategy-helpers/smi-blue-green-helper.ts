@@ -83,7 +83,7 @@ export function setupSMI(kubectl: Kubectl, serviceEntityList: any[]) {
 
 function createTrafficSplitObject(kubectl: Kubectl ,name: string, nextLabel: string): any {
     // getting smi spec api version 
-    if (!!trafficSplitAPIVersion) {
+    if (!trafficSplitAPIVersion) {
         trafficSplitAPIVersion = kubectlUtils.getTrafficSplitAPIVersion(kubectl);
     }
 
