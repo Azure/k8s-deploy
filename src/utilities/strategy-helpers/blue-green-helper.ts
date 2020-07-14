@@ -37,20 +37,29 @@ export function isSMIRoute(): boolean {
     return routeMethod && routeMethod.toUpperCase() === SMI_ROUTE;
 }
 
+export interface BlueGreenManifests {
+    serviceEntityList: any[], 
+    serviceNameMap: Map<string, string>, 
+    unroutedServiceEntityList: any[], 
+    deploymentEntityList: any[], 
+    ingressEntityList: any[], 
+    otherObjects: any[] 
+}
+
 export async function routeBlueGreen(kubectl: Kubectl, inputManifestFiles: string[]) {
     // get buffer time
     let bufferTime: number = parseInt(TaskInputParameters.versionSwitchBuffer);
 
     //logging start of buffer time
     let dateNow = new Date();
-    console.log('Starting buffer time of '+bufferTime+' minute(s) at '+dateNow.toISOString());
+    console.log(`Starting buffer time of ${bufferTime} minute(s) at ${dateNow.toISOString()}`);
     // waiting
     await sleep(bufferTime*1000*60);
     // logging end of buffer time
     dateNow = new Date();
-    console.log('Stopping buffer time of '+bufferTime+' minute(s) at '+dateNow.toISOString());
+    console.log(`Stopping buffer time of ${bufferTime} minute(s) at ${dateNow.toISOString()}`);
     
-    const manifestObjects = getManifestObjects(inputManifestFiles);
+    const manifestObjects: BlueGreenManifests = getManifestObjects(inputManifestFiles);
     // routing to new deployments
     if (isIngressRoute()) {
         routeBlueGreenIngress(kubectl, GREEN_LABEL_VALUE, manifestObjects.serviceNameMap, manifestObjects.ingressEntityList);    
@@ -123,20 +132,28 @@ export function getSuffix(label: string): string {
 }
 
 // other common functions
-export function getManifestObjects (filePaths: string[]): any {
+export function getManifestObjects (filePaths: string[]): BlueGreenManifests {
     const deploymentEntityList = [];
-    const allServiceEntityList = [];
+    const routedServiceEntityList = [];
+    const unroutedServiceEntityList = [];
     const ingressEntityList = [];
     const otherEntitiesList = [];
+    let serviceNameMap = new Map<string, string>();
     filePaths.forEach((filePath: string) => {
         const fileContents = fs.readFileSync(filePath);
         yaml.safeLoadAll(fileContents, function (inputObject) {
             if(!!inputObject) {
                 const kind = inputObject.kind;
+                const name = inputObject.metadata.name;
                 if (helper.isDeploymentEntity(kind)) {
                     deploymentEntityList.push(inputObject);
                 } else if (helper.isServiceEntity(kind)) {
-                    allServiceEntityList.push(inputObject);
+                    if (isServiceRouted(inputObject, deploymentEntityList)) {
+                        routedServiceEntityList.push(inputObject);
+                        serviceNameMap.set(name, getBlueGreenResourceName(name, GREEN_SUFFIX));
+                    } else {
+                        unroutedServiceEntityList.push(inputObject);
+                    }
                 } else if (helper.isIngressEntity(kind)) {
                     ingressEntityList.push(inputObject);
                 } else {
@@ -145,26 +162,8 @@ export function getManifestObjects (filePaths: string[]): any {
             }
         });
     })
-
-    const serviceEntityList = [];
-    const unroutedServiceEntityList = [];
-
-    allServiceEntityList.forEach((serviceObject) => {
-        if (isServiceRouted(serviceObject, deploymentEntityList)) {
-            serviceEntityList.push(serviceObject);
-        } else {
-            unroutedServiceEntityList.push(serviceObject);
-        }
-    })
-
-    let serviceNameMap = new Map<string, string>();
-    // find all services and add their names with blue green suffix
-    serviceEntityList.forEach(inputObject => {
-        const name = inputObject.metadata.name;
-        serviceNameMap.set(name, getBlueGreenResourceName(name, GREEN_SUFFIX));
-    });
      
-    return { serviceEntityList: serviceEntityList, serviceNameMap: serviceNameMap, unroutedServiceEntityList: unroutedServiceEntityList, deploymentEntityList: deploymentEntityList, ingressEntityList: ingressEntityList, otherObjects: otherEntitiesList };
+    return { serviceEntityList: routedServiceEntityList, serviceNameMap: serviceNameMap, unroutedServiceEntityList: unroutedServiceEntityList, deploymentEntityList: deploymentEntityList, ingressEntityList: ingressEntityList, otherObjects: otherEntitiesList };
 }
 
 export function isServiceRouted(serviceObject: any[], deploymentEntityList: any[]): boolean {

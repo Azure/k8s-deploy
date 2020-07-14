@@ -3,13 +3,13 @@
 import * as core from '@actions/core';
 import { Kubectl } from '../../kubectl-object-model';
 import * as fileHelper from '../files-helper';
-import { createWorkloadsWithLabel, getManifestObjects, getNewBlueGreenObject, addBlueGreenLabelsAndAnnotations, deleteWorkloadsAndServicesWithLabel, fetchResource } from './blue-green-helper';
+import { createWorkloadsWithLabel, getManifestObjects, getNewBlueGreenObject, addBlueGreenLabelsAndAnnotations, deleteWorkloadsAndServicesWithLabel, fetchResource, BlueGreenManifests } from './blue-green-helper';
 import { GREEN_LABEL_VALUE, NONE_LABEL_VALUE, BLUE_GREEN_VERSION_LABEL } from './blue-green-helper';
 const BACKEND = 'BACKEND';
 
 export function deployBlueGreenIngress(kubectl: Kubectl, filePaths: string[]) {
     // get all kubernetes objects defined in manifest files
-    const manifestObjects = getManifestObjects(filePaths);
+    const manifestObjects: BlueGreenManifests = getManifestObjects(filePaths);
 
     // create deployments with green label value
     const result = createWorkloadsWithLabel(kubectl, manifestObjects.deploymentEntityList, GREEN_LABEL_VALUE);
@@ -56,7 +56,7 @@ export async function promoteBlueGreenIngress(kubectl: Kubectl, manifestObjects)
 
 export async function rejectBlueGreenIngress(kubectl: Kubectl, filePaths: string[]) {
     // get all kubernetes objects defined in manifest files
-    const manifestObjects = getManifestObjects(filePaths);
+    const manifestObjects: BlueGreenManifests = getManifestObjects(filePaths);
     
     // routing ingress to stables services
     routeBlueGreenIngress(kubectl, null, manifestObjects.serviceNameMap, manifestObjects.ingressEntityList);
