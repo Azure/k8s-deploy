@@ -3,7 +3,7 @@
 import { Kubectl } from '../../kubectl-object-model';
 import * as kubectlUtils from '../kubectl-util';
 import * as fileHelper from '../files-helper';
-import { createWorkloadsWithLabel, getManifestObjects, fetchResource, deleteWorkloadsWithLabel, getNewBlueGreenObject, getBlueGreenResourceName, deleteObjects } from './blue-green-helper';
+import { createWorkloadsWithLabel, getManifestObjects, fetchResource, deleteWorkloadsWithLabel, getNewBlueGreenObject, getBlueGreenResourceName, deleteObjects, BlueGreenManifests } from './blue-green-helper';
 import { GREEN_LABEL_VALUE, NONE_LABEL_VALUE, GREEN_SUFFIX, STABLE_SUFFIX } from './blue-green-helper';
 
 let trafficSplitAPIVersion = "";
@@ -14,7 +14,7 @@ const MAX_VAL = '100';
 
 export function deployBlueGreenSMI(kubectl: Kubectl, filePaths: string[]) {
     // get all kubernetes objects defined in manifest files
-    const manifestObjects = getManifestObjects(filePaths);
+    const manifestObjects: BlueGreenManifests = getManifestObjects(filePaths);
 
     // creating services and other objects
     const newObjectsList = manifestObjects.otherObjects.concat(manifestObjects.serviceEntityList).concat(manifestObjects.ingressEntityList).concat(manifestObjects.unroutedServiceEntityList);
@@ -46,7 +46,7 @@ export async function promoteBlueGreenSMI(kubectl: Kubectl, manifestObjects) {
 
 export async function rejectBlueGreenSMI(kubectl: Kubectl, filePaths: string[]) {
     // get all kubernetes objects defined in manifest files
-    const manifestObjects = getManifestObjects(filePaths);
+    const manifestObjects: BlueGreenManifests = getManifestObjects(filePaths);
 
     // routing trafficsplit to stable deploymetns
     routeBlueGreenSMI(kubectl, NONE_LABEL_VALUE, manifestObjects.serviceEntityList);
@@ -83,7 +83,9 @@ export function setupSMI(kubectl: Kubectl, serviceEntityList: any[]) {
 
 function createTrafficSplitObject(kubectl: Kubectl ,name: string, nextLabel: string): any {
     // getting smi spec api version 
-    trafficSplitAPIVersion = kubectlUtils.getTrafficSplitAPIVersion(kubectl);
+    if (!!trafficSplitAPIVersion) {
+        trafficSplitAPIVersion = kubectlUtils.getTrafficSplitAPIVersion(kubectl);
+    }
 
     // deciding weights based on nextlabel
     let stableWeight: number;

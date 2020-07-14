@@ -2,12 +2,12 @@
 
 import { Kubectl } from '../../kubectl-object-model';
 import * as fileHelper from '../files-helper';
-import { createWorkloadsWithLabel, getManifestObjects, addBlueGreenLabelsAndAnnotations, fetchResource, deleteWorkloadsWithLabel } from './blue-green-helper';
+import { createWorkloadsWithLabel, getManifestObjects, addBlueGreenLabelsAndAnnotations, fetchResource, deleteWorkloadsWithLabel, BlueGreenManifests } from './blue-green-helper';
 import { GREEN_LABEL_VALUE, NONE_LABEL_VALUE, BLUE_GREEN_VERSION_LABEL } from './blue-green-helper';
 
 export function deployBlueGreenService(kubectl: Kubectl, filePaths: string[]) {
     // get all kubernetes objects defined in manifest files
-    const manifestObjects = getManifestObjects(filePaths);
+    const manifestObjects: BlueGreenManifests = getManifestObjects(filePaths);
 
     // create deployments with green label value
     const result = createWorkloadsWithLabel(kubectl, manifestObjects.deploymentEntityList, GREEN_LABEL_VALUE);
@@ -36,7 +36,7 @@ export async function promoteBlueGreenService(kubectl: Kubectl, manifestObjects)
 
 export async function rejectBlueGreenService(kubectl: Kubectl, filePaths: string[]) {
     // get all kubernetes objects defined in manifest files
-    const manifestObjects = getManifestObjects(filePaths);
+    const manifestObjects: BlueGreenManifests = getManifestObjects(filePaths);
 
     // routing to stable objects
     routeBlueGreenService(kubectl, NONE_LABEL_VALUE, manifestObjects.serviceEntityList);
