@@ -22,11 +22,13 @@ Following are the key capabilities of this action:
 	    - **Service Mesh Interface**: Service Mesh Interface abstraction allows for plug-and-play configuration with service mesh providers such as Linkerd and Istio. Meanwhile, this action takes away the hard work of mapping SMI's TrafficSplit objects to the stable, baseline and canary services during the lifecycle of the deployment strategy. Service mesh based canary deployments using this action are more accurate as service mesh providers enable granular percentage traffic split (via service registry and sidecar containers injected into pods alongside application containers).
 	    - **Only Kubernetes (no service mesh)**: In the absence of service mesh, while it may not be possible to achieve exact percentage split at the request level, it is still possible to perform canary deployments by deploying -baseline and -canary workload variants next to the stable variant. The service routes requests to pods of all three workload variants as the selector-label constraints are met (KubernetesManifest will honor these when creating -baseline and -canary variants). This achieves the intended effect of routing only a portion of total requests to the canary.
 	- **Blue-Green strategy**: Choosing blue-green strategy with this action leads to creation of workloads suffixed with '-green'. There are three route-methods supported in the action:
-	    - **Service route-method**: The services are configured to target the green deployments. The service is only configured if it targets a workload in the given manifests.
-	    - **Ingress route-method**: Along with deployments, new services are created with '-green' suffix (only if they are targeting a workload), and the ingresses are in turn updated to target the new services.
-	    - **SMI route-method**: A new [TrafficSplit](https://github.com/servicemeshinterface/smi-spec/blob/master/apis/traffic-split/v1alpha3/traffic-split.md) object for each service which is targeting a workload, and the TrafficSplit object is updated to target new deployments. This works only if SMI is set up in the cluster.
+
+      *Terminolgy: An **identified** service is one that is supplied as part of the input manifest(s) and targets a workload in the supplied manifest(s).
+	    - **Service route-method**: **Identified** services are configured to target the green deployments.
+	    - **Ingress route-method**: Along with deployments, new services are created with '-green' suffix (for **identified** services), and the ingresses are in turn updated to target the new services.
+	    - **SMI route-method**: A new [TrafficSplit](https://github.com/servicemeshinterface/smi-spec/blob/master/apis/traffic-split/v1alpha3/traffic-split.md) object is created for each **identified** service. The TrafficSplit object is updated to target the new deployments. **Note** that this works only if SMI is set up in the cluster.
 	    
-	- Traffic is routed to the new workloads only after the input time of `version-switch-buffer` has passed. `promote` action   creates workloads and services with new configurations but without any suffix. `reject` action routes traffic back to the old workloads and deletes the '-green' workloads.
+      Traffic is routed to the new workloads only after the time provided as `version-switch-buffer` input has passed. `promote` action creates workloads and services with new configurations but without any suffix. `reject` action routes traffic back to the old workloads and deletes the '-green' workloads.
 
 
 ## Action inputs
@@ -73,10 +75,10 @@ Following are the key capabilities of this action:
   </tr>
    <tr>
     <td><code>route-method</code><br/>Route Method</td>
-    <td>(Optional; Relevant only if strategy==blue-green) Default value: service. Acceptable values: service/ingress/smi. Traffic is routed based on the input here.
-    <br>Service: Service selector labels are updated to make it target '-green' workloads.
-    <br>Ingress: Ingress backends are updated to make it target the new '-green' services which in turn would target '-green' deployments.
-    <br>SMI: A <a href="https://github.com/servicemeshinterface/smi-spec/blob/master/apis/traffic-split/v1alpha3/traffic-split.md" data-raw-source="TrafficSplit](https://github.com/deislabs/smi-spec/blob/master/traffic-split.md)">TrafficSplit</a>  object is created to route traffic to new workloads.</td>
+    <td>(Optional; Relevant only if strategy==blue-green) Default value: service. Acceptable values: service/ingress/smi. Traffic is routed based on this input.
+    <br>Service: Service selector labels are updated to target '-green' workloads.
+    <br>Ingress: Ingress backends are updated to target the new '-green' services which in turn target '-green' deployments.
+    <br>SMI: A <a href="https://github.com/servicemeshinterface/smi-spec/blob/master/apis/traffic-split/v1alpha3/traffic-split.md" data-raw-source="TrafficSplit](https://github.com/deislabs/smi-spec/blob/master/traffic-split.md)">TrafficSplit</a>  object is created for each required service to route traffic to new workloads.</td>
   </tr>
   <tr>
     <td><code>version-switch-buffer</code><br/>Version Switch Buffer</td>
