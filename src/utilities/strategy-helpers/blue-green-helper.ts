@@ -168,16 +168,15 @@ export function getManifestObjects (filePaths: string[]): BlueGreenManifests {
 
 export function isServiceRouted(serviceObject: any[], deploymentEntityList: any[]): boolean {
     let shouldBeRouted: boolean = false;
-    const serviceSelector: string = getServiceSelector(serviceObject);
+    const serviceSelector: any = getServiceSelector(serviceObject);
     if (!!serviceSelector) {
-        deploymentEntityList.every((depObject) => {
+        if (deploymentEntityList.some((depObject) => {
             // finding if there is a deployment in the given manifests the service targets
-            const matchLabels: string = getDeploymentMatchLabels(depObject); 
-            if (!!matchLabels && isServiceSelectorSubsetOfMatchLabel(serviceSelector, matchLabels)) {
-                shouldBeRouted = true;
-                return false;
-            }
-        });
+            const matchLabels: any = getDeploymentMatchLabels(depObject); 
+            return (!!matchLabels && isServiceSelectorSubsetOfMatchLabel(serviceSelector, matchLabels)) 
+        })) {
+            shouldBeRouted = true;
+        }
     }
     return shouldBeRouted;
 }
@@ -229,36 +228,30 @@ export function getBlueGreenResourceName(name: string, suffix: string) {
     return `${name}${suffix}`;
 }
 
-export function getSpecLabel(inputObject: any): string {
-    if(!!inputObject && inputObject.spec && inputObject.spec.selector && inputObject.spec.selector.matchLabels && inputObject.spec.selector.matchLabels[BLUE_GREEN_VERSION_LABEL]) {
-        return inputObject.spec.selector.matchLabels[BLUE_GREEN_VERSION_LABEL]; 
-    }
-    return '';
-}
-
-export function getDeploymentMatchLabels(deploymentObject: any): string {
+export function getDeploymentMatchLabels(deploymentObject: any): any {
     if (!!deploymentObject && deploymentObject.kind.toUpperCase()==KubernetesWorkload.pod.toUpperCase() &&  !!deploymentObject.metadata && !!deploymentObject.metadata.labels) {
-        return JSON.stringify(deploymentObject.metadata.labels);
+        return deploymentObject.metadata.labels;
     } else if (!!deploymentObject && deploymentObject.spec && deploymentObject.spec.selector && deploymentObject.spec.selector.matchLabels) {
-        return JSON.stringify(deploymentObject.spec.selector.matchLabels);
+        return deploymentObject.spec.selector.matchLabels;
     }
-    return '';
+    return null;
 }
 
-export function getServiceSelector(serviceObject: any): string {
+export function getServiceSelector(serviceObject: any): any {
     if (!!serviceObject && serviceObject.spec && serviceObject.spec.selector) {
-        return JSON.stringify(serviceObject.spec.selector);
-    } else return '';
+        return serviceObject.spec.selector;
+    } else return null;
 }
 
-export function isServiceSelectorSubsetOfMatchLabel(serviceSelector: string, matchLabels: string): boolean {
+export function isServiceSelectorSubsetOfMatchLabel(serviceSelector: any, matchLabels: any): boolean {
     let serviceSelectorMap = new Map();
     let matchLabelsMap = new Map();
   
-    JSON.parse(serviceSelector, (key, value) => {
+    JSON.parse(JSON.stringify(serviceSelector), (key, value) => {
       serviceSelectorMap.set(key, value);
     });
-    JSON.parse(matchLabels, (key, value) => {
+
+    JSON.parse(JSON.stringify(matchLabels), (key, value) => {
       matchLabelsMap.set(key, value);
     });
   
