@@ -26,7 +26,8 @@ export async function deploy(kubectl: Kubectl, manifestFilePaths: string[], depl
     let inputManifestFiles: string[] = getUpdatedManifestFiles(manifestFilePaths);
 
     // deployment
-    const deployedManifestFiles = deployManifests(inputManifestFiles, kubectl, isCanaryDeploymentStrategy(deploymentStrategy), isBlueGreenDeploymentStrategy());
+    const deployResults = deployManifests(inputManifestFiles, kubectl, isCanaryDeploymentStrategy(deploymentStrategy), isBlueGreenDeploymentStrategy());
+    const deployedManifestFiles = deployResults.files;
 
     // check manifest stability
     const resourceTypes: Resource[] = KubernetesObjectUtility.getResources(deployedManifestFiles, models.deploymentTypes.concat([KubernetesConstants.DiscoveryAndLoadBalancerResource.service]));
@@ -34,7 +35,7 @@ export async function deploy(kubectl: Kubectl, manifestFilePaths: string[], depl
 
     // route blue-green deployments
     if (isBlueGreenDeploymentStrategy()) {
-        await routeBlueGreen(kubectl, inputManifestFiles);
+        await routeBlueGreen(kubectl, deployResults.manifestObjects);
     }
 
     // print ingress resources
@@ -54,8 +55,9 @@ export function getManifestFiles(manifestFilePaths: string[]): string[] {
     return files;
 }
 
-function deployManifests(files: string[], kubectl: Kubectl, isCanaryDeploymentStrategy: boolean, isBlueGreenDeploymentStrategy: boolean): string[] {
+function deployManifests(files: string[], kubectl: Kubectl, isCanaryDeploymentStrategy: boolean, isBlueGreenDeploymentStrategy: boolean): any {
     let result;
+    let manifestObjects: any = undefined;
     if (isCanaryDeploymentStrategy) {
         let canaryDeploymentOutput: any;
         if (canaryDeploymentHelper.isSMICanaryStrategy()) {
@@ -74,8 +76,9 @@ function deployManifests(files: string[], kubectl: Kubectl, isCanaryDeploymentSt
         } else {
             blueGreenDeploymentOutput = deployBlueGreenService(kubectl, files);
         }
-        result = blueGreenDeploymentOutput.result;
-        files = blueGreenDeploymentOutput.newFilePaths;
+        result = blueGreenDeploymentOutput.result.result;
+        files = blueGreenDeploymentOutput.result.newFilePaths;
+        manifestObjects = blueGreenDeploymentOutput.manifestObjects;
     } else {
         if (canaryDeploymentHelper.isSMICanaryStrategy()) {
             const updatedManifests = appendStableVersionLabelToResource(files, kubectl);
@@ -86,7 +89,7 @@ function deployManifests(files: string[], kubectl: Kubectl, isCanaryDeploymentSt
         }
     }
     checkForErrors([result]);
-    return files;
+    return { manifestObjects: manifestObjects, files: files };
 }
 
 function appendStableVersionLabelToResource(files: string[], kubectl: Kubectl): string[] {

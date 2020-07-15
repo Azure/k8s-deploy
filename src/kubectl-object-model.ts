@@ -66,6 +66,10 @@ export class Kubectl {
         return this.execute(['get', resourceType + '/' + name, '-o', 'json']);
     }
 
+    public getAllResourcesOfKind(resourceType: string) {
+        return this.execute(['get', resourceType, '-o', 'json']);
+    }
+
     public getResources(applyOutput: string, filterResourceTypes: string[]): Resource[] {
         const outputLines = applyOutput.split('\n');
         const results = [];

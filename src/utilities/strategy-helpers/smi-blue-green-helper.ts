@@ -3,8 +3,9 @@
 import { Kubectl } from '../../kubectl-object-model';
 import * as kubectlUtils from '../kubectl-util';
 import * as fileHelper from '../files-helper';
-import { createWorkloadsWithLabel, getManifestObjects, fetchResource, deleteWorkloadsWithLabel, getNewBlueGreenObject, getBlueGreenResourceName, deleteObjects, BlueGreenManifests } from './blue-green-helper';
+import { createWorkloadsWithLabel, getManifestObjects, fetchResource, deleteWorkloadsWithLabel, getBlueGreenResourceName, deleteObjects, BlueGreenManifests, getAuxiliaryService } from './blue-green-helper';
 import { GREEN_LABEL_VALUE, NONE_LABEL_VALUE, GREEN_SUFFIX, STABLE_SUFFIX } from './blue-green-helper';
+import { STABLE_LABEL_VALUE } from './canary-deployment-helper';
 
 let trafficSplitAPIVersion = "";
 const TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX = '-trafficsplit';
@@ -14,10 +15,10 @@ const MAX_VAL = '100';
 
 export function deployBlueGreenSMI(kubectl: Kubectl, filePaths: string[]) {
     // get all kubernetes objects defined in manifest files
-    const manifestObjects: BlueGreenManifests = getManifestObjects(filePaths);
+    const manifestObjects: BlueGreenManifests = getManifestObjects(kubectl, filePaths);
 
     // creating services and other objects
-    const newObjectsList = manifestObjects.otherObjects.concat(manifestObjects.serviceEntityList).concat(manifestObjects.ingressEntityList).concat(manifestObjects.unroutedServiceEntityList);
+    const newObjectsList = manifestObjects.otherObjects.concat(manifestObjects.serviceEntityList).concat(manifestObjects.ingressEntityList).concat(manifestObjects.unroutedServiceEntityList).concat(manifestObjects.unroutedIngressEntityList);;
     const manifestFiles = fileHelper.writeObjectsToFile(newObjectsList);
     kubectl.apply(manifestFiles);
 
@@ -28,7 +29,7 @@ export function deployBlueGreenSMI(kubectl: Kubectl, filePaths: string[]) {
     const result = createWorkloadsWithLabel(kubectl, manifestObjects.deploymentEntityList, GREEN_LABEL_VALUE);
 
     // return results to check for manifest stability
-    return result;
+    return { manifestObjects: manifestObjects ,result: result};
 }
 
 export async function promoteBlueGreenSMI(kubectl: Kubectl, manifestObjects) {
@@ -46,7 +47,7 @@ export async function promoteBlueGreenSMI(kubectl: Kubectl, manifestObjects) {
 
 export async function rejectBlueGreenSMI(kubectl: Kubectl, filePaths: string[]) {
     // get all kubernetes objects defined in manifest files
-    const manifestObjects: BlueGreenManifests = getManifestObjects(filePaths);
+    const manifestObjects: BlueGreenManifests = getManifestObjects(kubectl, filePaths);
 
     // routing trafficsplit to stable deploymetns
     routeBlueGreenSMI(kubectl, NONE_LABEL_VALUE, manifestObjects.serviceEntityList);
@@ -65,8 +66,8 @@ export function setupSMI(kubectl: Kubectl, serviceEntityList: any[]) {
         // create a trafficsplit for service
         trafficObjectList.push(serviceObject);
         // setting up the services for trafficsplit
-        const newStableService = getSMIServiceResource(serviceObject, STABLE_SUFFIX);
-        const newGreenService = getSMIServiceResource(serviceObject, GREEN_SUFFIX);
+        const newStableService = getAuxiliaryService(serviceObject, STABLE_LABEL_VALUE);
+        const newGreenService = getAuxiliaryService(serviceObject, GREEN_LABEL_VALUE);
         newObjectsList.push(newStableService);
         newObjectsList.push(newGreenService);
     });
@@ -123,18 +124,6 @@ function createTrafficSplitObject(kubectl: Kubectl ,name: string, nextLabel: str
     // creating trafficplit object
     const trafficSplitManifestFile = fileHelper.writeManifestToFile(trafficSplitObject, TRAFFIC_SPLIT_OBJECT, getBlueGreenResourceName(name, TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX));
     kubectl.apply(trafficSplitManifestFile);
-}
-
-export function getSMIServiceResource(inputObject: any, suffix: string): object {
-    const newObject = JSON.parse(JSON.stringify(inputObject));
-    if (suffix === STABLE_SUFFIX) {
-        // adding stable suffix to service name
-        newObject.metadata.name = getBlueGreenResourceName(inputObject.metadata.name, STABLE_SUFFIX)
-        return getNewBlueGreenObject(newObject, NONE_LABEL_VALUE);
-    } else {
-        // green label will be added for these
-        return getNewBlueGreenObject(newObject, GREEN_LABEL_VALUE);
-    }
 }
 
 export function routeBlueGreenSMI(kubectl: Kubectl, nextLabel: string, serviceEntityList: any[]) {

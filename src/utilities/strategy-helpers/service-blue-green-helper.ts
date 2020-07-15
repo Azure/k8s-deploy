@@ -2,23 +2,23 @@
 
 import { Kubectl } from '../../kubectl-object-model';
 import * as fileHelper from '../files-helper';
-import { createWorkloadsWithLabel, getManifestObjects, addBlueGreenLabelsAndAnnotations, fetchResource, deleteWorkloadsWithLabel, BlueGreenManifests } from './blue-green-helper';
+import { createWorkloadsWithLabel, getManifestObjects, addBlueGreenLabelsAndAnnotations, fetchResource, deleteWorkloadsWithLabel, BlueGreenManifests, isGreenObject } from './blue-green-helper';
 import { GREEN_LABEL_VALUE, NONE_LABEL_VALUE, BLUE_GREEN_VERSION_LABEL } from './blue-green-helper';
 
 export function deployBlueGreenService(kubectl: Kubectl, filePaths: string[]) {
     // get all kubernetes objects defined in manifest files
-    const manifestObjects: BlueGreenManifests = getManifestObjects(filePaths);
+    const manifestObjects: BlueGreenManifests = getManifestObjects(kubectl, filePaths);
 
     // create deployments with green label value
     const result = createWorkloadsWithLabel(kubectl, manifestObjects.deploymentEntityList, GREEN_LABEL_VALUE);
 
     // create other non deployment and non service entities
-    const newObjectsList = manifestObjects.otherObjects.concat(manifestObjects.ingressEntityList).concat(manifestObjects.unroutedServiceEntityList);
+    const newObjectsList = manifestObjects.otherObjects.concat(manifestObjects.ingressEntityList).concat(manifestObjects.unroutedServiceEntityList).concat(manifestObjects.unroutedIngressEntityList);
     const manifestFiles = fileHelper.writeObjectsToFile(newObjectsList);
     kubectl.apply(manifestFiles);
     
     // returning deployment details to check for rollout stability
-    return result;
+    return { manifestObjects: manifestObjects, result: result};
 }
 
 export async function promoteBlueGreenService(kubectl: Kubectl, manifestObjects) {
@@ -36,7 +36,7 @@ export async function promoteBlueGreenService(kubectl: Kubectl, manifestObjects)
 
 export async function rejectBlueGreenService(kubectl: Kubectl, filePaths: string[]) {
     // get all kubernetes objects defined in manifest files
-    const manifestObjects: BlueGreenManifests = getManifestObjects(filePaths);
+    const manifestObjects: BlueGreenManifests = getManifestObjects(kubectl, filePaths);
 
     // routing to stable objects
     routeBlueGreenService(kubectl, NONE_LABEL_VALUE, manifestObjects.serviceEntityList);
@@ -70,9 +70,7 @@ export function validateServicesState(kubectl: Kubectl, serviceEntityList: any[]
         // finding the existing routed service
         const existingService = fetchResource(kubectl, serviceObject.kind, serviceObject.metadata.name);
         if (!!existingService) {
-            let currentLabel: string = getServiceSpecLabel(existingService);
-            if(currentLabel != GREEN_LABEL_VALUE) {
-                // service should be targeting deployments with green label
+            if (!isGreenObject(existingService)) {
                 areServicesGreen = false;
             }
         } else {

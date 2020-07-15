@@ -60,7 +60,7 @@ async function promoteCanary(kubectl: Kubectl) {
 async function promoteBlueGreen(kubectl: Kubectl) {
     // updated container images and pull secrets
     let inputManifestFiles: string[] = getUpdatedManifestFiles(TaskInputParameters.manifests);
-    const manifestObjects: BlueGreenManifests = getManifestObjects(inputManifestFiles);
+    const manifestObjects: BlueGreenManifests = getManifestObjects(kubectl, inputManifestFiles);
 
     core.debug('deleting old deployment and making new ones');
     let result;
@@ -79,7 +79,7 @@ async function promoteBlueGreen(kubectl: Kubectl) {
     
     core.debug('routing to new deployments');
     if(isIngressRoute()) {
-        routeBlueGreenIngress(kubectl, null, manifestObjects.serviceNameMap, manifestObjects.ingressEntityList);
+        routeBlueGreenIngress(kubectl, NONE_LABEL_VALUE, manifestObjects.serviceNameMap, manifestObjects.ingressEntityList);
         deleteWorkloadsAndServicesWithLabel(kubectl, GREEN_LABEL_VALUE, manifestObjects.deploymentEntityList, manifestObjects.serviceEntityList);
     } else if (isSMIRoute()) {
         routeBlueGreenSMI(kubectl, NONE_LABEL_VALUE, manifestObjects.serviceEntityList);

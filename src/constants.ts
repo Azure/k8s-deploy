@@ -13,6 +13,7 @@ export class KubernetesWorkload {
 export class DiscoveryAndLoadBalancerResource {
     public static service: string = 'service';
     public static ingress: string = 'ingress';
+    public static smi: string = 'smi';
 }
 
 export class ServiceTypes {
