@@ -177,6 +177,7 @@ function addCanaryLabelsAndAnnotations(inputObject: any, type: string) {
     newLabels[CANARY_VERSION_LABEL] = type;
 
     helper.updateObjectLabels(inputObject, newLabels, false);
+    helper.updateObjectAnnotations(inputObject, newLabels, false);
     helper.updateSelectorLabels(inputObject, newLabels, false);
 
     if (!helper.isServiceEntity(inputObject.kind)) {
