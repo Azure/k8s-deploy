@@ -1,0 +1,18 @@
+name: "Trigger Integration tests"
+on:
+  push:
+
+jobs: 
+    trigger-integration-tests:
+      name: Trigger Integration tests
+      runs-on: ubuntu-latest
+      steps:
+        - name: Trigger Test run
+          run: |
+            response=$(curl -X POST -H "Authorization: token ${{ secrets.L2_REPO_TOKEN }}" https://api.github.com/repos/sundargs2000/integration-test/dispatches --data '{"event_type": "K8sDeployActionPR", "client_payload": {"action": "k8s-deploy"}}')
+            if [ "$response" == "" ]; then 
+             echo "Integration tests triggered successfully"; 
+            else 
+             echo "Triggering integration tests failed with: '$response'";
+             exit 1;
+            fi
