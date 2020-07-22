@@ -2,7 +2,8 @@ import * as os from 'os';
 import * as core from '@actions/core';
 import { IExecSyncResult } from './tool-runner';
 import { Kubectl } from '../kubectl-object-model';
-import { workflowAnnotations } from '../constants';
+import { GitHubClient } from '../githubClient';
+import { StatusCodes } from "./httpClient";
 
 export function getExecutableExtension(): string {
     if (os.type().match(/^Win/)) {
@@ -21,7 +22,7 @@ export function isEqual(str1: string, str2: string, ignoreCase?: boolean): boole
         return false;
     }
 
-    if (ignoreCase) {
+    if (!!ignoreCase) {
         return str1.toUpperCase() === str2.toUpperCase();
     } else {
         return str1 === str2;
@@ -32,7 +33,7 @@ export function checkForErrors(execResults: IExecSyncResult[], warnIfError?: boo
     if (execResults.length !== 0) {
         let stderr = '';
         execResults.forEach(result => {
-            if (result && result.stderr) {
+            if (!!result && !!result.stderr) {
                 if (result.code !== 0) {
                     stderr += result.stderr + '\n';
                 } else {
@@ -41,7 +42,7 @@ export function checkForErrors(execResults: IExecSyncResult[], warnIfError?: boo
             }
         });
         if (stderr.length > 0) {
-            if (warnIfError) {
+            if (!!warnIfError) {
                 core.warning(stderr.trim());
             } else {
                 throw new Error(stderr.trim());
@@ -50,48 +51,47 @@ export function checkForErrors(execResults: IExecSyncResult[], warnIfError?: boo
     }
 }
 
-export function annotateChildPods(kubectl: Kubectl, resourceType: string, resourceName: string, allPods): IExecSyncResult[] {
+export async function getLastSuccessfulRunSha(githubToken: string): Promise<string> {
+    let lastSuccessRunSha = '';
+    const gitHubClient = new GitHubClient(process.env.GITHUB_REPOSITORY, githubToken);
+    const branch = process.env.GITHUB_REF.replace("refs/heads/", "");
+    const response = await gitHubClient.getSuccessfulRunsOnBranch(branch);
+    if (response.statusCode == StatusCodes.OK
+        && response.body
+        && response.body.total_count) {
+        if (response.body.total_count > 0) {
+            lastSuccessRunSha = response.body.workflow_runs[0].head_sha;
+        }
+        else {
+            lastSuccessRunSha = 'NA';
+        }
+    }
+    else if (response.statusCode != StatusCodes.OK) {
+        core.debug(`An error occured while getting succeessful run results. Statuscode: ${response.statusCode}, StatusMessage: ${response.statusMessage}`);
+    }
+    return lastSuccessRunSha;
+}
+
+export function annotateChildPods(kubectl: Kubectl, resourceType: string, resourceName: string, annotationKeyValStr: string, allPods): IExecSyncResult[] {
     const commandExecutionResults = [];
     let owner = resourceName;
     if (resourceType.toLowerCase().indexOf('deployment') > -1) {
         owner = kubectl.getNewReplicaSet(resourceName);
     }
 
-    if (allPods && allPods.items && allPods.items.length > 0) {
+    if (!!allPods && !!allPods.items && allPods.items.length > 0) {
         allPods.items.forEach((pod) => {
             const owners = pod.metadata.ownerReferences;
-            if (owners) {
+            if (!!owners) {
                 owners.forEach(ownerRef => {
                     if (ownerRef.name === owner) {
-                        commandExecutionResults.push(kubectl.annotate('pod', pod.metadata.name, workflowAnnotations, true));
+                        commandExecutionResults.push(kubectl.annotate('pod', pod.metadata.name, [annotationKeyValStr], true));
                     }
                 });
             }
         });
     }
-
     return commandExecutionResults;
-}
-
-export function annotateNamespace(kubectl: Kubectl, namespaceName: string): IExecSyncResult {
-    const result = kubectl.getResource('namespace', namespaceName);
-    if (!result) {
-        return { code: -1, stderr: 'Failed to get resource' } as IExecSyncResult;
-    }
-    else if (result && result.stderr) {
-        return result;
-    }
-
-    if (result && result.stdout) {
-        const annotationsSet = JSON.parse(result.stdout).metadata.annotations;
-        if (annotationsSet && annotationsSet.runUri) {
-            if (annotationsSet.runUri.indexOf(process.env['GITHUB_REPOSITORY']) == -1) {
-                core.debug(`Skipping 'annotate namespace' as namespace annotated by other workflow`);
-                return { code: 0, stdout: '' } as IExecSyncResult;
-            }
-        }
-        return kubectl.annotate('namespace', namespaceName, workflowAnnotations, true);
-    }
 }
 
 export function sleep(timeout: number) {
