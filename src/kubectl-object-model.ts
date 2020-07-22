@@ -65,6 +65,14 @@ export class Kubectl {
         return this.execute(args);
     }
 
+    public labelFiles(files: string | string[], labels: string[], overwrite?: boolean): IExecSyncResult {
+        let args = ['label'];
+        args = args.concat(['-f', this.createInlineArray(files)]);
+        args = args.concat(labels);
+        if (!!overwrite) { args.push(`--overwrite`); }
+        return this.execute(args);
+    }
+
     public getAllPods(): IExecSyncResult {
         return this.execute(['get', 'pods', '-o', 'json'], true);
     }

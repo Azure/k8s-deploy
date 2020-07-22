@@ -7,10 +7,11 @@ import * as fs from 'fs';
 import * as io from '@actions/io';
 import * as toolCache from '@actions/tool-cache';
 import * as fileHelper from '../src/utilities/files-helper';
-import { workflowAnnotations } from '../src/constants';
+import { getWorkflowAnnotationKeyLabel, getWorkflowAnnotationsJson } from '../src/constants';
 import * as inputParam from '../src/input-parameters';
 
 import { Kubectl, Resource } from '../src/kubectl-object-model';
+import { GitHubClient } from '../src/githubClient';
 
 import { getkubectlDownloadURL } from "../src/utilities/kubectl-util";
 import { mocked } from 'ts-jest/utils';
@@ -36,7 +37,7 @@ const getAllPodsMock = {
 
 const getNamespaceMock = {
     'code': 0,
-    'stdout': '{"apiVersion": "v1","kind": "Namespace","metadata": {"annotations": {"workflow": ".github/workflows/workflow.yml","runUri": "https://github.com/testRepo/actions/runs/12345"}},"spec": {"finalizers": ["kubernetes"]},"status": {"phase": "Active"}}'
+    'stdout': '{"apiVersion": "v1","kind": "Namespace","metadata": {"annotations": { "resourceAnnotations": "[{\'run\':\'152673324\',\'repository\':\'koushdey/hello-kubernetes\',\'workflow\':\'.github/workflows/workflowNew.yml\',\'jobName\':\'build-and-deploy\',\'createdBy\':\'koushdey\',\'runUri\':\'https://github.com/koushdey/hello-kubernetes/actions/runs/152673324\',\'commit\':\'f45c9c04ed6bbd4813019ebc6f5e94f155c974a4\',\'branch\':\'refs/heads/koushdey-rename\',\'deployTimestamp\':\'1593516378601\',\'provider\':\'GitHub\'},{\'run\':\'12345\',\'repository\':\'testRepo\',\'workflow\':\'.github/workflows/workflow.yml\',\'jobName\':\'build-and-deploy\',\'createdBy\':\'koushdey\',\'runUri\':\'https://github.com/testRepo/actions/runs/12345\',\'commit\':\'testCommit\',\'branch\':\'testBranch\',\'deployTimestamp\':\'Now\',\'provider\':\'GitHub\'}]","key":"value"}},"spec": {"finalizers": ["kubernetes"]},"status": {"phase": "Active"}}'
 };
 
 const resources: Resource[] = [{ type: "Deployment", name: "AppName" }];
@@ -52,6 +53,7 @@ beforeEach(() => {
     process.env['GITHUB_REPOSITORY'] = 'testRepo';
     process.env['GITHUB_SHA'] = 'testCommit';
     process.env['GITHUB_REF'] = 'testBranch';
+    process.env['GITHUB_TOKEN'] = 'testToken';
 })
 
 test("setKubectlPath() - install a particular version", async () => {
@@ -213,6 +215,7 @@ test("deployment - deploy() - Invokes with manifestfiles", async () => {
     kubeCtl.describe = jest.fn().mockReturnValue("");
     kubeCtl.annotateFiles = jest.fn().mockReturnValue("");
     kubeCtl.annotate = jest.fn().mockReturnValue("");
+    kubeCtl.labelFiles = jest.fn().mockReturnValue("");
     KubernetesManifestUtilityMock.checkManifestStability = jest.fn().mockReturnValue("");
 
     const readFileSpy = jest.spyOn(fs, 'readFileSync').mockImplementation(() => deploymentYaml);
@@ -241,6 +244,7 @@ test("deployment - deploy() - deploy force flag on", async () => {
     kubeCtl.describe = jest.fn().mockReturnValue("");
     kubeCtl.annotateFiles = jest.fn().mockReturnValue("");
     kubeCtl.annotate = jest.fn().mockReturnValue("");
+    kubeCtl.labelFiles = jest.fn().mockReturnValue("");
     KubernetesManifestUtilityMock.checkManifestStability = jest.fn().mockReturnValue("");
 
     const deploySpy = jest.spyOn(kubeCtl, 'apply').mockImplementation(() => applyResMock);
@@ -252,12 +256,14 @@ test("deployment - deploy() - deploy force flag on", async () => {
 });
 
 test("deployment - deploy() - Annotate resources", async () => {
+    let annotationKeyValStr = getWorkflowAnnotationKeyLabel() + '=' + '[' + getWorkflowAnnotationsJson('lastSuccessSha') + ']';
     const KubernetesManifestUtilityMock = mocked(KubernetesManifestUtility, true);
     KubernetesManifestUtilityMock.checkManifestStability = jest.fn().mockReturnValue("");
     const KubernetesObjectUtilityMock = mocked(KubernetesObjectUtility, true);
     KubernetesObjectUtilityMock.getResources = jest.fn().mockReturnValue(resources);
     const fileHelperMock = mocked(fileHelper, true);
     fileHelperMock.writeObjectsToFile = jest.fn().mockReturnValue(["~/Deployment_testapp_currentTimestamp"]);
+
     const kubeCtl: jest.Mocked<Kubectl> = new Kubectl("") as any;
     kubeCtl.apply = jest.fn().mockReturnValue("");
     kubeCtl.getResource = jest.fn().mockReturnValue(getNamespaceMock);
@@ -265,15 +271,17 @@ test("deployment - deploy() - Annotate resources", async () => {
     kubeCtl.getNewReplicaSet = jest.fn().mockReturnValue("testpod-776cbc86f9");
     kubeCtl.annotateFiles = jest.fn().mockReturnValue("");
     kubeCtl.annotate = jest.fn().mockReturnValue("");
+    kubeCtl.labelFiles = jest.fn().mockReturnValue("");
 
     //Invoke and assert
     await expect(deployment.deploy(kubeCtl, ['manifests/deployment.yaml'], undefined)).resolves.not.toThrowError();
-    expect(kubeCtl.annotateFiles).toBeCalledWith(["~/Deployment_testapp_currentTimestamp"], workflowAnnotations, true);
+    expect(kubeCtl.annotateFiles).toBeCalledWith(["~/Deployment_testapp_currentTimestamp"], [annotationKeyValStr], true);
     expect(kubeCtl.annotate).toBeCalledTimes(2);
 });
 
 test("deployment - deploy() - Skip Annotate namespace", async () => {
-    process.env['GITHUB_REPOSITORY'] = 'test1Repo';
+    process.env['GITHUB_REPOSITORY'] = 'testUser/test1Repo';
+    let annotationKeyValStr = getWorkflowAnnotationKeyLabel() + '=' + '[' + getWorkflowAnnotationsJson('lastSuccessSha') + ']';
     const KubernetesManifestUtilityMock = mocked(KubernetesManifestUtility, true);
     KubernetesManifestUtilityMock.checkManifestStability = jest.fn().mockReturnValue("");
     const KubernetesObjectUtilityMock = mocked(KubernetesObjectUtility, true);
@@ -287,14 +295,15 @@ test("deployment - deploy() - Skip Annotate namespace", async () => {
     kubeCtl.getNewReplicaSet = jest.fn().mockReturnValue("testpod-776cbc86f9");
     kubeCtl.annotateFiles = jest.fn().mockReturnValue("");
     kubeCtl.annotate = jest.fn().mockReturnValue("");
+    kubeCtl.labelFiles = jest.fn().mockReturnValue("");
 
     const consoleOutputSpy = jest.spyOn(process.stdout, "write").mockImplementation();
 
     //Invoke and assert
     await expect(deployment.deploy(kubeCtl, ['manifests/deployment.yaml'], undefined)).resolves.not.toThrowError();
-    expect(kubeCtl.annotateFiles).toBeCalledWith(["~/Deployment_testapp_currentTimestamp"], workflowAnnotations, true);
-    expect(kubeCtl.annotate).toBeCalledTimes(1);
-    expect(consoleOutputSpy).toHaveBeenNthCalledWith(2, `##[debug]Skipping 'annotate namespace' as namespace annotated by other workflow` + os.EOL)
+    expect(kubeCtl.annotateFiles).toBeCalledWith(["~/Deployment_testapp_currentTimestamp"], [annotationKeyValStr], true);
+    //expect(kubeCtl.annotate).toBeCalledTimes(1);
+    //expect(consoleOutputSpy).toHaveBeenNthCalledWith(2, `##[debug]Skipping 'annotate namespace' as namespace annotated by other workflow` + os.EOL)
 });
 
 test("deployment - deploy() - Annotate resources failed", async () => {
@@ -316,10 +325,11 @@ test("deployment - deploy() - Annotate resources failed", async () => {
     kubeCtl.describe = jest.fn().mockReturnValue("");
     kubeCtl.annotateFiles = jest.fn().mockReturnValue("");
     kubeCtl.annotate = jest.fn().mockReturnValue(annotateMock);
+    kubeCtl.labelFiles = jest.fn().mockReturnValue("");
     KubernetesManifestUtilityMock.checkManifestStability = jest.fn().mockReturnValue("");
 
     const consoleOutputSpy = jest.spyOn(process.stdout, "write").mockImplementation();
     //Invoke and assert
     await expect(deployment.deploy(kubeCtl, ['manifests/deployment.yaml'], undefined)).resolves.not.toThrowError();
-    expect(consoleOutputSpy).toHaveBeenNthCalledWith(2, '##[warning]kubectl annotate failed' + os.EOL)
+    expect(consoleOutputSpy).toHaveBeenNthCalledWith(4, '##[warning]kubectl annotate failed' + os.EOL)
 });

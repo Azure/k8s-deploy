@@ -45,6 +45,10 @@ inputs:
     description: 'Deploy when a previous deployment already exists. If true then --force argument is added to the apply command.'
     required: false
     default: false
+  token:
+    description: 'Github token'
+    default: ${{ github.token }}
+    required: true
 
 branding:
   color: 'green' # optional, decorates the entry in the GitHub Marketplace
