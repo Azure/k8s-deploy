@@ -61,11 +61,12 @@ export function annotateChildPods(kubectl: Kubectl, resourceType: string, resour
         allPods.items.forEach((pod) => {
             const owners = pod.metadata.ownerReferences;
             if (owners) {
-                owners.forEach(ownerRef => {
+                for (let ownerRef of owners) {
                     if (ownerRef.name === owner) {
                         commandExecutionResults.push(kubectl.annotate('pod', pod.metadata.name, workflowAnnotations, true));
+                        break;
                     }
-                });
+                }
             }
         });
     }
@@ -76,21 +77,23 @@ export function annotateChildPods(kubectl: Kubectl, resourceType: string, resour
 export function annotateNamespace(kubectl: Kubectl, namespaceName: string): IExecSyncResult {
     const result = kubectl.getResource('namespace', namespaceName);
     if (!result) {
-        return { code: -1, stderr: 'Failed to get resource' } as IExecSyncResult;
+        return { code: 1, stderr: 'Failed to get resource' } as IExecSyncResult;
     }
-    else if (result && result.stderr) {
-        return result;
-    }
-
-    if (result && result.stdout) {
-        const annotationsSet = JSON.parse(result.stdout).metadata.annotations;
-        if (annotationsSet && annotationsSet.runUri) {
-            if (annotationsSet.runUri.indexOf(process.env['GITHUB_REPOSITORY']) == -1) {
-                core.debug(`Skipping 'annotate namespace' as namespace annotated by other workflow`);
-                return { code: 0, stdout: '' } as IExecSyncResult;
-            }
+    else {
+        if (result.stderr) {
+            return result;
         }
-        return kubectl.annotate('namespace', namespaceName, workflowAnnotations, true);
+
+        else if (result.stdout) {
+            const annotationsSet = JSON.parse(result.stdout).metadata.annotations;
+            if (annotationsSet && annotationsSet.runUri) {
+                if (annotationsSet.runUri.indexOf(process.env['GITHUB_REPOSITORY']) == -1) {
+                    core.debug(`Skipping 'annotate namespace' as namespace annotated by other workflow`);
+                    return { code: 0, stdout: '' } as IExecSyncResult;
+                }
+            }
+            return kubectl.annotate('namespace', namespaceName, workflowAnnotations, true);
+        }
     }
 }
 
