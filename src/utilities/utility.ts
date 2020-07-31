@@ -1,5 +1,8 @@
 import * as os from 'os';
 import * as core from '@actions/core';
+import { IExecSyncResult } from './tool-runner';
+import { Kubectl } from '../kubectl-object-model';
+import { workflowAnnotations } from '../constants';
 
 export function getExecutableExtension(): string {
     if (os.type().match(/^Win/)) {
@@ -25,11 +28,11 @@ export function isEqual(str1: string, str2: string, ignoreCase?: boolean): boole
     }
 }
 
-export function checkForErrors(execResults, warnIfError?: boolean) {
+export function checkForErrors(execResults: IExecSyncResult[], warnIfError?: boolean) {
     if (execResults.length !== 0) {
         let stderr = '';
         execResults.forEach(result => {
-            if (result.stderr) {
+            if (result && result.stderr) {
                 if (result.code !== 0) {
                     stderr += result.stderr + '\n';
                 } else {
@@ -38,11 +41,58 @@ export function checkForErrors(execResults, warnIfError?: boolean) {
             }
         });
         if (stderr.length > 0) {
-            if (!!warnIfError) {
+            if (warnIfError) {
                 core.warning(stderr.trim());
             } else {
                 throw new Error(stderr.trim());
             }
+        }
+    }
+}
+
+export function annotateChildPods(kubectl: Kubectl, resourceType: string, resourceName: string, allPods): IExecSyncResult[] {
+    const commandExecutionResults = [];
+    let owner = resourceName;
+    if (resourceType.toLowerCase().indexOf('deployment') > -1) {
+        owner = kubectl.getNewReplicaSet(resourceName);
+    }
+
+    if (allPods && allPods.items && allPods.items.length > 0) {
+        allPods.items.forEach((pod) => {
+            const owners = pod.metadata.ownerReferences;
+            if (owners) {
+                for (let ownerRef of owners) {
+                    if (ownerRef.name === owner) {
+                        commandExecutionResults.push(kubectl.annotate('pod', pod.metadata.name, workflowAnnotations, true));
+                        break;
+                    }
+                }
+            }
+        });
+    }
+
+    return commandExecutionResults;
+}
+
+export function annotateNamespace(kubectl: Kubectl, namespaceName: string): IExecSyncResult {
+    const result = kubectl.getResource('namespace', namespaceName);
+    if (!result) {
+        return { code: 1, stderr: 'Failed to get resource' } as IExecSyncResult;
+    }
+    else {
+        if (result.stderr) {
+            return result;
+        }
+
+        else if (result.stdout) {
+            const annotationsSet = JSON.parse(result.stdout).metadata.annotations;
+            if (annotationsSet && annotationsSet.runUri) {
+                if (annotationsSet.runUri.indexOf(process.env['GITHUB_REPOSITORY']) == -1) {
+                    core.debug(`Skipping 'annotate namespace' as namespace annotated by other workflow`);
+                    return { code: 0, stdout: '' } as IExecSyncResult;
+                }
+            }
+            return kubectl.annotate('namespace', namespaceName, workflowAnnotations, true);
         }
     }
 }

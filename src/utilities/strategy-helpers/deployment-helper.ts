@@ -1,6 +1,7 @@
 'use strict';
 
 import * as fs from 'fs';
+import * as core from '@actions/core';
 import * as yaml from 'js-yaml';
 import * as canaryDeploymentHelper from './canary-deployment-helper';
 import * as KubernetesObjectUtility from '../resource-object-utility';
@@ -12,9 +13,11 @@ import * as KubernetesManifestUtility from '../manifest-stability-utility';
 import * as KubernetesConstants from '../../constants';
 import { Kubectl, Resource } from '../../kubectl-object-model';
 import { getUpdatedManifestFiles } from '../manifest-utilities';
+import { IExecSyncResult } from '../../utilities/tool-runner';
+
 import { deployPodCanary } from './pod-canary-deployment-helper';
 import { deploySMICanary } from './smi-canary-deployment-helper';
-import { checkForErrors } from "../utility";
+import { checkForErrors, annotateChildPods, annotateNamespace } from "../utility";
 import { isBlueGreenDeploymentStrategy, isIngressRoute, isSMIRoute, routeBlueGreen } from './blue-green-helper';
 import { deployBlueGreenService } from './service-blue-green-helper';
 import { deployBlueGreenIngress } from './ingress-blue-green-helper';
@@ -42,6 +45,16 @@ export async function deploy(kubectl: Kubectl, manifestFilePaths: string[], depl
     ingressResources.forEach(ingressResource => {
         kubectl.getResource(KubernetesConstants.DiscoveryAndLoadBalancerResource.ingress, ingressResource.name);
     });
+    
+    // annotate resources
+    let allPods: any;
+    try {
+        allPods = JSON.parse((kubectl.getAllPods()).stdout);
+    } catch (e) {
+        core.debug("Unable to parse pods; Error: " + e);
+    }
+
+    annotateResources(deployedManifestFiles, kubectl, resourceTypes, allPods);
 }
 
 export function getManifestFiles(manifestFilePaths: string[]): string[] {
@@ -113,6 +126,19 @@ function appendStableVersionLabelToResource(files: string[], kubectl: Kubectl): 
 
 async function checkManifestStability(kubectl: Kubectl, resources: Resource[]): Promise<void> {
     await KubernetesManifestUtility.checkManifestStability(kubectl, resources);
+}
+
+function annotateResources(files: string[], kubectl: Kubectl, resourceTypes: Resource[], allPods: any) {
+    const annotateResults: IExecSyncResult[] = [];
+    annotateResults.push(annotateNamespace(kubectl, TaskInputParameters.namespace));
+    annotateResults.push(kubectl.annotateFiles(files, models.workflowAnnotations, true));
+    resourceTypes.forEach(resource => {
+        if (resource.type.toUpperCase() !== models.KubernetesWorkload.pod.toUpperCase()) {
+            annotateChildPods(kubectl, resource.type, resource.name, allPods)
+                .forEach(execResult => annotateResults.push(execResult));
+        }
+    });
+    checkForErrors(annotateResults, true);
 }
 
 function isCanaryDeploymentStrategy(deploymentStrategy: string): boolean {
