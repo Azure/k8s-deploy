@@ -57,8 +57,8 @@ export async function getLastSuccessfulRunSha(githubToken: string): Promise<stri
     const branch = process.env.GITHUB_REF.replace("refs/heads/", "");
     const response = await gitHubClient.getSuccessfulRunsOnBranch(branch);
     if (response.statusCode == StatusCodes.OK
-        && response.body
-        && response.body.total_count) {
+        && !!response.body
+        && !!response.body.total_count) {
         if (response.body.total_count > 0) {
             lastSuccessRunSha = response.body.workflow_runs[0].head_sha;
         }
@@ -69,7 +69,7 @@ export async function getLastSuccessfulRunSha(githubToken: string): Promise<stri
     else if (response.statusCode != StatusCodes.OK) {
         core.debug(`An error occured while getting succeessful run results. Statuscode: ${response.statusCode}, StatusMessage: ${response.statusMessage}`);
     }
-    return lastSuccessRunSha;
+    return Promise.resolve(lastSuccessRunSha);
 }
 
 export function annotateChildPods(kubectl: Kubectl, resourceType: string, resourceName: string, annotationKeyValStr: string, allPods): IExecSyncResult[] {
