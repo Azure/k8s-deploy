@@ -40,9 +40,9 @@ export function getWorkflowAnnotationsJson(lastSuccessRunSha: string): string {
         + `'provider': 'GitHub'`
         + `}`;
 }
-export function getWorkflowAnnotationKeyLabel(): string {
+export function getWorkflowAnnotationKeyLabel(workflowFilePath: string): string {
     const hashKey = require("crypto").createHash("MD5")
-        .update(`${process.env.GITHUB_REPOSITORY}/${process.env.GITHUB_WORKFLOW}`)
+        .update(`${process.env.GITHUB_REPOSITORY}/${workflowFilePath}`)
         .digest("hex");
     return `githubWorkflow_${hashKey}`;
 }
