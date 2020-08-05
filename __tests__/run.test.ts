@@ -384,7 +384,6 @@ test("utility - getLastSuccessfulRunSha() - Get Commits under different conditio
         if (name == errorWebRequest)
             return Promise.resolve(errorWebResponse);
     });*/
-
     jest.spyOn(httpClient, 'sendRequest').mockImplementation(() => Promise.resolve(lastSuccessfulRunUrlResponse));
     //Invoke and assert
     await expect(utility.getLastSuccessfulRunSha(process.env.GITHUB_TOKEN)).resolves.not.toThrowError;

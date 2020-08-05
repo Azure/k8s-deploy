@@ -51,25 +51,51 @@ export function checkForErrors(execResults: IExecSyncResult[], warnIfError?: boo
     }
 }
 
-export async function getLastSuccessfulRunSha(githubToken: string): Promise<string> {
-    let lastSuccessRunSha = '';
-    const gitHubClient = new GitHubClient(process.env.GITHUB_REPOSITORY, githubToken);
-    const branch = process.env.GITHUB_REF.replace("refs/heads/", "");
-    const response = await gitHubClient.getSuccessfulRunsOnBranch(branch);
-    if (response.statusCode == StatusCodes.OK
-        && !!response.body
-        && !!response.body.total_count) {
-        if (response.body.total_count > 0) {
-            lastSuccessRunSha = response.body.workflow_runs[0].head_sha;
+export function getLastSuccessfulRunSha(kubectl: Kubectl, namespaceName: string, annotationKey: string): string {
+    const result = kubectl.getResource('namespace', namespaceName);
+    if (!result) {
+        core.debug(`Failed to get commits from cluster.`);
+        return '';
+    }
+    else {
+        if (result.stderr) {
+            core.debug(`${result.stderr}`);
+            return process.env.GITHUB_SHA;
         }
-        else {
-            lastSuccessRunSha = 'NA';
+        else if (result.stdout) {
+            const annotationsSet = JSON.parse(result.stdout).metadata.annotations;
+            if (!!annotationsSet[annotationKey]) {
+                return JSON.parse(annotationsSet[annotationKey].replace(/'/g, '"')).commit;
+            }
+            else {
+                return 'NA';
+            }
         }
     }
-    else if (response.statusCode != StatusCodes.OK) {
-        core.debug(`An error occured while getting succeessful run results. Statuscode: ${response.statusCode}, StatusMessage: ${response.statusMessage}`);
+}
+
+export async function getWorkflowFilePath(githubToken: string): Promise<string> {
+    let workflowFilePath = process.env.GITHUB_WORKFLOW;
+    if (!workflowFilePath.startsWith('.github/workflows/')) {
+        const githubClient = new GitHubClient(process.env.GITHUB_REPOSITORY, githubToken);
+        const response = await githubClient.getWorkflows();
+        if (response.statusCode == StatusCodes.OK
+            && !!response.body
+            && !!response.body.total_count) {
+            if (response.body.total_count > 0) {
+                for (let workflow of response.body.workflows) {
+                    if (process.env.GITHUB_WORKFLOW === workflow.name) {
+                        workflowFilePath = workflow.path;
+                        break;
+                    }
+                }
+            }
+        }
+        else if (response.statusCode != StatusCodes.OK) {
+            core.debug(`An error occured while getting list of workflows on the repo. Statuscode: ${response.statusCode}, StatusMessage: ${response.statusMessage}`);
+        }
     }
-    return Promise.resolve(lastSuccessRunSha);
+    return Promise.resolve(workflowFilePath);
 }
 
 export function annotateChildPods(kubectl: Kubectl, resourceType: string, resourceName: string, annotationKeyValStr: string, allPods): IExecSyncResult[] {
