@@ -7,23 +7,6 @@ export class GitHubClient {
         this._token = token;
     }
 
-    public async getSuccessfulRunsOnBranch(branch: string, workflowFileName: string, force?: boolean): Promise<any> {
-        if (force || !this._successfulRunsOnBranchPromise) {
-            const lastSuccessfulRunUrl = `https://api.github.com/repos/${this._repository}/actions/workflows/${workflowFileName}/runs?status=success&branch=${branch}`;
-            const webRequest = new WebRequest();
-            webRequest.method = "GET";
-            webRequest.uri = lastSuccessfulRunUrl;
-            webRequest.headers = {
-                Authorization: `Bearer ${this._token}`
-            };
-
-            core.debug(`Getting last successful run for repo: ${this._repository} on branch: ${branch}`);
-            const response: WebResponse = await sendRequest(webRequest);
-            this._successfulRunsOnBranchPromise = Promise.resolve(response);
-        }
-        return this._successfulRunsOnBranchPromise;
-    }
-
     public async getWorkflows(force?: boolean): Promise<any> {
         if (force || !this._workflowsPromise) {
             const getWorkflowFileNameUrl = `https://api.github.com/repos/${this._repository}/actions/workflows`;
@@ -43,6 +26,5 @@ export class GitHubClient {
 
     private _repository: string;
     private _token: string;
-    private _successfulRunsOnBranchPromise: Promise<any>;
     private _workflowsPromise: Promise<any>;
 }

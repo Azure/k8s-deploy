@@ -58,13 +58,13 @@ export function getLastSuccessfulRunSha(kubectl: Kubectl, namespaceName: string,
         return '';
     }
     else {
-        if (result.stderr) {
+        if (!!result.stderr) {
             core.debug(`${result.stderr}`);
             return process.env.GITHUB_SHA;
         }
-        else if (result.stdout) {
+        else if (!!result.stdout) {
             const annotationsSet = JSON.parse(result.stdout).metadata.annotations;
-            if (!!annotationsSet[annotationKey]) {
+            if (!!annotationsSet && !!annotationsSet[annotationKey]) {
                 return JSON.parse(annotationsSet[annotationKey].replace(/'/g, '"')).commit;
             }
             else {
