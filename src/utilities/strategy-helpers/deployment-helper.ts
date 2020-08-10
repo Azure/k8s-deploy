@@ -135,7 +135,11 @@ function annotateResources(files: string[], kubectl: Kubectl, resourceTypes: Res
 }
 
 function labelResources(files: string[], kubectl: Kubectl, label: string) {
-    checkForErrors([kubectl.labelFiles(files, [`workflow=${label}`], true)], true);
+    let workflowName = process.env.GITHUB_WORKFLOW;
+    workflowName = workflowName.startsWith('.github/workflows/') ?
+        workflowName.replace(".github/workflows/", "") : workflowName;
+    const labels = [`workflowFriendlyName=${workflowName}`, `workflow=${label}`];
+    checkForErrors([kubectl.labelFiles(files, labels, true)], true);
 }
 
 function updateResourceObjects(filePaths: string[], imagePullSecrets: string[], containers: string[]): string[] {
