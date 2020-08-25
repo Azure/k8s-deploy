@@ -317,6 +317,7 @@ test("deployment - deploy() - Annotate & label resources", async () => {
     expect(kubeCtl.annotate).toBeCalledTimes(2);
     expect(kubeCtl.labelFiles).toBeCalledWith(["~/Deployment_testapp_currentTimestamp"],
         [`workflowFriendlyName=workflow.yml`, `workflow=${getWorkflowAnnotationKeyLabel(process.env.GITHUB_WORKFLOW)}`], true);
+
 });
 
 test("deployment - deploy() - Annotate & label resources for a new workflow", async () => {
