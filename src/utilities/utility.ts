@@ -22,7 +22,7 @@ export function isEqual(str1: string, str2: string, ignoreCase?: boolean): boole
         return false;
     }
 
-    if (!!ignoreCase) {
+    if (ignoreCase) {
         return str1.toUpperCase() === str2.toUpperCase();
     } else {
         return str1 === str2;
@@ -33,7 +33,7 @@ export function checkForErrors(execResults: IExecSyncResult[], warnIfError?: boo
     if (execResults.length !== 0) {
         let stderr = '';
         execResults.forEach(result => {
-            if (!!result && !!result.stderr) {
+            if (result && result.stderr) {
                 if (result.code !== 0) {
                     stderr += result.stderr + '\n';
                 } else {
@@ -42,7 +42,7 @@ export function checkForErrors(execResults: IExecSyncResult[], warnIfError?: boo
             }
         });
         if (stderr.length > 0) {
-            if (!!warnIfError) {
+            if (warnIfError) {
                 core.warning(stderr.trim());
             } else {
                 throw new Error(stderr.trim());
@@ -52,25 +52,27 @@ export function checkForErrors(execResults: IExecSyncResult[], warnIfError?: boo
 }
 
 export function getLastSuccessfulRunSha(kubectl: Kubectl, namespaceName: string, annotationKey: string): string {
-    const result = kubectl.getResource('namespace', namespaceName);
-    if (!result) {
-        core.debug(`Failed to get commits from cluster.`);
-        return '';
+    try {
+        const result = kubectl.getResource('namespace', namespaceName);
+        if (result) {
+            if (result.stderr) {
+                core.warning(`${result.stderr}`);
+                return process.env.GITHUB_SHA;
+            }
+            else if (result.stdout) {
+                const annotationsSet = JSON.parse(result.stdout).metadata.annotations;
+                if (annotationsSet && annotationsSet[annotationKey]) {
+                    return JSON.parse(annotationsSet[annotationKey].replace(/'/g, '"')).commit;
+                }
+                else {
+                    return 'NA';
+                }
+            }
+        }
     }
-    else {
-        if (!!result.stderr) {
-            core.debug(`${result.stderr}`);
-            return process.env.GITHUB_SHA;
-        }
-        else if (!!result.stdout) {
-            const annotationsSet = JSON.parse(result.stdout).metadata.annotations;
-            if (!!annotationsSet && !!annotationsSet[annotationKey]) {
-                return JSON.parse(annotationsSet[annotationKey].replace(/'/g, '"')).commit;
-            }
-            else {
-                return 'NA';
-            }
-        }
+    catch (ex) {
+        core.warning(`Failed to get commits from cluster. ${JSON.stringify(ex)}`);
+        return '';
     }
 }
 
@@ -79,20 +81,25 @@ export async function getWorkflowFilePath(githubToken: string): Promise<string> 
     if (!workflowFilePath.startsWith('.github/workflows/')) {
         const githubClient = new GitHubClient(process.env.GITHUB_REPOSITORY, githubToken);
         const response = await githubClient.getWorkflows();
-        if (response.statusCode == StatusCodes.OK
-            && !!response.body
-            && !!response.body.total_count) {
-            if (response.body.total_count > 0) {
-                for (let workflow of response.body.workflows) {
-                    if (process.env.GITHUB_WORKFLOW === workflow.name) {
-                        workflowFilePath = workflow.path;
-                        break;
+        if (response) {
+            if (response.statusCode == StatusCodes.OK
+                && response.body
+                && response.body.total_count) {
+                if (response.body.total_count > 0) {
+                    for (let workflow of response.body.workflows) {
+                        if (process.env.GITHUB_WORKFLOW === workflow.name) {
+                            workflowFilePath = workflow.path;
+                            break;
+                        }
                     }
                 }
             }
+            else if (response.statusCode != StatusCodes.OK) {
+                core.debug(`An error occured while getting list of workflows on the repo. Statuscode: ${response.statusCode}, StatusMessage: ${response.statusMessage}`);
+            }
         }
-        else if (response.statusCode != StatusCodes.OK) {
-            core.debug(`An error occured while getting list of workflows on the repo. Statuscode: ${response.statusCode}, StatusMessage: ${response.statusMessage}`);
+        else {
+            core.warning(`Failed to get response from workflow list API`);
         }
     }
     return Promise.resolve(workflowFilePath);
@@ -105,13 +112,13 @@ export function annotateChildPods(kubectl: Kubectl, resourceType: string, resour
         owner = kubectl.getNewReplicaSet(resourceName);
     }
 
-    if (!!allPods && !!allPods.items && allPods.items.length > 0) {
+    if (allPods && allPods.items && allPods.items.length > 0) {
         allPods.items.forEach((pod) => {
             const owners = pod.metadata.ownerReferences;
-            if (!!owners) {
+            if (owners) {
                 owners.forEach(ownerRef => {
                     if (ownerRef.name === owner) {
-                        commandExecutionResults.push(kubectl.annotate('pod', pod.metadata.name, [annotationKeyValStr], true));
+                        commandExecutionResults.push(kubectl.annotate('pod', pod.metadata.name, annotationKeyValStr));
                     }
                 });
             }

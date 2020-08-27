@@ -123,8 +123,8 @@ function annotateResources(files: string[], kubectl: Kubectl, resourceTypes: Res
     const annotateResults: IExecSyncResult[] = [];
     const lastSuccessSha = getLastSuccessfulRunSha(kubectl, TaskInputParameters.namespace, annotationKey);
     let annotationKeyValStr = annotationKey + '=' + models.getWorkflowAnnotationsJson(lastSuccessSha);
-    annotateResults.push(kubectl.annotate('namespace', TaskInputParameters.namespace, [annotationKeyValStr], true));
-    annotateResults.push(kubectl.annotateFiles(files, [annotationKeyValStr], true));
+    annotateResults.push(kubectl.annotate('namespace', TaskInputParameters.namespace, annotationKeyValStr));
+    annotateResults.push(kubectl.annotateFiles(files, annotationKeyValStr));
     resourceTypes.forEach(resource => {
         if (resource.type.toUpperCase() !== models.KubernetesWorkload.pod.toUpperCase()) {
             annotateChildPods(kubectl, resource.type, resource.name, annotationKeyValStr, allPods)
@@ -139,7 +139,7 @@ function labelResources(files: string[], kubectl: Kubectl, label: string) {
     workflowName = workflowName.startsWith('.github/workflows/') ?
         workflowName.replace(".github/workflows/", "") : workflowName;
     const labels = [`workflowFriendlyName=${workflowName}`, `workflow=${label}`];
-    checkForErrors([kubectl.labelFiles(files, labels, true)], true);
+    checkForErrors([kubectl.labelFiles(files, labels)], true);
 }
 
 function updateResourceObjects(filePaths: string[], imagePullSecrets: string[], containers: string[]): string[] {

@@ -7,24 +7,20 @@ export class GitHubClient {
         this._token = token;
     }
 
-    public async getWorkflows(force?: boolean): Promise<any> {
-        if (force || !this._workflowsPromise) {
-            const getWorkflowFileNameUrl = `https://api.github.com/repos/${this._repository}/actions/workflows`;
-            const webRequest = new WebRequest();
-            webRequest.method = "GET";
-            webRequest.uri = getWorkflowFileNameUrl;
-            webRequest.headers = {
-                Authorization: `Bearer ${this._token}`
-            };
+    public async getWorkflows(): Promise<any> {
+        const getWorkflowFileNameUrl = `https://api.github.com/repos/${this._repository}/actions/workflows`;
+        const webRequest = new WebRequest();
+        webRequest.method = "GET";
+        webRequest.uri = getWorkflowFileNameUrl;
+        webRequest.headers = {
+            Authorization: `Bearer ${this._token}`
+        };
 
-            core.debug(`Getting workflows for repo: ${this._repository}`);
-            const response: WebResponse = await sendRequest(webRequest);
-            this._workflowsPromise = Promise.resolve(response);
-        }
-        return this._workflowsPromise;
+        core.debug(`Getting workflows for repo: ${this._repository}`);
+        const response: WebResponse = await sendRequest(webRequest);
+        return Promise.resolve(response);
     }
 
     private _repository: string;
     private _token: string;
-    private _workflowsPromise: Promise<any>;
 }

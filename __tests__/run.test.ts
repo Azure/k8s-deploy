@@ -312,11 +312,11 @@ test("deployment - deploy() - Annotate & label resources", async () => {
     kubeCtl.labelFiles = jest.fn();
     //Invoke and assert
     await expect(deployment.deploy(kubeCtl, ['manifests/deployment.yaml'], undefined)).resolves.not.toThrowError();
-    expect(kubeCtl.annotate).toHaveBeenNthCalledWith(1, 'namespace', 'default', [annotationKeyValStr], true);
-    expect(kubeCtl.annotateFiles).toBeCalledWith(["~/Deployment_testapp_currentTimestamp"], [annotationKeyValStr], true);
+    expect(kubeCtl.annotate).toHaveBeenNthCalledWith(1, 'namespace', 'default', annotationKeyValStr);
+    expect(kubeCtl.annotateFiles).toBeCalledWith(["~/Deployment_testapp_currentTimestamp"], annotationKeyValStr);
     expect(kubeCtl.annotate).toBeCalledTimes(2);
     expect(kubeCtl.labelFiles).toBeCalledWith(["~/Deployment_testapp_currentTimestamp"],
-        [`workflowFriendlyName=workflow.yml`, `workflow=${getWorkflowAnnotationKeyLabel(process.env.GITHUB_WORKFLOW)}`], true);
+        [`workflowFriendlyName=workflow.yml`, `workflow=${getWorkflowAnnotationKeyLabel(process.env.GITHUB_WORKFLOW)}`]);
 });
 
 test("deployment - deploy() - Annotate & label resources for a new workflow", async () => {
@@ -340,11 +340,11 @@ test("deployment - deploy() - Annotate & label resources for a new workflow", as
     kubeCtl.labelFiles = jest.fn();
     //Invoke and assert
     await expect(deployment.deploy(kubeCtl, ['manifests/deployment.yaml'], undefined)).resolves.not.toThrowError();
-    expect(kubeCtl.annotate).toHaveBeenNthCalledWith(1, 'namespace', 'default', [annotationKeyValStr], true);
-    expect(kubeCtl.annotateFiles).toBeCalledWith(["~/Deployment_testapp_currentTimestamp"], [annotationKeyValStr], true);
+    expect(kubeCtl.annotate).toHaveBeenNthCalledWith(1, 'namespace', 'default', annotationKeyValStr);
+    expect(kubeCtl.annotateFiles).toBeCalledWith(["~/Deployment_testapp_currentTimestamp"], annotationKeyValStr);
     expect(kubeCtl.annotate).toBeCalledTimes(2);
     expect(kubeCtl.labelFiles).toBeCalledWith(["~/Deployment_testapp_currentTimestamp"],
-        [`workflowFriendlyName=${process.env.GITHUB_WORKFLOW}`, `workflow=${getWorkflowAnnotationKeyLabel(process.env.GITHUB_WORKFLOW)}`], true);
+        [`workflowFriendlyName=${process.env.GITHUB_WORKFLOW}`, `workflow=${getWorkflowAnnotationKeyLabel(process.env.GITHUB_WORKFLOW)}`]);
 });
 
 test("deployment - deploy() - Annotate resources failed", async () => {
