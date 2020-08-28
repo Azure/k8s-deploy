@@ -293,7 +293,7 @@ test("deployment - deploy() - deploy force flag on", async () => {
 });
 
 test("deployment - deploy() - Annotate & label resources", async () => {
-    let annotationKeyValStr = getWorkflowAnnotationKeyLabel(process.env.GITHUB_WORKFLOW) + '=' + getWorkflowAnnotationsJson('currentCommit');
+    let annotationKeyValStr = getWorkflowAnnotationKeyLabel(process.env.GITHUB_WORKFLOW) + '=' + getWorkflowAnnotationsJson('currentCommit', '.github/workflows/workflow.yml');
     const KubernetesManifestUtilityMock = mocked(KubernetesManifestUtility, true);
     KubernetesManifestUtilityMock.checkManifestStability = jest.fn().mockReturnValue("");
     const KubernetesObjectUtilityMock = mocked(KubernetesObjectUtility, true);
@@ -320,8 +320,8 @@ test("deployment - deploy() - Annotate & label resources", async () => {
 });
 
 test("deployment - deploy() - Annotate & label resources for a new workflow", async () => {
-    process.env.GITHUB_WORKFLOW = 'NewWorkflow';
-    let annotationKeyValStr = getWorkflowAnnotationKeyLabel(process.env.GITHUB_WORKFLOW) + '=' + getWorkflowAnnotationsJson('NA');
+    process.env.GITHUB_WORKFLOW = '.github/workflows/NewWorkflow.yml';
+    let annotationKeyValStr = getWorkflowAnnotationKeyLabel(process.env.GITHUB_WORKFLOW) + '=' + getWorkflowAnnotationsJson('NA', '.github/workflows/NewWorkflow.yml');
     const KubernetesManifestUtilityMock = mocked(KubernetesManifestUtility, true);
     KubernetesManifestUtilityMock.checkManifestStability = jest.fn().mockReturnValue("");
     const KubernetesObjectUtilityMock = mocked(KubernetesObjectUtility, true);
@@ -344,7 +344,7 @@ test("deployment - deploy() - Annotate & label resources for a new workflow", as
     expect(kubeCtl.annotateFiles).toBeCalledWith(["~/Deployment_testapp_currentTimestamp"], annotationKeyValStr);
     expect(kubeCtl.annotate).toBeCalledTimes(2);
     expect(kubeCtl.labelFiles).toBeCalledWith(["~/Deployment_testapp_currentTimestamp"],
-        [`workflowFriendlyName=${process.env.GITHUB_WORKFLOW}`, `workflow=${getWorkflowAnnotationKeyLabel(process.env.GITHUB_WORKFLOW)}`]);
+        [`workflowFriendlyName=NewWorkflow.yml`, `workflow=${getWorkflowAnnotationKeyLabel(process.env.GITHUB_WORKFLOW)}`]);
 });
 
 test("deployment - deploy() - Annotate resources failed", async () => {

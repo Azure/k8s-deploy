@@ -115,14 +115,14 @@ async function checkManifestStability(kubectl: Kubectl, resources: Resource[]): 
 async function annotateAndLabelResources(files: string[], kubectl: Kubectl, resourceTypes: Resource[], allPods: any) {
     const workflowFilePath = await getWorkflowFilePath(TaskInputParameters.githubToken);
     const annotationKeyLabel = models.getWorkflowAnnotationKeyLabel(workflowFilePath);
-    annotateResources(files, kubectl, resourceTypes, allPods, annotationKeyLabel);
+    annotateResources(files, kubectl, resourceTypes, allPods, annotationKeyLabel, workflowFilePath);
     labelResources(files, kubectl, annotationKeyLabel);
 }
 
-function annotateResources(files: string[], kubectl: Kubectl, resourceTypes: Resource[], allPods: any, annotationKey: string) {
+function annotateResources(files: string[], kubectl: Kubectl, resourceTypes: Resource[], allPods: any, annotationKey: string, workflowFilePath: string) {
     const annotateResults: IExecSyncResult[] = [];
     const lastSuccessSha = getLastSuccessfulRunSha(kubectl, TaskInputParameters.namespace, annotationKey);
-    let annotationKeyValStr = annotationKey + '=' + models.getWorkflowAnnotationsJson(lastSuccessSha);
+    let annotationKeyValStr = annotationKey + '=' + models.getWorkflowAnnotationsJson(lastSuccessSha, workflowFilePath);
     annotateResults.push(kubectl.annotate('namespace', TaskInputParameters.namespace, annotationKeyValStr));
     annotateResults.push(kubectl.annotateFiles(files, annotationKeyValStr));
     resourceTypes.forEach(resource => {
