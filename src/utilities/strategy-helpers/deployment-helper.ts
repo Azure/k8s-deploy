@@ -17,7 +17,7 @@ import { IExecSyncResult } from '../../utilities/tool-runner';
 
 import { deployPodCanary } from './pod-canary-deployment-helper';
 import { deploySMICanary } from './smi-canary-deployment-helper';
-import { checkForErrors, annotateChildPods, annotateNamespace } from "../utility";
+import { checkForErrors, annotateChildPods, getWorkflowFilePath, getLastSuccessfulRunSha } from "../utility";
 
 
 export async function deploy(kubectl: Kubectl, manifestFilePaths: string[], deploymentStrategy: string) {
@@ -49,7 +49,7 @@ export async function deploy(kubectl: Kubectl, manifestFilePaths: string[], depl
         core.debug("Unable to parse pods; Error: " + e);
     }
 
-    annotateResources(deployedManifestFiles, kubectl, resourceTypes, allPods);
+    annotateAndLabelResources(deployedManifestFiles, kubectl, resourceTypes, allPods);
 }
 
 function getManifestFiles(manifestFilePaths: string[]): string[] {
@@ -112,17 +112,34 @@ async function checkManifestStability(kubectl: Kubectl, resources: Resource[]): 
     await KubernetesManifestUtility.checkManifestStability(kubectl, resources);
 }
 
-function annotateResources(files: string[], kubectl: Kubectl, resourceTypes: Resource[], allPods: any) {
+async function annotateAndLabelResources(files: string[], kubectl: Kubectl, resourceTypes: Resource[], allPods: any) {
+    const workflowFilePath = await getWorkflowFilePath(TaskInputParameters.githubToken);
+    const annotationKeyLabel = models.getWorkflowAnnotationKeyLabel(workflowFilePath);
+    annotateResources(files, kubectl, resourceTypes, allPods, annotationKeyLabel, workflowFilePath);
+    labelResources(files, kubectl, annotationKeyLabel);
+}
+
+function annotateResources(files: string[], kubectl: Kubectl, resourceTypes: Resource[], allPods: any, annotationKey: string, workflowFilePath: string) {
     const annotateResults: IExecSyncResult[] = [];
-    annotateResults.push(annotateNamespace(kubectl, TaskInputParameters.namespace));
-    annotateResults.push(kubectl.annotateFiles(files, models.workflowAnnotations, true));
+    const lastSuccessSha = getLastSuccessfulRunSha(kubectl, TaskInputParameters.namespace, annotationKey);
+    let annotationKeyValStr = annotationKey + '=' + models.getWorkflowAnnotationsJson(lastSuccessSha, workflowFilePath);
+    annotateResults.push(kubectl.annotate('namespace', TaskInputParameters.namespace, annotationKeyValStr));
+    annotateResults.push(kubectl.annotateFiles(files, annotationKeyValStr));
     resourceTypes.forEach(resource => {
         if (resource.type.toUpperCase() !== models.KubernetesWorkload.pod.toUpperCase()) {
-            annotateChildPods(kubectl, resource.type, resource.name, allPods)
+            annotateChildPods(kubectl, resource.type, resource.name, annotationKeyValStr, allPods)
                 .forEach(execResult => annotateResults.push(execResult));
         }
     });
     checkForErrors(annotateResults, true);
+}
+
+function labelResources(files: string[], kubectl: Kubectl, label: string) {
+    let workflowName = process.env.GITHUB_WORKFLOW;
+    workflowName = workflowName.startsWith('.github/workflows/') ?
+        workflowName.replace(".github/workflows/", "") : workflowName;
+    const labels = [`workflowFriendlyName=${workflowName}`, `workflow=${label}`];
+    checkForErrors([kubectl.labelFiles(files, labels)], true);
 }
 
 function updateResourceObjects(filePaths: string[], imagePullSecrets: string[], containers: string[]): string[] {
