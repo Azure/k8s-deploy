@@ -2,7 +2,7 @@
 name: Blue Green Bug Bash
 about: Issues found in blue-green strategy bug bash
 title: "[Blue-Green Bug Bash] "
-labels: ''
+labels: 'blue-green-bug-bash'
 assignees: ajinkya599
 
 ---
