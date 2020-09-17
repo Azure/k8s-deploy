@@ -2,18 +2,18 @@
 
 import { Kubectl } from '../../kubectl-object-model';
 import * as fileHelper from '../files-helper';
-import { createWorkloadsWithLabel, getManifestObjects, addBlueGreenLabelsAndAnnotations, fetchResource, deleteWorkloadsWithLabel, cleanUp, isServiceRouted } from './blue-green-helper';
+import { createWorkloadsWithLabel, getManifestObjects, addBlueGreenLabelsAndAnnotations, fetchResource, deleteWorkloadsWithLabel, BlueGreenManifests } from './blue-green-helper';
 import { GREEN_LABEL_VALUE, NONE_LABEL_VALUE, BLUE_GREEN_VERSION_LABEL } from './blue-green-helper';
 
 export function deployBlueGreenService(kubectl: Kubectl, filePaths: string[]) {
     // get all kubernetes objects defined in manifest files
-    const manifestObjects = getManifestObjects(filePaths);
+    const manifestObjects: BlueGreenManifests = getManifestObjects(filePaths);
 
     // create deployments with green label value
     const result = createWorkloadsWithLabel(kubectl, manifestObjects.deploymentEntityList, GREEN_LABEL_VALUE);
 
     // create other non deployment and non service entities
-    const newObjectsList = manifestObjects.otherObjects.concat(manifestObjects.ingressEntityList);
+    const newObjectsList = manifestObjects.otherObjects.concat(manifestObjects.ingressEntityList).concat(manifestObjects.unroutedServiceEntityList);
     const manifestFiles = fileHelper.writeObjectsToFile(newObjectsList);
     kubectl.apply(manifestFiles);
     
@@ -23,7 +23,7 @@ export function deployBlueGreenService(kubectl: Kubectl, filePaths: string[]) {
 
 export async function promoteBlueGreenService(kubectl: Kubectl, manifestObjects) {
     // checking if services are in the right state ie. targeting green deployments
-    if (!validateServicesState(kubectl, manifestObjects.deploymentEntityList, manifestObjects.serviceEntityList)) {
+    if (!validateServicesState(kubectl, manifestObjects.serviceEntityList)) {
         throw('NotInPromoteState');
     }
 
@@ -36,29 +36,20 @@ export async function promoteBlueGreenService(kubectl: Kubectl, manifestObjects)
 
 export async function rejectBlueGreenService(kubectl: Kubectl, filePaths: string[]) {
     // get all kubernetes objects defined in manifest files
-    const manifestObjects = getManifestObjects(filePaths);
+    const manifestObjects: BlueGreenManifests = getManifestObjects(filePaths);
 
     // routing to stable objects
-    routeBlueGreenService(kubectl, NONE_LABEL_VALUE, manifestObjects.deploymentEntityList, manifestObjects.serviceEntityList);
+    routeBlueGreenService(kubectl, NONE_LABEL_VALUE, manifestObjects.serviceEntityList);
 
-    // seeing if we should even delete the service
-    cleanUp(kubectl, manifestObjects.deploymentEntityList, manifestObjects.serviceEntityList);
-    
     // deleting the new deployments with green suffix
     deleteWorkloadsWithLabel(kubectl, GREEN_LABEL_VALUE, manifestObjects.deploymentEntityList);
 }
 
-export function routeBlueGreenService(kubectl: Kubectl, nextLabel: string, deploymentEntityList: any[], serviceEntityList: any[]) {
+export function routeBlueGreenService(kubectl: Kubectl, nextLabel: string, serviceEntityList: any[]) {
     const newObjectsList = [];
     serviceEntityList.forEach((serviceObject) => {
-        if (isServiceRouted(serviceObject, deploymentEntityList)) {
-            // if service is routed, point it to given label
-            const newBlueGreenServiceObject = getUpdatedBlueGreenService(serviceObject, nextLabel);
-            newObjectsList.push(newBlueGreenServiceObject);
-        } else {
-            // if service is not routed, just push the original service
-            newObjectsList.push(serviceObject);
-        }
+        const newBlueGreenServiceObject = getUpdatedBlueGreenService(serviceObject, nextLabel);
+        newObjectsList.push(newBlueGreenServiceObject);
     });
     // configures the services
     const manifestFiles = fileHelper.writeObjectsToFile(newObjectsList);
@@ -73,22 +64,20 @@ function getUpdatedBlueGreenService(inputObject: any, labelValue: string): objec
     return newObject;
 }
 
-export function validateServicesState(kubectl: Kubectl, deploymentEntityList: any[], serviceEntityList: any[]): boolean {
+export function validateServicesState(kubectl: Kubectl, serviceEntityList: any[]): boolean {
     let areServicesGreen: boolean = true;
     serviceEntityList.forEach((serviceObject) => {
-        if (isServiceRouted(serviceObject, deploymentEntityList)) {
-            // finding the existing routed service
-            const existingService = fetchResource(kubectl, serviceObject.kind, serviceObject.metadata.name);
-            if (!!existingService) {
-                let currentLabel: string = getServiceSpecLabel(existingService);
-                if(currentLabel != GREEN_LABEL_VALUE) {
-                    // service should be targeting deployments with green label
-                    areServicesGreen = false;
-                }
-            } else {
-                // service targeting deployment doesn't exist
+        // finding the existing routed service
+        const existingService = fetchResource(kubectl, serviceObject.kind, serviceObject.metadata.name);
+        if (!!existingService) {
+            let currentLabel: string = getServiceSpecLabel(existingService);
+            if(currentLabel != GREEN_LABEL_VALUE) {
+                // service should be targeting deployments with green label
                 areServicesGreen = false;
             }
+        } else {
+            // service targeting deployment doesn't exist
+            areServicesGreen = false;
         }
     });
     return areServicesGreen;
