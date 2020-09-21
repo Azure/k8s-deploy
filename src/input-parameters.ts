@@ -14,10 +14,15 @@ export const versionSwitchBuffer: string = core.getInput('version-switch-buffer'
 export const baselineAndCanaryReplicas: string = core.getInput('baseline-and-canary-replicas');
 export const args: string = core.getInput('arguments');
 export const forceDeployment: boolean = core.getInput('force').toLowerCase() == 'true';
+export const githubToken = core.getInput("token");
 
 if (!namespace) {
     core.debug('Namespace was not supplied; using "default" namespace instead.');
     namespace = 'default';
+}
+
+if (!githubToken) {
+    core.error("'token' input is not supplied. Set it to a PAT/GITHUB_TOKEN");
 }
 
 try {
