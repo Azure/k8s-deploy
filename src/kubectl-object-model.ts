@@ -50,18 +50,26 @@ export class Kubectl {
         return newReplicaSet;
     }
 
-    public annotate(resourceType: string, resourceName: string, annotations: string[], overwrite?: boolean): IExecSyncResult {
+    public annotate(resourceType: string, resourceName: string, annotation: string): IExecSyncResult {
         let args = ['annotate', resourceType, resourceName];
-        args = args.concat(annotations);
-        if (!!overwrite) { args.push(`--overwrite`); }
+        args.push(annotation);
+        args.push(`--overwrite`);
         return this.execute(args);
     }
 
-    public annotateFiles(files: string | string[], annotations: string[], overwrite?: boolean): IExecSyncResult {
+    public annotateFiles(files: string | string[], annotation: string): IExecSyncResult {
         let args = ['annotate'];
         args = args.concat(['-f', this.createInlineArray(files)]);
-        args = args.concat(annotations);
-        if (!!overwrite) { args.push(`--overwrite`); }
+        args.push(annotation);
+        args.push(`--overwrite`);
+        return this.execute(args);
+    }
+
+    public labelFiles(files: string | string[], labels: string[]): IExecSyncResult {
+        let args = ['label'];
+        args = args.concat(['-f', this.createInlineArray(files)]);
+        args = args.concat(labels);
+        args.push(`--overwrite`);
         return this.execute(args);
     }
 
