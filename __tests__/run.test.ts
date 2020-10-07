@@ -294,7 +294,7 @@ test("deployment - deploy() - Skip Annotate namespace", async () => {
     await expect(deployment.deploy(kubeCtl, ['manifests/deployment.yaml'], undefined)).resolves.not.toThrowError();
     expect(kubeCtl.annotateFiles).toBeCalledWith(["~/Deployment_testapp_currentTimestamp"], workflowAnnotations, true);
     expect(kubeCtl.annotate).toBeCalledTimes(1);
-    expect(consoleOutputSpy).toHaveBeenNthCalledWith(2, `##[debug]Skipping 'annotate namespace' as namespace annotated by other workflow` + os.EOL)
+    expect(consoleOutputSpy).toHaveBeenNthCalledWith(2, `::debug::Skipping 'annotate namespace' as namespace annotated by other workflow` + os.EOL)
 });
 
 test("deployment - deploy() - Annotate resources failed", async () => {
@@ -321,5 +321,5 @@ test("deployment - deploy() - Annotate resources failed", async () => {
     const consoleOutputSpy = jest.spyOn(process.stdout, "write").mockImplementation();
     //Invoke and assert
     await expect(deployment.deploy(kubeCtl, ['manifests/deployment.yaml'], undefined)).resolves.not.toThrowError();
-    expect(consoleOutputSpy).toHaveBeenNthCalledWith(2, '##[warning]kubectl annotate failed' + os.EOL)
+    expect(consoleOutputSpy).toHaveBeenNthCalledWith(2, '::warning::kubectl annotate failed' + os.EOL)
 });
