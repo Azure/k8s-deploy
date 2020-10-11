@@ -372,7 +372,7 @@ test("deployment - deploy() - Annotate resources failed", async () => {
     const consoleOutputSpy = jest.spyOn(process.stdout, "write").mockImplementation();
     //Invoke and assert
     await expect(deployment.deploy(kubeCtl, ['manifests/deployment.yaml'], undefined)).resolves.not.toThrowError();
-    expect(consoleOutputSpy).toHaveBeenNthCalledWith(2, '##[warning]kubectl annotate failed' + os.EOL)
+    expect(consoleOutputSpy).toHaveBeenNthCalledWith(2, '::warning::kubectl annotate failed' + os.EOL)
 });
 
 test("utility - getWorkflowFilePath() - Get workflow file path under API failure", async () => {
