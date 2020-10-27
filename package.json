@@ -8,10 +8,11 @@
         "test": "jest"
     },
     "dependencies": {
-        "@actions/tool-cache": "^1.0.0",
-        "@actions/io": "^1.0.0",
         "@actions/core": "^1.2.6",
         "@actions/exec": "^1.0.0",
+        "@actions/io": "^1.0.0",
+        "@actions/tool-cache": "^1.0.0",
+        "glob": "^7.1.6",
         "js-yaml": "3.13.1"
     },
     "devDependencies": {

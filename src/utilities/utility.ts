@@ -1,5 +1,6 @@
 import * as os from 'os';
 import * as core from '@actions/core';
+import * as glob from 'glob';
 import { IExecSyncResult } from './tool-runner';
 import { Kubectl } from '../kubectl-object-model';
 import { workflowAnnotations } from '../constants';
@@ -104,4 +105,25 @@ export function getRandomInt(max: number) {
 
 export function getCurrentTime(): number {
     return new Date().getTime();
+}
+
+export function resolveGlobPatterns(manifests: string): string[] {
+    if (!manifests) {
+        core.setFailed('No manifests supplied to deploy');
+        return;
+    }
+    let unresolvedManifests = manifests.split('\n');
+    let resolvedManifests: string[] = [];
+    unresolvedManifests.forEach((manifestPath) => {
+        if (glob.hasMagic(manifestPath))
+            resolvedManifests = resolvedManifests.concat(glob.sync(manifestPath));
+        else
+            resolvedManifests.push(manifestPath);
+    });
+    
+    if (resolvedManifests == null || resolvedManifests.length == 0) {
+        core.setFailed('No manifests supplied to deploy');
+        return;
+    }
+    return resolvedManifests;
 }
