@@ -218,7 +218,7 @@ Following are the key capabilities of this action:
         service.yaml
         ingress-yml
     strategy: blue-green
-    strategy: ingress # should be the same as the value when action was deploy
+    route-method: ingress # should be the same as the value when action was deploy
     action: promote # substitute reject if you want to reject
 ```
 

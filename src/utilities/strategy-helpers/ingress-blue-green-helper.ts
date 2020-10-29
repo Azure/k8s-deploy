@@ -68,7 +68,7 @@ export async function rejectBlueGreenIngress(kubectl: Kubectl, filePaths: string
 export function routeBlueGreenIngress(kubectl: Kubectl, nextLabel: string, serviceNameMap: Map<string, string>, ingressEntityList: any[]) { 
     let newObjectsList = [];
     if (!nextLabel) {
-        newObjectsList = newObjectsList.concat(ingressEntityList);
+        newObjectsList = ingressEntityList.filter(ingress => isIngressRouted(ingress, serviceNameMap));
     } else {
         ingressEntityList.forEach((inputObject) => {
             if (isIngressRouted(inputObject, serviceNameMap)) {
