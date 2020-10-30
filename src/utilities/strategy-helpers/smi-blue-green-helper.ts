@@ -177,9 +177,9 @@ export function validateTrafficSplitsState(kubectl: Kubectl, serviceEntityList: 
 export function cleanupSMI(kubectl: Kubectl, serviceEntityList: any[]) { 
     const deleteList = [];
     serviceEntityList.forEach((serviceObject) => {
+        deleteList.push({ name: getBlueGreenResourceName(serviceObject.metadata.name, TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX), kind: TRAFFIC_SPLIT_OBJECT });
         deleteList.push({name: getBlueGreenResourceName(serviceObject.metadata.name, GREEN_SUFFIX), kind: serviceObject.kind});
         deleteList.push({name: getBlueGreenResourceName(serviceObject.metadata.name, STABLE_SUFFIX), kind: serviceObject.kind});
-        deleteList.push({name: getBlueGreenResourceName(serviceObject.metadata.name, TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX), kind: TRAFFIC_SPLIT_OBJECT});
     });
 
     // deleting all objects
