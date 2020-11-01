@@ -105,6 +105,24 @@ export async function getWorkflowFilePath(githubToken: string): Promise<string> 
     return Promise.resolve(workflowFilePath);
 }
 
+export async function getRepositoryId(githubToken: string): Promise<number> {
+    const githubClient = new GitHubClient(process.env.GITHUB_REPOSITORY, githubToken);
+    let repoId = 0;
+    const response = await githubClient.getRepo();
+    if (response) {
+        if (response.statusCode == StatusCodes.OK
+            && response.body) {
+                repoId = response.body.id;
+        }
+        else if (response.statusCode != StatusCodes.OK) {
+            core.debug(`An error occured while getting repo. Statuscode: ${response.statusCode}, StatusMessage: ${response.statusMessage}`);
+        }
+    } else {
+        core.warning(`Failed to get response from repos GET API`);
+    }
+    return Promise.resolve(repoId);
+}
+
 export function annotateChildPods(kubectl: Kubectl, resourceType: string, resourceName: string, annotationKeyValStr: string, allPods): IExecSyncResult[] {
     const commandExecutionResults = [];
     let owner = resourceName;

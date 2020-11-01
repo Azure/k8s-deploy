@@ -21,6 +21,20 @@ export class GitHubClient {
         return Promise.resolve(response);
     }
 
+    public async getRepo(): Promise<any> {
+        const getRepoUrl = `https://api.github.com/repos/${this._repository}`;
+        const webRequest = new WebRequest();
+        webRequest.method = "GET";
+        webRequest.uri = getRepoUrl;
+        webRequest.headers = {
+            Authorization: `Bearer ${this._token}`
+        };
+
+        core.debug(`Getting repo details for repo: ${this._repository}`);
+        const response: WebResponse = await sendRequest(webRequest);
+        return Promise.resolve(response);
+    }
+
     private _repository: string;
     private _token: string;
 } 

@@ -25,10 +25,11 @@ export const deploymentTypes: string[] = ['deployment', 'replicaset', 'daemonset
 export const workloadTypes: string[] = ['deployment', 'replicaset', 'daemonset', 'pod', 'statefulset', 'job', 'cronjob'];
 export const workloadTypesWithRolloutStatus: string[] = ['deployment', 'daemonset', 'statefulset'];
 
-export function getWorkflowAnnotationsJson(lastSuccessRunSha: string, workflowFilePath: string): string {
+export function getWorkflowAnnotationsJson(lastSuccessRunSha: string, workflowFilePath: string, repositoryId: number): string {
     return `{`
         + `'run': '${process.env.GITHUB_RUN_ID}',`
         + `'repository': '${process.env.GITHUB_REPOSITORY}',`
+        + `'repositoryId': '${repositoryId}',`        
         + `'workflow': '${process.env.GITHUB_WORKFLOW}',`
         + `'workflowFileName': '${workflowFilePath.replace(".github/workflows/", "")}',`
         + `'jobName': '${process.env.GITHUB_JOB}',`
