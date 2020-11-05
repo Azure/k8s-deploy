@@ -135,7 +135,6 @@ export async function getBuildConfigs(): Promise<Map<string, Map<string,string>>
 
     //From image file
     core.info(`🏃 Getting images info...`);
-    let images = core.getInput('images').split('\n');
     let imageToBuildConfigMap = new Map();
 
     //test if docker is working (login cases)
@@ -154,11 +153,12 @@ export async function getBuildConfigs(): Promise<Map<string, Map<string,string>>
             if (res.stderr != '' && !res.success) {
                 throw new Error(`image inspect call failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
             }
-            //core.info(res.stdout.toString());
+            
             let resultObj = JSON.parse(res.stdout);
+            core.info(resultObj.toString());
             const IMAGE_SOURCE_REPO_LABEL = 'org.opencontainers.image.source';
             const DOCKERFILE_PATH_LABEL = 'dockerfile-path';
-            if(resultObj.config != null && resultObj.config.labels !=null){
+            if(resultObj?.config != null && resultObj.config.labels !=null){
 
                 if(resultObj.config.labels[IMAGE_SOURCE_REPO_LABEL] !=null){
                     buildConfigMap.set('source', resultObj.config.labels[IMAGE_SOURCE_REPO_LABEL]);
@@ -167,7 +167,7 @@ export async function getBuildConfigs(): Promise<Map<string, Map<string,string>>
                     buildConfigMap.set('dockerfilePath', resultObj.config.labels[DOCKERFILE_PATH_LABEL]);
                 } 
             }
-            imageToBuildConfigMap.set(resultObj.Id, buildConfigMap);
+            imageToBuildConfigMap.set(resultObj.Id.toString(), buildConfigMap);
         });   
 
     }
