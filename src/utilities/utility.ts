@@ -150,7 +150,7 @@ export async function getBuildConfigs(): Promise<Map<string, Map<string,string>>
                     throw new Error(`docker images pull failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
                 }
             });
-            await exec.exec('docker inspect --type=image -f \{\{\'json .Config\'\}\}', args).then(res => {
+            await exec.exec('docker inspect --type=image -f \{\{ json \}\}', args).then(res => {
                 if (res.stderr != '' && !res.success) {
                     throw new Error(`docker inspect call failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
                 }
@@ -159,13 +159,13 @@ export async function getBuildConfigs(): Promise<Map<string, Map<string,string>>
                 //core.info(resultObj.toString());
                 const IMAGE_SOURCE_REPO_LABEL = 'org.opencontainers.image.source';
                 const DOCKERFILE_PATH_LABEL = 'dockerfile-path';
-                if(resultObj != null){
+                if(resultObj != null && resultObj.Config != null && resultObj.Config.Labels != null ){
 
-                    if(resultObj.Labels[IMAGE_SOURCE_REPO_LABEL] !=null){
-                        buildConfigMap.set('source', resultObj.Labels[IMAGE_SOURCE_REPO_LABEL]);
+                    if(resultObj.Config.Labels[IMAGE_SOURCE_REPO_LABEL] !=null){
+                        buildConfigMap.set('source', resultObj.Config.Labels[IMAGE_SOURCE_REPO_LABEL]);
                     } 
-                    if(resultObj.Labels[DOCKERFILE_PATH_LABEL] !=null){
-                        buildConfigMap.set('dockerfilePath', resultObj.Labels[DOCKERFILE_PATH_LABEL]);
+                    if(resultObj.Config.Labels[DOCKERFILE_PATH_LABEL] !=null){
+                        buildConfigMap.set('dockerfilePath', resultObj.Config.Labels[DOCKERFILE_PATH_LABEL]);
                     } 
                     imageToBuildConfigMap.set(image.toString().split('@')[1] , buildConfigMap);
                 }
