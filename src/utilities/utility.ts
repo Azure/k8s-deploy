@@ -149,12 +149,12 @@ export async function getBuildConfigs(): Promise<Map<string, Map<string,string>>
                 throw new Error(`docker images pull failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
             }
         });
-        await exec.exec('docker inspect --format=\'{{json .Config.Labels}}\'', args).then(res => {
+        await exec.exec('docker inspect --format=\'json .Config.Labels\' ', args).then(res => {
             if (res.stderr != '' && !res.success) {
                 throw new Error(`image inspect call failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
             }
             
-            let resultObj = JSON.parse(res.stdout)[0];
+            let resultObj = JSON.parse(res.stdout);
             //core.info(resultObj.toString());
             const IMAGE_SOURCE_REPO_LABEL = 'org.opencontainers.image.source';
             const DOCKERFILE_PATH_LABEL = 'dockerfile-path';
@@ -173,7 +173,7 @@ export async function getBuildConfigs(): Promise<Map<string, Map<string,string>>
     }
     core.info(`🏃 DONE fetching images info...`);
     
-    return imageToBuildConfigMap; 
+    return Promise.resolve(imageToBuildConfigMap); 
 }
 
 export function sleep(timeout: number) {
