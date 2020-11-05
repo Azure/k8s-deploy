@@ -175,8 +175,8 @@ export async function getBuildConfigs(): Promise<Map<string, string>> {
             if(resultObj.Config.Labels[DOCKERFILE_PATH_LABEL] !=null){
                 buildConfigMap.set('dockerfilePath', resultObj.Config.Labels[DOCKERFILE_PATH_LABEL]);
             } 
-            core.info(`Image Map :: ${buildConfigMap.entries.toString()}`);
-            imageToBuildConfigMap.set(image.toString().split('@')[1] , buildConfigMap.entries.toString());
+            core.info(`Image Map :: ${JSON.stringify(buildConfigMap)}`);
+            imageToBuildConfigMap.set(image.toString().split('@')[1] , JSON.stringify(buildConfigMap));
         }
     }
     core.info(`🏃 DONE fetching images info...${JSON.stringify(imageToBuildConfigMap)}`);
