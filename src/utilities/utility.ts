@@ -130,7 +130,7 @@ export function annotateChildPods(kubectl: Kubectl, resourceType: string, resour
     return commandExecutionResults;
 }
 
-export async function getBuildConfigs(): Promise<Map<string, Map<string,string>>> {
+export async function getBuildConfigs(): Promise<Map<string, string>> {
     let imageNames = core.getInput('images').split('\n');
 
     //From image file
@@ -150,7 +150,7 @@ export async function getBuildConfigs(): Promise<Map<string, Map<string,string>>
                     throw new Error(`docker images pull failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
                 }
             });
-            await exec.exec('docker inspect --type=image --format=\'{% raw %}{{ json }}{% endraw %}\'', args).then(res => {
+            await exec.exec('docker inspect --type=image', args).then(res => {
                 if (res.stderr != '' && !res.success) {
                     throw new Error(`docker inspect call failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
                 }
@@ -167,7 +167,7 @@ export async function getBuildConfigs(): Promise<Map<string, Map<string,string>>
                     if(resultObj.Config.Labels[DOCKERFILE_PATH_LABEL] !=null){
                         buildConfigMap.set('dockerfilePath', resultObj.Config.Labels[DOCKERFILE_PATH_LABEL]);
                     } 
-                    imageToBuildConfigMap.set(image.toString().split('@')[1] , buildConfigMap);
+                    imageToBuildConfigMap.set(image.toString().split('@')[1] , JSON.stringify(buildConfigMap));
                 }
             });   
         }
