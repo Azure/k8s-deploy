@@ -142,9 +142,10 @@ export async function getBuildConfigs(): Promise<Map<string, string>> {
     //Fetch image info
     for(const image of imageNames){
         let args: string[] = [image];
-
+        let resultObj: any;
+        let buildConfigMap = new Map();
         try{
-            let buildConfigMap = new Map();
+            
             await exec.exec('docker pull -q', args).then(res => {
                 if (res.stderr != '' && !res.success) {
                     throw new Error(`docker images pull failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
@@ -154,28 +155,31 @@ export async function getBuildConfigs(): Promise<Map<string, string>> {
                 if (res.stderr != '' && !res.success) {
                     throw new Error(`docker inspect call failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
                 }
+                core.info(res.stdout);
+                resultObj = JSON.parse(res.stdout)[0];
                 
-                let resultObj = JSON.parse(res.stdout)[0];
-                //core.info(resultObj.toString());
-                const IMAGE_SOURCE_REPO_LABEL = 'org.opencontainers.image.source';
-                const DOCKERFILE_PATH_LABEL = 'dockerfile-path';
-                if(resultObj != null && resultObj.Config != null && resultObj.Config.Labels != null ){
-
-                    if(resultObj.Config.Labels[IMAGE_SOURCE_REPO_LABEL] !=null){
-                        buildConfigMap.set('source', resultObj.Config.Labels[IMAGE_SOURCE_REPO_LABEL]);
-                    } 
-                    if(resultObj.Config.Labels[DOCKERFILE_PATH_LABEL] !=null){
-                        buildConfigMap.set('dockerfilePath', resultObj.Config.Labels[DOCKERFILE_PATH_LABEL]);
-                    } 
-                    imageToBuildConfigMap.set(image.toString().split('@')[1] , JSON.stringify(buildConfigMap));
-                }
             });   
         }
         catch (ex) {
             core.warning(`Failed to get details for image ${image.toString()} : ${JSON.stringify(ex)}`);
         }
+
+        core.info(`Image Info:: ${JSON.stringify(resultObj)}`);
+        const IMAGE_SOURCE_REPO_LABEL = 'org.opencontainers.image.source';
+        const DOCKERFILE_PATH_LABEL = 'dockerfile-path';
+        if(resultObj != null && resultObj.Config != null && resultObj.Config.Labels != null ){
+
+            if(resultObj.Config.Labels[IMAGE_SOURCE_REPO_LABEL] !=null){
+                buildConfigMap.set('source', resultObj.Config.Labels[IMAGE_SOURCE_REPO_LABEL]);
+            } 
+            if(resultObj.Config.Labels[DOCKERFILE_PATH_LABEL] !=null){
+                buildConfigMap.set('dockerfilePath', resultObj.Config.Labels[DOCKERFILE_PATH_LABEL]);
+            } 
+            core.info(`Image Map :: ${buildConfigMap.entries.toString()}`);
+            imageToBuildConfigMap.set(image.toString().split('@')[1] , buildConfigMap.entries.toString());
+        }
     }
-    core.info(`🏃 DONE fetching images info...`);
+    core.info(`🏃 DONE fetching images info...${JSON.stringify(imageToBuildConfigMap)}`);
     
     return Promise.resolve(imageToBuildConfigMap); 
 }
