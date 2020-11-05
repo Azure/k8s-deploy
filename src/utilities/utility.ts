@@ -130,12 +130,12 @@ export function annotateChildPods(kubectl: Kubectl, resourceType: string, resour
     return commandExecutionResults;
 }
 
-export async function getBuildConfigs(): Promise<Map<string, string>> {
+export async function getBuildConfigs(): Promise<any> {
     let imageNames = core.getInput('images').split('\n');
 
     //From image file
     core.info(`🏃 Getting images info...`);
-    let imageToBuildConfigMap = new Map();
+    let imageToBuildConfigMap: any;
 
     //test if docker is working (login cases)
 
@@ -143,7 +143,7 @@ export async function getBuildConfigs(): Promise<Map<string, string>> {
     for(const image of imageNames){
         let args: string[] = [image];
         let resultObj: any;
-        let buildConfigMap = new Map();
+        let buildConfigMap : any;
         try{
             
             await exec.exec('docker pull -q', args).then(res => {
@@ -165,15 +165,15 @@ export async function getBuildConfigs(): Promise<Map<string, string>> {
         }
 
         core.info(`Image Info:: ${JSON.stringify(resultObj)}`);
-        const IMAGE_SOURCE_REPO_LABEL = 'org.opencontainers.image.source';
-        const DOCKERFILE_PATH_LABEL = 'dockerfile-path';
+        const IMAGE_SOURCE_REPO_LABEL_KEY = 'org.opencontainers.image.source';
+        const DOCKERFILE_PATH_LABEL_KEY = 'dockerfile-path';
         if(resultObj != null && resultObj.Config != null && resultObj.Config.Labels != null ){
 
-            if(resultObj.Config.Labels[IMAGE_SOURCE_REPO_LABEL] !=null){
-                buildConfigMap.set('source', resultObj.Config.Labels[IMAGE_SOURCE_REPO_LABEL]);
+            if(resultObj.Config.Labels[IMAGE_SOURCE_REPO_LABEL_KEY] !=null){
+                buildConfigMap.set('source', resultObj.Config.Labels[IMAGE_SOURCE_REPO_LABEL_KEY]);
             } 
-            if(resultObj.Config.Labels[DOCKERFILE_PATH_LABEL] !=null){
-                buildConfigMap.set('dockerfilePath', resultObj.Config.Labels[DOCKERFILE_PATH_LABEL]);
+            if(resultObj.Config.Labels[DOCKERFILE_PATH_LABEL_KEY] !=null){
+                buildConfigMap.set('dockerfilePath', resultObj.Config.Labels[DOCKERFILE_PATH_LABEL_KEY]);
             } 
             core.info(`Image Map :: ${JSON.stringify(buildConfigMap)}`);
             imageToBuildConfigMap.set(image.toString().split('@')[1] , JSON.stringify(buildConfigMap));
