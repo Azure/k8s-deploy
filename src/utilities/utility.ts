@@ -155,7 +155,7 @@ export async function getBuildConfigs(): Promise<Map<string, string>> {
                     throw new Error(`docker inspect call failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
                 }
                 
-                let resultObj = JSON.parse(res.stdout);
+                let resultObj = JSON.parse(res.stdout)[0];
                 //core.info(resultObj.toString());
                 const IMAGE_SOURCE_REPO_LABEL = 'org.opencontainers.image.source';
                 const DOCKERFILE_PATH_LABEL = 'dockerfile-path';
