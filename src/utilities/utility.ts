@@ -150,7 +150,7 @@ export async function getBuildConfigs(): Promise<Map<string, Map<string,string>>
                     throw new Error(`docker images pull failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
                 }
             });
-            await exec.exec('docker inspect --type=image -f \{\{ json \}\}', args).then(res => {
+            await exec.exec('docker inspect --type=image -f json', args).then(res => {
                 if (res.stderr != '' && !res.success) {
                     throw new Error(`docker inspect call failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
                 }
