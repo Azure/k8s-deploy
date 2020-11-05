@@ -143,33 +143,37 @@ export async function getBuildConfigs(): Promise<Map<string, Map<string,string>>
     for(const image of imageNames){
         let args: string[] = [image];
 
-        let buildConfigMap = new Map();
-        await exec.exec('docker pull -q', args).then(res => {
-            if (res.stderr != '' && !res.success) {
-                throw new Error(`docker images pull failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
-            }
-        });
-        await exec.exec('docker inspect --format=\'\{\{json .Config\}\}\' ', args).then(res => {
-            if (res.stderr != '' && !res.success) {
-                throw new Error(`image inspect call failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
-            }
-            
-            let resultObj = JSON.parse(res.stdout);
-            //core.info(resultObj.toString());
-            const IMAGE_SOURCE_REPO_LABEL = 'org.opencontainers.image.source';
-            const DOCKERFILE_PATH_LABEL = 'dockerfile-path';
-            if(resultObj != null){
+        try{
+            let buildConfigMap = new Map();
+            await exec.exec('docker pull -q', args).then(res => {
+                if (res.stderr != '' && !res.success) {
+                    throw new Error(`docker images pull failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
+                }
+            });
+            await exec.exec('docker inspect --type image --format \{\{\'json .Config\'\}\} ', args).then(res => {
+                if (res.stderr != '' && !res.success) {
+                    throw new Error(`docker inspect call failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
+                }
+                
+                let resultObj = JSON.parse(res.stdout);
+                //core.info(resultObj.toString());
+                const IMAGE_SOURCE_REPO_LABEL = 'org.opencontainers.image.source';
+                const DOCKERFILE_PATH_LABEL = 'dockerfile-path';
+                if(resultObj != null){
 
-                if(resultObj.Labels[IMAGE_SOURCE_REPO_LABEL] !=null){
-                    buildConfigMap.set('source', resultObj.Labels[IMAGE_SOURCE_REPO_LABEL]);
-                } 
-                if(resultObj.Labels[DOCKERFILE_PATH_LABEL] !=null){
-                    buildConfigMap.set('dockerfilePath', resultObj.Labels[DOCKERFILE_PATH_LABEL]);
-                } 
-                imageToBuildConfigMap.set(image.toString().split('@')[1] , buildConfigMap);
-            }
-        });   
-
+                    if(resultObj.Labels[IMAGE_SOURCE_REPO_LABEL] !=null){
+                        buildConfigMap.set('source', resultObj.Labels[IMAGE_SOURCE_REPO_LABEL]);
+                    } 
+                    if(resultObj.Labels[DOCKERFILE_PATH_LABEL] !=null){
+                        buildConfigMap.set('dockerfilePath', resultObj.Labels[DOCKERFILE_PATH_LABEL]);
+                    } 
+                    imageToBuildConfigMap.set(image.toString().split('@')[1] , buildConfigMap);
+                }
+            });   
+        }
+        catch (ex) {
+            core.warning(`Failed to get details for image ${image.toString()} : ${JSON.stringify(ex)}`);
+        }
     }
     core.info(`🏃 DONE fetching images info...`);
     
