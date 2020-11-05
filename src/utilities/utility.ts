@@ -4,6 +4,7 @@ import { IExecSyncResult } from './tool-runner';
 import { Kubectl } from '../kubectl-object-model';
 import { GitHubClient } from '../githubClient';
 import { StatusCodes } from "./httpClient";
+import * as exec from "./exec";
 
 export function getExecutableExtension(): string {
     if (os.type().match(/^Win/)) {
@@ -127,6 +128,52 @@ export function annotateChildPods(kubectl: Kubectl, resourceType: string, resour
     }
 
     return commandExecutionResults;
+}
+
+export async function getBuildConfigs(): Promise<Map<string, Map<string,string>>> {
+    let imageNames = core.getInput('images').split('\n');
+
+    //From image file
+    core.info(`🏃 Getting images info...`);
+    let images = core.getInput('images').split('\n');
+    let imageToBuildConfigMap = new Map();
+
+    //test if docker is working (login cases)
+
+    //Fetch image info
+    for(const image of imageNames){
+        let args: string[] = [image];
+
+        let buildConfigMap = new Map();
+        await exec.exec('docker pull -q', args).then(res => {
+            if (res.stderr != '' && !res.success) {
+                throw new Error(`docker images pull failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
+            }
+        });
+        await exec.exec('docker image inspect', args).then(res => {
+            if (res.stderr != '' && !res.success) {
+                throw new Error(`image inspect call failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
+            }
+            //core.info(res.stdout.toString());
+            let resultObj = JSON.parse(res.stdout);
+            const IMAGE_SOURCE_REPO_LABEL = 'org.opencontainers.image.source';
+            const DOCKERFILE_PATH_LABEL = 'dockerfile-path';
+            if(resultObj.config != null && resultObj.config.labels !=null){
+
+                if(resultObj.config.labels[IMAGE_SOURCE_REPO_LABEL] !=null){
+                    buildConfigMap.set('source', resultObj.config.labels[IMAGE_SOURCE_REPO_LABEL]);
+                } 
+                if(resultObj.config.labels[DOCKERFILE_PATH_LABEL] !=null){
+                    buildConfigMap.set('dockerfilePath', resultObj.config.labels[DOCKERFILE_PATH_LABEL]);
+                } 
+            }
+            imageToBuildConfigMap.set(resultObj.Id, buildConfigMap);
+        });   
+
+    }
+    core.info(`🏃 DONE fetching images info...`);
+
+    return imageToBuildConfigMap; 
 }
 
 export function sleep(timeout: number) {
