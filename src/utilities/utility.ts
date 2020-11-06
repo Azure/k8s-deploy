@@ -170,13 +170,13 @@ export async function getBuildConfigs(): Promise<any> {
         if(resultObj != null && resultObj.Config != null && resultObj.Config.Labels != null ){
 
             if(resultObj.Config.Labels[IMAGE_SOURCE_REPO_LABEL_KEY] !=null){
-                buildConfigMap.set('source', resultObj.Config.Labels[IMAGE_SOURCE_REPO_LABEL_KEY]);
+                buildConfigMap['source'] = resultObj.Config.Labels[IMAGE_SOURCE_REPO_LABEL_KEY];
             } 
             if(resultObj.Config.Labels[DOCKERFILE_PATH_LABEL_KEY] !=null){
-                buildConfigMap.set('dockerfilePath', resultObj.Config.Labels[DOCKERFILE_PATH_LABEL_KEY]);
+                buildConfigMap['dockerfilePath'] = resultObj.Config.Labels[DOCKERFILE_PATH_LABEL_KEY];
             } 
             core.info(`Image Map :: ${JSON.stringify(buildConfigMap)}`);
-            imageToBuildConfigMap.set(image.toString().split('@')[1] , JSON.stringify(buildConfigMap));
+            imageToBuildConfigMap[image.toString().split('@')[1]] = JSON.stringify(buildConfigMap);
         }
     }
     core.info(`🏃 DONE fetching images info...${JSON.stringify(imageToBuildConfigMap)}`);
