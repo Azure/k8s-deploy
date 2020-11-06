@@ -135,7 +135,7 @@ export async function getBuildConfigs(): Promise<any> {
 
     //From image file
     core.info(`🏃 Getting images info...`);
-    let imageToBuildConfigMap: any;
+    let imageToBuildConfigMap: any = {};
 
     //test if docker is working (login cases)
 
@@ -143,7 +143,7 @@ export async function getBuildConfigs(): Promise<any> {
     for(const image of imageNames){
         let args: string[] = [image];
         let resultObj: any;
-        let buildConfigMap : any;
+        let buildConfigMap : any = {};
         try{
             
             await exec.exec('docker pull -q', args).then(res => {
