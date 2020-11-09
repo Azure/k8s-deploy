@@ -2,7 +2,7 @@ name: "Trigger Integration tests"
 on:
   # push:
   #   branches:
-  #     - master
+  ##    - master
   #     - 'releases/*'
   pull_request:
     branches:
