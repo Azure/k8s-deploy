@@ -17,7 +17,7 @@ import { IExecSyncResult } from '../../utilities/tool-runner';
 
 import { deployPodCanary } from './pod-canary-deployment-helper';
 import { deploySMICanary } from './smi-canary-deployment-helper';
-import { checkForErrors, annotateChildPods, getWorkflowFilePath, getLastSuccessfulRunSha, getBuildConfigs } from "../utility";
+import { checkForErrors, annotateChildPods, getWorkflowFilePath, getLastSuccessfulRunSha, getFilePathsConfigs } from "../utility";
 import { isBlueGreenDeploymentStrategy, isIngressRoute, isSMIRoute, routeBlueGreen } from './blue-green-helper';
 import { deployBlueGreenService } from './service-blue-green-helper';
 import { deployBlueGreenIngress } from './ingress-blue-green-helper';
@@ -130,7 +130,7 @@ async function checkManifestStability(kubectl: Kubectl, resources: Resource[]): 
 
 async function annotateAndLabelResources(files: string[], kubectl: Kubectl, resourceTypes: Resource[], allPods: any) {
     const workflowFilePath = await getWorkflowFilePath(TaskInputParameters.githubToken);
-    const buildConfigs = await getBuildConfigs();
+    const buildConfigs = await getFilePathsConfigs(files);
     const annotationKeyLabel = models.getWorkflowAnnotationKeyLabel(workflowFilePath);
     annotateResources(files, kubectl, resourceTypes, allPods, annotationKeyLabel, workflowFilePath, buildConfigs);
     labelResources(files, kubectl, annotationKeyLabel);

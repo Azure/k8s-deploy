@@ -130,15 +130,25 @@ export function annotateChildPods(kubectl: Kubectl, resourceType: string, resour
     return commandExecutionResults;
 }
 
-export async function getBuildConfigs(): Promise<any> {
-    let imageNames = core.getInput('images').split('\n');
+export async function getFilePathsConfigs(files: string[]): Promise<any> {
+
+    let filePathsConfig: any = {};
+    const BUILD_CONFIG_KEY = 'buildConfigs';
+    const MANIFEST_PATHS_KEY = 'manifestFilePaths';
+    const HELM_CHART_KEY = 'helmChartFilePaths';
+    
+    filePathsConfig[MANIFEST_PATHS_KEY] = JSON.stringify(files);
+
+    let helmChartPath = process.env.HELM_CHART_PATH || '';
+    filePathsConfig[HELM_CHART_KEY] = JSON.stringify(helmChartPath);
 
     //From image file
-    core.info(`🏃 Getting images info...`);
+    core.info(`🏃 Getting images dockerfile info...`);
     let imageToBuildConfigMap: any = {};
+    let imageNames = core.getInput('images').split('\n');
 
     //test if docker is working (login cases)
-
+    
     //Fetch image info
     for(const image of imageNames){
         let args: string[] = [image];
@@ -146,12 +156,12 @@ export async function getBuildConfigs(): Promise<any> {
         let buildConfigMap : any = {};
         try{
             
-            await exec.exec('docker pull -q', args).then(res => {
+            await exec.exec('docker pull -q', args, true).then(res => {
                 if (res.stderr != '' && !res.success) {
                     throw new Error(`docker images pull failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
                 }
             });
-            await exec.exec('docker inspect --type=image', args).then(res => {
+            await exec.exec('docker inspect --type=image', args, true).then(res => {
                 if (res.stderr != '' && !res.success) {
                     throw new Error(`docker inspect call failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
                 }
@@ -161,27 +171,28 @@ export async function getBuildConfigs(): Promise<any> {
             });   
         }
         catch (ex) {
-            core.warning(`Failed to get details for image ${image.toString()} : ${JSON.stringify(ex)}`);
+            core.warning(`Failed to get dockerfile paths for image ${image.toString()} : ${JSON.stringify(ex)}`);
         }
 
         core.info(`Image Info:: ${JSON.stringify(resultObj)}`);
-        const IMAGE_SOURCE_REPO_LABEL_KEY = 'org.opencontainers.image.source';
         const DOCKERFILE_PATH_LABEL_KEY = 'dockerfile-path';
+        const DOCKERFILE_PATH_KEY = 'dockerfilePath';
+        const CONTAINER_REG_KEY = 'containerRegistryLink';
         if(resultObj != null && resultObj.Config != null && resultObj.Config.Labels != null ){
-
-            if(resultObj.Config.Labels[IMAGE_SOURCE_REPO_LABEL_KEY] !=null){
-                buildConfigMap['source'] = resultObj.Config.Labels[IMAGE_SOURCE_REPO_LABEL_KEY];
-            } 
             if(resultObj.Config.Labels[DOCKERFILE_PATH_LABEL_KEY] !=null){
-                buildConfigMap['dockerfilePath'] = resultObj.Config.Labels[DOCKERFILE_PATH_LABEL_KEY];
+                buildConfigMap[DOCKERFILE_PATH_KEY] = resultObj.Config.Labels[DOCKERFILE_PATH_LABEL_KEY];
             } 
-            core.info(`Image Map :: ${JSON.stringify(buildConfigMap)}`);
+            //Add CR link to build config
+            buildConfigMap[CONTAINER_REG_KEY] = image.toString().split('@')[0];
+            //core.info(`Image Map :: ${JSON.stringify(buildConfigMap)}`);
             imageToBuildConfigMap[image.toString().split('@')[1]] = JSON.stringify(buildConfigMap);
         }
     }
+    filePathsConfig[BUILD_CONFIG_KEY] = JSON.stringify(imageToBuildConfigMap);
     core.info(`🏃 DONE fetching images info...${JSON.stringify(imageToBuildConfigMap)}`);
     
-    return Promise.resolve(imageToBuildConfigMap); 
+    
+    return Promise.resolve(filePathsConfig); 
 }
 
 export function sleep(timeout: number) {
