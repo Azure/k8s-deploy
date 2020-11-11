@@ -137,10 +137,10 @@ export async function getFilePathsConfigs(files: string[]): Promise<any> {
     const MANIFEST_PATHS_KEY = 'manifestFilePaths';
     const HELM_CHART_KEY = 'helmChartFilePaths';
     
-    filePathsConfig[MANIFEST_PATHS_KEY] = JSON.stringify(files);
+    filePathsConfig[MANIFEST_PATHS_KEY] = files;
 
     let helmChartPath = process.env.HELM_CHART_PATH || '';
-    filePathsConfig[HELM_CHART_KEY] = JSON.stringify(helmChartPath);
+    filePathsConfig[HELM_CHART_KEY] = helmChartPath;
 
     //From image file
     core.info(`🏃 Getting images dockerfile info...`);
@@ -165,33 +165,30 @@ export async function getFilePathsConfigs(files: string[]): Promise<any> {
                 if (res.stderr != '' && !res.success) {
                     throw new Error(`docker inspect call failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
                 }
-                core.info(res.stdout);
                 resultObj = JSON.parse(res.stdout)[0];
-                
             });   
         }
         catch (ex) {
             core.warning(`Failed to get dockerfile paths for image ${image.toString()} : ${JSON.stringify(ex)}`);
         }
 
-        core.info(`Image Info:: ${JSON.stringify(resultObj)}`);
         const DOCKERFILE_PATH_LABEL_KEY = 'dockerfile-path';
         const DOCKERFILE_PATH_KEY = 'dockerfilePath';
-        const CONTAINER_REG_KEY = 'containerRegistryLink';
+        const CONTAINER_REG_KEY = 'containerRegistryServer';
+
         if(resultObj != null && resultObj.Config != null && resultObj.Config.Labels != null ){
             if(resultObj.Config.Labels[DOCKERFILE_PATH_LABEL_KEY] !=null){
                 buildConfigMap[DOCKERFILE_PATH_KEY] = resultObj.Config.Labels[DOCKERFILE_PATH_LABEL_KEY];
             } 
             //Add CR link to build config
-            buildConfigMap[CONTAINER_REG_KEY] = image.toString().split('@')[0];
+            buildConfigMap[CONTAINER_REG_KEY] = image.toString().split('@')[0].split('/')[0];
             //core.info(`Image Map :: ${JSON.stringify(buildConfigMap)}`);
-            imageToBuildConfigMap[image.toString().split('@')[1]] = JSON.stringify(buildConfigMap);
+            imageToBuildConfigMap[image.toString().split('@')[1]] = buildConfigMap;
         }
     }
-    filePathsConfig[BUILD_CONFIG_KEY] = JSON.stringify(imageToBuildConfigMap);
-    core.info(`🏃 DONE fetching images info...${JSON.stringify(imageToBuildConfigMap)}`);
-    
-    
+    filePathsConfig[BUILD_CONFIG_KEY] = imageToBuildConfigMap;
+    core.info(`🏃 DONE fetching images info...`);
+
     return Promise.resolve(filePathsConfig); 
 }
 
