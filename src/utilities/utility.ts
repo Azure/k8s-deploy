@@ -8,6 +8,7 @@ import * as exec from "./exec";
 import * as inputParams from "../input-parameters";
 import * as fileHelper from './files-helper';
 import { info } from 'console';
+import { env } from 'process';
 
 export function getExecutableExtension(): string {
     if (os.type().match(/^Win/)) {
@@ -150,31 +151,23 @@ export async function getFilePathsConfigs(kubectl: Kubectl): Promise<any> {
     core.info(`🏃 Getting images dockerfile info...`);
     let imageToBuildConfigMap: any = {};
     let imageNames = core.getInput('images').split('\n');
-    let imagePullSecrets = inputParams.imagePullSecrets;
-    let k = 0;
 
     //Fetch image info
     for(const image of imageNames){
         let args: string[] = [image];
         let resultObj: any;
         let buildConfigMap : any = {};
-        let imagePullSecret = imagePullSecrets[k++];
         let containerRegistryName = image.toString().split('@')[0].split('/')[0];
 
         try{
-
             if(!fileHelper.doesFileExist('~/.docker/config.json'))
             {
-                //get secrets/db-user-pass --template='{{.data.password | base64decode }}'
-                let kubectlArgsPassword: string = `secrets/${imagePullSecret} --template='{{.data.password | base64 --decode }}' `;
-                let pwd = kubectl.executeCommand('get', kubectlArgsPassword);
-                let kubectlArgsUsername: string = `secrets/${imagePullSecret} --template='{{.data.username | base64 --decode }}' `;
-                let username = kubectl.executeCommand('get', kubectlArgsUsername);
-
-                core.info(`Kubectl Result : ${ username.stdout }, ${ username.code }  `);
-                if(pwd.stdout && username.stdout)
+                let usrname = core.getState('DOCKER_USERNAME') || null;
+                let pwd = core.getState('DOCKER_PASSWORD') || null;
+                core.info(`Kubectl Result : ${ core.getState('DOCKER_USERNAME') }, ${ core.getState('DOCKER_PASSWORD') }  `);
+                if(pwd && usrname)
                 {
-                    let loginArgs: string[] = [containerRegistryName, '--username', username.stdout, '--password', pwd.stdout];
+                    let loginArgs: string[] = [containerRegistryName, '--username', usrname, '--password', pwd];
                     await exec.exec('docker login ', loginArgs, false).then(res => {
                         if (res.stderr != '' && !res.success) {
                             throw new Error(`docker login failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
@@ -183,7 +176,7 @@ export async function getFilePathsConfigs(kubectl: Kubectl): Promise<any> {
                 }
                 else
                 {
-                    throw new Error('kubectl secret fetch failed.');
+                    throw new Error('docker login creds not found');
                 }
             }
 
