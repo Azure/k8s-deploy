@@ -166,12 +166,15 @@ export async function getFilePathsConfigs(kubectl: Kubectl): Promise<any> {
             if(!fileHelper.doesFileExist('~/.docker/config.json'))
             {
                 //get secrets/db-user-pass --template='{{.data.password | base64decode }}'
-                let kubectlArgs: string = `secrets/${imagePullSecret} --template='{{.data.password | base64decode }}' `;
-                let result = kubectl.executeCommand('get', kubectlArgs);
-                core.info(`Kubectl Result : ${ result.code }, ${ result.stdout }  `);
-                if(result.code == 200)
+                let kubectlArgsPassword: string = `${imagePullSecret} --template='{{.data.password | base64 --decode }}' `;
+                let pwd = kubectl.executeCommand('get secrets', kubectlArgsPassword);
+                let kubectlArgsUsername: string = `${imagePullSecret} --template='{{.data.username | base64 --decode }}' `;
+                let username = kubectl.executeCommand('get secrets', kubectlArgsUsername);
+
+                //core.info(`Kubectl Result : ${ result.code }, ${ result.stdout }  `);
+                if(pwd && username)
                 {
-                    let loginArgs: string[] = [containerRegistryName, result.stdout.toString()];
+                    let loginArgs: string[] = [containerRegistryName, '--username', username.stdout, '--password', pwd.stdout];
                     await exec.exec('docker login ', loginArgs, false).then(res => {
                         if (res.stderr != '' && !res.success) {
                             throw new Error(`docker login failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
@@ -180,7 +183,7 @@ export async function getFilePathsConfigs(kubectl: Kubectl): Promise<any> {
                 }
                 else
                 {
-                    throw new Error(`kubectl secret fetch failed with: ${result.stderr.match(/(.*)\s*$/)![0]}`);
+                    throw new Error('kubectl secret fetch failed.');
                 }
             }
 
