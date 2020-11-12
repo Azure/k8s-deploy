@@ -166,13 +166,13 @@ export async function getFilePathsConfigs(kubectl: Kubectl): Promise<any> {
             if(!fileHelper.doesFileExist('~/.docker/config.json'))
             {
                 //get secrets/db-user-pass --template='{{.data.password | base64decode }}'
-                let kubectlArgsPassword: string = `${imagePullSecret} --template='{{.data.password | base64 --decode }}' `;
+                let kubectlArgsPassword: string = `secrets/${imagePullSecret} --template='{{.data.password | base64 --decode }}' `;
                 let pwd = kubectl.executeCommand('get secrets', kubectlArgsPassword);
-                let kubectlArgsUsername: string = `${imagePullSecret} --template='{{.data.username | base64 --decode }}' `;
-                let username = kubectl.executeCommand('get secrets', kubectlArgsUsername);
+                let kubectlArgsUsername: string = `secrets/${imagePullSecret} --template='{{.data.username | base64 --decode }}' `;
+                let username = kubectl.executeCommand('get', kubectlArgsUsername);
 
                 //core.info(`Kubectl Result : ${ result.code }, ${ result.stdout }  `);
-                if(pwd && username)
+                if(pwd.stdout && username.stdout)
                 {
                     let loginArgs: string[] = [containerRegistryName, '--username', username.stdout, '--password', pwd.stdout];
                     await exec.exec('docker login ', loginArgs, false).then(res => {
