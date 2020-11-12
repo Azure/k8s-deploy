@@ -130,14 +130,14 @@ export function annotateChildPods(kubectl: Kubectl, resourceType: string, resour
     return commandExecutionResults;
 }
 
-export async function getFilePathsConfigs(files: string[]): Promise<any> {
+export async function getFilePathsConfigs(inputManifestFiles: string[]): Promise<any> {
 
     let filePathsConfig: any = {};
     const BUILD_CONFIG_KEY = 'buildConfigs';
     const MANIFEST_PATHS_KEY = 'manifestFilePaths';
     const HELM_CHART_KEY = 'helmChartFilePaths';
     
-    filePathsConfig[MANIFEST_PATHS_KEY] = files;
+    filePathsConfig[MANIFEST_PATHS_KEY] = inputManifestFiles || '';
 
     let helmChartPath = process.env.HELM_CHART_PATH || '';
     filePathsConfig[HELM_CHART_KEY] = helmChartPath;
