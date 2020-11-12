@@ -166,7 +166,7 @@ export async function getFilePathsConfigs(kubectl: Kubectl): Promise<any> {
             if(!fileHelper.doesFileExist('~/.docker/config.json'))
             {
                 let kubectlArgs: string[] = [ imagePullSecret, '--output=\"jsonpath={.data.\.dockerconfigjson}\" | base64 --decode' ];
-                let result = kubectl.executeCommand('kubectl get secret', kubectlArgs.toString());
+                let result = kubectl.executeCommand('get secret', kubectlArgs.toString());
                 core.info(`Kubectl Result : ${ result.code }, ${ result.stdout }  `);
                 if(result.code == 200)
                 {
