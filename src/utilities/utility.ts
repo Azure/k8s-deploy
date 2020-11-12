@@ -5,6 +5,9 @@ import { Kubectl } from '../kubectl-object-model';
 import { GitHubClient } from '../githubClient';
 import { StatusCodes } from "./httpClient";
 import * as exec from "./exec";
+import * as inputParams from "../input-parameters";
+import * as fileHelper from './files-helper';
+import { info } from 'console';
 
 export function getExecutableExtension(): string {
     if (os.type().match(/^Win/)) {
@@ -130,13 +133,14 @@ export function annotateChildPods(kubectl: Kubectl, resourceType: string, resour
     return commandExecutionResults;
 }
 
-export async function getFilePathsConfigs(inputManifestFiles: string[]): Promise<any> {
+export async function getFilePathsConfigs(kubectl: Kubectl): Promise<any> {
 
     let filePathsConfig: any = {};
     const BUILD_CONFIG_KEY = 'buildConfigs';
     const MANIFEST_PATHS_KEY = 'manifestFilePaths';
     const HELM_CHART_KEY = 'helmChartFilePaths';
     
+    let inputManifestFiles = inputParams.manifests;
     filePathsConfig[MANIFEST_PATHS_KEY] = inputManifestFiles || '';
 
     let helmChartPath = process.env.HELM_CHART_PATH || '';
@@ -146,21 +150,44 @@ export async function getFilePathsConfigs(inputManifestFiles: string[]): Promise
     core.info(`🏃 Getting images dockerfile info...`);
     let imageToBuildConfigMap: any = {};
     let imageNames = core.getInput('images').split('\n');
+    let imagePullSecrets = inputParams.imagePullSecrets;
+    let k = 0;
 
-    //test if docker is working (login cases)
-    
     //Fetch image info
     for(const image of imageNames){
         let args: string[] = [image];
         let resultObj: any;
         let buildConfigMap : any = {};
+        let imagePullSecret = imagePullSecrets[k++];
+        let containerRegistryName = image.toString().split('@')[0].split('/')[0];
+
         try{
-            
-            await exec.exec('docker pull -q', args, true).then(res => {
+
+            if(!fileHelper.doesFileExist('~/.docker/config.json'))
+            {
+                let result = kubectl.executeCommand('kubectl get secret', imagePullSecret);
+                core.info(`Kubectl Result : ${ result.code }, ${ result.stdout }  `);
+                if(result.code == 200)
+                {
+                    let loginArgs: string[] = [containerRegistryName, result.stdout.toString()];
+                    await exec.exec('docker login ', loginArgs, false).then(res => {
+                        if (res.stderr != '' && !res.success) {
+                            throw new Error(`docker login failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
+                        }
+                    });
+                }
+                else
+                {
+                    throw new Error(`kubectl secret fetch failed with: ${result.stderr.match(/(.*)\s*$/)![0]}`);
+                }
+            }
+
+            await exec.exec('docker pull ', args, false).then(res => {
                 if (res.stderr != '' && !res.success) {
                     throw new Error(`docker images pull failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
                 }
             });
+
             await exec.exec('docker inspect --type=image', args, true).then(res => {
                 if (res.stderr != '' && !res.success) {
                     throw new Error(`docker inspect call failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
@@ -181,13 +208,12 @@ export async function getFilePathsConfigs(inputManifestFiles: string[]): Promise
                 buildConfigMap[DOCKERFILE_PATH_KEY] = resultObj.Config.Labels[DOCKERFILE_PATH_LABEL_KEY];
             } 
             //Add CR link to build config
-            buildConfigMap[CONTAINER_REG_KEY] = image.toString().split('@')[0].split('/')[0];
+            buildConfigMap[CONTAINER_REG_KEY] = containerRegistryName;
             //core.info(`Image Map :: ${JSON.stringify(buildConfigMap)}`);
             imageToBuildConfigMap[image.toString().split('@')[1]] = buildConfigMap;
         }
     }
     filePathsConfig[BUILD_CONFIG_KEY] = imageToBuildConfigMap;
-    core.info(`🏃 DONE fetching images info...`);
 
     return Promise.resolve(filePathsConfig); 
 }

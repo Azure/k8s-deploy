@@ -32,6 +32,13 @@ export function assertFileExists(path: string) {
     }
 }
 
+export function doesFileExist(path: string): boolean {
+    if (!fs.existsSync(path)) {
+        return false;
+    }
+    return true;
+}
+
 export function writeObjectsToFile(inputObjects: any[]): string[] {
     const newFilePaths = [];
 

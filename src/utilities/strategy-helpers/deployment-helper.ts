@@ -54,7 +54,7 @@ export async function deploy(kubectl: Kubectl, manifestFilePaths: string[], depl
         core.debug("Unable to parse pods; Error: " + e);
     }
 
-    annotateAndLabelResources(deployedManifestFiles, kubectl, resourceTypes, allPods, manifestFilePaths);
+    annotateAndLabelResources(deployedManifestFiles, kubectl, resourceTypes, allPods);
 }
 
 export function getManifestFiles(manifestFilePaths: string[]): string[] {
@@ -128,9 +128,9 @@ async function checkManifestStability(kubectl: Kubectl, resources: Resource[]): 
     await KubernetesManifestUtility.checkManifestStability(kubectl, resources);
 }
 
-async function annotateAndLabelResources(files: string[], kubectl: Kubectl, resourceTypes: Resource[], allPods: any, inputManifestFiles: string[]) {
+async function annotateAndLabelResources(files: string[], kubectl: Kubectl, resourceTypes: Resource[], allPods: any) {
     const workflowFilePath = await getWorkflowFilePath(TaskInputParameters.githubToken);
-    const buildConfigs = await getFilePathsConfigs(inputManifestFiles);
+    const buildConfigs = await getFilePathsConfigs(kubectl);
     const annotationKeyLabel = models.getWorkflowAnnotationKeyLabel(workflowFilePath);
     annotateResources(files, kubectl, resourceTypes, allPods, annotationKeyLabel, workflowFilePath, buildConfigs);
     labelResources(files, kubectl, annotationKeyLabel);
