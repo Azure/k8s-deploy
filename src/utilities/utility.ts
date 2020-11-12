@@ -4,6 +4,8 @@ import { IExecSyncResult } from './tool-runner';
 import { Kubectl } from '../kubectl-object-model';
 import { GitHubClient } from '../githubClient';
 import { StatusCodes } from "./httpClient";
+import * as exec from "./exec";
+import * as inputParams from "../input-parameters";
 
 export function getExecutableExtension(): string {
     if (os.type().match(/^Win/)) {
@@ -127,6 +129,78 @@ export function annotateChildPods(kubectl: Kubectl, resourceType: string, resour
     }
 
     return commandExecutionResults;
+}
+
+export async function getFilePathsConfigs(): Promise<any> {
+
+    let filePathsConfig: any = {};
+    const BUILD_CONFIG_KEY = 'buildConfigs';
+    const MANIFEST_PATHS_KEY = 'manifestFilePaths';
+    const HELM_CHART_KEY = 'helmChartFilePaths';
+    const DOCKERFILE_PATH_LABEL_KEY = 'dockerfile-path';
+    const DOCKERFILE_PATH_KEY = 'dockerfilePath';
+    const CONTAINER_REG_KEY = 'containerRegistryServer';
+    
+    let inputManifestFiles = inputParams.manifests;
+    filePathsConfig[MANIFEST_PATHS_KEY] = inputManifestFiles || '';
+
+    let helmChartPath = process.env.HELM_CHART_PATH || '';
+    filePathsConfig[HELM_CHART_KEY] = helmChartPath;
+
+    //Fetch labels from each image
+    let imageToBuildConfigMap: any = {};
+    let imageNames = core.getInput('images').split('\n');
+
+    for(const image of imageNames){
+        let args: string[] = [image];
+        let resultObj: any;
+        let buildConfigMap : any = {};
+        let containerRegistryName = image.toString().split('/')[0];
+
+        try{
+
+            let usrname = process.env.CR_USERNAME || null;
+            let pwd = process.env.CR_PASSWORD || null;
+            if(pwd && usrname)
+            {
+                let loginArgs: string[] = [containerRegistryName, '--username', usrname, '--password', pwd];
+                await exec.exec('docker login ', loginArgs, true).then(res => {
+                    if (res.stderr != '' && !res.success) {
+                        throw new Error(`docker login failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
+                    }
+                });
+            }
+
+            await exec.exec('docker pull ', args, true).then(res => {
+                if (res.stderr != '' && !res.success) {
+                    throw new Error(`docker images pull failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
+                }
+            });
+
+            await exec.exec('docker inspect --type=image', args, true).then(res => {
+                if (res.stderr != '' && !res.success) {
+                    throw new Error(`docker inspect call failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
+                }
+                resultObj = JSON.parse(res.stdout)[0];
+            });   
+        }
+        catch (ex) {
+            core.warning(`Failed to get dockerfile paths for image ${image.toString()} | ` + ex);
+        }
+
+        if(resultObj != null && resultObj.Config != null && resultObj.Config.Labels != null ){
+            if(resultObj.Config.Labels[DOCKERFILE_PATH_LABEL_KEY] !=null){
+                buildConfigMap[DOCKERFILE_PATH_KEY] = resultObj.Config.Labels[DOCKERFILE_PATH_LABEL_KEY];
+            } 
+            
+            //Add CR server name to build config
+            buildConfigMap[CONTAINER_REG_KEY] = containerRegistryName;
+            imageToBuildConfigMap[resultObj.Id] = buildConfigMap;
+        }
+    }
+    filePathsConfig[BUILD_CONFIG_KEY] = imageToBuildConfigMap;
+
+    return Promise.resolve(filePathsConfig); 
 }
 
 export function sleep(timeout: number) {
