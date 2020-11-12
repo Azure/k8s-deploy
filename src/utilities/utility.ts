@@ -160,11 +160,12 @@ export async function getFilePathsConfigs(kubectl: Kubectl): Promise<any> {
         let containerRegistryName = image.toString().split('@')[0].split('/')[0];
 
         try{
-            if(!fileHelper.doesFileExist('~\\.docker\\config.json'))
-            {
-                let usrname = core.getInput('DOCKER_USERNAME') || null;
-                let pwd = core.getInput('DOCKER_PASSWORD') || null;
-                core.info(`Docker username: ${ usrname }`);
+            let usrname = core.getInput('DOCKER_USERNAME') || null;
+            let pwd = core.getInput('DOCKER_PASSWORD') || null;
+            core.info(`Docker username: ${ usrname }`);
+
+            //if(!fileHelper.doesFileExist('~\\.docker\\config.json'))
+            //{
                 if(pwd && usrname)
                 {
                     let loginArgs: string[] = [containerRegistryName, '--username', usrname, '--password', pwd];
@@ -178,7 +179,7 @@ export async function getFilePathsConfigs(kubectl: Kubectl): Promise<any> {
                 {
                     throw new Error('docker login creds not found');
                 }
-            }
+            //}
 
             await exec.exec('docker pull ', args, false).then(res => {
                 if (res.stderr != '' && !res.success) {
