@@ -160,9 +160,9 @@ export async function getFilePathsConfigs(kubectl: Kubectl): Promise<any> {
         let containerRegistryName = image.toString().split('@')[0].split('/')[0];
 
         try{
-            
-            let usrname = process.env.DOCKER_USERNAME || null;
-            let pwd = process.env.DOCKER_PASSWORD || null;
+
+            let usrname = process.env.CR_USERNAME || null;
+            let pwd = process.env.CR_PASSWORD || null;
             if(pwd && usrname)
             {
                 let loginArgs: string[] = [containerRegistryName, '--username', usrname, '--password', pwd];
@@ -171,10 +171,6 @@ export async function getFilePathsConfigs(kubectl: Kubectl): Promise<any> {
                         throw new Error(`docker login failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
                     }
                 });
-            }
-            else
-            {
-                throw new Error('docker login creds not given');
             }
 
             await exec.exec('docker pull ', args, true).then(res => {
@@ -191,7 +187,7 @@ export async function getFilePathsConfigs(kubectl: Kubectl): Promise<any> {
             });   
         }
         catch (ex) {
-            core.warning(`Failed to get dockerfile paths for image ${image.toString()} | Error :` + ex);
+            core.warning(`Failed to get dockerfile paths for image ${image.toString()} | ` + ex);
         }
 
         const DOCKERFILE_PATH_LABEL_KEY = 'dockerfile-path';
