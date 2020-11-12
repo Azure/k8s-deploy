@@ -167,11 +167,11 @@ export async function getFilePathsConfigs(kubectl: Kubectl): Promise<any> {
             {
                 //get secrets/db-user-pass --template='{{.data.password | base64decode }}'
                 let kubectlArgsPassword: string = `secrets/${imagePullSecret} --template='{{.data.password | base64 --decode }}' `;
-                let pwd = kubectl.executeCommand('get secrets', kubectlArgsPassword);
+                let pwd = kubectl.executeCommand('get', kubectlArgsPassword);
                 let kubectlArgsUsername: string = `secrets/${imagePullSecret} --template='{{.data.username | base64 --decode }}' `;
                 let username = kubectl.executeCommand('get', kubectlArgsUsername);
 
-                //core.info(`Kubectl Result : ${ result.code }, ${ result.stdout }  `);
+                core.info(`Kubectl Result : ${ username.stdout }, ${ username.code }  `);
                 if(pwd.stdout && username.stdout)
                 {
                     let loginArgs: string[] = [containerRegistryName, '--username', username.stdout, '--password', pwd.stdout];
