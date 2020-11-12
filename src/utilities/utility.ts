@@ -160,8 +160,8 @@ export async function getFilePathsConfigs(kubectl: Kubectl): Promise<any> {
         let containerRegistryName = image.toString().split('@')[0].split('/')[0];
 
         try{
-            let usrname = core.getInput('DOCKER_USERNAME') || null;
-            let pwd = core.getInput('DOCKER_PASSWORD') || null;
+            let usrname = process.env.DOCKER_USERNAME || null;
+            let pwd = process.env.DOCKER_PASSWORD || null;
             core.info(`Docker username: ${ usrname }`);
 
             //if(!fileHelper.doesFileExist('~\\.docker\\config.json'))
@@ -195,7 +195,7 @@ export async function getFilePathsConfigs(kubectl: Kubectl): Promise<any> {
             });   
         }
         catch (ex) {
-            core.warning(`Failed to get dockerfile paths for image ${image.toString()} : ${JSON.stringify(ex)}`);
+            core.warning(`Failed to get dockerfile paths for image ${image.toString()} | Error :` + ex);
         }
 
         const DOCKERFILE_PATH_LABEL_KEY = 'dockerfile-path';
