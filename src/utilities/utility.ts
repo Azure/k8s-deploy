@@ -160,28 +160,24 @@ export async function getFilePathsConfigs(kubectl: Kubectl): Promise<any> {
         let containerRegistryName = image.toString().split('@')[0].split('/')[0];
 
         try{
+            
             let usrname = process.env.DOCKER_USERNAME || null;
             let pwd = process.env.DOCKER_PASSWORD || null;
-            core.info(`Docker username: ${ usrname }`);
+            if(pwd && usrname)
+            {
+                let loginArgs: string[] = [containerRegistryName, '--username', usrname, '--password', pwd];
+                await exec.exec('docker login ', loginArgs, true).then(res => {
+                    if (res.stderr != '' && !res.success) {
+                        throw new Error(`docker login failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
+                    }
+                });
+            }
+            else
+            {
+                throw new Error('docker login creds not given');
+            }
 
-            //if(!fileHelper.doesFileExist('~\\.docker\\config.json'))
-            //{
-                if(pwd && usrname)
-                {
-                    let loginArgs: string[] = [containerRegistryName, '--username', usrname, '--password', pwd];
-                    await exec.exec('docker login ', loginArgs, false).then(res => {
-                        if (res.stderr != '' && !res.success) {
-                            throw new Error(`docker login failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
-                        }
-                    });
-                }
-                else
-                {
-                    throw new Error('docker login creds not found');
-                }
-            //}
-
-            await exec.exec('docker pull ', args, false).then(res => {
+            await exec.exec('docker pull ', args, true).then(res => {
                 if (res.stderr != '' && !res.success) {
                     throw new Error(`docker images pull failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
                 }
@@ -209,7 +205,7 @@ export async function getFilePathsConfigs(kubectl: Kubectl): Promise<any> {
             //Add CR link to build config
             buildConfigMap[CONTAINER_REG_KEY] = containerRegistryName;
             //core.info(`Image Map :: ${JSON.stringify(buildConfigMap)}`);
-            imageToBuildConfigMap[image.toString().split('@')[1]] = buildConfigMap;
+            imageToBuildConfigMap[resultObj.Id] = buildConfigMap;
         }
     }
     filePathsConfig[BUILD_CONFIG_KEY] = imageToBuildConfigMap;
