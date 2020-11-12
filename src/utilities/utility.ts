@@ -160,11 +160,11 @@ export async function getFilePathsConfigs(kubectl: Kubectl): Promise<any> {
         let containerRegistryName = image.toString().split('@')[0].split('/')[0];
 
         try{
-            if(!fileHelper.doesFileExist('~/.docker/config.json'))
+            if(!fileHelper.doesFileExist('~\\.docker\\config.json'))
             {
-                let usrname = core.getState('DOCKER_USERNAME') || null;
-                let pwd = core.getState('DOCKER_PASSWORD') || null;
-                core.info(`Kubectl Result : ${ core.getState('DOCKER_USERNAME') }, ${ core.getState('DOCKER_PASSWORD') }  `);
+                let usrname = core.getInput('DOCKER_USERNAME') || null;
+                let pwd = core.getInput('DOCKER_PASSWORD') || null;
+                core.info(`Docker username: ${ usrname }`);
                 if(pwd && usrname)
                 {
                     let loginArgs: string[] = [containerRegistryName, '--username', usrname, '--password', pwd];
