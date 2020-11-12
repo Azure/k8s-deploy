@@ -140,6 +140,9 @@ export async function getFilePathsConfigs(kubectl: Kubectl): Promise<any> {
     const BUILD_CONFIG_KEY = 'buildConfigs';
     const MANIFEST_PATHS_KEY = 'manifestFilePaths';
     const HELM_CHART_KEY = 'helmChartFilePaths';
+    const DOCKERFILE_PATH_LABEL_KEY = 'dockerfile-path';
+    const DOCKERFILE_PATH_KEY = 'dockerfilePath';
+    const CONTAINER_REG_KEY = 'containerRegistryServer';
     
     let inputManifestFiles = inputParams.manifests;
     filePathsConfig[MANIFEST_PATHS_KEY] = inputManifestFiles || '';
@@ -147,17 +150,15 @@ export async function getFilePathsConfigs(kubectl: Kubectl): Promise<any> {
     let helmChartPath = process.env.HELM_CHART_PATH || '';
     filePathsConfig[HELM_CHART_KEY] = helmChartPath;
 
-    //From image file
-    core.info(`🏃 Getting images dockerfile info...`);
+    //Fetch labels from each image
     let imageToBuildConfigMap: any = {};
     let imageNames = core.getInput('images').split('\n');
 
-    //Fetch image info
     for(const image of imageNames){
         let args: string[] = [image];
         let resultObj: any;
         let buildConfigMap : any = {};
-        let containerRegistryName = image.toString().split('@')[0].split('/')[0];
+        let containerRegistryName = image.toString().split('/')[0];
 
         try{
 
@@ -190,17 +191,13 @@ export async function getFilePathsConfigs(kubectl: Kubectl): Promise<any> {
             core.warning(`Failed to get dockerfile paths for image ${image.toString()} | ` + ex);
         }
 
-        const DOCKERFILE_PATH_LABEL_KEY = 'dockerfile-path';
-        const DOCKERFILE_PATH_KEY = 'dockerfilePath';
-        const CONTAINER_REG_KEY = 'containerRegistryServer';
-
         if(resultObj != null && resultObj.Config != null && resultObj.Config.Labels != null ){
             if(resultObj.Config.Labels[DOCKERFILE_PATH_LABEL_KEY] !=null){
                 buildConfigMap[DOCKERFILE_PATH_KEY] = resultObj.Config.Labels[DOCKERFILE_PATH_LABEL_KEY];
             } 
-            //Add CR link to build config
+            
+            //Add CR server name to build config
             buildConfigMap[CONTAINER_REG_KEY] = containerRegistryName;
-            //core.info(`Image Map :: ${JSON.stringify(buildConfigMap)}`);
             imageToBuildConfigMap[resultObj.Id] = buildConfigMap;
         }
     }
