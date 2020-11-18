@@ -22,6 +22,7 @@ import { isBlueGreenDeploymentStrategy, isIngressRoute, isSMIRoute, routeBlueGre
 import { deployBlueGreenService } from './service-blue-green-helper';
 import { deployBlueGreenIngress } from './ingress-blue-green-helper';
 import { deployBlueGreenSMI } from './smi-blue-green-helper';
+import * as AzureTraceabilityHelper from "../../traceability/azure-traceability-helper";
 
 export async function deploy(kubectl: Kubectl, manifestFilePaths: string[], deploymentStrategy: string) {
 
@@ -30,6 +31,7 @@ export async function deploy(kubectl: Kubectl, manifestFilePaths: string[], depl
 
     // deployment
     const deployedManifestFiles = deployManifests(inputManifestFiles, kubectl, isCanaryDeploymentStrategy(deploymentStrategy), isBlueGreenDeploymentStrategy());
+    await AzureTraceabilityHelper.addTraceability(deployedManifestFiles.join(','));
 
     // check manifest stability
     const resourceTypes: Resource[] = KubernetesObjectUtility.getResources(deployedManifestFiles, models.deploymentTypes.concat([KubernetesConstants.DiscoveryAndLoadBalancerResource.service]));
