@@ -26,7 +26,7 @@ export const workloadTypes: string[] = ['deployment', 'replicaset', 'daemonset',
 export const workloadTypesWithRolloutStatus: string[] = ['deployment', 'daemonset', 'statefulset'];
 
 export function getWorkflowAnnotationsJson(lastSuccessRunSha: string, workflowFilePath: string, filePathConfigs: any): string {
-    return `{`
+    return JSON.stringify(`{`
         + `'run': '${process.env.GITHUB_RUN_ID}',`
         + `'repository': '${process.env.GITHUB_REPOSITORY}',`
         + `'workflow': '${process.env.GITHUB_WORKFLOW}',`
@@ -41,7 +41,7 @@ export function getWorkflowAnnotationsJson(lastSuccessRunSha: string, workflowFi
         + `'manifestsPaths': '${filePathConfigs.manifestFilePaths}',`
         + `'dockerfilePaths': '${filePathConfigs.buildConfigs}',`
         + `'provider': 'GitHub'`
-        + `}`;
+        + `}`);
 }
 
 export function getWorkflowAnnotationKeyLabel(workflowFilePath: string): string {
