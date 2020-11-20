@@ -140,7 +140,7 @@ export async function getFilePathsConfigs(): Promise<any> {
     const CONTAINER_REG_KEY = 'containerRegistryServer';
 
     let inputManifestFiles = inputParams.manifests || [];
-    filePathsConfig[MANIFEST_PATHS_KEY] = inputManifestFiles;
+    filePathsConfig[MANIFEST_PATHS_KEY] = JSON.stringify(inputManifestFiles);
 
     let helmChartPath = process.env.HELM_CHART_PATH || '';
     filePathsConfig[HELM_CHART_KEY] = helmChartPath;
@@ -204,7 +204,7 @@ export async function getFilePathsConfigs(): Promise<any> {
         }
     }
     
-    filePathsConfig[BUILD_CONFIG_KEY] = imageToBuildConfigMap;
+    filePathsConfig[BUILD_CONFIG_KEY] = JSON.stringify(imageToBuildConfigMap);
 
     return Promise.resolve(filePathsConfig); 
 }
