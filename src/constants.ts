@@ -38,8 +38,8 @@ export function getWorkflowAnnotationsJson(lastSuccessRunSha: string, workflowFi
         + `'lastSuccessRunCommit': '${lastSuccessRunSha}',`
         + `'branch': '${process.env.GITHUB_REF}',`
         + `'deployTimestamp': '${Date.now()}',`
-        + `'manifestsPaths': '${JSON.stringify(filePathConfigs.manifestFilePaths)}',`
-        + `'dockerfilePaths': '${JSON.stringify(filePathConfigs.buildConfigs)}',`
+        + `'manifestsPaths': '${filePathConfigs.manifestFilePaths}',`
+        + `'dockerfilePaths': '${filePathConfigs.buildConfigs}',`
         + `'provider': 'GitHub'`
         + `}`;
 }
