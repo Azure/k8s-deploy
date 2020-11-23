@@ -27,7 +27,7 @@ Following are the key capabilities of this action:
 	    - **Service route-method**: **Identified** services are configured to target the green deployments.
 	    - **Ingress route-method**: Along with deployments, new services are created with '-green' suffix (for **identified** services), and the ingresses are in turn updated to target the new services.
 	    - **SMI route-method**: A new [TrafficSplit](https://github.com/servicemeshinterface/smi-spec/blob/master/apis/traffic-split/v1alpha3/traffic-split.md) object is created for each **identified** service. The TrafficSplit object is updated to target the new deployments. **Note** that this works only if SMI is set up in the cluster.
-	    
+
       Traffic is routed to the new workloads only after the time provided as `version-switch-buffer` input has passed. `promote` action creates workloads and services with new configurations but without any suffix. `reject` action routes traffic back to the old workloads and deletes the '-green' workloads.
 
 
@@ -103,7 +103,7 @@ Following are the key capabilities of this action:
 ### Basic deployment (without any deployment strategy)
 
 ```yaml
-- uses: Azure/k8s-deploy@v1
+- uses: Azure/k8s-deploy@v1.3
   with:
     namespace: 'myapp'
     manifests: |
@@ -119,7 +119,7 @@ Following are the key capabilities of this action:
 ### Deployment Strategies - Canary deployment without service mesh
 
 ```yaml
-- uses: Azure/k8s-deploy@v1
+- uses: Azure/k8s-deploy@v1.3
   with:
     namespace: 'myapp'
     images: 'contoso.azurecr.io/myapp:${{ event.run_id }}'
@@ -136,7 +136,7 @@ Following are the key capabilities of this action:
 ### To promote/reject the canary created by the above snippet, the following YAML snippet could be used:
 
 ```yaml
-- uses: Azure/k8s-deploy@v1
+- uses: Azure/k8s-deploy@v1.3
   with:
     namespace: 'myapp'
     images: 'contoso.azurecr.io/myapp:${{ event.run_id }}'
@@ -153,7 +153,7 @@ Following are the key capabilities of this action:
 ### Deployment Strategies - Canary deployment based on Service Mesh Interface
 
 ```yaml
-- uses: Azure/k8s-deploy@v1
+- uses: Azure/k8s-deploy@v1.3
   with:
     namespace: 'myapp'
     images: 'contoso.azurecr.io/myapp:${{ event.run_id }}'
@@ -170,7 +170,7 @@ Following are the key capabilities of this action:
 ```
 ### To promote/reject the canary created by the above snippet, the following YAML snippet could be used:
 ```yaml
-- uses: Azure/k8s-deploy@v1
+- uses: Azure/k8s-deploy@v1.3
   with:
     namespace: 'myapp'
     images: 'contoso.azurecr.io/myapp:${{ event.run_id }} '
@@ -187,7 +187,7 @@ Following are the key capabilities of this action:
 ### Deployment Strategies - Blue-Green deployment with different route methods
 
 ```yaml
-- uses: Azure/k8s-deploy@v1
+- uses: Azure/k8s-deploy@v1.3
   with:
     namespace: 'myapp'
     images: 'contoso.azurecr.io/myapp:${{ event.run_id }}'
@@ -206,7 +206,7 @@ Following are the key capabilities of this action:
 ### **To promote/reject the green workload created by the above snippet, the following YAML snippet could be used:**
 
 ```yaml
-- uses: Azure/k8s-deploy@v1
+- uses: Azure/k8s-deploy@v1.3
   with:
     namespace: 'myapp'
     images: 'contoso.azurecr.io/myapp:${{ event.run_id }}'
@@ -236,24 +236,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
-    
+
     - uses: Azure/docker-login@v1
       with:
         login-server: contoso.azurecr.io
         username: ${{ secrets.REGISTRY_USERNAME }}
         password: ${{ secrets.REGISTRY_PASSWORD }}
-    
+
     - run: |
         docker build . -t contoso.azurecr.io/k8sdemo:${{ github.sha }}
         docker push contoso.azurecr.io/k8sdemo:${{ github.sha }}
-      
+
     # Set the target AKS cluster.
     - uses: Azure/aks-set-context@v1
       with:
         creds: '${{ secrets.AZURE_CREDENTIALS }}'
         cluster-name: contoso
         resource-group: contoso-rg
-        
+
     - uses: Azure/k8s-create-secret@v1
       with:
         container-registry-url: contoso.azurecr.io
@@ -261,7 +261,7 @@ jobs:
         container-registry-password: ${{ secrets.REGISTRY_PASSWORD }}
         secret-name: demo-k8s-secret
 
-    - uses: Azure/k8s-deploy@v1
+    - uses: Azure/k8s-deploy@v1.3
       with:
         manifests: |
           manifests/deployment.yml
@@ -282,21 +282,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
-    
+
     - uses: Azure/docker-login@v1
       with:
         login-server: contoso.azurecr.io
         username: ${{ secrets.REGISTRY_USERNAME }}
         password: ${{ secrets.REGISTRY_PASSWORD }}
-    
+
     - run: |
         docker build . -t contoso.azurecr.io/k8sdemo:${{ github.sha }}
         docker push contoso.azurecr.io/k8sdemo:${{ github.sha }}
-      
+
     - uses: Azure/k8s-set-context@v1
       with:
         kubeconfig: ${{ secrets.KUBE_CONFIG }}
-        
+
     - uses: Azure/k8s-create-secret@v1
       with:
         container-registry-url: contoso.azurecr.io
@@ -304,7 +304,7 @@ jobs:
         container-registry-password: ${{ secrets.REGISTRY_PASSWORD }}
         secret-name: demo-k8s-secret
 
-    - uses: Azure/k8s-deploy@v1
+    - uses: Azure/k8s-deploy@v1.3
       with:
         manifests: |
           manifests/deployment.yml
