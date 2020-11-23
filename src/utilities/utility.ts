@@ -144,7 +144,7 @@ export async function getFilePathsConfigs(): Promise<any> {
     let helmChartPaths = [];
     if(process.env.HELM_CHART_PATHS){
         helmChartPaths = process.env.HELM_CHART_PATHS.split('\n');
-        helmChartPaths.filter( val => val != "" );
+        helmChartPaths.splice(-1);
     }    
     
     filePathsConfig[HELM_CHART_KEY] = helmChartPaths;
