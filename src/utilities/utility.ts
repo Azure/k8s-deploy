@@ -141,12 +141,7 @@ export async function getFilePathsConfigs(): Promise<any> {
     let inputManifestFiles = inputParams.manifests || [];
     filePathsConfig[MANIFEST_PATHS_KEY] = inputManifestFiles;
 
-    let helmChartPaths = [];
-    if(process.env.HELM_CHART_PATHS){
-        helmChartPaths = process.env.HELM_CHART_PATHS.split('\n');
-        helmChartPaths.splice(-1);
-    }    
-    
+    let helmChartPaths = process.env.HELM_CHART_PATHS && process.env.HELM_CHART_PATHS.split('\n').splice(-1) || [];
     filePathsConfig[HELM_CHART_KEY] = helmChartPaths;
 
     //Fetch labels from each image
