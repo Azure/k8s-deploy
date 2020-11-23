@@ -141,7 +141,7 @@ export async function getFilePathsConfigs(): Promise<any> {
     filePathsConfig[MANIFEST_PATHS_KEY] = inputManifestFiles;
 
     let helmChartPaths = process.env.HELM_CHART_PATHS || '';
-    filePathsConfig[HELM_CHART_KEY] = helmChartPaths;
+    filePathsConfig[HELM_CHART_KEY] = helmChartPaths.split('\n');
 
     //Fetch labels from each image
     let imageToBuildConfigMap: any = [];
@@ -189,6 +189,9 @@ export async function getFilePathsConfigs(): Promise<any> {
             resultObj = resultObj[0];
             if((resultObj.Config) && (resultObj.Config.Labels) && (resultObj.Config.Labels[DOCKERFILE_PATH_LABEL_KEY])){
                 imageToBuildConfigMap[image] = resultObj.Config.Labels[DOCKERFILE_PATH_LABEL_KEY];
+            }
+            else{
+                imageToBuildConfigMap[image] = 'Not available';
             }
         }
     }
