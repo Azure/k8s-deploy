@@ -144,13 +144,15 @@ export async function getFilePathsConfigs(): Promise<any> {
     filePathsConfig[HELM_CHART_KEY] = helmChartPaths.split('\n');
 
     //Fetch labels from each image
-    let imageToBuildConfigMap: any = [];
+    
     let imageNames = core.getInput('images').split('\n');
+    let imageDockerfilePathList: any = [];
 
     for(const image of imageNames){
         let args: string[] = [image];
         let resultObj: any;
         let containerRegistryName = image;
+        let imageDockerfilePathObj: any = {};
 
         try{
             let usrname = process.env.CR_USERNAME || null;
@@ -188,15 +190,16 @@ export async function getFilePathsConfigs(): Promise<any> {
         if(resultObj){
             resultObj = resultObj[0];
             if((resultObj.Config) && (resultObj.Config.Labels) && (resultObj.Config.Labels[DOCKERFILE_PATH_LABEL_KEY])){
-                imageToBuildConfigMap[image] = resultObj.Config.Labels[DOCKERFILE_PATH_LABEL_KEY];
+                imageDockerfilePathObj[image] = resultObj.Config.Labels[DOCKERFILE_PATH_LABEL_KEY];
             }
             else{
-                imageToBuildConfigMap[image] = 'Not available';
+                imageDockerfilePathObj[image] = 'Not available';
             }
+            imageDockerfilePathList.push(imageDockerfilePathObj);
         }
     }
     
-    filePathsConfig[DOCKERFILE_PATH_KEY] = imageToBuildConfigMap;
+    filePathsConfig[DOCKERFILE_PATH_KEY] = imageDockerfilePathList;
 
     return Promise.resolve(filePathsConfig); 
 }
