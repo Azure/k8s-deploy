@@ -6,6 +6,7 @@ import { GitHubClient } from '../githubClient';
 import { StatusCodes } from "./httpClient";
 import * as exec from "./exec";
 import * as inputParams from "../input-parameters";
+import { Z_FILTERED } from 'zlib';
 
 export function getExecutableExtension(): string {
     if (os.type().match(/^Win/)) {
@@ -140,8 +141,13 @@ export async function getFilePathsConfigs(): Promise<any> {
     let inputManifestFiles = inputParams.manifests || [];
     filePathsConfig[MANIFEST_PATHS_KEY] = inputManifestFiles;
 
-    let helmChartPaths = process.env.HELM_CHART_PATHS || '';
-    filePathsConfig[HELM_CHART_KEY] = helmChartPaths.split('\n');
+    let helmChartPaths = [];
+    if(process.env.HELM_CHART_PATHS){
+        helmChartPaths = process.env.HELM_CHART_PATHS.split('\n');
+        helmChartPaths.filter( val => val != "" );
+    }    
+    
+    filePathsConfig[HELM_CHART_KEY] = helmChartPaths;
 
     //Fetch labels from each image
     

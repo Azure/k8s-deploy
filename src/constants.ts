@@ -38,9 +38,9 @@ export function getWorkflowAnnotationsJson(lastSuccessRunSha: string, workflowFi
         + `'lastSuccessRunCommit': '${lastSuccessRunSha}',`
         + `'branch': '${process.env.GITHUB_REF}',`
         + `'deployTimestamp': '${Date.now()}',`
-        + `'dockerfilePaths': '${JSON.stringify(filePathConfigs.dockerfilePaths)}',`
-        + `'manifestsPaths': '${JSON.stringify(filePathConfigs.manifestFilePaths)}',`
-        + `'helmChartPaths': '${JSON.stringify(filePathConfigs.helmChartFilePaths)}',`
+        + `'dockerfilePaths': '${JSON.stringify(filePathConfigs.dockerfilePaths,null,2)}',`
+        + `'manifestsPaths': '${JSON.stringify(filePathConfigs.manifestFilePaths,null,2)}',`
+        + `'helmChartPaths': '${JSON.stringify(filePathConfigs.helmChartFilePaths,null,2)}',`
         + `'provider': 'GitHub'`
         + `}`;
 }
