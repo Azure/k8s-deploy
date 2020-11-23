@@ -1,5 +1,4 @@
 import * as aexec from '@actions/exec';
-import {ExecOptions} from '@actions/exec';
 
 export interface ExecResult {
   success: boolean;
@@ -11,7 +10,7 @@ export const exec = async (command: string, args: string[] = [], silent?: boolea
   let stdout: string = '';
   let stderr: string = '';
 
-  const options: ExecOptions = {
+  const options: aexec.ExecOptions = {
     silent: silent,
     ignoreReturnCode: true
   };

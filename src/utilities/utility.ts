@@ -142,8 +142,8 @@ export async function getFilePathsConfigs(): Promise<any> {
     let inputManifestFiles = inputParams.manifests || [];
     filePathsConfig[MANIFEST_PATHS_KEY] = JSON.stringify(inputManifestFiles);
 
-    let helmChartPath = process.env.HELM_CHART_PATH || '';
-    filePathsConfig[HELM_CHART_KEY] = helmChartPath;
+    let helmChartPaths = process.env.HELM_CHART_PATHS || '';
+    filePathsConfig[HELM_CHART_KEY] = helmChartPaths;
 
     //Fetch labels from each image
     let imageToBuildConfigMap: any = {};
@@ -156,7 +156,6 @@ export async function getFilePathsConfigs(): Promise<any> {
         let containerRegistryName = image.toString().split('/')[0];
 
         try{
-
             let usrname = process.env.CR_USERNAME || null;
             let pwd = process.env.CR_PASSWORD || null;
             if(pwd && usrname)
@@ -180,7 +179,7 @@ export async function getFilePathsConfigs(): Promise<any> {
                     throw new Error(`docker inspect call failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
                 }
 
-                if(res.stdout!= null && res.stdout != ''){
+                if(!res.stdout){
                     resultObj = JSON.parse(res.stdout);
                 }
             });   
@@ -189,16 +188,16 @@ export async function getFilePathsConfigs(): Promise<any> {
             core.warning(`Failed to get dockerfile paths for image ${image.toString()} | ` + ex);
         }
 
-        if(resultObj != null){
+        if(!resultObj){
             resultObj = resultObj[0];
 
-            if(resultObj.Config != null && resultObj.Config.Labels != null && resultObj.Config.Labels[DOCKERFILE_PATH_LABEL_KEY] !=null){
+            if(!(resultObj.Config) && !(resultObj.Config.Labels) && !(resultObj.Config.Labels[DOCKERFILE_PATH_LABEL_KEY])){
                 buildConfigMap[DOCKERFILE_PATH_KEY] = resultObj.Config.Labels[DOCKERFILE_PATH_LABEL_KEY];
             } 
 
             //Add CR server name to build config
             buildConfigMap[CONTAINER_REG_KEY] = containerRegistryName;
-            if(resultObj.Id != null){
+            if(!resultObj.Id){
                 imageToBuildConfigMap[resultObj.Id] = buildConfigMap;
             }
         }
