@@ -116,11 +116,14 @@ export async function getRepositoryId(githubToken: string): Promise<number> {
         }
         else if (response.statusCode != StatusCodes.OK) {
             core.debug(`An error occured while getting repo. Statuscode: ${response.statusCode}, StatusMessage: ${response.statusMessage}`);
+        } else {
+            core.debug(`An error occured while getting repo. Received empty respone, StatusMessage: ${response.statusMessage}`);
         }
+
     } else {
         core.warning(`Failed to get response from repos GET API`);
     }
-    return Promise.resolve(repoId);
+    return repoId;
 }
 
 export function annotateChildPods(kubectl: Kubectl, resourceType: string, resourceName: string, annotationKeyValStr: string, allPods): IExecSyncResult[] {
