@@ -17,7 +17,7 @@ import { IExecSyncResult } from '../../utilities/tool-runner';
 
 import { deployPodCanary } from './pod-canary-deployment-helper';
 import { deploySMICanary } from './smi-canary-deployment-helper';
-import { checkForErrors, annotateChildPods, getWorkflowFilePath, getLastSuccessfulRunSha } from "../utility";
+import { checkForErrors, annotateChildPods, getWorkflowFilePath, getLastSuccessfulRunSha, getFilePathsConfigs } from "../utility";
 
 
 export async function deploy(kubectl: Kubectl, manifestFilePaths: string[], deploymentStrategy: string) {
@@ -114,15 +114,16 @@ async function checkManifestStability(kubectl: Kubectl, resources: Resource[]): 
 
 async function annotateAndLabelResources(files: string[], kubectl: Kubectl, resourceTypes: Resource[], allPods: any) {
     const workflowFilePath = await getWorkflowFilePath(TaskInputParameters.githubToken);
+    const filePathsConfig = await getFilePathsConfigs();
     const annotationKeyLabel = models.getWorkflowAnnotationKeyLabel(workflowFilePath);
-    annotateResources(files, kubectl, resourceTypes, allPods, annotationKeyLabel, workflowFilePath);
+    annotateResources(files, kubectl, resourceTypes, allPods, annotationKeyLabel, workflowFilePath, filePathsConfig);
     labelResources(files, kubectl, annotationKeyLabel);
 }
 
-function annotateResources(files: string[], kubectl: Kubectl, resourceTypes: Resource[], allPods: any, annotationKey: string, workflowFilePath: string) {
+function annotateResources(files: string[], kubectl: Kubectl, resourceTypes: Resource[], allPods: any, annotationKey: string, workflowFilePath: string, filePathsConfig: string) {
     const annotateResults: IExecSyncResult[] = [];
     const lastSuccessSha = getLastSuccessfulRunSha(kubectl, TaskInputParameters.namespace, annotationKey);
-    let annotationKeyValStr = annotationKey + '=' + models.getWorkflowAnnotationsJson(lastSuccessSha, workflowFilePath);
+    let annotationKeyValStr = annotationKey + '=' + models.getWorkflowAnnotationsJson(lastSuccessSha, workflowFilePath, filePathsConfig);
     annotateResults.push(kubectl.annotate('namespace', TaskInputParameters.namespace, annotationKeyValStr));
     annotateResults.push(kubectl.annotateFiles(files, annotationKeyValStr));
     resourceTypes.forEach(resource => {

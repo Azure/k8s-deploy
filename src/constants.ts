@@ -25,21 +25,25 @@ export const deploymentTypes: string[] = ['deployment', 'replicaset', 'daemonset
 export const workloadTypes: string[] = ['deployment', 'replicaset', 'daemonset', 'pod', 'statefulset', 'job', 'cronjob'];
 export const workloadTypesWithRolloutStatus: string[] = ['deployment', 'daemonset', 'statefulset'];
 
-export function getWorkflowAnnotationsJson(lastSuccessRunSha: string, workflowFilePath: string): string {
-    return `{`
-        + `'run': '${process.env.GITHUB_RUN_ID}',`
-        + `'repository': '${process.env.GITHUB_REPOSITORY}',`
-        + `'workflow': '${process.env.GITHUB_WORKFLOW}',`
-        + `'workflowFileName': '${workflowFilePath.replace(".github/workflows/", "")}',`
-        + `'jobName': '${process.env.GITHUB_JOB}',`
-        + `'createdBy': '${process.env.GITHUB_ACTOR}',`
-        + `'runUri': 'https://github.com/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}',`
-        + `'commit': '${process.env.GITHUB_SHA}',`
-        + `'lastSuccessRunCommit': '${lastSuccessRunSha}',`
-        + `'branch': '${process.env.GITHUB_REF}',`
-        + `'deployTimestamp': '${Date.now()}',`
-        + `'provider': 'GitHub'`
-        + `}`;
+export function getWorkflowAnnotationsJson(lastSuccessRunSha: string, workflowFilePath: string, filePathConfigs: any): string {
+    let annotationObject: any = {};
+    annotationObject["run"] = process.env.GITHUB_RUN_ID;
+    annotationObject["repository"] = process.env.GITHUB_REPOSITORY;
+    annotationObject["workflow"] = process.env.GITHUB_WORKFLOW;
+    annotationObject["workflowFileName"] = workflowFilePath.replace(".github/workflows/", "");
+    annotationObject["jobName"] = process.env.GITHUB_JOB;
+    annotationObject["createdBy"] = process.env.GITHUB_ACTOR;
+    annotationObject["runUri"] = `https://github.com/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`;
+    annotationObject["commit"] = process.env.GITHUB_SHA;
+    annotationObject["lastSuccessRunCommit"] = lastSuccessRunSha;
+    annotationObject["branch"] = process.env.GITHUB_REF;
+    annotationObject["deployTimestamp"] = Date.now();
+    annotationObject["dockerfilePaths"] = filePathConfigs.dockerfilePaths;
+    annotationObject["manifestsPaths"] = filePathConfigs.manifestFilePaths
+    annotationObject["helmChartPaths"] = filePathConfigs.helmChartFilePaths;
+    annotationObject["provider"] = "GitHub";
+
+    return JSON.stringify(annotationObject);
 }
 
 export function getWorkflowAnnotationKeyLabel(workflowFilePath: string): string {
