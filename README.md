@@ -103,7 +103,7 @@ Following are the key capabilities of this action:
 ### Basic deployment (without any deployment strategy)
 
 ```yaml
-- uses: Azure/k8s-deploy@v1
+- uses: Azure/k8s-deploy@v1.3
   with:
     namespace: 'myapp'
     manifests: |
@@ -119,7 +119,7 @@ Following are the key capabilities of this action:
 ### Deployment Strategies - Canary deployment without service mesh
 
 ```yaml
-- uses: Azure/k8s-deploy@v1
+- uses: Azure/k8s-deploy@v1.3
   with:
     namespace: 'myapp'
     images: 'contoso.azurecr.io/myapp:${{ event.run_id }}'
@@ -136,7 +136,7 @@ Following are the key capabilities of this action:
 ### To promote/reject the canary created by the above snippet, the following YAML snippet could be used:
 
 ```yaml
-- uses: Azure/k8s-deploy@v1
+- uses: Azure/k8s-deploy@v1.3
   with:
     namespace: 'myapp'
     images: 'contoso.azurecr.io/myapp:${{ event.run_id }}'
@@ -153,7 +153,7 @@ Following are the key capabilities of this action:
 ### Deployment Strategies - Canary deployment based on Service Mesh Interface
 
 ```yaml
-- uses: Azure/k8s-deploy@v1
+- uses: Azure/k8s-deploy@v1.3
   with:
     namespace: 'myapp'
     images: 'contoso.azurecr.io/myapp:${{ event.run_id }}'
@@ -170,7 +170,7 @@ Following are the key capabilities of this action:
 ```
 ### To promote/reject the canary created by the above snippet, the following YAML snippet could be used:
 ```yaml
-- uses: Azure/k8s-deploy@v1
+- uses: Azure/k8s-deploy@v1.3
   with:
     namespace: 'myapp'
     images: 'contoso.azurecr.io/myapp:${{ event.run_id }} '
@@ -187,7 +187,7 @@ Following are the key capabilities of this action:
 ### Deployment Strategies - Blue-Green deployment with different route methods
 
 ```yaml
-- uses: Azure/k8s-deploy@v1
+- uses: Azure/k8s-deploy@v1.3
   with:
     namespace: 'myapp'
     images: 'contoso.azurecr.io/myapp:${{ event.run_id }}'
@@ -206,7 +206,7 @@ Following are the key capabilities of this action:
 ### **To promote/reject the green workload created by the above snippet, the following YAML snippet could be used:**
 
 ```yaml
-- uses: Azure/k8s-deploy@v1
+- uses: Azure/k8s-deploy@v1.3
   with:
     namespace: 'myapp'
     images: 'contoso.azurecr.io/myapp:${{ event.run_id }}'
@@ -261,7 +261,7 @@ jobs:
         container-registry-password: ${{ secrets.REGISTRY_PASSWORD }}
         secret-name: demo-k8s-secret
 
-    - uses: Azure/k8s-deploy@v1
+    - uses: Azure/k8s-deploy@v1.3
       with:
         manifests: |
           manifests/deployment.yml
@@ -304,7 +304,7 @@ jobs:
         container-registry-password: ${{ secrets.REGISTRY_PASSWORD }}
         secret-name: demo-k8s-secret
 
-    - uses: Azure/k8s-deploy@v1
+    - uses: Azure/k8s-deploy@v1.3
       with:
         manifests: |
           manifests/deployment.yml
