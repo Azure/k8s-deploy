@@ -149,7 +149,7 @@ export async function getFilePathsConfigs(): Promise<any> {
     let pathKey: any, pathVal: any;
 
     //Fetching from env var if available
-    let dockerfilePathsList: any[] = (process.env.DOCKERFILEPATHS &&  process.env.DOCKERFILEPATHS.split('\n')) || [];
+    let dockerfilePathsList: any[] = (process.env.DOCKERFILE_PATHS &&  process.env.DOCKERFILE_PATHS.split('\n')) || [];
     dockerfilePathsList.forEach(path => {
         if(path){
             pathKey = path.split(' ')[0];
