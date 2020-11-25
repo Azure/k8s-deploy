@@ -6,7 +6,6 @@ import { GitHubClient } from '../githubClient';
 import { StatusCodes } from "./httpClient";
 import * as exec from "./exec";
 import * as inputParams from "../input-parameters";
-import { Z_FILTERED } from 'zlib';
 
 export function getExecutableExtension(): string {
     if (os.type().match(/^Win/)) {
@@ -144,16 +143,26 @@ export async function getFilePathsConfigs(): Promise<any> {
     let helmChartPaths = (process.env.HELM_CHART_PATHS && process.env.HELM_CHART_PATHS.split('\n').filter(path => path != "")) || [];
     filePathsConfig[HELM_CHART_KEY] = helmChartPaths;
 
-    //Fetch labels from each image
-    
+    //Parsing dockerfile paths for images
     let imageNames = core.getInput('images').split('\n');
-    let imageDockerfilePathList: any = [];
+    let imageDockerfilePathMap: any = {};
+    let pathKey: any, pathVal: any;
 
+    //Fetching from env var if available
+    let dockerfilePathsList: any[] = (process.env.DOCKERFILEPATHS &&  process.env.DOCKERFILEPATHS.split('\n')) || [];
+    dockerfilePathsList.forEach(path => {
+        if(path){
+            pathKey = path.split(' ')[0];
+            pathVal = path.split(' ')[1];
+            imageDockerfilePathMap[pathKey] = pathVal;
+        }
+    })
+
+    //Fetching from image lable if available
     for(const image of imageNames){
         let args: string[] = [image];
         let resultObj: any;
         let containerRegistryName = image;
-        let imageDockerfilePathObj: any = {};
 
         try{
             let usrname = process.env.CR_USERNAME || null;
@@ -191,16 +200,18 @@ export async function getFilePathsConfigs(): Promise<any> {
         if(resultObj){
             resultObj = resultObj[0];
             if((resultObj.Config) && (resultObj.Config.Labels) && (resultObj.Config.Labels[DOCKERFILE_PATH_LABEL_KEY])){
-                imageDockerfilePathObj[image] = resultObj.Config.Labels[DOCKERFILE_PATH_LABEL_KEY];
+                pathVal = resultObj.Config.Labels[DOCKERFILE_PATH_LABEL_KEY];
             }
             else{
-                imageDockerfilePathObj[image] = 'Not available';
+                pathVal = 'Not available';
             }
-            imageDockerfilePathList.push(imageDockerfilePathObj);
+            if(!imageDockerfilePathMap[image]){ //If (image : someVal) does not exist from env var parsing then add
+                imageDockerfilePathMap[image] = pathVal;
+            }  
         }
     }
     
-    filePathsConfig[DOCKERFILE_PATH_KEY] = imageDockerfilePathList;
+    filePathsConfig[DOCKERFILE_PATH_KEY] = imageDockerfilePathMap;
 
     return Promise.resolve(filePathsConfig); 
 }
