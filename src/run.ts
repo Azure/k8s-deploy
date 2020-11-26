@@ -4,7 +4,7 @@ import * as path from 'path';
 import * as toolCache from '@actions/tool-cache';
 
 import { downloadKubectl, getStableKubectlVersion } from "./utilities/kubectl-util";
-import { getExecutableExtension, isEqual } from "./utilities/utility";
+import { getExecutableExtension, isEqual, resolveGlobPatterns } from "./utilities/utility";
 
 import { Kubectl } from './kubectl-object-model';
 import { deploy } from './utilities/strategy-helpers/deployment-helper';
@@ -59,11 +59,11 @@ export async function run() {
         namespace = 'default';
     }
     let action = core.getInput('action');
-    let manifests = manifestsInput.split('\n');
 
     if (action === 'deploy') {
         let strategy = core.getInput('strategy');
-        console.log("strategy: ", strategy)
+        console.log("strategy: ", strategy);
+        let manifests = resolveGlobPatterns(manifestsInput);
         await deploy(new Kubectl(kubectlPath, namespace), manifests, strategy);
     }
     else if (action === 'promote') {

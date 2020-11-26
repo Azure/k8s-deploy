@@ -1,11 +1,12 @@
 'use strict';
 
 import * as core from '@actions/core';
+import { resolveGlobPatterns } from './utilities/utility';
 
 export let namespace: string = core.getInput('namespace');
 export const containers: string[] = core.getInput('images').split('\n');
 export const imagePullSecrets: string[] = core.getInput('imagepullsecrets').split('\n').filter(secret => secret.trim().length > 0);
-export const manifests = core.getInput('manifests').split('\n');
+export const manifests = resolveGlobPatterns(core.getInput('manifests'));
 export const canaryPercentage: string = core.getInput('percentage');
 export const deploymentStrategy: string = core.getInput('strategy');
 export const trafficSplitMethod: string = core.getInput('traffic-split-method');
