@@ -147,7 +147,7 @@ export function resolveGlobPatterns(manifests: string): string[] {
         core.setFailed('No manifests supplied to deploy');
         return;
     }
-    let unresolvedManifests = manifests.split('\n');
+    let unresolvedManifests = manifests.split("\n");
     let resolvedManifests: string[] = [];
     unresolvedManifests.forEach((manifestPath) => {
         if (glob.hasMagic(manifestPath)) {
@@ -158,7 +158,7 @@ export function resolveGlobPatterns(manifests: string): string[] {
         }
     });
 
-    if (resolvedManifests) {
+    if (!resolvedManifests) {
         core.setFailed('No manifests supplied to deploy');
         return;
     }

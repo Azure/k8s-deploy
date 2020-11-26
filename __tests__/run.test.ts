@@ -318,9 +318,9 @@ test("deployment - deploy() - Annotate & label resources", async () => {
     //Invoke and assert
     await expect(deployment.deploy(kubeCtl, ['manifests/deployment.yaml'], undefined)).resolves.not.toThrowError();
     expect(kubeCtl.annotate).toHaveBeenNthCalledWith(1, 'namespace', 'default', annotationKeyValStr);
-    expect(kubeCtl.annotateFiles).toBeCalledWith(["~\\Deployment_testapp_currentTimestamp\\deployment.yaml"], annotationKeyValStr);
+    expect(kubeCtl.annotateFiles).toBeCalledWith(["~/Deployment_testapp_currentTimestamp/deployment.yaml"], annotationKeyValStr);
     expect(kubeCtl.annotate).toBeCalledTimes(2);
-    expect(kubeCtl.labelFiles).toBeCalledWith(["~\\Deployment_testapp_currentTimestamp\\deployment.yaml"],
+    expect(kubeCtl.labelFiles).toBeCalledWith(["~/Deployment_testapp_currentTimestamp/deployment.yaml"],
         [`workflowFriendlyName=workflow.yml`, `workflow=${getWorkflowAnnotationKeyLabel(process.env.GITHUB_WORKFLOW)}`]);
 });
 
@@ -348,9 +348,9 @@ test("deployment - deploy() - Annotate & label resources for a new workflow", as
     //Invoke and assert
     await expect(deployment.deploy(kubeCtl, ['manifests/deployment.yaml'], undefined)).resolves.not.toThrowError();
     expect(kubeCtl.annotate).toHaveBeenNthCalledWith(1, 'namespace', 'default', annotationKeyValStr);
-    expect(kubeCtl.annotateFiles).toBeCalledWith(["~\\Deployment_testapp_currentTimestamp\\deployment.yaml"], annotationKeyValStr);
+    expect(kubeCtl.annotateFiles).toBeCalledWith(["~/Deployment_testapp_currentTimestamp/deployment.yaml"], annotationKeyValStr);
     expect(kubeCtl.annotate).toBeCalledTimes(2);
-    expect(kubeCtl.labelFiles).toBeCalledWith(["~\\Deployment_testapp_currentTimestamp\\deployment.yaml"],
+    expect(kubeCtl.labelFiles).toBeCalledWith(["~/Deployment_testapp_currentTimestamp/deployment.yaml"],
         [`workflowFriendlyName=NewWorkflow.yml`, `workflow=${getWorkflowAnnotationKeyLabel(process.env.GITHUB_WORKFLOW)}`]);
 });
 
