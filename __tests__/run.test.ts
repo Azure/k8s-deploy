@@ -7,6 +7,7 @@ import * as fs from 'fs';
 import * as io from '@actions/io';
 import * as toolCache from '@actions/tool-cache';
 import * as fileHelper from '../src/utilities/files-helper';
+import * as glob from 'glob';
 import { getWorkflowAnnotationKeyLabel, getWorkflowAnnotationsJson } from '../src/constants';
 import * as inputParam from '../src/input-parameters';
 
@@ -26,6 +27,7 @@ const inputParamMock = mocked(inputParam, true);
 
 const toolCacheMock = mocked(toolCache, true);
 const fileUtility = mocked(fs, true);
+const globMock = mocked(glob, true);
 
 const stableVersionUrl = 'https://storage.googleapis.com/kubernetes-release/release/stable.txt';
 
@@ -79,6 +81,7 @@ const resources: Resource[] = [{ type: "Deployment", name: "AppName" }];
 beforeEach(() => {
     deploymentYaml = fs.readFileSync(path.join(__dirname, 'manifests', 'deployment.yml'), 'utf8');
     jest.spyOn(Date, 'now').mockImplementation(() => 1234561234567);
+    globMock.hasMagic = jest.fn().mockReturnValue(false);
  
     process.env["KUBECONFIG"] = 'kubeConfig';
     process.env['GITHUB_RUN_ID'] = '12345';
@@ -315,9 +318,9 @@ test("deployment - deploy() - Annotate & label resources", async () => {
     //Invoke and assert
     await expect(deployment.deploy(kubeCtl, ['manifests/deployment.yaml'], undefined)).resolves.not.toThrowError();
     expect(kubeCtl.annotate).toHaveBeenNthCalledWith(1, 'namespace', 'default', annotationKeyValStr);
-    expect(kubeCtl.annotateFiles).toBeCalledWith(["~/Deployment_testapp_currentTimestamp/deployment.yaml"], annotationKeyValStr);
+    expect(kubeCtl.annotateFiles).toBeCalledWith(["~\\Deployment_testapp_currentTimestamp\\deployment.yaml"], annotationKeyValStr);
     expect(kubeCtl.annotate).toBeCalledTimes(2);
-    expect(kubeCtl.labelFiles).toBeCalledWith(["~/Deployment_testapp_currentTimestamp/deployment.yaml"],
+    expect(kubeCtl.labelFiles).toBeCalledWith(["~\\Deployment_testapp_currentTimestamp\\deployment.yaml"],
         [`workflowFriendlyName=workflow.yml`, `workflow=${getWorkflowAnnotationKeyLabel(process.env.GITHUB_WORKFLOW)}`]);
 });
 
@@ -345,9 +348,9 @@ test("deployment - deploy() - Annotate & label resources for a new workflow", as
     //Invoke and assert
     await expect(deployment.deploy(kubeCtl, ['manifests/deployment.yaml'], undefined)).resolves.not.toThrowError();
     expect(kubeCtl.annotate).toHaveBeenNthCalledWith(1, 'namespace', 'default', annotationKeyValStr);
-    expect(kubeCtl.annotateFiles).toBeCalledWith(["~/Deployment_testapp_currentTimestamp/deployment.yaml"], annotationKeyValStr);
+    expect(kubeCtl.annotateFiles).toBeCalledWith(["~\\Deployment_testapp_currentTimestamp\\deployment.yaml"], annotationKeyValStr);
     expect(kubeCtl.annotate).toBeCalledTimes(2);
-    expect(kubeCtl.labelFiles).toBeCalledWith(["~/Deployment_testapp_currentTimestamp/deployment.yaml"],
+    expect(kubeCtl.labelFiles).toBeCalledWith(["~\\Deployment_testapp_currentTimestamp\\deployment.yaml"],
         [`workflowFriendlyName=NewWorkflow.yml`, `workflow=${getWorkflowAnnotationKeyLabel(process.env.GITHUB_WORKFLOW)}`]);
 });
 
