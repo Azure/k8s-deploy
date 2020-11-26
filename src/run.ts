@@ -59,11 +59,11 @@ export async function run() {
         namespace = 'default';
     }
     let action = core.getInput('action');
-    let manifests = resolveGlobPatterns(manifestsInput);
 
     if (action === 'deploy') {
         let strategy = core.getInput('strategy');
-        console.log("strategy: ", strategy)
+        console.log("strategy: ", strategy);
+        let manifests = resolveGlobPatterns(manifestsInput);
         await deploy(new Kubectl(kubectlPath, namespace), manifests, strategy);
     }
     else if (action === 'promote') {
