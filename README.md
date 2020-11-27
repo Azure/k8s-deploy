@@ -314,7 +314,7 @@ jobs:
         imagepullsecrets: |
           demo-k8s-secret
 ```
-## Workflows with some env variables ( which this action reads from ) which can be resued throughout the workflow and help with traceability fields.
+## Sample workflows with new environment variables ( which this action reads from ) which can be reused throughout the workflow and help with traceability fields.
 
 ### End to end workflow for building and deploying container images 
 
