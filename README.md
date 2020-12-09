@@ -353,13 +353,14 @@ jobs:
         cluster-name: contoso
         resource-group: contoso-rg
         
-    - uses: Azure/k8s-create-secret@v1.2
+    - uses: Azure/k8s-create-secret@v1
       with:
         container-registry-url: ${{ env.REGISTRY_URL }}
         container-registry-username: ${{ env.CR_USERNAME }}
         container-registry-password: ${{ env.CR_PASSWORD }}
         secret-name: demo-k8s-secret
-    - uses: Azure/k8s-deploy@v1
+
+    - uses: Azure/k8s-deploy@v1.2
       with:
         manifests: |
           manifests/deployment.yml
@@ -437,6 +438,7 @@ jobs:
           replicas:2
         helm-version: 'latest' 
       id: bake
+
     - uses: Azure/k8s-deploy@v1.2
       with:
         manifests: ${{ steps.bake.outputs.manifestsBundle }}
