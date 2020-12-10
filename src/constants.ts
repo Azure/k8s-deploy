@@ -1,4 +1,5 @@
 'use strict';
+import { FileConfigPath } from "./utilities/utility";
 
 export class KubernetesWorkload {
     public static pod: string = 'Pod';
@@ -25,7 +26,7 @@ export const deploymentTypes: string[] = ['deployment', 'replicaset', 'daemonset
 export const workloadTypes: string[] = ['deployment', 'replicaset', 'daemonset', 'pod', 'statefulset', 'job', 'cronjob'];
 export const workloadTypesWithRolloutStatus: string[] = ['deployment', 'daemonset', 'statefulset'];
 
-export function getWorkflowAnnotationsJson(lastSuccessRunSha: string, workflowFilePath: string, filePathConfigs: any): string {
+export function getWorkflowAnnotationsJson(lastSuccessRunSha: string, workflowFilePath: string, filePathConfigs: FileConfigPath): string {
     let annotationObject: any = {};
     annotationObject["run"] = process.env.GITHUB_RUN_ID;
     annotationObject["repository"] = process.env.GITHUB_REPOSITORY;

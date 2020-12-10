@@ -7,6 +7,12 @@ import { StatusCodes } from "./httpClient";
 import * as exec from "./exec";
 import * as inputParams from "../input-parameters";
 
+export interface FileConfigPath {
+    manifestFilePaths: string[];
+    helmChartFilePaths: string[];
+    dockerfilePaths: any[];
+}
+
 export function getExecutableExtension(): string {
     if (os.type().match(/^Win/)) {
         return '.exe';
@@ -131,9 +137,9 @@ export function annotateChildPods(kubectl: Kubectl, resourceType: string, resour
     return commandExecutionResults;
 }
 
-export async function getFilePathsConfigs(): Promise<any> {
+export async function getFilePathsConfigs(): Promise<FileConfigPath> {
 
-    let filePathsConfig: any = {};
+    let filePathsConfig = <FileConfigPath>{};
     const MANIFEST_PATHS_KEY = 'manifestFilePaths';
     const HELM_CHART_KEY = 'helmChartFilePaths';
     const DOCKERFILE_PATH_KEY = 'dockerfilePaths';
@@ -148,35 +154,48 @@ export async function getFilePathsConfigs(): Promise<any> {
     //Parsing dockerfile paths for images
     let imageNames = core.getInput('images').split('\n');
     let imageDockerfilePathMap: any = {};
-    let pathKey: any, pathVal: any;
+    let registryCredentialsMap: any = {};
+    let pathKey: string, pathValue: string, registryName: string, username: string, password: string;
 
-    //Fetching from env var if available
-    let dockerfilePathsList: any[] = (process.env.DOCKERFILE_PATHS &&  process.env.DOCKERFILE_PATHS.split('\n')) || [];
+    //Fetching from environment variables if available :: List of image_name<space>dockerfile_path
+    let dockerfilePathsList: any[] = (process.env.DOCKERFILE_PATHS && process.env.DOCKERFILE_PATHS.split('\n')) || [];
     dockerfilePathsList.forEach(path => {
-        if(path){
+        if (path) {
             pathKey = path.split(' ')[0];
-            pathVal = path.split(' ')[1];
-            imageDockerfilePathMap[pathKey] = pathVal;
+            pathValue = path.split(' ')[1];
+            imageDockerfilePathMap[pathKey] = pathValue;
         }
     })
 
-    //Fetching from image lable if available
-    for(const image of imageNames){
-        let args: string[] = [image];
-        let resultObj: any;
-        let containerRegistryName = image;
+    //Fetching list of registry username and password from environment variables :: List of registry_name<space>username<space>password
+    let credentialList: any[] = (process.env.REGISTRY_CREDENTIALS && process.env.REGISTRY_CREDENTIALS.split('\n')) || [];
+    credentialList.forEach(credential => {
+        if (credential) {
+            registryName = credential.split(' ')[0];
+            username = credential.split(' ')[1];
+            password = credential.split(' ')[2];
+            registryCredentialsMap[registryName] = [username, password];
+        }
+    })
 
-        try{
-            let usrname = process.env.CR_USERNAME || null;
-            let pwd = process.env.CR_PASSWORD || null;
-            if(pwd && usrname)
-            {
-                let loginArgs: string[] = [containerRegistryName, '--username', usrname, '--password', pwd];
-                await exec.exec('docker login ', loginArgs, true).then(res => {
-                    if (res.stderr != '' && !res.success) {
-                        throw new Error(`docker login failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
-                    }
-                });
+    //Fetching from image label if available
+    for (const image of imageNames) {
+        let args: string[] = [image];
+        let imageConfig: any;
+        let containerRegistryName = image.split('/')[0];
+
+        try {
+            if (registryCredentialsMap && registryCredentialsMap[containerRegistryName]) {
+                let registryUsername = registryCredentialsMap[containerRegistryName][0] || null;
+                let registryPassword = registryCredentialsMap[containerRegistryName][1] || null;
+                if (registryPassword && registryUsername) {
+                    let loginArgs: string[] = [containerRegistryName, '--username', registryUsername, '--password', registryPassword];
+                    await exec.exec('docker login ', loginArgs, true).then(res => {
+                        if (res.stderr != '' && !res.success) {
+                            throw new Error(`docker login failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
+                        }
+                    });
+                }
             }
 
             await exec.exec('docker pull ', args, true).then(res => {
@@ -190,32 +209,32 @@ export async function getFilePathsConfigs(): Promise<any> {
                     throw new Error(`docker inspect call failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
                 }
 
-                if(res.stdout){
-                    resultObj = JSON.parse(res.stdout);
+                if (res.stdout) {
+                    imageConfig = JSON.parse(res.stdout);
                 }
-            });   
+            });
         }
         catch (ex) {
             core.warning(`Failed to get dockerfile paths for image ${image.toString()} | ` + ex);
         }
 
-        if(resultObj){
-            resultObj = resultObj[0];
-            if((resultObj.Config) && (resultObj.Config.Labels) && (resultObj.Config.Labels[DOCKERFILE_PATH_LABEL_KEY])){
-                pathVal = resultObj.Config.Labels[DOCKERFILE_PATH_LABEL_KEY];
+        if (imageConfig) {
+            imageConfig = imageConfig[0];
+            if ((imageConfig.Config) && (imageConfig.Config.Labels) && (imageConfig.Config.Labels[DOCKERFILE_PATH_LABEL_KEY])) {
+                pathValue = imageConfig.Config.Labels[DOCKERFILE_PATH_LABEL_KEY];
             }
-            else{
-                pathVal = 'Not available';
+            else {
+                pathValue = 'Not available';
             }
-            if(!imageDockerfilePathMap[image]){ //If (image : someVal) does not exist from env var parsing then add
-                imageDockerfilePathMap[image] = pathVal;
-            }  
+            if (!imageDockerfilePathMap[image]) { //If (image : someVal) does not exist from env var parsing then add
+                imageDockerfilePathMap[image] = pathValue;
+            }
         }
     }
 
     filePathsConfig[DOCKERFILE_PATH_KEY] = imageDockerfilePathMap;
 
-    return Promise.resolve(filePathsConfig); 
+    return Promise.resolve(filePathsConfig);
 }
 
 export function sleep(timeout: number) {
