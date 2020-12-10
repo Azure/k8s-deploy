@@ -131,4 +131,5 @@ function createDeploymentReport(context: AksResourceContext, deploymentManifests
   const deploymentReportPath = path.join( process.env['RUNNER_TEMP'], 'deployment-report.json');
   fs.writeFileSync(deploymentReportPath, JSON.stringify(deploymentReport));
   core.setOutput('deployment-report', deploymentReportPath);
+  core.setOutput('deployment-report-contents', JSON.stringify(deploymentReport));
 }
