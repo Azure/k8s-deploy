@@ -190,12 +190,18 @@ export async function getFilePathsConfigs(): Promise<FileConfigPath> {
                 let registryPassword = registryCredentialsMap[containerRegistryName][1] || null;
                 if (registryPassword && registryUsername) {
                     let loginArgs: string[] = [containerRegistryName, '--username', registryUsername, '--password', registryPassword];
-                    await exec.exec('docker login ', loginArgs, true).then(res => {
+                    await exec.exec('docker login ', loginArgs, false).then(res => {
                         if (res.stderr != '' && !res.success) {
                             core.warning(`docker login failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
                         }
                     });
                 }
+                else{
+                    core.warning(`docker login failed due to no credentials`);
+                }
+            }
+            else{
+                core.warning(`docker login failed due to no credentials`);
             }
 
             await exec.exec('docker pull ', args, true).then(res => {
