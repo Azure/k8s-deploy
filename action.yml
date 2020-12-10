@@ -57,6 +57,9 @@ inputs:
     description: 'Github token'
     default: ${{ github.token }}
     required: true
+outputs:
+  deployment-report:
+    description: "Deployment summary"
 
 branding:
   color: 'green' # optional, decorates the entry in the GitHub Marketplace
