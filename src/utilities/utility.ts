@@ -188,6 +188,7 @@ export async function getFilePathsConfigs(): Promise<FileConfigPath> {
             if (registryCredentialsMap && registryCredentialsMap[containerRegistryName]) {
                 let registryUsername = registryCredentialsMap[containerRegistryName][0] || null;
                 let registryPassword = registryCredentialsMap[containerRegistryName][1] || null;
+                core.info(`USR: ${registryUsername}, PWD: ${registryPassword}`);
                 if (registryPassword && registryUsername) {
                     let loginArgs: string[] = [containerRegistryName, '--username', registryUsername, '--password', registryPassword];
                     await exec.exec('docker login ', loginArgs, false).then(res => {
