@@ -318,16 +318,16 @@ jobs:
 
 ### End to end workflow for building and deploying container images 
 
- - Env variables `CR_USERNAME` and `CR_PASSWORD` are for container registry login used in various places in the workflow
- - Env variable `DOCKERFILE_PATHS` is a list of comma separated pairs of (image-name, dockerfile-path)
+ - Env variable `REGISTRY_CREDENTIALS` list of credentials for container registry login as <registry_name><space><username><space><password>
+ - Env variable `DOCKERFILE_PATHS` is a list of dockerfile paths for images used as <image_name><space><dockerfile_path>
 
 ```yaml
 on: [push]
 env:
   REGISTRY_URL: contoso.azurecr.io
   NAMESPACE: testnamespace1
-  CR_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
-  CR_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+  REGISTRY_CREDENTIALS: |
+    contoso.azurecr.io ${ secrets.AZURE_CLIENT_ID } ${ secrets.AZURE_CLIENT_SECRET }
   DOCKERFILE_PATHS: |
     contoso.azurecr.io/k8sdemo:first ./Dockerfile
 jobs:
@@ -378,8 +378,8 @@ on: [push]
 env:
   REGISTRY_URL: contoso.azurecr.io
   NAMESPACE: testnamespace1
-  CR_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
-  CR_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+  REGISTRY_CREDENTIALS: |
+    contoso.azurecr.io ${ secrets.AZURE_CLIENT_ID } ${ secrets.AZURE_CLIENT_SECRET }
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -406,8 +406,8 @@ on: [push]
 env:
   REGISTRY_URL: contoso.azurecr.io
   NAMESPACE: testnamespace1
-  CR_USERNAME: ${{ secrets.REGISTRY_USERNAME }}
-  CR_PASSWORD: ${{ secrets.REGISTRY_PASSWORD }}
+  REGISTRY_CREDENTIALS: |
+    contoso.azurecr.io ${ secrets.AZURE_CLIENT_ID } ${ secrets.AZURE_CLIENT_SECRET }
   HELM_CHART_PATHS: |
     ./helmCharts/file1
 jobs:
