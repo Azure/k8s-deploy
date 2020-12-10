@@ -192,7 +192,7 @@ export async function getFilePathsConfigs(): Promise<FileConfigPath> {
                     let loginArgs: string[] = [containerRegistryName, '--username', registryUsername, '--password', registryPassword];
                     await exec.exec('docker login ', loginArgs, true).then(res => {
                         if (res.stderr != '' && !res.success) {
-                            throw new Error(`docker login failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
+                            core.warning(`docker login failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
                         }
                     });
                 }
