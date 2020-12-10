@@ -168,13 +168,13 @@ export async function getFilePathsConfigs(): Promise<FileConfigPath> {
     })
 
     //Fetching list of registry username and password from environment variables :: List of registry_name<space>username<space>password
-    let credentialList: any[] = (process.env.REGISTRY_CREDENTIALS && process.env.REGISTRY_CREDENTIALS.split('\n')) || [];
+    let credentialList: string[] = (process.env.REGISTRY_CREDENTIALS && process.env.REGISTRY_CREDENTIALS.split('\n')) || [];
     credentialList.forEach(credential => {
         if (credential) {
             registryName = credential.split(' ')[0];
             username = credential.split(' ')[1];
             password = credential.split(' ')[2];
-            registryCredentialsMap[registryName] = [username, password];
+            registryCredentialsMap[registryName] = [ username, password ];
         }
     })
 
@@ -197,7 +197,7 @@ export async function getFilePathsConfigs(): Promise<FileConfigPath> {
                     });
                 }
                 else{
-                    core.warning(`docker login failed due to no credentials`);
+                    core.warning(`docker login failed due to incomplete credentials`);
                 }
             }
             else{
