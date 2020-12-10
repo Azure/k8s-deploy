@@ -10,7 +10,7 @@ import * as inputParams from "../input-parameters";
 export interface FileConfigPath {
     manifestFilePaths: string[];
     helmChartFilePaths: string[];
-    dockerfilePaths: any[];
+    dockerfilePaths: any;
 }
 
 export function getExecutableExtension(): string {

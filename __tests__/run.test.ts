@@ -293,7 +293,7 @@ test("deployment - deploy() - deploy force flag on", async () => {
 });
 
 test("deployment - deploy() - Annotate & label resources", async () => {
-    var filepathConfigs: utility.FileConfigPath = { manifestFilePaths :['manifests/deployment.yaml'], helmChartFilePaths : [], dockerfilePaths : [] } ;
+    var filepathConfigs: utility.FileConfigPath = { manifestFilePaths :['manifests/deployment.yaml'], helmChartFilePaths : [], dockerfilePaths : {} } ;
     let annotationKeyValStr = getWorkflowAnnotationKeyLabel(process.env.GITHUB_WORKFLOW) + '=' + getWorkflowAnnotationsJson('currentCommit', '.github/workflows/workflow.yml', filepathConfigs);
     const KubernetesManifestUtilityMock = mocked(KubernetesManifestUtility, true);
     KubernetesManifestUtilityMock.checkManifestStability = jest.fn().mockReturnValue("");
@@ -325,7 +325,7 @@ test("deployment - deploy() - Annotate & label resources", async () => {
 
 test("deployment - deploy() - Annotate & label resources for a new workflow", async () => {
     process.env.GITHUB_WORKFLOW = '.github/workflows/NewWorkflow.yml';
-    var filepathConfigs: utility.FileConfigPath = { manifestFilePaths :['manifests/deployment.yaml'], helmChartFilePaths : [], dockerfilePaths : [] } ;
+    var filepathConfigs: utility.FileConfigPath = { manifestFilePaths :['manifests/deployment.yaml'], helmChartFilePaths : [], dockerfilePaths : {} } ;
     let annotationKeyValStr = getWorkflowAnnotationKeyLabel(process.env.GITHUB_WORKFLOW) + '=' + getWorkflowAnnotationsJson('NA', '.github/workflows/NewWorkflow.yml', filepathConfigs);
     const KubernetesManifestUtilityMock = mocked(KubernetesManifestUtility, true);
     KubernetesManifestUtilityMock.checkManifestStability = jest.fn().mockReturnValue("");
