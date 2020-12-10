@@ -46,7 +46,7 @@ export function getGitHubPipelineProperties(status: string, workflowFilePath?: s
         commit: `${process.env.GITHUB_SHA}`,
         branch: `${process.env.GITHUB_REF}`,
         creationTimestamp: '',
-        modifiedTimestamp: `${Date.now()}`,
+        modifiedTimestamp: `${(new Date()).toString()}`,
         status: status,
     }
     
