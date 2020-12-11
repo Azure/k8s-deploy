@@ -316,13 +316,17 @@ jobs:
 ```
 ## Sample workflows with new environment variables ( which this action reads from ) which can be reused throughout the workflow and help with traceability fields.
 
- Environment variables : 
- - `REGISTRY_URL_n`: contoso.azurecr.io
- - `REGISTRY_USERNAME_n`: ${{ secrets.AZURE_CLIENT_ID }}
- - `REGISTRY_PASSWORD_n`: ${{ secrets.AZURE_CLIENT_SECRET }}
- 
- - `IMAGE_NAME_n`: contoso.azurecr.io/k8sdemo:first
- - `IMAGE_DOCKERFILE_n`: ./Dockerfile
+ Environment variables that can be set once and resued throughout the workflow. 
+ This helps in better readability and manitenance when there are multiple registries/images used for build and deploy.
+
+ For each registry in the workflow:
+ - `REGISTRY_URL_n`: Login url for registry,           Eg. : contoso.azurecr.io
+ - `REGISTRY_USERNAME_n`: Login username for registry, Eg. : ${{ secrets.AZURE_CLIENT_ID }}
+ - `REGISTRY_PASSWORD_n`: Login password for registry, Eg. :${{ secrets.AZURE_CLIENT_SECRET }}
+
+For each image in the workflow:
+ - `IMAGE_NAME_n`: Fully qualified image name, Eg. :  contoso.azurecr.io/k8sdemo:first
+ - `IMAGE_DOCKERFILE_n`: Path to dockerfile,   Eg. : ./Dockerfile
 
  - `HELM_CHART_PATHS` is a list of helmchart files used in k8s-bake and k8s-deploy
 
@@ -351,8 +355,8 @@ jobs:
         password: ${{ env.REGISTRY_PASSWORD_1 }}
     
     - run: |
-        docker build . -t ${{ IMAGE_NAME_1 }}
-        docker push ${{ IMAGE_NAME_1 }}
+        docker build . -t ${{ env.IMAGE_NAME_1 }}
+        docker push ${{ env.IMAGE_NAME_1 }}
       
     # Set the target AKS cluster.
     - uses: Azure/aks-set-context@v1
@@ -405,8 +409,8 @@ jobs:
         password: ${{ env.REGISTRY_PASSWORD_1 }}
     
     - run: |
-        docker build . -t ${{ IMAGE_NAME_1 }} --label dockerfile-path=./Dockerfile
-        docker push ${{ IMAGE_NAME_1 }}
+        docker build . -t ${{ env.IMAGE_NAME_1 }} --label dockerfile-path=${{ env.IMAGE_DOCKERFILE_1 }}
+        docker push ${{ env.IMAGE_NAME_1 }}
  ```     
 
 ### CD workflow using bake action to get manifests deploying to a Kubernetes cluster 
@@ -419,7 +423,6 @@ env:
   REGISTRY_USERNAME_1: ${{ secrets.AZURE_CLIENT_ID }}
   REGISTRY_PASSWORD_1: ${{ secrets.AZURE_CLIENT_SECRET }}
   IMAGE_NAME_1: contoso.azurecr.io/k8sdemo:${{ github.sha }}
-  IMAGE_DOCKERFILE_1:  ./Dockerfile
   HELM_CHART_PATHS: |
     ./helmCharts/file1
 
