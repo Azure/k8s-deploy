@@ -314,6 +314,141 @@ jobs:
         imagepullsecrets: |
           demo-k8s-secret
 ```
+## Sample workflows with new environment variables ( which this action reads from ) which can be reused throughout the workflow and help with traceability fields.
+
+### End to end workflow for building and deploying container images 
+
+ - Environment variables `CR_USERNAME` and `CR_PASSWORD` container registry login credentials
+ - Environment variable `DOCKERFILE_PATHS` is a list of dockerfile paths for images used as <image_name><space><dockerfile_path>
+
+```yaml
+on: [push]
+env:
+  REGISTRY_URL: contoso.azurecr.io
+  NAMESPACE: testnamespace1
+  CR_USERNAME: ${{ secrets.AZURE_CLIENT_ID }}
+  CR_PASSWORD: ${{ secrets.AZURE_CLIENT_SECRET }}
+  DOCKERFILE_PATHS: |
+    contoso.azurecr.io/k8sdemo:first ./Dockerfile
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    
+    - uses: Azure/docker-login@v1
+      with:
+        login-server: contoso.azurecr.io
+        username: ${{ env.CR_USERNAME }}
+        password: ${{ env.CR_PASSWORD }}
+    
+    - run: |
+        docker build . -t contoso.azurecr.io/k8sdemo:${{ github.sha }}
+        docker push contoso.azurecr.io/k8sdemo:${{ github.sha }}
+      
+    # Set the target AKS cluster.
+    - uses: Azure/aks-set-context@v1
+      with:
+        creds: '${{ secrets.AZURE_CREDENTIALS }}'
+        cluster-name: contoso
+        resource-group: contoso-rg
+        
+    - uses: Azure/k8s-create-secret@v1
+      with:
+        container-registry-url: ${{ env.REGISTRY_URL }}
+        container-registry-username: ${{ env.CR_USERNAME }}
+        container-registry-password: ${{ env.CR_PASSWORD }}
+        secret-name: demo-k8s-secret
+
+    - uses: Azure/k8s-deploy@v1.2
+      with:
+        manifests: |
+          manifests/deployment.yml
+          manifests/service.yml
+        images: |
+          demo.azurecr.io/k8sdemo:${{ github.sha }}
+        imagepullsecrets: |
+          demo-k8s-secret
+```
+
+### CI workflow to build image and add `dockerfile-path` label to it. This image can then be used in another CD workflow.
+
+```yaml
+on: [push]
+env:
+  REGISTRY_URL: contoso.azurecr.io
+  NAMESPACE: testnamespace1
+  CR_USERNAME: ${{ secrets.AZURE_CLIENT_ID }}
+  CR_PASSWORD: ${{ secrets.AZURE_CLIENT_SECRET }}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    
+    - uses: Azure/docker-login@v1
+      with:
+        login-server: contoso.azurecr.io
+        username: ${{ env.CR_USERNAME }}
+        password: ${{ env.CR_PASSWORD }}
+    
+    - run: |
+        docker build . -t contoso.azurecr.io/k8sdemo:${{ github.sha }} --label dockerfile-path=./Dockerfile
+        docker push contoso.azurecr.io/k8sdemo:${{ github.sha }}
+ ```     
+
+### CD workflow using bake action to get manifests deploying to a Kubernetes cluster 
+
+- Env variable `HELM_CHART_PATHS` is a list of helmchart files used in k8s-bake and k8s-deploy
+
+```yaml
+on: [push]
+env:
+  REGISTRY_URL: contoso.azurecr.io
+  NAMESPACE: testnamespace1
+  CR_USERNAME: ${{ secrets.AZURE_CLIENT_ID }}
+  CR_PASSWORD: ${{ secrets.AZURE_CLIENT_SECRET }}
+  HELM_CHART_PATHS: |
+    ./helmCharts/file1
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+      
+    # Set the target AKS cluster.
+    - uses: Azure/aks-set-context@v1
+      with:
+        creds: '${{ secrets.AZURE_CREDENTIALS }}'
+        cluster-name: contoso
+        resource-group: contoso-rg
+        
+    - uses: Azure/k8s-create-secret@v1
+      with:
+        container-registry-url: ${{ env.REGISTRY_URL }}
+        container-registry-username: ${{ env.CR_USERNAME }}
+        container-registry-password: ${{ env.CR_PASSWORD }}
+        secret-name: demo-k8s-secret
+    - uses: azure/k8s-bake@v1
+      with:
+        renderEngine: 'helm'
+        helmChart: ${{ env.HELM_CHART_PATHS }}
+        overrideFiles: './aks-helloworld/values-override.yaml'
+        overrides: |     
+          replicas:2
+        helm-version: 'latest' 
+      id: bake
+
+    - uses: Azure/k8s-deploy@v1.2
+      with:
+        manifests: ${{ steps.bake.outputs.manifestsBundle }}
+        images: |
+          demo.azurecr.io/k8sdemo:${{ github.sha }}
+        imagepullsecrets: |
+          demo-k8s-secret
+```
 
 # Contributing
 
