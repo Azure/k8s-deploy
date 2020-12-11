@@ -154,56 +154,32 @@ export async function getFilePathsConfigs(): Promise<FileConfigPath> {
     let imageNames = core.getInput('images').split('\n');
     let imageDockerfilePathMap: any = {};
     let registryCredentialsMap: any = {};
-    let pathKey: string, pathValue: string, registryName: string, username: string, password: string;
+    let imageNameKey: string, registryNameKey: string, pathValue: string;
 
-    //Parsing from environment variables : Dockerfile-paths, registry-credentials
-    var imageNameList: string[] = [];
-    var dockerfilePathsList: string[] = [];
-    var registryUrlList: string[] = [];
-    var registryUsernameList: string[] = [];
-    var registryPasswordList: string[] = [];
+    //Parsing from environment variables : Image-Dockerfile map and Registry-credentials map
+
     for (const key in process.env) {
         if (Object.prototype.hasOwnProperty.call(process.env, key)) {
-            if (key.startsWith('IMAGE_NAME_')) {
-                imageNameList.push(process.env[key]);
-            }
             if (key.startsWith('IMAGE_DOCKERFILE_')) {
-                dockerfilePathsList.push(process.env[key]);
-            }
-            if (key.startsWith('REGISTRY_URL_')) {
-                registryUrlList.push(process.env[key]);
+                imageNameKey = key.replace('DOCKERFILE','NAME');
+                if(process.env[imageNameKey]){
+                    imageDockerfilePathMap[process.env[imageNameKey]] = process.env[key];
+                }
             }
             if (key.startsWith('REGISTRY_USERNAME_')) {
-                registryUsernameList.push(process.env[key]);
+                registryNameKey = key.replace('USERNAME', 'URL');
+                if(process.env[registryNameKey]){
+                    registryCredentialsMap[process.env[registryNameKey]]['USERNAME'] = process.env[key];
+                }
             }
             if (key.startsWith('REGISTRY_PASSWORD_')) {
-                registryPasswordList.push(process.env[key]);
+                registryNameKey = key.replace('PASSWORD', 'URL');
+                if(process.env[registryNameKey]){
+                    registryCredentialsMap[process.env[registryNameKey]]['PASSWORD'] = process.env[key];
+                }
             }
         }
     };
-    
-    //Forming imageName-dockerfilePath map
-    let index = 0;
-    imageNameList.forEach(imageName => {
-        if (imageName) {
-            pathKey = imageName;
-            pathValue = dockerfilePathsList[index] || null;
-            imageDockerfilePathMap[pathKey] = pathValue;
-            index++;
-        }
-    })
-
-    //Forming Container registry name-credentials map
-    index = 0;
-    registryUrlList.forEach(registryUrl => {
-        if (registryUrl) {
-            registryName = registryUrl;
-            username = registryUsernameList[index] || '';
-            password = registryPasswordList[index] || '';
-            registryCredentialsMap[registryName] = [ username, password ];
-            index++;
-        }
-    })
 
     //Fetching from image label if available
     for (const image of imageNames) {
@@ -213,8 +189,8 @@ export async function getFilePathsConfigs(): Promise<FileConfigPath> {
 
         try {
             if (registryCredentialsMap && registryCredentialsMap[containerRegistryName]) {
-                let registryUsername = registryCredentialsMap[containerRegistryName][0] || null;
-                let registryPassword = registryCredentialsMap[containerRegistryName][1] || null;
+                let registryUsername = registryCredentialsMap[containerRegistryName]['USERNAME'] || null;
+                let registryPassword = registryCredentialsMap[containerRegistryName]['PASSWORD'] || null;
                 if (registryPassword && registryUsername) {
                     let loginArgs: string[] = [containerRegistryName, '--username', registryUsername, '--password', registryPassword];
                     await exec.exec('docker login ', loginArgs, true).then(res => {
