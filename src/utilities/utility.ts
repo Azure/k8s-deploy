@@ -169,12 +169,18 @@ export async function getFilePathsConfigs(): Promise<FileConfigPath> {
             if (key.startsWith('REGISTRY_USERNAME_')) {
                 registryNameKey = key.replace('USERNAME', 'URL');
                 if(process.env[registryNameKey]){
+                    if(!(registryCredentialsMap[process.env[registryNameKey]])){
+                        registryCredentialsMap[process.env[registryNameKey]] = {};
+                    }
                     registryCredentialsMap[process.env[registryNameKey]]['USERNAME'] = process.env[key];
                 }
             }
             if (key.startsWith('REGISTRY_PASSWORD_')) {
                 registryNameKey = key.replace('PASSWORD', 'URL');
                 if(process.env[registryNameKey]){
+                    if(!(registryCredentialsMap[process.env[registryNameKey]])){
+                        registryCredentialsMap[process.env[registryNameKey]] = {};
+                    }
                     registryCredentialsMap[process.env[registryNameKey]]['PASSWORD'] = process.env[key];
                 }
             }
