@@ -151,13 +151,12 @@ export async function getFilePathsConfigs(): Promise<FileConfigPath> {
     let helmChartPaths = (process.env.HELM_CHART_PATHS && process.env.HELM_CHART_PATHS.split('\n').filter(path => path != "")) || [];
     filePathsConfig[HELM_CHART_KEY] = helmChartPaths;
 
-    //Parsing dockerfile paths for images
     let imageNames = core.getInput('images').split('\n');
     let imageDockerfilePathMap: any = {};
     let registryCredentialsMap: any = {};
     let pathKey: string, pathValue: string, registryName: string, username: string, password: string;
 
-    //Parsing from environment variables 
+    //Parsing from environment variables : Dockerfile-paths, registry-credentials
     var imageNameList: string[] = [];
     var dockerfilePathsList: string[] = [];
     var registryUrlList: string[] = [];
@@ -185,22 +184,22 @@ export async function getFilePathsConfigs(): Promise<FileConfigPath> {
     
     //Forming imageName-dockerfilePath map
     let index = 0;
-    dockerfilePathsList.forEach(path => {
-        if (path) {
-            pathKey = imageNameList[index];
-            pathValue = path;
+    imageNameList.forEach(imageName => {
+        if (imageName) {
+            pathKey = imageName;
+            pathValue = dockerfilePathsList[index] || null;
             imageDockerfilePathMap[pathKey] = pathValue;
             index++;
         }
     })
 
-    //Forming Registry credentials map
+    //Forming Container registry name-credentials map
     index = 0;
     registryUrlList.forEach(registryUrl => {
         if (registryUrl) {
             registryName = registryUrl;
-            username = registryUsernameList[index];
-            password = registryPasswordList[index];
+            username = registryUsernameList[index] || '';
+            password = registryPasswordList[index] || '';
             registryCredentialsMap[registryName] = [ username, password ];
             index++;
         }
@@ -216,21 +215,20 @@ export async function getFilePathsConfigs(): Promise<FileConfigPath> {
             if (registryCredentialsMap && registryCredentialsMap[containerRegistryName]) {
                 let registryUsername = registryCredentialsMap[containerRegistryName][0] || null;
                 let registryPassword = registryCredentialsMap[containerRegistryName][1] || null;
-                core.info(`USR: ${registryUsername}, PWD: ${registryPassword}`);
                 if (registryPassword && registryUsername) {
                     let loginArgs: string[] = [containerRegistryName, '--username', registryUsername, '--password', registryPassword];
-                    await exec.exec('docker login ', loginArgs, false).then(res => {
+                    await exec.exec('docker login ', loginArgs, true).then(res => {
                         if (res.stderr != '' && !res.success) {
                             core.warning(`docker login failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
                         }
                     });
                 }
                 else{
-                    core.warning(`docker login failed due to incomplete credentials`);
+                    core.warning(`docker login failed due to Incomplete credentials`);
                 }
             }
             else{
-                core.warning(`docker login failed due to no credentials`);
+                core.warning(`docker login failed due to missing credentials`);
             }
 
             await exec.exec('docker pull ', args, true).then(res => {
@@ -261,7 +259,7 @@ export async function getFilePathsConfigs(): Promise<FileConfigPath> {
             else {
                 pathValue = 'Not available';
             }
-            if (!imageDockerfilePathMap[image]) { //If (image : someVal) does not exist from env var parsing then add
+            if (!imageDockerfilePathMap[image]) { //If (image : someVal) does not exist (fetched from env var) then add
                 imageDockerfilePathMap[image] = pathValue;
             }
         }
