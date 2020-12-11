@@ -316,40 +316,43 @@ jobs:
 ```
 ## Sample workflows with new environment variables ( which this action reads from ) which can be reused throughout the workflow and help with traceability fields.
 
+ Environment variables : 
+ - `REGISTRY_URL_n`: contoso.azurecr.io
+ - `REGISTRY_USERNAME_n`: ${{ secrets.AZURE_CLIENT_ID }}
+ - `REGISTRY_PASSWORD_n`: ${{ secrets.AZURE_CLIENT_SECRET }}
+ 
+ - `IMAGE_NAME_n`: contoso.azurecr.io/k8sdemo:first
+ - `IMAGE_DOCKERFILE_n`: ./Dockerfile
+
+ - `HELM_CHART_PATHS` is a list of helmchart files used in k8s-bake and k8s-deploy
+
 ### End to end workflow for building and deploying container images 
-
- Environment variables :
- - `n_REGISTRY_URL`: contoso.azurecr.io
- - `n_REGISTRY_USERNAME`: ${{ secrets.AZURE_CLIENT_ID }}
- - `n_REGISTRY_PASSWORD`: ${{ secrets.AZURE_CLIENT_SECRET }}
- - `n_IMAGE_NAME`: contoso.azurecr.io/k8sdemo:first
- - `n_IMAGE_DOCKERFILE`: ./Dockerfile
-
 
 ```yaml
 on: [push]
 env:
-  NAMESPACE: testnamespace1
-  1_REGISTRY_URL: contoso.azurecr.io
-  1_REGISTRY_USERNAME: ${{ secrets.AZURE_CLIENT_ID }}
-  1_REGISTRY_PASSWORD: ${{ secrets.AZURE_CLIENT_SECRET }}
-  1_IMAGE_NAME: contoso.azurecr.io/k8sdemo:first
-  1_IMAGE_DOCKERFILE: ./Dockerfile
+  NAMESPACE: demo-ns2
+  REGISTRY_URL_1: contoso.azurecr.io
+  REGISTRY_USERNAME_1: ${{ secrets.AZURE_CLIENT_ID }}
+  REGISTRY_PASSWORD_1: ${{ secrets.AZURE_CLIENT_SECRET }}
+  IMAGE_NAME_1: contoso.azurecr.io/k8sdemo:${{ github.sha }}
+  IMAGE_DOCKERFILE_1:  ./Dockerfile
+
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
     
     - uses: Azure/docker-login@v1
       with:
-        login-server: ${{ env.1_REGISTRY_URL }}
-        username: ${{ env.1_REGISTRY_USERNAME }}
-        password: ${{ env.1_REGISTRY_PASSWORD }}
+        login-server: ${{ env.REGISTRY_URL_1 }}
+        username: ${{ env.REGISTRY_USERNAME_1 }}
+        password: ${{ env.REGISTRY_PASSWORD_1 }}
     
     - run: |
-        docker build . -t contoso.azurecr.io/k8sdemo:${{ github.sha }}
-        docker push contoso.azurecr.io/k8sdemo:${{ github.sha }}
+        docker build . -t ${{ IMAGE_NAME_1 }}
+        docker push ${{ IMAGE_NAME_1 }}
       
     # Set the target AKS cluster.
     - uses: Azure/aks-set-context@v1
@@ -360,9 +363,10 @@ jobs:
         
     - uses: Azure/k8s-create-secret@v1
       with:
-        container-registry-url: ${{ env.1_REGISTRY_URL }}
-        container-registry-username: ${{ env.1_REGISTRY_USERNAME }}
-        container-registry-password: ${{ env.1_REGISTRY_PASSWORD }}
+        namespace: ${{ env.NAMESPACE  }}
+        container-registry-url: ${{ env.REGISTRY_URL_1 }}
+        container-registry-username: ${{ env.REGISTRY_USERNAME_1 }}
+        container-registry-password: ${{ env.REGISTRY_PASSWORD_1 }}
         secret-name: demo-k8s-secret
 
     - uses: Azure/k8s-deploy@v1.2
@@ -371,7 +375,7 @@ jobs:
           manifests/deployment.yml
           manifests/service.yml
         images: |
-          demo.azurecr.io/k8sdemo:${{ github.sha }}
+          ${{ env.IMAGE_NAME_1 }}
         imagepullsecrets: |
           demo-k8s-secret
 ```
@@ -381,10 +385,12 @@ jobs:
 ```yaml
 on: [push]
 env:
-  REGISTRY_URL: contoso.azurecr.io
-  NAMESPACE: testnamespace1
-  CR_USERNAME: ${{ secrets.AZURE_CLIENT_ID }}
-  CR_PASSWORD: ${{ secrets.AZURE_CLIENT_SECRET }}
+  NAMESPACE: demo-ns2
+  REGISTRY_URL_1: contoso.azurecr.io
+  REGISTRY_USERNAME_1: ${{ secrets.AZURE_CLIENT_ID }}
+  REGISTRY_PASSWORD_1: ${{ secrets.AZURE_CLIENT_SECRET }}
+  IMAGE_NAME_1: contoso.azurecr.io/k8sdemo:${{ github.sha }}
+  IMAGE_DOCKERFILE_1:  ./Dockerfile
 
 jobs:
   build:
@@ -394,26 +400,26 @@ jobs:
     
     - uses: Azure/docker-login@v1
       with:
-        login-server: contoso.azurecr.io
-        username: ${{ env.CR_USERNAME }}
-        password: ${{ env.CR_PASSWORD }}
+        login-server: ${{ env.REGISTRY_URL_1 }}
+        username: ${{ env.REGISTRY_USERNAME_1 }}
+        password: ${{ env.REGISTRY_PASSWORD_1 }}
     
     - run: |
-        docker build . -t contoso.azurecr.io/k8sdemo:${{ github.sha }} --label dockerfile-path=./Dockerfile
-        docker push contoso.azurecr.io/k8sdemo:${{ github.sha }}
+        docker build . -t ${{ IMAGE_NAME_1 }} --label dockerfile-path=./Dockerfile
+        docker push ${{ IMAGE_NAME_1 }}
  ```     
 
 ### CD workflow using bake action to get manifests deploying to a Kubernetes cluster 
 
-- Env variable `HELM_CHART_PATHS` is a list of helmchart files used in k8s-bake and k8s-deploy
-
 ```yaml
 on: [push]
 env:
-  REGISTRY_URL: contoso.azurecr.io
-  NAMESPACE: testnamespace1
-  CR_USERNAME: ${{ secrets.AZURE_CLIENT_ID }}
-  CR_PASSWORD: ${{ secrets.AZURE_CLIENT_SECRET }}
+  NAMESPACE: demo-ns2
+  REGISTRY_URL_1: contoso.azurecr.io
+  REGISTRY_USERNAME_1: ${{ secrets.AZURE_CLIENT_ID }}
+  REGISTRY_PASSWORD_1: ${{ secrets.AZURE_CLIENT_SECRET }}
+  IMAGE_NAME_1: contoso.azurecr.io/k8sdemo:${{ github.sha }}
+  IMAGE_DOCKERFILE_1:  ./Dockerfile
   HELM_CHART_PATHS: |
     ./helmCharts/file1
 
@@ -432,10 +438,12 @@ jobs:
         
     - uses: Azure/k8s-create-secret@v1
       with:
-        container-registry-url: ${{ env.REGISTRY_URL }}
-        container-registry-username: ${{ env.CR_USERNAME }}
-        container-registry-password: ${{ env.CR_PASSWORD }}
+        namespace: ${{ env.NAMESPACE  }}
+        container-registry-url: ${{ env.REGISTRY_URL_1 }}
+        container-registry-username: ${{ env.REGISTRY_USERNAME_1 }}
+        container-registry-password: ${{ env.REGISTRY_PASSWORD_1 }}
         secret-name: demo-k8s-secret
+
     - uses: azure/k8s-bake@v1
       with:
         renderEngine: 'helm'
@@ -450,7 +458,7 @@ jobs:
       with:
         manifests: ${{ steps.bake.outputs.manifestsBundle }}
         images: |
-          demo.azurecr.io/k8sdemo:${{ github.sha }}
+          ${{ env.IMAGE_NAME_1 }}
         imagepullsecrets: |
           demo-k8s-secret
 ```
