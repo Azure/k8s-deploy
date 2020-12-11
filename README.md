@@ -318,18 +318,23 @@ jobs:
 
 ### End to end workflow for building and deploying container images 
 
- - Environment variables `CR_USERNAME` and `CR_PASSWORD` container registry login credentials
- - Environment variable `DOCKERFILE_PATHS` is a list of dockerfile paths for images used as <image_name><space><dockerfile_path>
+ Environment variables :
+ - `n_REGISTRY_URL`: contoso.azurecr.io
+ - `n_REGISTRY_USERNAME`: ${{ secrets.AZURE_CLIENT_ID }}
+ - `n_REGISTRY_PASSWORD`: ${{ secrets.AZURE_CLIENT_SECRET }}
+ - `n_IMAGE_NAME`: contoso.azurecr.io/k8sdemo:first
+ - `n_IMAGE_DOCKERFILE`: ./Dockerfile
+
 
 ```yaml
 on: [push]
 env:
-  REGISTRY_URL: contoso.azurecr.io
   NAMESPACE: testnamespace1
-  CR_USERNAME: ${{ secrets.AZURE_CLIENT_ID }}
-  CR_PASSWORD: ${{ secrets.AZURE_CLIENT_SECRET }}
-  DOCKERFILE_PATHS: |
-    contoso.azurecr.io/k8sdemo:first ./Dockerfile
+  1_REGISTRY_URL: contoso.azurecr.io
+  1_REGISTRY_USERNAME: ${{ secrets.AZURE_CLIENT_ID }}
+  1_REGISTRY_PASSWORD: ${{ secrets.AZURE_CLIENT_SECRET }}
+  1_IMAGE_NAME: contoso.azurecr.io/k8sdemo:first
+  1_IMAGE_DOCKERFILE: ./Dockerfile
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -338,9 +343,9 @@ jobs:
     
     - uses: Azure/docker-login@v1
       with:
-        login-server: contoso.azurecr.io
-        username: ${{ env.CR_USERNAME }}
-        password: ${{ env.CR_PASSWORD }}
+        login-server: ${{ env.1_REGISTRY_URL }}
+        username: ${{ env.1_REGISTRY_USERNAME }}
+        password: ${{ env.1_REGISTRY_PASSWORD }}
     
     - run: |
         docker build . -t contoso.azurecr.io/k8sdemo:${{ github.sha }}
@@ -355,9 +360,9 @@ jobs:
         
     - uses: Azure/k8s-create-secret@v1
       with:
-        container-registry-url: ${{ env.REGISTRY_URL }}
-        container-registry-username: ${{ env.CR_USERNAME }}
-        container-registry-password: ${{ env.CR_PASSWORD }}
+        container-registry-url: ${{ env.1_REGISTRY_URL }}
+        container-registry-username: ${{ env.1_REGISTRY_USERNAME }}
+        container-registry-password: ${{ env.1_REGISTRY_PASSWORD }}
         secret-name: demo-k8s-secret
 
     - uses: Azure/k8s-deploy@v1.2
