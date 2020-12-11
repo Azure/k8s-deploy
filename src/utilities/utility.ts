@@ -157,24 +157,52 @@ export async function getFilePathsConfigs(): Promise<FileConfigPath> {
     let registryCredentialsMap: any = {};
     let pathKey: string, pathValue: string, registryName: string, username: string, password: string;
 
-    //Fetching from environment variables if available :: List of image_name<space>dockerfile_path
-    let dockerfilePathsList: any[] = (process.env.DOCKERFILE_PATHS && process.env.DOCKERFILE_PATHS.split('\n')) || [];
+    //Parsing from environment variables 
+    var imageNameList: string[];
+    var dockerfilePathsList: string[];
+    var registryUrlList: string[];
+    var registryUsernameList: string[];
+    var registryPasswordList: string[];
+    for (const key in process.env) {
+        if (Object.prototype.hasOwnProperty.call(process.env, key)) {
+            if(key.endsWith('_IMAGE_NAME')){
+                imageNameList.push(process.env[key]);
+            }
+            if(key.endsWith('_IMAGE_DOCKERFILEE')){
+                dockerfilePathsList.push(process.env[key]);
+            }
+            if(key.endsWith('_REGISTRY_URL')){
+                registryUrlList.push(process.env[key]);
+            }
+            if(key.endsWith('_REGISTRY_USERNAME')){
+                registryUsernameList.push(process.env[key]);
+            }
+            if(key.endsWith('_REGISTRY_PASSWORD')){
+                registryPasswordList.push(process.env[key]);
+            }
+        }
+    };
+    
+    //Forming imageName-dockerfilePath map
+    let index = 0;
     dockerfilePathsList.forEach(path => {
         if (path) {
-            pathKey = path.split(' ')[0];
-            pathValue = path.split(' ')[1];
+            pathKey = imageNameList[index];
+            pathValue = path;
             imageDockerfilePathMap[pathKey] = pathValue;
+            index++;
         }
     })
 
-    //Fetching list of registry username and password from environment variables :: List of registry_name<space>username<space>password
-    let credentialList: string[] = (process.env.REGISTRY_CREDENTIALS && process.env.REGISTRY_CREDENTIALS.split('\n')) || [];
-    credentialList.forEach(credential => {
-        if (credential) {
-            registryName = credential.split(' ')[0];
-            username = credential.split(' ')[1];
-            password = credential.split(' ')[2];
+    //Forming Registry credentials map
+    index = 0;
+    registryUrlList.forEach(registryUrl => {
+        if (registryUrl) {
+            registryName = registryUrl;
+            username = registryUsernameList[index];
+            password = registryPasswordList[index];
             registryCredentialsMap[registryName] = [ username, password ];
+            index++;
         }
     })
 
