@@ -158,11 +158,11 @@ export async function getFilePathsConfigs(): Promise<FileConfigPath> {
     let pathKey: string, pathValue: string, registryName: string, username: string, password: string;
 
     //Parsing from environment variables 
-    var imageNameList: string[];
-    var dockerfilePathsList: string[];
-    var registryUrlList: string[];
-    var registryUsernameList: string[];
-    var registryPasswordList: string[];
+    var imageNameList: string[] = [];
+    var dockerfilePathsList: string[] = [];
+    var registryUrlList: string[] = [];
+    var registryUsernameList: string[] = [];
+    var registryPasswordList: string[] = [];
     for (const key in process.env) {
         if (Object.prototype.hasOwnProperty.call(process.env, key)) {
             if (key.startsWith('IMAGE_NAME_')) {
