@@ -317,7 +317,7 @@ jobs:
 ## Sample workflows with new environment variables ( which this action reads from ) which can be reused throughout the workflow and help with traceability fields.
 
  Environment variables that can be set once and resued throughout the workflow. 
- This helps in better readability and manitenance when there are multiple registries/images used for build and deploy.
+ This helps in better readability and maintenance when there are multiple registries/images used for build and deploy.
 
  For each registry in the workflow:
  - `REGISTRY_URL_n`: Login url for registry,           Eg. : contoso.azurecr.io
