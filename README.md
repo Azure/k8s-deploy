@@ -317,7 +317,7 @@ jobs:
 ## Sample workflows for new traceability fields support 
 
  - Environment variable `HELM_CHART_PATHS` is a list of helmchart files used in k8s-bake and k8s-deploy
- - Use script to build image and add `dockerfile-path` label to it.
+ - Use script to build image and add `dockerfile-path` label to it. The value can be a link, or a relative path if your dockerfile is in the same repo.
  - Run docker login action for each image registry - in case image build and image deploy are 2 distinct jobs in the same or separate workflows.
 
 ### End to end workflow for building and deploying container images 
@@ -388,7 +388,7 @@ jobs:
         password: ${{ secrets.REGISTRY_PASSWORD }}
     
     - run: |
-        docker build . -t contoso.azurecr.io/k8sdemo:${{ github.sha }} --label dockerfile-path=./Dockerfile
+        docker build . -t contoso.azurecr.io/k8sdemo:${{ github.sha }} --label dockerfile-path=https://github.com/Josh-01/hello-kubernetes/blob/master/Dockerfile
         docker push contoso.azurecr.io/k8sdemo:${{ github.sha }}
  ```     
 
