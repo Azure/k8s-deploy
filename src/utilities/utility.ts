@@ -154,7 +154,7 @@ export async function getFilePathsConfigs(): Promise<FileConfigPath> {
     let imageNames = core.getInput('images').split('\n');
     let imageDockerfilePathMap: any = {};
     let pathValue: string, pathLink: string;
-    const branchOrTag: string = process.env.GITHUB_REF && process.env.GITHUB_REF.replace('refs/heads/','').replace('refs/tags/','');
+    const branchOrTag: string = process.env.GITHUB_REF && process.env.GITHUB_REF.replace('refs/heads/','blob/').replace('refs/tags/','blob/');
 
     //Fetching from image label if available
     for (const image of imageNames) {
