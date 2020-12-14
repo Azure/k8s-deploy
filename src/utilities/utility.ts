@@ -6,8 +6,7 @@ import { GitHubClient } from '../githubClient';
 import { StatusCodes } from "./httpClient";
 import * as exec from "./exec";
 import * as inputParams from "../input-parameters";
-import { ensureDirExists } from './files-helper';
-import { stringify } from 'querystring';
+import * as github from '@actions/github';
 
 export interface FileConfigPath {
     manifestFilePaths: string[];
@@ -156,6 +155,7 @@ export async function getFilePathsConfigs(): Promise<FileConfigPath> {
     let imageNames = core.getInput('images').split('\n');
     let imageDockerfilePathMap: any = {};
     let pathValue: string, pathLink: string;
+    const branchOrTag: string = github.context?.ref && github.context?.ref.replace('refs/heads/','').replace('refs/tags/','');
 
     //Fetching from image label if available
     for (const image of imageNames) {
@@ -189,7 +189,7 @@ export async function getFilePathsConfigs(): Promise<FileConfigPath> {
             if ((imageConfig.Config) && (imageConfig.Config.Labels) && (imageConfig.Config.Labels[DOCKERFILE_PATH_LABEL_KEY])) {
                 pathValue = imageConfig.Config.Labels[DOCKERFILE_PATH_LABEL_KEY];
                 if(pathValue.startsWith('./')){  //if it is relative filepath convert to link from current repo
-                    pathLink = `https://github.com/${process.env.GITHUB_REPOSITORY}/${pathValue}`;
+                    pathLink = `https://github.com/${process.env.GITHUB_REPOSITORY}/${branchOrTag}/${pathValue}`;
                     pathValue = pathLink;
                 }
 
