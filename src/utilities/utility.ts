@@ -6,6 +6,8 @@ import { GitHubClient } from '../githubClient';
 import { StatusCodes } from "./httpClient";
 import * as exec from "./exec";
 import * as inputParams from "../input-parameters";
+import { ensureDirExists } from './files-helper';
+import { stringify } from 'querystring';
 
 export interface FileConfigPath {
     manifestFilePaths: string[];
@@ -153,66 +155,15 @@ export async function getFilePathsConfigs(): Promise<FileConfigPath> {
 
     let imageNames = core.getInput('images').split('\n');
     let imageDockerfilePathMap: any = {};
-    let registryCredentialsMap: any = {};
-    let imageNameKey: string, registryNameKey: string, pathValue: string;
-
-    //Parsing from environment variables : Image-Dockerfile map and Registry-credentials map
-
-    for (const key in process.env) {
-        if (Object.prototype.hasOwnProperty.call(process.env, key)) {
-            if (key.startsWith('IMAGE_DOCKERFILE_')) {
-                imageNameKey = key.replace('DOCKERFILE','NAME');
-                if(process.env[imageNameKey]){
-                    imageDockerfilePathMap[process.env[imageNameKey]] = process.env[key];
-                }
-            }
-            if (key.startsWith('REGISTRY_USERNAME_')) {
-                registryNameKey = key.replace('USERNAME', 'URL');
-                if(process.env[registryNameKey]){
-                    if(!(registryCredentialsMap[process.env[registryNameKey]])){
-                        registryCredentialsMap[process.env[registryNameKey]] = {};
-                    }
-                    registryCredentialsMap[process.env[registryNameKey]]['USERNAME'] = process.env[key];
-                }
-            }
-            if (key.startsWith('REGISTRY_PASSWORD_')) {
-                registryNameKey = key.replace('PASSWORD', 'URL');
-                if(process.env[registryNameKey]){
-                    if(!(registryCredentialsMap[process.env[registryNameKey]])){
-                        registryCredentialsMap[process.env[registryNameKey]] = {};
-                    }
-                    registryCredentialsMap[process.env[registryNameKey]]['PASSWORD'] = process.env[key];
-                }
-            }
-        }
-    };
+    let pathValue: string, pathLink: string;
 
     //Fetching from image label if available
     for (const image of imageNames) {
         let args: string[] = [image];
         let imageConfig: any;
-        let containerRegistryName = image.split('/')[0];
 
         try {
-            if (registryCredentialsMap && registryCredentialsMap[containerRegistryName]) {
-                let registryUsername = registryCredentialsMap[containerRegistryName]['USERNAME'] || null;
-                let registryPassword = registryCredentialsMap[containerRegistryName]['PASSWORD'] || null;
-                if (registryPassword && registryUsername) {
-                    let loginArgs: string[] = [containerRegistryName, '--username', registryUsername, '--password', registryPassword];
-                    await exec.exec('docker login ', loginArgs, true).then(res => {
-                        if (res.stderr != '' && !res.success) {
-                            core.warning(`docker login failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
-                        }
-                    });
-                }
-                else{
-                    core.warning(`docker login failed due to Incomplete credentials`);
-                }
-            }
-            else{
-                core.warning(`docker login failed due to missing credentials`);
-            }
-
+            
             await exec.exec('docker pull ', args, true).then(res => {
                 if (res.stderr != '' && !res.success) {
                     throw new Error(`docker images pull failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
@@ -237,13 +188,17 @@ export async function getFilePathsConfigs(): Promise<FileConfigPath> {
             imageConfig = imageConfig[0];
             if ((imageConfig.Config) && (imageConfig.Config.Labels) && (imageConfig.Config.Labels[DOCKERFILE_PATH_LABEL_KEY])) {
                 pathValue = imageConfig.Config.Labels[DOCKERFILE_PATH_LABEL_KEY];
+                if(pathValue.startsWith('./')){  //if it is relative filepath convert to link from current repo
+                    pathLink = `https://github.com/${process.env.GITHUB_REPOSITORY}/${pathValue}`;
+                    pathValue = pathLink;
+                }
+
             }
             else {
                 pathValue = 'Not available';
             }
-            if (!imageDockerfilePathMap[image]) { //If (image : someVal) does not exist (fetched from env var) then add
-                imageDockerfilePathMap[image] = pathValue;
-            }
+                
+            imageDockerfilePathMap[image] = pathValue;
         }
     }
 
