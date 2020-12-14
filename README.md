@@ -388,7 +388,7 @@ jobs:
         password: ${{ secrets.REGISTRY_PASSWORD }}
     
     - run: |
-        docker build . -t contoso.azurecr.io/k8sdemo:${{ github.sha }} --label dockerfile-path=https://github.com/Josh-01/hello-kubernetes/blob/master/Dockerfile
+        docker build . -t contoso.azurecr.io/k8sdemo:${{ github.sha }} --label dockerfile-path=https://github.com/Username/RepoName/blob/branch/Dockerfile
         docker push contoso.azurecr.io/k8sdemo:${{ github.sha }}
  ```     
 
