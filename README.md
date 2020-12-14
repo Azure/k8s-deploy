@@ -103,11 +103,7 @@ Following are the key capabilities of this action:
 ### Basic deployment (without any deployment strategy)
 
 ```yaml
-<<<<<<< HEAD
-- uses: Azure/k8s-deploy@v1
-=======
 - uses: Azure/k8s-deploy@v1.3
->>>>>>> d73a036acb98935f6bdf0a71be632fc8453b5082
   with:
     namespace: 'myapp'
     manifests: |
@@ -123,11 +119,7 @@ Following are the key capabilities of this action:
 ### Deployment Strategies - Canary deployment without service mesh
 
 ```yaml
-<<<<<<< HEAD
-- uses: Azure/k8s-deploy@v1
-=======
 - uses: Azure/k8s-deploy@v1.3
->>>>>>> d73a036acb98935f6bdf0a71be632fc8453b5082
   with:
     namespace: 'myapp'
     images: 'contoso.azurecr.io/myapp:${{ event.run_id }}'
@@ -144,11 +136,7 @@ Following are the key capabilities of this action:
 ### To promote/reject the canary created by the above snippet, the following YAML snippet could be used:
 
 ```yaml
-<<<<<<< HEAD
-- uses: Azure/k8s-deploy@v1
-=======
 - uses: Azure/k8s-deploy@v1.3
->>>>>>> d73a036acb98935f6bdf0a71be632fc8453b5082
   with:
     namespace: 'myapp'
     images: 'contoso.azurecr.io/myapp:${{ event.run_id }}'
@@ -165,11 +153,7 @@ Following are the key capabilities of this action:
 ### Deployment Strategies - Canary deployment based on Service Mesh Interface
 
 ```yaml
-<<<<<<< HEAD
-- uses: Azure/k8s-deploy@v1
-=======
 - uses: Azure/k8s-deploy@v1.3
->>>>>>> d73a036acb98935f6bdf0a71be632fc8453b5082
   with:
     namespace: 'myapp'
     images: 'contoso.azurecr.io/myapp:${{ event.run_id }}'
@@ -186,11 +170,7 @@ Following are the key capabilities of this action:
 ```
 ### To promote/reject the canary created by the above snippet, the following YAML snippet could be used:
 ```yaml
-<<<<<<< HEAD
-- uses: Azure/k8s-deploy@v1
-=======
 - uses: Azure/k8s-deploy@v1.3
->>>>>>> d73a036acb98935f6bdf0a71be632fc8453b5082
   with:
     namespace: 'myapp'
     images: 'contoso.azurecr.io/myapp:${{ event.run_id }} '
@@ -207,11 +187,7 @@ Following are the key capabilities of this action:
 ### Deployment Strategies - Blue-Green deployment with different route methods
 
 ```yaml
-<<<<<<< HEAD
-- uses: Azure/k8s-deploy@v1
-=======
 - uses: Azure/k8s-deploy@v1.3
->>>>>>> d73a036acb98935f6bdf0a71be632fc8453b5082
   with:
     namespace: 'myapp'
     images: 'contoso.azurecr.io/myapp:${{ event.run_id }}'
@@ -230,11 +206,7 @@ Following are the key capabilities of this action:
 ### **To promote/reject the green workload created by the above snippet, the following YAML snippet could be used:**
 
 ```yaml
-<<<<<<< HEAD
-- uses: Azure/k8s-deploy@v1
-=======
 - uses: Azure/k8s-deploy@v1.3
->>>>>>> d73a036acb98935f6bdf0a71be632fc8453b5082
   with:
     namespace: 'myapp'
     images: 'contoso.azurecr.io/myapp:${{ event.run_id }}'
@@ -289,11 +261,7 @@ jobs:
         container-registry-password: ${{ secrets.REGISTRY_PASSWORD }}
         secret-name: demo-k8s-secret
 
-<<<<<<< HEAD
-    - uses: Azure/k8s-deploy@v1
-=======
     - uses: Azure/k8s-deploy@v1.3
->>>>>>> d73a036acb98935f6bdf0a71be632fc8453b5082
       with:
         manifests: |
           manifests/deployment.yml
@@ -336,11 +304,7 @@ jobs:
         container-registry-password: ${{ secrets.REGISTRY_PASSWORD }}
         secret-name: demo-k8s-secret
 
-<<<<<<< HEAD
-    - uses: Azure/k8s-deploy@v1
-=======
     - uses: Azure/k8s-deploy@v1.3
->>>>>>> d73a036acb98935f6bdf0a71be632fc8453b5082
       with:
         manifests: |
           manifests/deployment.yml
@@ -350,10 +314,6 @@ jobs:
         imagepullsecrets: |
           demo-k8s-secret
 ```
-<<<<<<< HEAD
-=======
-
->>>>>>> d73a036acb98935f6bdf0a71be632fc8453b5082
 ## Sample workflows for new traceability fields support 
 
  - Environment variable `HELM_CHART_PATHS` is a list of helmchart files used in k8s-bake and k8s-deploy
@@ -403,10 +363,6 @@ jobs:
           manifests/deployment.yml
           manifests/service.yml
         images: |
-<<<<<<< HEAD
-=======
-
->>>>>>> d73a036acb98935f6bdf0a71be632fc8453b5082
           contoso.azurecr.io/k8sdemo:${{ github.sha }}
         imagepullsecrets: |
           demo-k8s-secret
@@ -503,8 +459,4 @@ provided by the bot. You will only need to do this once across all repos using o
 
 This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
 For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
-<<<<<<< HEAD
 contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
-=======
-contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
->>>>>>> d73a036acb98935f6bdf0a71be632fc8453b5082
