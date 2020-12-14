@@ -6,7 +6,6 @@ import { GitHubClient } from '../githubClient';
 import { StatusCodes } from "./httpClient";
 import * as exec from "./exec";
 import * as inputParams from "../input-parameters";
-import * as github from '@actions/github';
 
 export interface FileConfigPath {
     manifestFilePaths: string[];
@@ -155,7 +154,7 @@ export async function getFilePathsConfigs(): Promise<FileConfigPath> {
     let imageNames = core.getInput('images').split('\n');
     let imageDockerfilePathMap: any = {};
     let pathValue: string, pathLink: string;
-    const branchOrTag: string = github.context?.ref && github.context?.ref.replace('refs/heads/','').replace('refs/tags/','');
+    const branchOrTag: string = process.env.GITHUB_REF && process.env.GITHUB_REF.replace('refs/heads/','').replace('refs/tags/','');
 
     //Fetching from image label if available
     for (const image of imageNames) {
