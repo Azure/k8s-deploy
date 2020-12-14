@@ -314,21 +314,11 @@ jobs:
         imagepullsecrets: |
           demo-k8s-secret
 ```
-## Sample workflows with new environment variables ( which this action reads from ) which can be reused throughout the workflow and help with traceability fields.
+## Sample workflows for new traceability fields support 
 
- Environment variables that can be set once and resued throughout the workflow. 
- This helps in better readability and maintenance when there are multiple registries/images used for build and deploy.
-
- For each registry in the workflow:
- - `REGISTRY_URL_n`: Login url for registry,           Eg. : contoso.azurecr.io
- - `REGISTRY_USERNAME_n`: Login username for registry, Eg. : ${{ secrets.AZURE_CLIENT_ID }}
- - `REGISTRY_PASSWORD_n`: Login password for registry, Eg. :${{ secrets.AZURE_CLIENT_SECRET }}
-
-For each image in the workflow:
- - `IMAGE_NAME_n`: Fully qualified image name, Eg. :  contoso.azurecr.io/k8sdemo:first
- - `IMAGE_DOCKERFILE_n`: Path to dockerfile,   Eg. : ./Dockerfile
-
- - `HELM_CHART_PATHS` is a list of helmchart files used in k8s-bake and k8s-deploy
+ - Environment variable `HELM_CHART_PATHS` is a list of helmchart files used in k8s-bake and k8s-deploy
+ - Use script to build image and add `dockerfile-path` label to it.
+ - Run docker login action for each image registry - in case image build and image deploy are 2 distinct jobs in the same or separate workflows.
 
 ### End to end workflow for building and deploying container images 
 
@@ -336,11 +326,6 @@ For each image in the workflow:
 on: [push]
 env:
   NAMESPACE: demo-ns2
-  REGISTRY_URL_1: contoso.azurecr.io
-  REGISTRY_USERNAME_1: ${{ secrets.AZURE_CLIENT_ID }}
-  REGISTRY_PASSWORD_1: ${{ secrets.AZURE_CLIENT_SECRET }}
-  IMAGE_NAME_1: contoso.azurecr.io/k8sdemo:${{ github.sha }}
-  IMAGE_DOCKERFILE_1:  ./Dockerfile
 
 jobs:
   build-and-deploy:
@@ -350,13 +335,13 @@ jobs:
     
     - uses: Azure/docker-login@v1
       with:
-        login-server: ${{ env.REGISTRY_URL_1 }}
-        username: ${{ env.REGISTRY_USERNAME_1 }}
-        password: ${{ env.REGISTRY_PASSWORD_1 }}
+        login-server: contoso.azurecr.io
+        username: ${{ secrets.REGISTRY_USERNAME }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
     
     - run: |
-        docker build . -t ${{ env.IMAGE_NAME_1 }}
-        docker push ${{ env.IMAGE_NAME_1 }}
+        docker build . -t contoso.azurecr.io/k8sdemo:${{ github.sha }} --label dockerfile-path=./Dockerfile
+        docker push contoso.azurecr.io/k8sdemo:${{ github.sha }}
       
     # Set the target AKS cluster.
     - uses: Azure/aks-set-context@v1
@@ -367,10 +352,9 @@ jobs:
         
     - uses: Azure/k8s-create-secret@v1
       with:
-        namespace: ${{ env.NAMESPACE  }}
-        container-registry-url: ${{ env.REGISTRY_URL_1 }}
-        container-registry-username: ${{ env.REGISTRY_USERNAME_1 }}
-        container-registry-password: ${{ env.REGISTRY_PASSWORD_1 }}
+        container-registry-url: contoso.azurecr.io
+        container-registry-username: ${{ secrets.REGISTRY_USERNAME }}
+        container-registry-password: ${{ secrets.REGISTRY_PASSWORD }}
         secret-name: demo-k8s-secret
 
     - uses: Azure/k8s-deploy@v1.2
@@ -379,7 +363,7 @@ jobs:
           manifests/deployment.yml
           manifests/service.yml
         images: |
-          ${{ env.IMAGE_NAME_1 }}
+          contoso.azurecr.io/k8sdemo:${{ github.sha }}
         imagepullsecrets: |
           demo-k8s-secret
 ```
@@ -390,11 +374,6 @@ jobs:
 on: [push]
 env:
   NAMESPACE: demo-ns2
-  REGISTRY_URL_1: contoso.azurecr.io
-  REGISTRY_USERNAME_1: ${{ secrets.AZURE_CLIENT_ID }}
-  REGISTRY_PASSWORD_1: ${{ secrets.AZURE_CLIENT_SECRET }}
-  IMAGE_NAME_1: contoso.azurecr.io/k8sdemo:${{ github.sha }}
-  IMAGE_DOCKERFILE_1:  ./Dockerfile
 
 jobs:
   build:
@@ -404,13 +383,13 @@ jobs:
     
     - uses: Azure/docker-login@v1
       with:
-        login-server: ${{ env.REGISTRY_URL_1 }}
-        username: ${{ env.REGISTRY_USERNAME_1 }}
-        password: ${{ env.REGISTRY_PASSWORD_1 }}
+        login-server: contoso.azurecr.io
+        username: ${{ secrets.REGISTRY_USERNAME }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
     
     - run: |
-        docker build . -t ${{ env.IMAGE_NAME_1 }} --label dockerfile-path=${{ env.IMAGE_DOCKERFILE_1 }}
-        docker push ${{ env.IMAGE_NAME_1 }}
+        docker build . -t contoso.azurecr.io/k8sdemo:${{ github.sha }} --label dockerfile-path=./Dockerfile
+        docker push contoso.azurecr.io/k8sdemo:${{ github.sha }}
  ```     
 
 ### CD workflow using bake action to get manifests deploying to a Kubernetes cluster 
@@ -419,10 +398,6 @@ jobs:
 on: [push]
 env:
   NAMESPACE: demo-ns2
-  REGISTRY_URL_1: contoso.azurecr.io
-  REGISTRY_USERNAME_1: ${{ secrets.AZURE_CLIENT_ID }}
-  REGISTRY_PASSWORD_1: ${{ secrets.AZURE_CLIENT_SECRET }}
-  IMAGE_NAME_1: contoso.azurecr.io/k8sdemo:${{ github.sha }}
   HELM_CHART_PATHS: |
     ./helmCharts/file1
 
@@ -431,6 +406,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
+
+    - uses: Azure/docker-login@v1
+      with:
+        login-server: contoso.azurecr.io
+        username: ${{ secrets.REGISTRY_USERNAME }}
+        password: ${{ secrets.REGISTRY_PASSWORD }}
       
     # Set the target AKS cluster.
     - uses: Azure/aks-set-context@v1
@@ -442,9 +423,9 @@ jobs:
     - uses: Azure/k8s-create-secret@v1
       with:
         namespace: ${{ env.NAMESPACE  }}
-        container-registry-url: ${{ env.REGISTRY_URL_1 }}
-        container-registry-username: ${{ env.REGISTRY_USERNAME_1 }}
-        container-registry-password: ${{ env.REGISTRY_PASSWORD_1 }}
+        container-registry-url: contoso.azurecr.io
+        container-registry-username: ${{ secrets.REGISTRY_USERNAME }}
+        container-registry-password: ${{ secrets.REGISTRY_PASSWORD }}
         secret-name: demo-k8s-secret
 
     - uses: azure/k8s-bake@v1
@@ -461,7 +442,7 @@ jobs:
       with:
         manifests: ${{ steps.bake.outputs.manifestsBundle }}
         images: |
-          ${{ env.IMAGE_NAME_1 }}
+          contoso.azurecr.io/k8sdemo:${{ github.sha }}
         imagepullsecrets: |
           demo-k8s-secret
 ```
