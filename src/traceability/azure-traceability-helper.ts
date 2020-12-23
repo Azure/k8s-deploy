@@ -1,8 +1,9 @@
 import * as path from 'path';
 import * as fs from 'fs';
+import { DeploymentReport } from '@azure/azure-actions-traceability';
+import {  TargetResource, Artifact } from '@azure/azure-actions-traceability/lib/models';
 import { WebRequest, WebRequestOptions, WebResponse, sendRequest, StatusCodes } from "../utilities/httpClient";
 import * as InputParameters from "../input-parameters";
-import {DeploymentReport, getGitHubPipelineProperties, TargetResource, Artifact} from './trace-deployment';
 import * as core from '@actions/core';
 
 interface AksResourceContext {
@@ -73,37 +74,36 @@ function getDeploymentPayload(aksResourceContext: AksResourceContext, deployment
 }
 
 async function createDeploymentResource(aksResourceContext: AksResourceContext, deploymentPayload: any): Promise<any> {
-  return Promise.resolve();
-  // const deploymentName = `${aksResourceContext.clusterName}-${InputParameters.namespace}-deployment-${process.env['GITHUB_SHA']}`;
-  // return new Promise<string>((resolve, reject) => {
-  //   var webRequest = new WebRequest();
-  //   webRequest.method = 'PUT';
-  //   webRequest.uri = `${aksResourceContext.managementUrl}subscriptions/${aksResourceContext.subscriptionId}/resourceGroups/${aksResourceContext.resourceGroup}/providers/Microsoft.DeploymentCenterV2/deploymentsv2/${deploymentName}?api-version=2020-06-01-preview`;
-  //   console.log(`Deployment resource URI: ${webRequest.uri}`);
-  //   webRequest.headers = {
-  //     'Authorization': 'Bearer ' + aksResourceContext.sessionToken,
-  //     'Content-Type': 'application/json; charset=utf-8'
-  //   }
-  //   webRequest.body = JSON.stringify(deploymentPayload);
-  //   sendRequest(webRequest).then((response: WebResponse) => {
-  //     if (response.statusCode == StatusCodes.OK
-  //       || response.statusCode == StatusCodes.CREATED
-  //       || response.statusCode == StatusCodes.ACCEPTED) {
-  //       resolve(response.body);
-  //     } else {
-  //       console.log(`An error occured while creating the deployment resource. Response body: '${JSON.stringify(response.body)}'`);
-  //       reject(JSON.stringify(response.body));
-  //     }
-  //   }).catch(reject);
-  // });
+  const deploymentName = `${aksResourceContext.clusterName}-${InputParameters.namespace}-deployment-${process.env['GITHUB_SHA']}`;
+  return new Promise<string>((resolve, reject) => {
+    var webRequest = new WebRequest();
+    webRequest.method = 'PUT';
+    webRequest.uri = `${aksResourceContext.managementUrl}subscriptions/${aksResourceContext.subscriptionId}/resourceGroups/${aksResourceContext.resourceGroup}/providers/Microsoft.DeploymentCenterV2/deploymentsv2/${deploymentName}?api-version=2020-06-01-preview`;
+    console.log(`Deployment resource URI: ${webRequest.uri}`);
+    webRequest.headers = {
+      'Authorization': 'Bearer ' + aksResourceContext.sessionToken,
+      'Content-Type': 'application/json; charset=utf-8'
+    }
+    webRequest.body = JSON.stringify(deploymentPayload);
+    sendRequest(webRequest).then((response: WebResponse) => {
+      if (response.statusCode == StatusCodes.OK
+        || response.statusCode == StatusCodes.CREATED
+        || response.statusCode == StatusCodes.ACCEPTED) {
+        resolve(response.body);
+      } else {
+        console.log(`An error occured while creating the deployment resource. Response body: '${JSON.stringify(response.body)}'`);
+        reject(JSON.stringify(response.body));
+      }
+    }).catch(reject);
+  });
 }
 
 export async function addTraceability(deploymentName): Promise<void> {
   const aksResourceContext = getAksResourceContext();
   let deploymentPayload = getDeploymentPayload(aksResourceContext, deploymentName);
   createDeploymentReport(aksResourceContext, deploymentName);
-  console.log(`[New] Trying to create the deployment resource with payload: \n${JSON.stringify(deploymentPayload)}`);
   try {
+    console.log(`Trying to create the deployment resource with payload: \n${JSON.stringify(deploymentPayload)}`);
     const deploymentResource = await createDeploymentResource(aksResourceContext, deploymentPayload);
     console.log(`Deployment resource created successfully. Deployment resource object: \n${JSON.stringify(deploymentResource)}`);
   } catch (error) {
@@ -112,7 +112,7 @@ export async function addTraceability(deploymentName): Promise<void> {
 }
 
 function createDeploymentReport(context: AksResourceContext, deploymentManifests: string) {
-  let resource: TargetResource = {
+  const resource: TargetResource = {
     id: `/subscriptions/${context.subscriptionId}/resourceGroups/${context.resourceGroup}/providers/Microsoft.ContainerService/managedClusters/${context.clusterName}`,
     provider: 'Azure',
     type: 'Microsoft.ContainerService/managedClusters',
@@ -120,16 +120,13 @@ function createDeploymentReport(context: AksResourceContext, deploymentManifests
       manifests: deploymentManifests
     }
   };
-  let deploymentReport: DeploymentReport = {
-    targetResource: resource,
-    pipeline: {
-      provider: "GitHub",
-      properties: getGitHubPipelineProperties("succeeded")
-    },
-    artifacts: []
-  }
-  const deploymentReportPath = path.join( process.env['RUNNER_TEMP'], 'deployment-report.json');
-  fs.writeFileSync(deploymentReportPath, JSON.stringify(deploymentReport));
+
+  const artifact: Artifact = {
+    type: 'container',
+    properties: {}
+  };
+
+  const deploymentReport: DeploymentReport = new DeploymentReport([ artifact ], 'succeeded', resource);
+  const deploymentReportPath = deploymentReport.export();
   core.setOutput('deployment-report', deploymentReportPath);
-  core.setOutput('deployment-report-contents', JSON.stringify(deploymentReport));
 }
