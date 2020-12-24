@@ -449,6 +449,7 @@ jobs:
         imagepullsecrets: |
           demo-k8s-secret
 ```
+k8s-deploy GitHub Actions is supported on both 'AzureUSGovernment' or 'AzureChinaCloud'.Login to the respective Azure Cloud before running this action using [Azure Login](https://github.com/Azure/login)
 
 # Contributing
 
