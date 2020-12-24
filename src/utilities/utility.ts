@@ -4,8 +4,8 @@ import { IExecSyncResult } from './tool-runner';
 import { Kubectl } from '../kubectl-object-model';
 import { GitHubClient } from '../githubClient';
 import { StatusCodes } from "./httpClient";
-import * as exec from "./exec";
 import * as inputParams from "../input-parameters";
+import { DockerExec } from '../docker-object-model';
 
 export interface FileConfigPath {
     manifestFilePaths: string[];
@@ -154,7 +154,7 @@ export async function getFilePathsConfigs(): Promise<FileConfigPath> {
     let imageNames = core.getInput('images').split('\n');
     let imageDockerfilePathMap: any = {};
     let pathValue: string, pathLink: string;
-    const branchOrTag: string = process.env.GITHUB_REF && process.env.GITHUB_REF.replace('refs/heads/','blob/').replace('refs/tags/','blob/');
+    const branchOrTag: string = process.env.GITHUB_REF && process.env.GITHUB_REF.replace('refs/heads/','/').replace('refs/tags/','/');
 
     //Fetching from image label if available
     for (const image of imageNames) {
@@ -162,22 +162,9 @@ export async function getFilePathsConfigs(): Promise<FileConfigPath> {
         let imageConfig: any;
 
         try {
-            
-            await exec.exec('docker pull ', args, true).then(res => {
-                if (res.stderr != '' && !res.success) {
-                    throw new Error(`docker images pull failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
-                }
-            });
-
-            await exec.exec('docker inspect --type=image', args, true).then(res => {
-                if (res.stderr != '' && !res.success) {
-                    throw new Error(`docker inspect call failed with: ${res.stderr.match(/(.*)\s*$/)![0]}`);
-                }
-
-                if (res.stdout) {
-                    imageConfig = JSON.parse(res.stdout);
-                }
-            });
+            var dockerExec: DockerExec = new DockerExec('docker');
+            dockerExec.pullImage(args,true);
+            imageConfig = dockerExec.inspectImage(args,true);
         }
         catch (ex) {
             core.warning(`Failed to get dockerfile paths for image ${image.toString()} | ` + ex);
@@ -188,10 +175,9 @@ export async function getFilePathsConfigs(): Promise<FileConfigPath> {
             if ((imageConfig.Config) && (imageConfig.Config.Labels) && (imageConfig.Config.Labels[DOCKERFILE_PATH_LABEL_KEY])) {
                 pathValue = imageConfig.Config.Labels[DOCKERFILE_PATH_LABEL_KEY];
                 if(pathValue.startsWith('./')){  //if it is relative filepath convert to link from current repo
-                    pathLink = `https://github.com/${process.env.GITHUB_REPOSITORY}/${branchOrTag}/${pathValue}`;
+                    pathLink = `https://github.com/${process.env.GITHUB_REPOSITORY}/blob${branchOrTag}/${pathValue}`;
                     pathValue = pathLink;
                 }
-
             }
             else {
                 pathValue = 'Not available';
