@@ -11,15 +11,15 @@ export class DockerExec{
         args = ['pull', ...args];
         var result: IExecSyncResult = this.execute(args,silent);
         if (result.stderr != '' && result.code != 0) {
-            throw new Error(`docker images pull failed with: ${result.stderr.match(/(.*)\s*$/)![0]}`);
+            throw new Error(`docker images pull failed with: ${result.error}`);
         }
     }
 
     public inspectImage(args: string[], silent?: boolean): any {
-        args = ['inspect --type=image', ...args];
+        args = ['inspect', ...args];
         var result: IExecSyncResult = this.execute(args,silent);
         if (result.stderr != '' && result.code != 0) {
-            throw new Error(`docker inspect call failed with: ${result.stderr.match(/(.*)\s*$/)![0]}`);
+            throw new Error(`docker inspect call failed with: ${result.error}`);
         }
         return result.stdout;
     }
