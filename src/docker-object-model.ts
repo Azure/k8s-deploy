@@ -3,9 +3,9 @@ import { ToolRunner, IExecOptions, IExecSyncResult } from "./utilities/tool-runn
 export class DockerExec{
     private dockerPath: string;
 
-    constructor(dockerPath: string) {
+    constructor(dockerPath: string){
         this.dockerPath = dockerPath;
-    }
+    };
 
     public pullImage(args: string[], silent?: boolean) {
         args = ['pull', ...args];

@@ -6,6 +6,10 @@ import { GitHubClient } from '../githubClient';
 import { StatusCodes } from "./httpClient";
 import * as inputParams from "../input-parameters";
 import { DockerExec } from '../docker-object-model';
+import * as io from '@actions/io';
+import * as path from 'path';
+import * as toolCache from '@actions/tool-cache';
+
 
 export interface FileConfigPath {
     manifestFilePaths: string[];
@@ -162,7 +166,8 @@ export async function getFilePathsConfigs(): Promise<FileConfigPath> {
         let pathValue: string, pathLink: string;
 
         try {
-            var dockerExec: DockerExec = new DockerExec('docker');
+            var dockerPath = await getDockerPath();
+            var dockerExec: DockerExec = new DockerExec(dockerPath);
             dockerExec.pullImage(args,true);
             imageConfig = dockerExec.inspectImage(args,true);
         }
@@ -203,3 +208,17 @@ export function getRandomInt(max: number) {
 export function getCurrentTime(): number {
     return new Date().getTime();
 }
+
+async function getDockerPath(): Promise<string> {
+    var dockerPath = await io.which('docker', false);
+    if (!dockerPath) {
+        const allVersions = toolCache.findAllVersions('docker');
+        dockerPath = allVersions.length > 0 ? toolCache.find('docker', allVersions[0]) : '';
+        if (!dockerPath) {
+            throw new Error('Docker is not installed, please use image with docker');
+        }
+        dockerPath = path.join(dockerPath, `docker${getExecutableExtension()}`);
+        return Promise.resolve(dockerPath);
+    }
+}
+
