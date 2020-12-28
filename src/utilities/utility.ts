@@ -166,7 +166,7 @@ export async function getFilePathsConfigs(): Promise<FileConfigPath> {
         let pathValue: string, pathLink: string;
 
         try {
-            await setDockerPath();
+            await checkDockerPath();
             var dockerExec: DockerExec = new DockerExec('docker');
             dockerExec.pullImage(args,true);
             imageConfig = dockerExec.inspectImage(args,true);
@@ -209,14 +209,10 @@ export function getCurrentTime(): number {
     return new Date().getTime();
 }
 
-async function setDockerPath() {
+async function checkDockerPath() {
     var dockerPath = await io.which('docker', false);
     if (!dockerPath) {
-        const allVersions = toolCache.findAllVersions('docker');
-        dockerPath = allVersions.length > 0 ? toolCache.find('docker', allVersions[0]) : '';
-        if (!dockerPath) {
-            throw new Error('Docker is not installed, please use an image with docker');
-        }
+        throw new Error('Docker is not installed, please use an image with docker');
     }
 }
 
