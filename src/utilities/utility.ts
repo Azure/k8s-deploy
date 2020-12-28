@@ -163,8 +163,8 @@ export async function getFilePathsConfigs(): Promise<FileConfigPath> {
 
         try {
             var dockerExec: DockerExec = new DockerExec('docker');
-            dockerExec.pullImage(args,true);
-            imageConfig = dockerExec.inspectImage(args,true);
+            dockerExec.pullImage(args,false);
+            imageConfig = dockerExec.inspectImage(args,false);
         }
         catch (ex) {
             core.warning(`Failed to get dockerfile paths for image ${image.toString()} | ` + ex);
