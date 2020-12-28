@@ -166,8 +166,8 @@ export async function getFilePathsConfigs(): Promise<FileConfigPath> {
         let pathValue: string, pathLink: string;
 
         try {
-            var dockerPath = await getDockerPath();
-            var dockerExec: DockerExec = new DockerExec(dockerPath);
+            await setDockerPath();
+            var dockerExec: DockerExec = new DockerExec('docker');
             dockerExec.pullImage(args,true);
             imageConfig = dockerExec.inspectImage(args,true);
         }
@@ -209,16 +209,14 @@ export function getCurrentTime(): number {
     return new Date().getTime();
 }
 
-async function getDockerPath(): Promise<string> {
+async function setDockerPath() {
     var dockerPath = await io.which('docker', false);
     if (!dockerPath) {
         const allVersions = toolCache.findAllVersions('docker');
         dockerPath = allVersions.length > 0 ? toolCache.find('docker', allVersions[0]) : '';
         if (!dockerPath) {
-            throw new Error('Docker is not installed, please use image with docker');
+            throw new Error('Docker is not installed, please use an image with docker');
         }
-        dockerPath = path.join(dockerPath, `docker${getExecutableExtension()}`);
-        return Promise.resolve(dockerPath);
     }
 }
 
