@@ -153,25 +153,25 @@ export async function getFilePathsConfigs(): Promise<FileConfigPath> {
 
     let imageNames = core.getInput('images').split('\n');
     let imageDockerfilePathMap: any = {};
-    let pathValue: string, pathLink: string;
     const branchOrTag: string = process.env.GITHUB_REF && process.env.GITHUB_REF.replace('refs/heads/','/').replace('refs/tags/','/');
 
     //Fetching from image label if available
     for (const image of imageNames) {
         let args: string[] = [image];
         let imageConfig: any;
+        let pathValue: string, pathLink: string;
 
         try {
             var dockerExec: DockerExec = new DockerExec('docker');
-            dockerExec.pullImage(args,false);
-            imageConfig = dockerExec.inspectImage(args,false);
+            dockerExec.pullImage(args,true);
+            imageConfig = dockerExec.inspectImage(args,true);
         }
         catch (ex) {
             core.warning(`Failed to get dockerfile paths for image ${image.toString()} | ` + ex);
         }
 
         if (imageConfig) {
-            imageConfig = imageConfig[0];
+            imageConfig = JSON.parse(imageConfig)[0];
             if ((imageConfig.Config) && (imageConfig.Config.Labels) && (imageConfig.Config.Labels[DOCKERFILE_PATH_LABEL_KEY])) {
                 pathValue = imageConfig.Config.Labels[DOCKERFILE_PATH_LABEL_KEY];
                 if(pathValue.startsWith('./')){  //if it is relative filepath convert to link from current repo
