@@ -12,7 +12,7 @@
         "@actions/exec": "1.0.4",
         "@actions/io": "1.0.2",
         "@actions/tool-cache": "1.6.0",
-        "@azure/azure-actions-traceability": "^1.0.0",
+        "@azure/azure-actions-traceability": "^1.0.1",
         "js-yaml": "3.13.1",
         "typed-rest-client": "1.7.2"
     },

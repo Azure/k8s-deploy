@@ -1,7 +1,6 @@
 import * as path from 'path';
 import * as fs from 'fs';
-import { DeploymentReport } from '@azure/azure-actions-traceability';
-import {  TargetResource, Artifact } from '@azure/azure-actions-traceability/lib/models';
+import { DeploymentReport, TargetResource, Artifact } from '@azure/azure-actions-traceability';
 import { WebRequest, WebRequestOptions, WebResponse, sendRequest, StatusCodes } from "../utilities/httpClient";
 import * as InputParameters from "../input-parameters";
 import * as core from '@actions/core';
