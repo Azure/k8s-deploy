@@ -1,4 +1,5 @@
 'use strict';
+import { DeploymentConfig } from "./utilities/utility";
 
 export class KubernetesWorkload {
     public static pod: string = 'Pod';
@@ -25,7 +26,7 @@ export const deploymentTypes: string[] = ['deployment', 'replicaset', 'daemonset
 export const workloadTypes: string[] = ['deployment', 'replicaset', 'daemonset', 'pod', 'statefulset', 'job', 'cronjob'];
 export const workloadTypesWithRolloutStatus: string[] = ['deployment', 'daemonset', 'statefulset'];
 
-export function getWorkflowAnnotationsJson(lastSuccessRunSha: string, workflowFilePath: string, filePathConfigs: any): string {
+export function getWorkflowAnnotationsJson(lastSuccessRunSha: string, workflowFilePath: string, deploymentConfig: DeploymentConfig): string {
     let annotationObject: any = {};
     annotationObject["run"] = process.env.GITHUB_RUN_ID;
     annotationObject["repository"] = process.env.GITHUB_REPOSITORY;
@@ -38,9 +39,9 @@ export function getWorkflowAnnotationsJson(lastSuccessRunSha: string, workflowFi
     annotationObject["lastSuccessRunCommit"] = lastSuccessRunSha;
     annotationObject["branch"] = process.env.GITHUB_REF;
     annotationObject["deployTimestamp"] = Date.now();
-    annotationObject["dockerfilePaths"] = filePathConfigs.dockerfilePaths;
-    annotationObject["manifestsPaths"] = filePathConfigs.manifestFilePaths
-    annotationObject["helmChartPaths"] = filePathConfigs.helmChartFilePaths;
+    annotationObject["dockerfilePaths"] = deploymentConfig.dockerfilePaths;
+    annotationObject["manifestsPaths"] = deploymentConfig.manifestFilePaths
+    annotationObject["helmChartPaths"] = deploymentConfig.helmChartFilePaths;
     annotationObject["provider"] = "GitHub";
 
     return JSON.stringify(annotationObject);
