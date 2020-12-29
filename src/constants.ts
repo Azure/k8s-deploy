@@ -1,4 +1,5 @@
 'use strict';
+import { DeploymentConfig } from "./utilities/utility";
 
 export class KubernetesWorkload {
     public static pod: string = 'Pod';

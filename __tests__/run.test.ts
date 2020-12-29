@@ -326,7 +326,7 @@ test("deployment - deploy() - Annotate & label resources", async () => {
 test("deployment - deploy() - Annotate & label resources for a new workflow", async () => {
     process.env.GITHUB_WORKFLOW = '.github/workflows/NewWorkflow.yml';
     let deploymentConfig: utility.DeploymentConfig = { manifestFilePaths: ['manifests/deployment.yaml'], helmChartFilePaths: [], dockerfilePaths: {} }
-    let annotationKeyValStr = getWorkflowAnnotationKeyLabel(process.env.GITHUB_WORKFLOW) + '=' + getWorkflowAnnotationsJson('NA', '.github/workflows/NewWorkflow.yml', deployment);
+    let annotationKeyValStr = getWorkflowAnnotationKeyLabel(process.env.GITHUB_WORKFLOW) + '=' + getWorkflowAnnotationsJson('NA', '.github/workflows/NewWorkflow.yml', deploymentConfig);
     const KubernetesManifestUtilityMock = mocked(KubernetesManifestUtility, true);
     KubernetesManifestUtilityMock.checkManifestStability = jest.fn().mockReturnValue("");
     const KubernetesObjectUtilityMock = mocked(KubernetesObjectUtility, true);
