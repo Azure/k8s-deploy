@@ -45,7 +45,7 @@ export async function deploy(kubectl: Kubectl, manifestFilePaths: string[], depl
     ingressResources.forEach(ingressResource => {
         kubectl.getResource(KubernetesConstants.DiscoveryAndLoadBalancerResource.ingress, ingressResource.name);
     });
-    
+
     // annotate resources
     let allPods: any;
     try {
@@ -79,7 +79,7 @@ function deployManifests(files: string[], kubectl: Kubectl, isCanaryDeploymentSt
         result = canaryDeploymentOutput.result;
         files = canaryDeploymentOutput.newFilePaths;
     } else if (isBlueGreenDeploymentStrategy) {
-        let blueGreenDeploymentOutput: any; 
+        let blueGreenDeploymentOutput: any;
         if (isIngressRoute()) {
             blueGreenDeploymentOutput = deployBlueGreenIngress(kubectl, files);
         } else if (isSMIRoute()) {
@@ -130,9 +130,9 @@ async function checkManifestStability(kubectl: Kubectl, resources: Resource[]): 
 
 async function annotateAndLabelResources(files: string[], kubectl: Kubectl, resourceTypes: Resource[], allPods: any) {
     const workflowFilePath = await getWorkflowFilePath(TaskInputParameters.githubToken);
-    const filePathsConfig = await getDeploymentConfig();
+    const deploymentConfig = await getDeploymentConfig();
     const annotationKeyLabel = models.getWorkflowAnnotationKeyLabel(workflowFilePath);
-    annotateResources(files, kubectl, resourceTypes, allPods, annotationKeyLabel, workflowFilePath, filePathsConfig);
+    annotateResources(files, kubectl, resourceTypes, allPods, annotationKeyLabel, workflowFilePath, deploymentConfig);
     labelResources(files, kubectl, annotationKeyLabel);
 }
 

@@ -143,7 +143,7 @@ export async function getDeploymentConfig(): Promise<DeploymentConfig> {
     const inputManifestFiles = inputParams.manifests || [];
     const helmChartPaths = (process.env.HELM_CHART_PATHS && process.env.HELM_CHART_PATHS.split('\n').filter(path => path != "")) || [];
     const imageNames = inputParams.containers || [];
-    let imageDockerfilePathMap: { [id: string] : string; } = {};
+    let imageDockerfilePathMap: { [id: string]: string; } = {};
 
     //Fetching from image label if available
     for (const image of imageNames) {
@@ -152,8 +152,8 @@ export async function getDeploymentConfig(): Promise<DeploymentConfig> {
         try {
             await checkDockerPath();
             var dockerExec: DockerExec = new DockerExec('docker');
-            dockerExec.pull(image,[],true);
-            imageInspectResult = dockerExec.inspect(image,[],true);
+            dockerExec.pull(image, [], true);
+            imageInspectResult = dockerExec.inspect(image, [], true);
             imageConfig = JSON.parse(imageInspectResult)[0];
             imageDockerfilePathMap[image] = getDockerfilePath(imageConfig);
         }
@@ -190,18 +190,18 @@ async function checkDockerPath() {
     }
 }
 
-function getDockerfilePath(imageConfig: any): string{
+function getDockerfilePath(imageConfig: any): string {
     const DOCKERFILE_PATH_LABEL_KEY = 'dockerfile-path';
-    const ref: string = process.env.GITHUB_REF && process.env.GITHUB_REF.replace('refs/heads/','').replace('refs/tags/','');
+    const ref: string = process.env.GITHUB_REF && process.env.GITHUB_REF.replace('refs/heads/', '').replace('refs/tags/', '');
     let pathLabel: string, pathLink: string, pathValue: string = '';
     if (imageConfig) {
         if ((imageConfig.Config) && (imageConfig.Config.Labels) && (imageConfig.Config.Labels[DOCKERFILE_PATH_LABEL_KEY])) {
             pathLabel = imageConfig.Config.Labels[DOCKERFILE_PATH_LABEL_KEY];
-            if(pathValue.startsWith('./')){  //if it is relative filepath convert to link from current repo
+            if (pathValue.startsWith('./')) {  //if it is relative filepath convert to link from current repo
                 pathLink = `https://github.com/${process.env.GITHUB_REPOSITORY}/blob/${ref}/${pathLabel}`;
                 pathValue = pathLink;
             }
-            else{
+            else {
                 pathValue = pathLabel;
             }
         }
