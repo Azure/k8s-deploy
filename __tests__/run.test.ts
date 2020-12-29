@@ -293,8 +293,8 @@ test("deployment - deploy() - deploy force flag on", async () => {
 });
 
 test("deployment - deploy() - Annotate & label resources", async () => {
-    var filepathConfigs: utility.FileConfigPath = { manifestFilePaths :['manifests/deployment.yaml'], helmChartFilePaths : [], dockerfilePaths : {} } ;
-    let annotationKeyValStr = getWorkflowAnnotationKeyLabel(process.env.GITHUB_WORKFLOW) + '=' + getWorkflowAnnotationsJson('currentCommit', '.github/workflows/workflow.yml', filepathConfigs);
+    var deploymentConfig: utility.DeploymentConfig = { manifestFilePaths :['manifests/deployment.yaml'], helmChartFilePaths : [], dockerfilePaths : {} } ;
+    let annotationKeyValStr = getWorkflowAnnotationKeyLabel(process.env.GITHUB_WORKFLOW) + '=' + getWorkflowAnnotationsJson('currentCommit', '.github/workflows/workflow.yml', deploymentConfig);
     const KubernetesManifestUtilityMock = mocked(KubernetesManifestUtility, true);
     KubernetesManifestUtilityMock.checkManifestStability = jest.fn().mockReturnValue("");
     const KubernetesObjectUtilityMock = mocked(KubernetesObjectUtility, true);
@@ -304,7 +304,7 @@ test("deployment - deploy() - Annotate & label resources", async () => {
     fileHelperMock.getTempDirectory = jest.fn().mockReturnValue("~/Deployment_testapp_currentTimestamp");
     fsMock.writeFileSync =jest.fn().mockReturnValue("");
     jest.spyOn(utility, 'getWorkflowFilePath').mockImplementation(() => Promise.resolve(process.env.GITHUB_WORKFLOW));
-    jest.spyOn(utility, 'getFilePathsConfigs').mockImplementation(()=> Promise.resolve(filepathConfigs));
+    jest.spyOn(utility, 'getDeploymentConfig').mockImplementation(()=> Promise.resolve(deploymentConfig));
 
     const kubeCtl: jest.Mocked<Kubectl> = new Kubectl("") as any;
     kubeCtl.apply = jest.fn().mockReturnValue("");
@@ -325,8 +325,8 @@ test("deployment - deploy() - Annotate & label resources", async () => {
 
 test("deployment - deploy() - Annotate & label resources for a new workflow", async () => {
     process.env.GITHUB_WORKFLOW = '.github/workflows/NewWorkflow.yml';
-    var filepathConfigs: utility.FileConfigPath = { manifestFilePaths :['manifests/deployment.yaml'], helmChartFilePaths : [], dockerfilePaths : {} } ;
-    let annotationKeyValStr = getWorkflowAnnotationKeyLabel(process.env.GITHUB_WORKFLOW) + '=' + getWorkflowAnnotationsJson('NA', '.github/workflows/NewWorkflow.yml', filepathConfigs);
+    var deploymentConfig: utility.DeploymentConfig = { manifestFilePaths :['manifests/deployment.yaml'], helmChartFilePaths : [], dockerfilePaths : {} } ;
+    let annotationKeyValStr = getWorkflowAnnotationKeyLabel(process.env.GITHUB_WORKFLOW) + '=' + getWorkflowAnnotationsJson('NA', '.github/workflows/NewWorkflow.yml', deploymentConfig);
     const KubernetesManifestUtilityMock = mocked(KubernetesManifestUtility, true);
     KubernetesManifestUtilityMock.checkManifestStability = jest.fn().mockReturnValue("");
     const KubernetesObjectUtilityMock = mocked(KubernetesObjectUtility, true);
@@ -336,7 +336,7 @@ test("deployment - deploy() - Annotate & label resources for a new workflow", as
     fileHelperMock.getTempDirectory = jest.fn().mockReturnValue("~/Deployment_testapp_currentTimestamp");
     fsMock.writeFileSync =jest.fn().mockReturnValue("");
     jest.spyOn(httpClient, 'sendRequest').mockImplementation(() => Promise.resolve(getWorkflowsUrlResponse));
-    jest.spyOn(utility, 'getFilePathsConfigs').mockImplementation(()=> Promise.resolve(filepathConfigs));
+    jest.spyOn(utility, 'getDeploymentConfig').mockImplementation(()=> Promise.resolve(deploymentConfig));
 
     const kubeCtl: jest.Mocked<Kubectl> = new Kubectl("") as any;
     kubeCtl.apply = jest.fn().mockReturnValue("");
