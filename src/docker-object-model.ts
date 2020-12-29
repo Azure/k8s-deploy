@@ -7,17 +7,17 @@ export class DockerExec{
         this.dockerPath = dockerPath;
     };
 
-    public pullImage(args: string[], silent?: boolean) {
-        args = ['pull', ...args];
-        var result: IExecSyncResult = this.execute(args,silent);
+    public pull(image: string, args: string[], silent?: boolean) {
+        args = ['pull', image, ...args];
+        let result: IExecSyncResult = this.execute(args,silent);
         if (result.stderr != '' && result.code != 0) {
             throw new Error(`docker images pull failed with: ${result.error}`);
         }
     }
 
-    public inspectImage(args: string[], silent?: boolean): any {
-        args = ['inspect', ...args];
-        var result: IExecSyncResult = this.execute(args,silent);
+    public inspect(image: string, args: string[], silent?: boolean): any {
+        args = ['inspect', image, ...args];
+        let result: IExecSyncResult = this.execute(args,silent);
         if (result.stderr != '' && result.code != 0) {
             throw new Error(`docker inspect call failed with: ${result.error}`);
         }

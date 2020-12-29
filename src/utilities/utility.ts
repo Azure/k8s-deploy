@@ -7,11 +7,8 @@ import { StatusCodes } from "./httpClient";
 import * as inputParams from "../input-parameters";
 import { DockerExec } from '../docker-object-model';
 import * as io from '@actions/io';
-import * as path from 'path';
-import * as toolCache from '@actions/tool-cache';
 
-
-export interface FileConfigPath {
+export interface DeploymentConfig {
     manifestFilePaths: string[];
     helmChartFilePaths: string[];
     dockerfilePaths: any;
@@ -141,60 +138,37 @@ export function annotateChildPods(kubectl: Kubectl, resourceType: string, resour
     return commandExecutionResults;
 }
 
-export async function getFilePathsConfigs(): Promise<FileConfigPath> {
+export async function getDeploymentConfig(): Promise<DeploymentConfig> {
 
-    let filePathsConfig = <FileConfigPath>{};
-    const MANIFEST_PATHS_KEY = 'manifestFilePaths';
-    const HELM_CHART_KEY = 'helmChartFilePaths';
-    const DOCKERFILE_PATH_KEY = 'dockerfilePaths';
-    const DOCKERFILE_PATH_LABEL_KEY = 'dockerfile-path';
-
-    let inputManifestFiles = inputParams.manifests || [];
-    filePathsConfig[MANIFEST_PATHS_KEY] = inputManifestFiles;
-
-    let helmChartPaths = (process.env.HELM_CHART_PATHS && process.env.HELM_CHART_PATHS.split('\n').filter(path => path != "")) || [];
-    filePathsConfig[HELM_CHART_KEY] = helmChartPaths;
-
-    let imageNames = core.getInput('images').split('\n');
-    let imageDockerfilePathMap: any = {};
-    const branchOrTag: string = process.env.GITHUB_REF && process.env.GITHUB_REF.replace('refs/heads/','/').replace('refs/tags/','/');
+    const inputManifestFiles = inputParams.manifests || [];
+    const helmChartPaths = (process.env.HELM_CHART_PATHS && process.env.HELM_CHART_PATHS.split('\n').filter(path => path != "")) || [];
+    const imageNames = inputParams.containers || [];
+    let imageDockerfilePathMap: { [id: string] : string; } = {};
 
     //Fetching from image label if available
     for (const image of imageNames) {
-        let args: string[] = [image];
-        let imageConfig: any;
-        let pathValue: string, pathLink: string;
+        let imageConfig: any, imageInspectResult: string;
 
         try {
             await checkDockerPath();
             var dockerExec: DockerExec = new DockerExec('docker');
-            dockerExec.pullImage(args,true);
-            imageConfig = dockerExec.inspectImage(args,true);
+            dockerExec.pull(image,[],true);
+            imageInspectResult = dockerExec.inspect(image,[],true);
+            imageConfig = JSON.parse(imageInspectResult)[0];
+            imageDockerfilePathMap[image] = getDockerfilePath(imageConfig);
         }
         catch (ex) {
-            core.warning(`Failed to get dockerfile paths for image ${image.toString()} | ` + ex);
-        }
-
-        if (imageConfig) {
-            imageConfig = JSON.parse(imageConfig)[0];
-            if ((imageConfig.Config) && (imageConfig.Config.Labels) && (imageConfig.Config.Labels[DOCKERFILE_PATH_LABEL_KEY])) {
-                pathValue = imageConfig.Config.Labels[DOCKERFILE_PATH_LABEL_KEY];
-                if(pathValue.startsWith('./')){  //if it is relative filepath convert to link from current repo
-                    pathLink = `https://github.com/${process.env.GITHUB_REPOSITORY}/blob${branchOrTag}/${pathValue}`;
-                    pathValue = pathLink;
-                }
-            }
-            else {
-                pathValue = 'Not available';
-            }
-                
-            imageDockerfilePathMap[image] = pathValue;
+            core.warning(`Failed to get dockerfile path for image ${image.toString()} | ` + ex);
         }
     }
 
-    filePathsConfig[DOCKERFILE_PATH_KEY] = imageDockerfilePathMap;
+    const deploymentConfig = <DeploymentConfig>{
+        manifestFilePaths: inputManifestFiles,
+        helmChartFilePaths: helmChartPaths,
+        dockerfilePaths: imageDockerfilePathMap
+    };
 
-    return Promise.resolve(filePathsConfig);
+    return Promise.resolve(deploymentConfig);
 }
 
 export function sleep(timeout: number) {
@@ -210,9 +184,31 @@ export function getCurrentTime(): number {
 }
 
 async function checkDockerPath() {
-    var dockerPath = await io.which('docker', false);
+    let dockerPath = await io.which('docker', false);
     if (!dockerPath) {
-        throw new Error('Docker is not installed, please use an image with docker');
+        throw new Error('Docker is not installed.');
     }
+}
+
+function getDockerfilePath(imageConfig: any): string{
+    const DOCKERFILE_PATH_LABEL_KEY = 'dockerfile-path';
+    const ref: string = process.env.GITHUB_REF && process.env.GITHUB_REF.replace('refs/heads/','').replace('refs/tags/','');
+    let pathLabel: string, pathLink: string, pathValue: string = '';
+    if (imageConfig) {
+        if ((imageConfig.Config) && (imageConfig.Config.Labels) && (imageConfig.Config.Labels[DOCKERFILE_PATH_LABEL_KEY])) {
+            pathLabel = imageConfig.Config.Labels[DOCKERFILE_PATH_LABEL_KEY];
+            if(pathValue.startsWith('./')){  //if it is relative filepath convert to link from current repo
+                pathLink = `https://github.com/${process.env.GITHUB_REPOSITORY}/blob/${ref}/${pathLabel}`;
+                pathValue = pathLink;
+            }
+            else{
+                pathValue = pathLabel;
+            }
+        }
+        else {
+            pathValue = '';
+        }
+    }
+    return pathValue;
 }
 
