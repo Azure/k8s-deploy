@@ -25,59 +25,33 @@ function getAksResourceContext(): AksResourceContext {
   }
 }
 
-function getDeploymentPayload(aksResourceContext: AksResourceContext, deploymentName: string): any {
-  const targetResourceId = `/subscriptions/${aksResourceContext.subscriptionId}/resourceGroups/${aksResourceContext.resourceGroup}/providers/Microsoft.ContainerService/managedClusters/${aksResourceContext.clusterName}`;
+function getDeploymentPayload(deploymentReport: DeploymentReport): any {
   return {
-    "location": "westus",
+    // "location": "westus", // Should we set it? If yes, how?
     "properties": {
-      "targetResource": {
-        "id": targetResourceId,
-        "type": "Microsoft.ContainerService/managedClusters",
-        "dataProperties": {
-          "namespaces": [
-            InputParameters.namespace
-          ]
-        }
-      },
-      "deployer": {
-        "type": "Automated",
-        "properties": {
-          "provider": "GitHub",
-          "repository": process.env['GITHUB_REPOSITORY'],
-          "workflowId": "stub",
-          "workflowRunId": process.env['GITHUB_RUN_ID'],
-          "workflowRunproperties": {
-            "commitsDelta": [],
-            "issuesDelta": []
+      "resourcePayload": {
+        "targetResource": {
+          "name": deploymentReport.targetResource.properties['name'],
+          "id": deploymentReport.targetResource.id,
+          // "location": "westus", // We should avoid this as it would require an extra call?
+          "type": deploymentReport.targetResource.type,
+          "properties": {
+            "namespace": deploymentReport.targetResource.properties['namespace'],
+            "kubernetesObjects": deploymentReport.targetResource.properties['kubernetesObjects']
           }
-        }
-      },
-      "resourceChanges": {
-        "type": "Data",
-        "armDeploymentId": "",
-        "armPropertyChanges": "",
-        "dataPropertyChanges": {
-          "namespace": InputParameters.namespace,
-          "dockerFile": "",
-          "manifests": {
-            "deployment": deploymentName,
-            "service": "stubservice"
-          }
-        }
-      },
-      "status": "Succeeded",
-      "startedAt": "2020-11-17T04:06:52.858948",
-      "finishedAt": "2020-11-17T04:07:52.858948"
+        },
+        "workflowRun": deploymentReport.pipeline,
+        "artifacts": deploymentReport.artifacts
+      }
     }
   };
 }
 
 async function createDeploymentResource(aksResourceContext: AksResourceContext, deploymentPayload: any): Promise<any> {
-  const deploymentName = `${aksResourceContext.clusterName}-${InputParameters.namespace}-deployment-${process.env['GITHUB_SHA']}`;
   return new Promise<string>((resolve, reject) => {
     var webRequest = new WebRequest();
     webRequest.method = 'PUT';
-    webRequest.uri = `${aksResourceContext.managementUrl}subscriptions/${aksResourceContext.subscriptionId}/resourceGroups/${aksResourceContext.resourceGroup}/providers/Microsoft.DeploymentCenterV2/deploymentsv2/${deploymentName}?api-version=2020-06-01-preview`;
+    webRequest.uri = getResourceUri(aksResourceContext);
     console.log(`Deployment resource URI: ${webRequest.uri}`);
     webRequest.headers = {
       'Authorization': 'Bearer ' + aksResourceContext.sessionToken,
@@ -97,11 +71,11 @@ async function createDeploymentResource(aksResourceContext: AksResourceContext, 
   });
 }
 
-export async function addTraceability(deploymentName): Promise<void> {
+export async function addTraceability(): Promise<void> {
   const aksResourceContext = getAksResourceContext();
-  let deploymentPayload = getDeploymentPayload(aksResourceContext, deploymentName);
-  createDeploymentReport(aksResourceContext, deploymentName);
+  const deploymentReport = createDeploymentReport(aksResourceContext);
   try {
+    const deploymentPayload = getDeploymentPayload(deploymentReport);
     console.log(`Trying to create the deployment resource with payload: \n${JSON.stringify(deploymentPayload)}`);
     const deploymentResource = await createDeploymentResource(aksResourceContext, deploymentPayload);
     console.log(`Deployment resource created successfully. Deployment resource object: \n${JSON.stringify(deploymentResource)}`);
@@ -110,22 +84,38 @@ export async function addTraceability(deploymentName): Promise<void> {
   }
 }
 
-function createDeploymentReport(context: AksResourceContext, deploymentManifests: string) {
+function getResourceUri(aksResourceContext: AksResourceContext): string {
+  const deploymentName = `${aksResourceContext.clusterName}-${InputParameters.namespace}-deployment-${process.env['GITHUB_SHA']}`;
+  return `${aksResourceContext.managementUrl}subscriptions/${aksResourceContext.subscriptionId}/resourceGroups/${aksResourceContext.resourceGroup}/providers/Microsoft.Devops/deploymentv2/${deploymentName}?api-version=2020-10-01-preview`;
+}
+
+function createDeploymentReport(context: AksResourceContext): DeploymentReport {
   const resource: TargetResource = {
     id: `/subscriptions/${context.subscriptionId}/resourceGroups/${context.resourceGroup}/providers/Microsoft.ContainerService/managedClusters/${context.clusterName}`,
     provider: 'Azure',
     type: 'Microsoft.ContainerService/managedClusters',
     properties: {
-      manifests: deploymentManifests
+      namespace: InputParameters.namespace,
+      kuberentesObjects: []
     }
   };
 
   const artifact: Artifact = {
     type: 'container',
-    properties: {}
+    properties: {
+      "images": InputParameters.containers.map(image => {
+        return {
+          "image": image,
+          "dockerfile": ""
+        }
+      }),
+      "helmchart": [],
+      "manifests": InputParameters.manifests 
+    }
   };
 
   const deploymentReport: DeploymentReport = new DeploymentReport([ artifact ], 'succeeded', resource);
   const deploymentReportPath = deploymentReport.export();
   core.setOutput('deployment-report', deploymentReportPath);
+  return deploymentReport;
 }
