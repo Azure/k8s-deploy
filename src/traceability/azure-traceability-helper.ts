@@ -13,6 +13,11 @@ interface AksResourceContext {
   managementUrl: string;
 }
 
+interface IKubeObject {
+  kind: string;
+  name: string;
+}
+
 function getAksResourceContext(): AksResourceContext {
   const runnerTempDirectory = process.env['RUNNER_TEMP'];
   const aksResourceContextPath = path.join(runnerTempDirectory, `aks-resource-context.json`);
@@ -21,7 +26,7 @@ function getAksResourceContext(): AksResourceContext {
     const rawContent = fs.readFileSync(aksResourceContextPath, 'utf-8');
     return JSON.parse(rawContent);
   } catch (ex) {
-    throw new Error(`An error occured while reading/parsing the contents of the file: ${aksResourceContextPath}. Error: ${ex}`);
+    return null;
   }
 }
 
@@ -77,17 +82,22 @@ async function createDeploymentResource(aksResourceContext: AksResourceContext, 
   });
 }
 
-export async function addTraceability(): Promise<void> {
+export async function addTraceability(deployedManifestFiles: string[]): Promise<void> {
   const aksResourceContext = getAksResourceContext();
-  const deploymentReport = createDeploymentReport(aksResourceContext);
-  try {
+  if (aksResourceContext !== null) {
+    const deploymentReport = getDeploymentReport(aksResourceContext, deployedManifestFiles);
     const deploymentPayload = getDeploymentPayload(deploymentReport);
-    console.log(`Trying to create the deployment resource with payload: \n${JSON.stringify(deploymentPayload)}`);
-    const deploymentResource = await createDeploymentResource(aksResourceContext, deploymentPayload);
-    console.log(`Deployment resource created successfully. Deployment resource object: \n${JSON.stringify(deploymentResource)}`);
-  } catch (error) {
-    console.log(`Some error occured: ${error}`);
+    try {
+      console.log(`Trying to create the deployment resource with payload: \n${JSON.stringify(deploymentPayload)}`);
+      const deploymentResource = await createDeploymentResource(aksResourceContext, deploymentPayload);
+      console.log(`Deployment resource created successfully. Deployment resource object: \n${JSON.stringify(deploymentResource)}`);
+    } catch (error) {
+      console.log(`Some error occured: ${error}`);
+      return Promise.reject(error);
+    }
   }
+
+  return Promise.resolve();
 }
 
 function getResourceUri(aksResourceContext: AksResourceContext): string {
@@ -95,14 +105,30 @@ function getResourceUri(aksResourceContext: AksResourceContext): string {
   return `${aksResourceContext.managementUrl}subscriptions/${aksResourceContext.subscriptionId}/resourceGroups/${aksResourceContext.resourceGroup}/providers/Microsoft.Devops/deploymentv2/${deploymentName}?api-version=2020-10-01-preview`;
 }
 
-function createDeploymentReport(context: AksResourceContext): DeploymentReport {
+function getDeploymentReport(context: AksResourceContext, deployedManifestFiles: string[]) {
+  let kubernetesObjects: IKubeObject[] = [];
+  if (deployedManifestFiles && deployedManifestFiles.length > 0) {
+    deployedManifestFiles.forEach((manifest) => {
+      let manifestContent = JSON.parse(fs.readFileSync(manifest, { encoding: "utf-8" }));
+      if (manifestContent &&
+          manifestContent.kind &&
+          manifestContent.metadata &&
+          manifestContent.metadata.name) {
+        kubernetesObjects.push({
+          kind: manifestContent.kind,
+          name: manifestContent.metadata.name
+        });
+      }
+    });
+  }
+
   const resource: TargetResource = {
     id: `/subscriptions/${context.subscriptionId}/resourceGroups/${context.resourceGroup}/providers/Microsoft.ContainerService/managedClusters/${context.clusterName}`,
     provider: 'Azure',
     type: 'Microsoft.ContainerService/managedClusters',
     properties: {
       namespace: InputParameters.namespace,
-      kuberentesObjects: []
+      kubernetesObjects: kubernetesObjects
     }
   };
 
@@ -122,6 +148,7 @@ function createDeploymentReport(context: AksResourceContext): DeploymentReport {
 
   const deploymentReport: DeploymentReport = new DeploymentReport([ artifact ], 'succeeded', resource);
   const deploymentReportPath = deploymentReport.export();
+
   core.setOutput('deployment-report', deploymentReportPath);
   return deploymentReport;
 }
