@@ -150,12 +150,7 @@ export async function getDeploymentConfig(): Promise<DeploymentConfig> {
         let imageConfig: any, imageInspectResult: string;
 
         try {
-            await checkDockerPath();
-            var dockerExec: DockerExec = new DockerExec('docker');
-            dockerExec.pull(image, [], true);
-            imageInspectResult = dockerExec.inspect(image, [], true);
-            imageConfig = JSON.parse(imageInspectResult)[0];
-            imageDockerfilePathMap[image] = getDockerfilePath(imageConfig);
+            imageDockerfilePathMap[image] = await getDockerfilePath(image);
         }
         catch (ex) {
             core.warning(`Failed to get dockerfile path for image ${image.toString()} | ` + ex);
@@ -190,25 +185,32 @@ async function checkDockerPath() {
     }
 }
 
-function getDockerfilePath(imageConfig: any): string {
+async function getDockerfilePath(image: any): Promise<string> {
+    let imageConfig: any, imageInspectResult: string;
+    var dockerExec: DockerExec = new DockerExec('docker');
+    await checkDockerPath();
+    dockerExec.pull(image, [], true);
+    imageInspectResult = dockerExec.inspect(image, [], true);
+    imageConfig = JSON.parse(imageInspectResult)[0];
     const DOCKERFILE_PATH_LABEL_KEY = 'dockerfile-path';
     const ref: string = process.env.GITHUB_REF && process.env.GITHUB_REF.replace('refs/heads/', '').replace('refs/tags/', '');
-    let pathLink: string, pathValue: string = '';
+    let pathValue: string = '';
     if (imageConfig) {
         if ((imageConfig.Config) && (imageConfig.Config.Labels) && (imageConfig.Config.Labels[DOCKERFILE_PATH_LABEL_KEY])) {
             const pathLabel = imageConfig.Config.Labels[DOCKERFILE_PATH_LABEL_KEY];
-            if (pathLabel.startsWith('./')) {  //if it is relative filepath convert to link from current repo
-                pathLink = `https://github.com/${process.env.GITHUB_REPOSITORY}/blob/${ref}/${pathLabel}`;
+            if (!isHttpUrl(pathLabel)) {  //if it is not an http url then convert to link from current repo and ref
+                let pathLink: string = `https://github.com/${process.env.GITHUB_REPOSITORY}/blob/${ref}/${pathLabel}`;
                 pathValue = pathLink;
             }
             else {
                 pathValue = pathLabel;
             }
         }
-        else {
-            pathValue = '';
-        }
     }
     return pathValue;
 }
 
+export function isHttpUrl(url: string) {
+    const HTTP_REGEX = /^https?:\/\/.*$/;
+    return HTTP_REGEX.test(url);
+}
