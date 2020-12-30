@@ -1,5 +1,6 @@
 import * as path from 'path';
 import * as fs from 'fs';
+import * as yaml from 'js-yaml';
 import { DeploymentReport, TargetResource, Artifact } from '@azure/azure-actions-traceability';
 import { WebRequest, WebRequestOptions, WebResponse, sendRequest, StatusCodes } from "../utilities/httpClient";
 import * as InputParameters from "../input-parameters";
@@ -110,8 +111,8 @@ function getDeploymentReport(context: AksResourceContext, deployedManifestFiles:
   if (deployedManifestFiles && deployedManifestFiles.length > 0) {
     deployedManifestFiles.forEach((manifest) => {
       console.log(`Reading ${manifest}`);
-      console.log(fs.readFileSync(manifest, { encoding: "utf-8" }));
-      let manifestContent = JSON.parse(fs.readFileSync(manifest, { encoding: "utf-8" }));
+      console.log(yaml.safeLoad(fs.readFileSync(manifest, { encoding: "utf-8" })));
+      let manifestContent = yaml.safeLoad(fs.readFileSync(manifest, { encoding: "utf-8" }));
       if (manifestContent &&
           manifestContent.kind &&
           manifestContent.metadata &&
