@@ -196,7 +196,7 @@ function getDockerfilePath(imageConfig: any): string {
     if (imageConfig) {
         if ((imageConfig.Config) && (imageConfig.Config.Labels) && (imageConfig.Config.Labels[DOCKERFILE_PATH_LABEL_KEY])) {
             pathLabel = imageConfig.Config.Labels[DOCKERFILE_PATH_LABEL_KEY];
-            if (pathValue.startsWith('./')) {  //if it is relative filepath convert to link from current repo
+            if (pathLabel.startsWith('./')) {  //if it is relative filepath convert to link from current repo
                 pathLink = `https://github.com/${process.env.GITHUB_REPOSITORY}/blob/${ref}/${pathLabel}`;
                 pathValue = pathLink;
             }
