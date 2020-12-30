@@ -17,7 +17,7 @@ import { IExecSyncResult } from '../../utilities/tool-runner';
 
 import { deployPodCanary } from './pod-canary-deployment-helper';
 import { deploySMICanary } from './smi-canary-deployment-helper';
-import { checkForErrors, annotateChildPods, getWorkflowFilePath, getLastSuccessfulRunSha } from "../utility";
+import { checkForErrors, annotateChildPods, getWorkflowFilePath, getLastSuccessfulRunSha, DeploymentConfig, getDeploymentConfig } from "../utility";
 import { isBlueGreenDeploymentStrategy, isIngressRoute, isSMIRoute, routeBlueGreen } from './blue-green-helper';
 import { deployBlueGreenService } from './service-blue-green-helper';
 import { deployBlueGreenIngress } from './ingress-blue-green-helper';
@@ -45,7 +45,7 @@ export async function deploy(kubectl: Kubectl, manifestFilePaths: string[], depl
     ingressResources.forEach(ingressResource => {
         kubectl.getResource(KubernetesConstants.DiscoveryAndLoadBalancerResource.ingress, ingressResource.name);
     });
-    
+
     // annotate resources
     let allPods: any;
     try {
@@ -79,7 +79,7 @@ function deployManifests(files: string[], kubectl: Kubectl, isCanaryDeploymentSt
         result = canaryDeploymentOutput.result;
         files = canaryDeploymentOutput.newFilePaths;
     } else if (isBlueGreenDeploymentStrategy) {
-        let blueGreenDeploymentOutput: any; 
+        let blueGreenDeploymentOutput: any;
         if (isIngressRoute()) {
             blueGreenDeploymentOutput = deployBlueGreenIngress(kubectl, files);
         } else if (isSMIRoute()) {
@@ -130,15 +130,16 @@ async function checkManifestStability(kubectl: Kubectl, resources: Resource[]): 
 
 async function annotateAndLabelResources(files: string[], kubectl: Kubectl, resourceTypes: Resource[], allPods: any) {
     const workflowFilePath = await getWorkflowFilePath(TaskInputParameters.githubToken);
+    const deploymentConfig = await getDeploymentConfig();
     const annotationKeyLabel = models.getWorkflowAnnotationKeyLabel(workflowFilePath);
-    annotateResources(files, kubectl, resourceTypes, allPods, annotationKeyLabel, workflowFilePath);
+    annotateResources(files, kubectl, resourceTypes, allPods, annotationKeyLabel, workflowFilePath, deploymentConfig);
     labelResources(files, kubectl, annotationKeyLabel);
 }
 
-function annotateResources(files: string[], kubectl: Kubectl, resourceTypes: Resource[], allPods: any, annotationKey: string, workflowFilePath: string) {
+function annotateResources(files: string[], kubectl: Kubectl, resourceTypes: Resource[], allPods: any, annotationKey: string, workflowFilePath: string, deploymentConfig: DeploymentConfig) {
     const annotateResults: IExecSyncResult[] = [];
     const lastSuccessSha = getLastSuccessfulRunSha(kubectl, TaskInputParameters.namespace, annotationKey);
-    let annotationKeyValStr = annotationKey + '=' + models.getWorkflowAnnotationsJson(lastSuccessSha, workflowFilePath);
+    let annotationKeyValStr = annotationKey + '=' + models.getWorkflowAnnotationsJson(lastSuccessSha, workflowFilePath, deploymentConfig);
     annotateResults.push(kubectl.annotate('namespace', TaskInputParameters.namespace, annotationKeyValStr));
     annotateResults.push(kubectl.annotateFiles(files, annotationKeyValStr));
     resourceTypes.forEach(resource => {
