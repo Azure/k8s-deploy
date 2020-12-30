@@ -16,6 +16,7 @@ import { routeBlueGreenService, promoteBlueGreenService } from '../utilities/str
 import { routeBlueGreenIngress, promoteBlueGreenIngress } from '../utilities/strategy-helpers/ingress-blue-green-helper';
 import { routeBlueGreenSMI, promoteBlueGreenSMI, cleanupSMI } from '../utilities/strategy-helpers/smi-blue-green-helper';
 import { Kubectl, Resource } from '../kubectl-object-model';
+import * as AzureTraceabilityHelper from "../traceability/azure-traceability-helper";
 
 export async function promote() {
     const kubectl = new Kubectl(await utils.getKubectl(), TaskInputParameters.namespace, true);
@@ -74,6 +75,10 @@ async function promoteBlueGreen(kubectl: Kubectl) {
 
     // checking stability of newly created deployments 
     const deployedManifestFiles = result.newFilePaths;
+
+    // Adding traceability data
+    await AzureTraceabilityHelper.addTraceability(deployedManifestFiles);
+
     const resources: Resource[] = KubernetesObjectUtility.getResources(deployedManifestFiles, models.deploymentTypes.concat([models.DiscoveryAndLoadBalancerResource.service]));
     await KubernetesManifestUtility.checkManifestStability(kubectl, resources);
     

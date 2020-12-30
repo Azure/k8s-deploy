@@ -16,7 +16,7 @@ interface AksResourceContext {
 
 interface IKubeObject {
   kind: string;
-  name: string;
+  url: string;
 }
 
 function getAksResourceContext(): AksResourceContext {
@@ -110,8 +110,6 @@ function getDeploymentReport(context: AksResourceContext, deployedManifestFiles:
   let kubernetesObjects: IKubeObject[] = [];
   if (deployedManifestFiles && deployedManifestFiles.length > 0) {
     deployedManifestFiles.forEach((manifest) => {
-      console.log(`Reading ${manifest}`);
-      console.log(yaml.safeLoad(fs.readFileSync(manifest, { encoding: "utf-8" })));
       let manifestContent = yaml.safeLoad(fs.readFileSync(manifest, { encoding: "utf-8" }));
       if (manifestContent &&
           manifestContent.kind &&
@@ -119,7 +117,7 @@ function getDeploymentReport(context: AksResourceContext, deployedManifestFiles:
           manifestContent.metadata.name) {
         kubernetesObjects.push({
           kind: manifestContent.kind,
-          name: manifestContent.metadata.name
+          url: manifestContent.metadata.name
         });
       }
     });
