@@ -193,11 +193,11 @@ async function checkDockerPath() {
 function getDockerfilePath(imageConfig: any): string {
     const DOCKERFILE_PATH_LABEL_KEY = 'dockerfile-path';
     const ref: string = process.env.GITHUB_REF && process.env.GITHUB_REF.replace('refs/heads/', '').replace('refs/tags/', '');
-    let pathLabel: string, pathLink: string, pathValue: string = '';
+    let pathLink: string, pathValue: string = '';
     if (imageConfig) {
         if ((imageConfig.Config) && (imageConfig.Config.Labels) && (imageConfig.Config.Labels[DOCKERFILE_PATH_LABEL_KEY])) {
-            pathLabel = imageConfig.Config.Labels[DOCKERFILE_PATH_LABEL_KEY];
-            if (pathValue.startsWith('./')) {  //if it is relative filepath convert to link from current repo
+            const pathLabel = imageConfig.Config.Labels[DOCKERFILE_PATH_LABEL_KEY];
+            if (pathLabel.startsWith('./')) {  //if it is relative filepath convert to link from current repo
                 pathLink = `https://github.com/${process.env.GITHUB_REPOSITORY}/blob/${ref}/${pathLabel}`;
                 pathValue = pathLink;
             }
