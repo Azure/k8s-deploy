@@ -138,8 +138,29 @@ export function annotateChildPods(kubectl: Kubectl, resourceType: string, resour
 
 export async function getDeploymentConfig(): Promise<DeploymentConfig> {
 
-    const inputManifestFiles = inputParams.manifests || [];
-    const helmChartPaths = (process.env.HELM_CHART_PATHS && process.env.HELM_CHART_PATHS.split('\n').filter(path => path != "")) || [];
+    let helmChartPaths = (process.env.HELM_CHART_PATHS && process.env.HELM_CHART_PATHS.split('\n').filter(path => path != "")) || [];
+    helmChartPaths.map(helmchart => {
+        let pathValue = helmchart;
+        if (!isHttpUrl(helmchart)) {  //if it is not an http url then convert to link from current repo and commit
+            let pathLink: string = `https://github.com/${process.env.GITHUB_REPOSITORY}/blob/${process.env.GITHUB_SHA}/${helmchart}`;
+            pathValue = pathLink;
+        }
+        return pathValue;
+    });
+
+    let inputManifestFiles: string[] = [];
+    if (!helmChartPaths || helmChartPaths.length == 0) {
+        let inputManifestFiles = inputParams.manifests || [];
+        inputManifestFiles.map(manifestFile => {
+            let pathValue = manifestFile;
+            if (!isHttpUrl(manifestFile)) {  //if it is not an http url then convert to link from current repo and commit 
+                let pathLink: string = `https://github.com/${process.env.GITHUB_REPOSITORY}/blob/${process.env.GITHUB_SHA}/${manifestFile}`;
+                pathValue = pathLink;
+            }
+            return pathValue;
+        });
+    }
+
     const imageNames = inputParams.containers || [];
     let imageDockerfilePathMap: { [id: string]: string; } = {};
 
