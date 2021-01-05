@@ -5,6 +5,7 @@ import { DeploymentReport, TargetResource, Artifact } from '@azure/azure-actions
 import { WebRequest, WebRequestOptions, WebResponse, sendRequest, StatusCodes } from "../utilities/httpClient";
 import * as InputParameters from "../input-parameters";
 import * as core from '@actions/core';
+import { Kubectl } from '../kubectl-object-model';
 
 interface AksResourceContext {
   subscriptionId: string;
@@ -12,11 +13,6 @@ interface AksResourceContext {
   clusterName: string;
   sessionToken: string;
   managementUrl: string;
-}
-
-interface IKubeObject {
-  kind: string;
-  url: string;
 }
 
 function getAksResourceContext(): AksResourceContext {
@@ -33,12 +29,10 @@ function getAksResourceContext(): AksResourceContext {
 
 function getDeploymentPayload(deploymentReport: DeploymentReport): any {
   return {
-    // "location": "westus", // Should we set it? If yes, how?
     "properties": {
       "targetResource": {
         "name": deploymentReport.targetResource.properties['name'],
         "id": deploymentReport.targetResource.id,
-        // "location": "westus", // We should avoid this as it would require an extra call?
         "type": deploymentReport.targetResource.type,
         "properties": {
           "namespace": deploymentReport.targetResource.properties['namespace'],
@@ -83,17 +77,17 @@ async function createDeploymentResource(aksResourceContext: AksResourceContext, 
   });
 }
 
-export async function addTraceability(deployedManifestFiles: string[]): Promise<void> {
+export async function addTraceability(kubectl: Kubectl): Promise<void> {
   const aksResourceContext = getAksResourceContext();
   if (aksResourceContext !== null) {
-    const deploymentReport = getDeploymentReport(aksResourceContext, deployedManifestFiles);
+    const deploymentReport = getDeploymentReport(aksResourceContext, kubectl);
     const deploymentPayload = getDeploymentPayload(deploymentReport);
     try {
       console.log(`Trying to create the deployment resource with payload: \n${JSON.stringify(deploymentPayload)}`);
       const deploymentResource = await createDeploymentResource(aksResourceContext, deploymentPayload);
       console.log(`Deployment resource created successfully. Deployment resource object: \n${JSON.stringify(deploymentResource)}`);
     } catch (error) {
-      console.log(`Some error occured: ${error}`);
+      console.log(`Some error occured while creating the deployment resource for traceability: ${error}`);
       return Promise.reject(error);
     }
   }
@@ -106,30 +100,14 @@ function getResourceUri(aksResourceContext: AksResourceContext): string {
   return `${aksResourceContext.managementUrl}subscriptions/${aksResourceContext.subscriptionId}/resourceGroups/${aksResourceContext.resourceGroup}/providers/Microsoft.Devops/deploymentv2/${deploymentName}?api-version=2020-10-01-preview`;
 }
 
-function getDeploymentReport(context: AksResourceContext, deployedManifestFiles: string[]) {
-  let kubernetesObjects: IKubeObject[] = [];
-  if (deployedManifestFiles && deployedManifestFiles.length > 0) {
-    deployedManifestFiles.forEach((manifest) => {
-      let manifestContent = yaml.safeLoad(fs.readFileSync(manifest, { encoding: "utf-8" }));
-      if (manifestContent &&
-          manifestContent.kind &&
-          manifestContent.metadata &&
-          manifestContent.metadata.name) {
-        kubernetesObjects.push({
-          kind: manifestContent.kind,
-          url: manifestContent.metadata.name
-        });
-      }
-    });
-  }
-
+function getDeploymentReport(context: AksResourceContext, kubectl: Kubectl) {
   const resource: TargetResource = {
     id: `/subscriptions/${context.subscriptionId}/resourceGroups/${context.resourceGroup}/providers/Microsoft.ContainerService/managedClusters/${context.clusterName}`,
     provider: 'Azure',
     type: 'Microsoft.ContainerService/managedClusters',
     properties: {
       namespace: InputParameters.namespace,
-      kubernetesObjects: kubernetesObjects
+      kubernetesObjects: kubectl.getDeployedObjects()
     }
   };
 

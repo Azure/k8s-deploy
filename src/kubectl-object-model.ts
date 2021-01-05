@@ -1,14 +1,22 @@
 import { ToolRunner, IExecOptions, IExecSyncResult } from "./utilities/tool-runner";
+import { getManifestFileContents } from "./utilities/files-helper";
 
 export interface Resource {
     name: string;
     type: string;
 }
 
+export interface IKubeObject {
+  kind: string;
+  name: string;
+  apiVersion: string;
+}
+
 export class Kubectl {
     private kubectlPath: string;
     private namespace: string;
     private ignoreSSLErrors: boolean;
+    private deployedObjects: IKubeObject[];
 
     constructor(kubectlPath: string, namespace?: string, ignoreSSLErrors?: boolean) {
         this.kubectlPath = kubectlPath;
@@ -18,10 +26,13 @@ export class Kubectl {
         } else {
             this.namespace = 'default';
         }
+        this.deployedObjects = [];
     }
 
     public apply(configurationPaths: string | string[], force?: boolean): IExecSyncResult {
         let applyArgs: string[] = ['apply', '-f', this.createInlineArray(configurationPaths)];
+
+        this.populateDeployedObjects(configurationPaths);
 
         if (!!force) {
             console.log("force flag is on, deployment will continue even if previous deployment already exists");
@@ -122,6 +133,10 @@ export class Kubectl {
             return this.execute(['delete'].concat(args));
     }
 
+    public getDeployedObjects() {
+        return this.deployedObjects;
+    }
+
     private execute(args: string[], silent?: boolean) {
         if (this.ignoreSSLErrors) {
             args.push('--insecure-skip-tls-verify');
@@ -136,5 +151,32 @@ export class Kubectl {
     private createInlineArray(str: string | string[]): string {
         if (typeof str === 'string') { return str; }
         return str.join(',');
+    }
+
+    private populateDeployedObjects(configurationPaths: string | string[]) {
+        let paths: string[] = [];
+        if (typeof configurationPaths === 'string') {
+            paths.push(configurationPaths)
+        }
+        else {
+            paths = [...configurationPaths];
+        }
+
+        if (paths.length > 0) {
+            paths.forEach((path) => {
+                let manifestContent = getManifestFileContents(path);
+                if (manifestContent &&
+                    manifestContent.apiVersion &&
+                    manifestContent.kind &&
+                    manifestContent.metadata &&
+                    manifestContent.metadata.name) {
+                        this.deployedObjects.push({
+                            apiVersion: manifestContent.apiVersion,
+                            kind: manifestContent.kind,
+                            name: manifestContent.metadata.name
+                        });
+                    }
+            });
+        }
     }
 }

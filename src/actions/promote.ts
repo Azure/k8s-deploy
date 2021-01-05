@@ -29,6 +29,9 @@ export async function promote() {
         core.debug('Strategy is not canary or blue-green deployment. Invalid request.');
         throw ('InvalidPromotetActionDeploymentStrategy');
     }
+
+    // Adding traceability data
+    await AzureTraceabilityHelper.addTraceability(kubectl);
 }
 
 async function promoteCanary(kubectl: Kubectl) {
@@ -75,10 +78,6 @@ async function promoteBlueGreen(kubectl: Kubectl) {
 
     // checking stability of newly created deployments 
     const deployedManifestFiles = result.newFilePaths;
-
-    // Adding traceability data
-    await AzureTraceabilityHelper.addTraceability(deployedManifestFiles);
-
     const resources: Resource[] = KubernetesObjectUtility.getResources(deployedManifestFiles, models.deploymentTypes.concat([models.DiscoveryAndLoadBalancerResource.service]));
     await KubernetesManifestUtility.checkManifestStability(kubectl, resources);
     
