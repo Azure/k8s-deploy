@@ -145,8 +145,6 @@ export async function getDeploymentConfig(): Promise<DeploymentConfig> {
 
     //Fetching from image label if available
     for (const image of imageNames) {
-        let imageConfig: any, imageInspectResult: string;
-
         try {
             imageDockerfilePathMap[image] = await getDockerfilePath(image);
         }
@@ -192,13 +190,12 @@ async function getDockerfilePath(image: any): Promise<string> {
     imageInspectResult = dockerExec.inspect(image, [], true);
     imageConfig = JSON.parse(imageInspectResult)[0];
     const DOCKERFILE_PATH_LABEL_KEY = 'dockerfile-path';
-    const ref: string = process.env.GITHUB_REF && process.env.GITHUB_REF.replace('refs/heads/', '').replace('refs/tags/', '');
     let pathValue: string = '';
     if (imageConfig) {
         if ((imageConfig.Config) && (imageConfig.Config.Labels) && (imageConfig.Config.Labels[DOCKERFILE_PATH_LABEL_KEY])) {
             const pathLabel = imageConfig.Config.Labels[DOCKERFILE_PATH_LABEL_KEY];
             if (!isHttpUrl(pathLabel)) {  //if it is relative filepath convert to link from current repo
-                let pathLink: string = `https://github.com/${process.env.GITHUB_REPOSITORY}/blob/${ref}/${pathLabel}`;
+                let pathLink: string = `https://github.com/${process.env.GITHUB_REPOSITORY}/blob/${process.env.GITHUB_SHA}/${pathLabel}`;
                 pathValue = pathLink;
             }
             else {
