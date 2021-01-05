@@ -23,6 +23,7 @@ function getAksResourceContext(): AksResourceContext {
     const rawContent = fs.readFileSync(aksResourceContextPath, 'utf-8');
     return JSON.parse(rawContent);
   } catch (ex) {
+    core.debug(`An error occured while reading/parsing the contents of the file: ${aksResourceContextPath}. Error: ${ex}`);
     return null;
   }
 }
@@ -31,7 +32,6 @@ function getDeploymentPayload(deploymentReport: DeploymentReport): any {
   return {
     "properties": {
       "targetResource": {
-        "name": deploymentReport.targetResource.properties['name'],
         "id": deploymentReport.targetResource.id,
         "type": deploymentReport.targetResource.type,
         "properties": {
@@ -87,8 +87,7 @@ export async function addTraceability(kubectl: Kubectl): Promise<void> {
       const deploymentResource = await createDeploymentResource(aksResourceContext, deploymentPayload);
       console.log(`Deployment resource created successfully. Deployment resource object: \n${JSON.stringify(deploymentResource)}`);
     } catch (error) {
-      console.log(`Some error occured while creating the deployment resource for traceability: ${error}`);
-      return Promise.reject(error);
+      core.warning(`Some error occured while creating the deployment resource for traceability: ${error}`);
     }
   }
 
