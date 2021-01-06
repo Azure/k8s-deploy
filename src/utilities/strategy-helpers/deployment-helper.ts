@@ -31,7 +31,6 @@ export async function deploy(kubectl: Kubectl, manifestFilePaths: string[], depl
 
     // deployment
     const deployedManifestFiles = deployManifests(inputManifestFiles, kubectl, isCanaryDeploymentStrategy(deploymentStrategy), isBlueGreenDeploymentStrategy());
-    await AzureTraceabilityHelper.addTraceability();
 
     // check manifest stability
     const resourceTypes: Resource[] = KubernetesObjectUtility.getResources(deployedManifestFiles, models.deploymentTypes.concat([KubernetesConstants.DiscoveryAndLoadBalancerResource.service]));
@@ -57,6 +56,8 @@ export async function deploy(kubectl: Kubectl, manifestFilePaths: string[], depl
     }
 
     annotateAndLabelResources(deployedManifestFiles, kubectl, resourceTypes, allPods);
+
+    await AzureTraceabilityHelper.addTraceability(kubectl);
 }
 
 export function getManifestFiles(manifestFilePaths: string[]): string[] {

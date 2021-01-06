@@ -1,9 +1,11 @@
 import * as path from 'path';
 import * as fs from 'fs';
+import * as yaml from 'js-yaml';
 import { DeploymentReport, TargetResource, Artifact } from '@azure/azure-actions-traceability';
 import { WebRequest, WebRequestOptions, WebResponse, sendRequest, StatusCodes } from "../utilities/httpClient";
 import * as InputParameters from "../input-parameters";
 import * as core from '@actions/core';
+import { Kubectl } from '../kubectl-object-model';
 
 interface AksResourceContext {
   subscriptionId: string;
@@ -21,18 +23,16 @@ function getAksResourceContext(): AksResourceContext {
     const rawContent = fs.readFileSync(aksResourceContextPath, 'utf-8');
     return JSON.parse(rawContent);
   } catch (ex) {
-    throw new Error(`An error occured while reading/parsing the contents of the file: ${aksResourceContextPath}. Error: ${ex}`);
+    core.debug(`An error occured while reading/parsing the contents of the file: ${aksResourceContextPath}. Error: ${ex}`);
+    return null;
   }
 }
 
 function getDeploymentPayload(deploymentReport: DeploymentReport): any {
   return {
-    // "location": "westus", // Should we set it? If yes, how?
     "properties": {
       "targetResource": {
-        "name": deploymentReport.targetResource.properties['name'],
         "id": deploymentReport.targetResource.id,
-        // "location": "westus", // We should avoid this as it would require an extra call?
         "type": deploymentReport.targetResource.type,
         "properties": {
           "namespace": deploymentReport.targetResource.properties['namespace'],
@@ -77,17 +77,21 @@ async function createDeploymentResource(aksResourceContext: AksResourceContext, 
   });
 }
 
-export async function addTraceability(): Promise<void> {
+export async function addTraceability(kubectl: Kubectl): Promise<void> {
   const aksResourceContext = getAksResourceContext();
-  const deploymentReport = createDeploymentReport(aksResourceContext);
-  try {
+  if (aksResourceContext !== null) {
+    const deploymentReport = getDeploymentReport(aksResourceContext, kubectl);
     const deploymentPayload = getDeploymentPayload(deploymentReport);
-    console.log(`Trying to create the deployment resource with payload: \n${JSON.stringify(deploymentPayload)}`);
-    const deploymentResource = await createDeploymentResource(aksResourceContext, deploymentPayload);
-    console.log(`Deployment resource created successfully. Deployment resource object: \n${JSON.stringify(deploymentResource)}`);
-  } catch (error) {
-    console.log(`Some error occured: ${error}`);
+    try {
+      console.log(`Trying to create the deployment resource with payload: \n${JSON.stringify(deploymentPayload)}`);
+      const deploymentResource = await createDeploymentResource(aksResourceContext, deploymentPayload);
+      console.log(`Deployment resource created successfully. Deployment resource object: \n${JSON.stringify(deploymentResource)}`);
+    } catch (error) {
+      core.warning(`Some error occured while creating the deployment resource for traceability: ${error}`);
+    }
   }
+
+  return Promise.resolve();
 }
 
 function getResourceUri(aksResourceContext: AksResourceContext): string {
@@ -95,14 +99,14 @@ function getResourceUri(aksResourceContext: AksResourceContext): string {
   return `${aksResourceContext.managementUrl}subscriptions/${aksResourceContext.subscriptionId}/resourceGroups/${aksResourceContext.resourceGroup}/providers/Microsoft.Devops/deploymentv2/${deploymentName}?api-version=2020-10-01-preview`;
 }
 
-function createDeploymentReport(context: AksResourceContext): DeploymentReport {
+function getDeploymentReport(context: AksResourceContext, kubectl: Kubectl) {
   const resource: TargetResource = {
     id: `/subscriptions/${context.subscriptionId}/resourceGroups/${context.resourceGroup}/providers/Microsoft.ContainerService/managedClusters/${context.clusterName}`,
     provider: 'Azure',
     type: 'Microsoft.ContainerService/managedClusters',
     properties: {
       namespace: InputParameters.namespace,
-      kuberentesObjects: []
+      kubernetesObjects: kubectl.getDeployedObjects()
     }
   };
 
@@ -122,6 +126,7 @@ function createDeploymentReport(context: AksResourceContext): DeploymentReport {
 
   const deploymentReport: DeploymentReport = new DeploymentReport([ artifact ], 'succeeded', resource);
   const deploymentReportPath = deploymentReport.export();
+
   core.setOutput('deployment-report', deploymentReportPath);
   return deploymentReport;
 }

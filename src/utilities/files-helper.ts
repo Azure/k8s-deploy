@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as core from '@actions/core';
 import * as os from 'os';
+import * as yaml from 'js-yaml';
 
 export function getTempDirectory(): string {
     return process.env['runner.tempDirectory'] || os.tmpdir();
@@ -66,6 +67,18 @@ export function writeManifestToFile(inputObjectString: string, kind: string, nam
         }
     }
     return '';
+}
+
+export function getManifestFileContents(filePath: string) {
+    if (filePath &&
+        filePath.length > 0) {
+        try {
+            return yaml.safeLoad(fs.readFileSync(filePath, { encoding: "utf-8" }));
+        } catch (ex) {
+            core.debug(`Exception occurred while reading manifest file: '${filePath}'. Exception: '${ex}'`);
+        }
+    }
+    return null;
 }
 
 function getManifestFileName(kind: string, name: string) {

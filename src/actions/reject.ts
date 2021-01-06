@@ -10,6 +10,7 @@ import { rejectBlueGreenIngress } from '../utilities/strategy-helpers/ingress-bl
 import { rejectBlueGreenSMI } from '../utilities/strategy-helpers/smi-blue-green-helper'
 import { isSMIRoute, isIngressRoute, isBlueGreenDeploymentStrategy } from '../utilities/strategy-helpers/blue-green-helper'
 import { getManifestFiles } from '../utilities/strategy-helpers/deployment-helper'
+import * as AzureTraceabilityHelper from "../traceability/azure-traceability-helper";
 
 export async function reject() {
     const kubectl = new Kubectl(await utils.getKubectl(), TaskInputParameters.namespace, true);
@@ -22,6 +23,9 @@ export async function reject() {
         core.debug('Strategy is not canary or blue-green deployment. Invalid request.');
         throw ('InvalidDeletetActionDeploymentStrategy');
     }
+
+    // Adding traceability data
+    await AzureTraceabilityHelper.addTraceability(kubectl);
 }
 
 async function rejectCanary(kubectl: Kubectl) {

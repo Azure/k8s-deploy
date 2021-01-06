@@ -1,14 +1,22 @@
 import { ToolRunner, IExecOptions, IExecSyncResult } from "./utilities/tool-runner";
+import { getManifestObjects } from "./utilities/manifest-utilities";
 
 export interface Resource {
     name: string;
     type: string;
 }
 
+export interface IKubeObject {
+  kind: string;
+  name: string;
+  version: string;
+}
+
 export class Kubectl {
     private kubectlPath: string;
     private namespace: string;
     private ignoreSSLErrors: boolean;
+    private deployedManifestsPaths: string[];
 
     constructor(kubectlPath: string, namespace?: string, ignoreSSLErrors?: boolean) {
         this.kubectlPath = kubectlPath;
@@ -18,10 +26,13 @@ export class Kubectl {
         } else {
             this.namespace = 'default';
         }
+        this.deployedManifestsPaths = [];
     }
 
     public apply(configurationPaths: string | string[], force?: boolean): IExecSyncResult {
         let applyArgs: string[] = ['apply', '-f', this.createInlineArray(configurationPaths)];
+
+        this.storeDeployedManifestsPaths(configurationPaths);
 
         if (!!force) {
             console.log("force flag is on, deployment will continue even if previous deployment already exists");
@@ -122,6 +133,38 @@ export class Kubectl {
             return this.execute(['delete'].concat(args));
     }
 
+    public getDeployedObjects() {
+        let manifests = getManifestObjects(this.deployedManifestsPaths);
+        let deployedObjects: IKubeObject[] = [];
+        let isKubeObjectPresent: any = {};
+        if (manifests &&
+            manifests.length > 0) {
+                manifests.forEach((manifestContent) => {
+                    if (manifestContent &&
+                        manifestContent.apiVersion &&
+                        manifestContent.kind &&
+                        manifestContent.metadata &&
+                        manifestContent.metadata.name) {
+                            let kind = manifestContent.kind;
+                            let name = manifestContent.metadata.name;
+                            if (!isKubeObjectPresent[kind]) {
+                                isKubeObjectPresent[kind] = {};
+                            }
+
+                            if (!isKubeObjectPresent[kind][name]) {
+                                deployedObjects.push({
+                                    version: manifestContent.apiVersion,
+                                    kind: kind,
+                                    name: name
+                                });
+                                isKubeObjectPresent[kind][name] = true;
+                            }
+                        }
+                });
+            }
+        return deployedObjects;
+    }
+
     private execute(args: string[], silent?: boolean) {
         if (this.ignoreSSLErrors) {
             args.push('--insecure-skip-tls-verify');
@@ -136,5 +179,14 @@ export class Kubectl {
     private createInlineArray(str: string | string[]): string {
         if (typeof str === 'string') { return str; }
         return str.join(',');
+    }
+
+    private storeDeployedManifestsPaths(configurationPaths: string | string[]) {
+        if (typeof configurationPaths === 'string') {
+            this.deployedManifestsPaths.push(configurationPaths)
+        }
+        else {
+            this.deployedManifestsPaths = [...configurationPaths];
+        }
     }
 }
