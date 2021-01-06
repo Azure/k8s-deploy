@@ -316,7 +316,7 @@ jobs:
 ```
 ## Sample workflows for new traceability fields support 
 
- - Environment variable `HELM_CHART_PATHS` is a list of helmchart files used in k8s-bake and k8s-deploy
+ - Environment variable `HELM_CHART_PATHS` is a list of helmchart files expected by k8s-deploy - it can be populated from k8s-bake
  - Use script to build image and add `dockerfile-path` label to it. 
    The value expected is the link to the dockerfile : `https://github.com/${{github.repo}}/blob/${GITHUB_SHA}/Dockerfile`
    If your dockerfile is in the same repo and branch where the workflow is run, it can be a relative path and it will be converted to a link for traceability.
@@ -400,8 +400,6 @@ jobs:
 on: [push]
 env:
   NAMESPACE: demo-ns2
-  HELM_CHART_PATHS: |
-    ./helmCharts/file1
 
 jobs:
   deploy:
@@ -433,7 +431,7 @@ jobs:
     - uses: azure/k8s-bake@v1
       with:
         renderEngine: 'helm'
-        helmChart: ${{ env.HELM_CHART_PATHS }}
+        helmChart: './aks-helloworld/'
         overrideFiles: './aks-helloworld/values-override.yaml'
         overrides: |     
           replicas:2
@@ -447,6 +445,9 @@ jobs:
           contoso.azurecr.io/k8sdemo:${{ github.sha }}
         imagepullsecrets: |
           demo-k8s-secret
+      env:
+        HELM_CHART_PATHS: |
+          ./aks-helloworld/file1
 ```
 
 # Contributing
