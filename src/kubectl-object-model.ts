@@ -136,6 +136,7 @@ export class Kubectl {
     public getDeployedObjects() {
         let manifests = getManifestObjects(this.deployedManifestsPaths);
         let deployedObjects: IKubeObject[] = [];
+        let isKubeObjectPresent: any = {};
         if (manifests &&
             manifests.length > 0) {
                 manifests.forEach((manifestContent) => {
@@ -144,11 +145,20 @@ export class Kubectl {
                         manifestContent.kind &&
                         manifestContent.metadata &&
                         manifestContent.metadata.name) {
-                            deployedObjects.push({
-                                version: manifestContent.apiVersion,
-                                kind: manifestContent.kind,
-                                name: manifestContent.metadata.name
-                            });
+                            let kind = manifestContent.kind;
+                            let name = manifestContent.metadata.name;
+                            if (!isKubeObjectPresent[kind]) {
+                                isKubeObjectPresent[kind] = {};
+                            }
+
+                            if (!isKubeObjectPresent[kind][name]) {
+                                deployedObjects.push({
+                                    version: manifestContent.apiVersion,
+                                    kind: kind,
+                                    name: name
+                                });
+                                isKubeObjectPresent[kind][name] = true;
+                            }
                         }
                 });
             }
