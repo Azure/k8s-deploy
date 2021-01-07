@@ -140,8 +140,14 @@ export function annotateChildPods(kubectl: Kubectl, resourceType: string, resour
 
 export async function getDeploymentConfig(): Promise<DeploymentConfig> {
 
-    const inputManifestFiles = inputParams.manifests || [];
-    const helmChartPaths = (process.env.HELM_CHART_PATHS && process.env.HELM_CHART_PATHS.split('\n').filter(path => path != "")) || [];
+    let helmChartPaths: string[] = (process.env.HELM_CHART_PATHS && process.env.HELM_CHART_PATHS.split(';').filter(path => path != "")) || [];
+    helmChartPaths = helmChartPaths.map(helmchart => getNormalizedPath(helmchart.trim()));
+
+    let inputManifestFiles: string[] = inputParams.manifests || [];
+    if (!helmChartPaths || helmChartPaths.length == 0) {
+        inputManifestFiles = inputManifestFiles.map(manifestFile => getNormalizedPath(manifestFile));
+    }
+
     const imageNames = inputParams.containers || [];
     let imageDockerfilePathMap: { [id: string]: string; } = {};
 
@@ -160,7 +166,6 @@ export async function getDeploymentConfig(): Promise<DeploymentConfig> {
         helmChartFilePaths: helmChartPaths,
         dockerfilePaths: imageDockerfilePathMap
     };
-
     return Promise.resolve(deploymentConfig);
 }
 
@@ -191,18 +196,11 @@ async function getDockerfilePath(image: any): Promise<string> {
     imageInspectResult = dockerExec.inspect(image, [], true);
     imageConfig = JSON.parse(imageInspectResult)[0];
     const DOCKERFILE_PATH_LABEL_KEY = 'dockerfile-path';
-    const ref: string = process.env.GITHUB_REF && process.env.GITHUB_REF.replace('refs/heads/', '').replace('refs/tags/', '');
     let pathValue: string = '';
     if (imageConfig) {
         if ((imageConfig.Config) && (imageConfig.Config.Labels) && (imageConfig.Config.Labels[DOCKERFILE_PATH_LABEL_KEY])) {
             const pathLabel = imageConfig.Config.Labels[DOCKERFILE_PATH_LABEL_KEY];
-            if (!isHttpUrl(pathLabel)) {  //if it is not an http url then convert to link from current repo and ref
-                let pathLink: string = `https://github.com/${process.env.GITHUB_REPOSITORY}/blob/${ref}/${pathLabel}`;
-                pathValue = pathLink;
-            }
-            else {
-                pathValue = pathLabel;
-            }
+            pathValue = getNormalizedPath(pathLabel);
         }
     }
     return Promise.resolve(pathValue);
@@ -212,3 +210,10 @@ export function isHttpUrl(url: string) {
     const HTTP_REGEX = /^https?:\/\/.*$/;
     return HTTP_REGEX.test(url);
 }
+
+export function getNormalizedPath(pathValue: string) {
+    if (!isHttpUrl(pathValue)) {  //if it is not an http url then convert to link from current repo and commit 
+        return `https://github.com/${process.env.GITHUB_REPOSITORY}/blob/${process.env.GITHUB_SHA}/${pathValue}`;
+    }
+    return pathValue;
+} 
