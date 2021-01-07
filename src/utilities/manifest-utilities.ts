@@ -69,67 +69,6 @@ export function getDeleteCmdArgs(argsPrefix: string, inputArgs: string): string 
         return Value: `image: "example/example-image:identifiertag"`
 */
 
-export function substituteImageNameInSpecFile(inputObject: any, containers: string[]) {
-    if (!inputObject || !inputObject.spec || !containers) {
-        return;
-    }
-
-    if (inputObject.spec.template && !!inputObject.spec.template.spec) {
-        if (inputObject.spec.template.spec.containers) {
-            updateContainers(inputObject.spec.template.spec.containers, containers);
-        }
-        if (inputObject.spec.template.spec.initContainers) {
-            updateContainers(inputObject.spec.template.spec.initContainers, containers);
-        }
-        return;
-    }
-
-    if (inputObject.spec.jobTemplate && inputObject.spec.jobTemplate.spec && inputObject.spec.jobTemplate.spec.template && inputObject.spec.jobTemplate.spec.template.spec) {
-        if (inputObject.spec.jobTemplate.spec.template.spec.containers) {
-            updateContainers(inputObject.spec.jobTemplate.spec.template.spec.containers, containers);
-        }
-
-        if (inputObject.spec.jobTemplate.spec.template.spec.initContainers) {
-            updateContainers(inputObject.spec.jobTemplate.spec.template.spec.initContainers, containers);
-        }
-        return;
-    }
-
-    if (inputObject.spec.containers) {
-        updateContainers(inputObject.spec.containers, containers);
-    }
-
-    if (inputObject.spec.initContainers) {
-        updateContainers(inputObject.spec.initContainers, containers);
-    }
-}
-
-function updateContainers(inputContainers: any[], images: string[]) {
-    if (!inputContainers || inputContainers.length === 0) {
-        return inputContainers;
-    }
-    inputContainers.forEach((inputContainer) => {
-        const imageName: string = extractImageName(inputContainer.image.trim());
-        images.forEach(image => {
-            if (extractImageName(image) === imageName) {
-                inputContainer.image = image;
-            }
-        });
-    });
-}
-
-function extractImageName(imageName) {
-    let img = '';
-    if (imageName.indexOf('/') > 0) {
-        const registry = imageName.substring(0, imageName.indexOf('/'));
-        const imgName = imageName.substring(imageName.indexOf('/') + 1).split(':')[0];
-        img = `${registry}/${imgName}`;
-    } else {
-        img = imageName.split(':')[0];
-    }
-    return img;
-}
-
 function createInlineArray(str: string | string[]): string {
     if (typeof str === 'string') { return str; }
     return str.join(',');
@@ -231,36 +170,6 @@ function substituteImageNameInSpecContent(currentString: string, imageName: stri
     }, '');
 }
 
-function updateContainerImagesInManifestFiles(filePaths: string[], containers: string[]): string[] {
-    if (!!containers && containers.length > 0) {
-        const newObjectsList = [];
-        const tempDirectory = fileHelper.getTempDirectory();
-        filePaths.forEach((filePath: string) => {
-            const fileContents = fs.readFileSync(filePath).toString();
-            yaml.safeLoadAll(fileContents, function (inputObject: any) {
-                if (!!inputObject && !!inputObject.kind) {
-                    const kind = inputObject.kind;
-                    if (KubernetesObjectUtility.isWorkloadEntity(kind)) {
-                        substituteImageNameInSpecFile(inputObject, containers);
-                    }
-                    else if (isEqual(kind, 'list', true)) {
-                        let items = inputObject.items;
-                        if (items.length > 0) {
-                            items.forEach((item) => substituteImageNameInSpecFile(item, containers));
-                        }
-                    }
-                    newObjectsList.push(inputObject);
-                }
-            });
-        });
-        core.debug('New K8s objects after updating container images are :' + JSON.stringify(newObjectsList));
-        const newFilePaths = fileHelper.writeObjectsToFile(newObjectsList);
-        return newFilePaths;
-    }
-
-    return filePaths;
-}
-
 export function updateImagePullSecrets(inputObject: any, newImagePullSecrets: string[]) {
     if (!inputObject || !inputObject.spec || !newImagePullSecrets) {
         return;
@@ -281,22 +190,40 @@ export function updateImagePullSecrets(inputObject: any, newImagePullSecrets: st
     setImagePullSecrets(inputObject, existingImagePullSecretObjects);
 }
 
-function updateImagePullSecretsInManifestFiles(filePaths: string[], imagePullSecrets: string[]): string[] {
-    if (!!imagePullSecrets && imagePullSecrets.length > 0) {
-        const newObjectsList = [];
+function updateResourceObjects(filePaths: string[], imagePullSecrets: string[], containers: string[]): string[] {
+    if ((!!imagePullSecrets && imagePullSecrets.length > 0) || (!!containers && containers.length > 0)) {
+        let newObjectsList = [];
         filePaths.forEach((filePath: string) => {
             const fileContents = fs.readFileSync(filePath).toString();
             yaml.safeLoadAll(fileContents, function (inputObject: any) {
                 if (!!inputObject && !!inputObject.kind) {
                     const kind = inputObject.kind;
                     if (KubernetesObjectUtility.isWorkloadEntity(kind)) {
-                        KubernetesObjectUtility.updateImagePullSecrets(inputObject, imagePullSecrets, false);
+                        if (!!imagePullSecrets && imagePullSecrets.length > 0) {
+                            KubernetesObjectUtility.updateImagePullSecrets(inputObject, imagePullSecrets, false);
+                        }
+                        if (!!containers && containers.length > 0) {
+                            KubernetesObjectUtility.substituteImageNameInSpecFile(inputObject, containers);
+                        }
+                    }
+                    else if (isEqual(kind, 'list', true)) {
+                        let items = inputObject.items;
+                        if (items.length > 0) {
+                            items.forEach((item) => {
+                                if (!!imagePullSecrets && imagePullSecrets.length > 0) {
+                                    KubernetesObjectUtility.updateImagePullSecrets(item, imagePullSecrets, false);
+                                }
+                                if (!!containers && containers.length > 0) {
+                                    KubernetesObjectUtility.substituteImageNameInSpecFile(item, containers);
+                                }
+                            });
+                        }
                     }
                     newObjectsList.push(inputObject);
                 }
             });
         });
-        core.debug('New K8s objects after adding imagePullSecrets are :' + JSON.stringify(newObjectsList));
+        core.debug('New K8s objects after adding imagePullSecrets and updating container images are :' + JSON.stringify(newObjectsList));
         const newFilePaths = fileHelper.writeObjectsToFile(newObjectsList);
         return newFilePaths;
     }
@@ -310,11 +237,7 @@ export function getUpdatedManifestFiles(manifestFilePaths: string[]) {
         throw new Error(`ManifestFileNotFound : ${manifestFilePaths}`);
     }
 
-    // artifact substitution
-    inputManifestFiles = updateContainerImagesInManifestFiles(inputManifestFiles, TaskInputParameters.containers);
-
-    // imagePullSecrets addition
-    inputManifestFiles = updateImagePullSecretsInManifestFiles(inputManifestFiles, TaskInputParameters.imagePullSecrets);
+    inputManifestFiles = updateResourceObjects(inputManifestFiles, TaskInputParameters.imagePullSecrets, TaskInputParameters.containers);
 
     return inputManifestFiles;
 }
