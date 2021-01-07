@@ -6,6 +6,7 @@ import { WebRequest, WebRequestOptions, WebResponse, sendRequest, StatusCodes } 
 import * as InputParameters from "../input-parameters";
 import * as core from '@actions/core';
 import { Kubectl } from '../kubectl-object-model';
+import { getDeploymentConfig } from '../utilities/utility';
 
 interface AksResourceContext {
   subscriptionId: string;
@@ -80,7 +81,7 @@ async function createDeploymentResource(aksResourceContext: AksResourceContext, 
 export async function addTraceability(kubectl: Kubectl): Promise<void> {
   const aksResourceContext = getAksResourceContext();
   if (aksResourceContext !== null) {
-    const deploymentReport = getDeploymentReport(aksResourceContext, kubectl);
+    const deploymentReport = await getDeploymentReport(aksResourceContext, kubectl);
     const deploymentPayload = getDeploymentPayload(deploymentReport);
     try {
       console.log(`Trying to create the deployment resource with payload: \n${JSON.stringify(deploymentPayload)}`);
@@ -99,7 +100,9 @@ function getResourceUri(aksResourceContext: AksResourceContext): string {
   return `${aksResourceContext.managementUrl}subscriptions/${aksResourceContext.subscriptionId}/resourceGroups/${aksResourceContext.resourceGroup}/providers/Microsoft.Devops/deploymentv2/${deploymentName}?api-version=2020-10-01-preview`;
 }
 
-function getDeploymentReport(context: AksResourceContext, kubectl: Kubectl) {
+async function getDeploymentReport(context: AksResourceContext, kubectl: Kubectl): Promise<DeploymentReport> {
+
+  const deploymentConfig = await getDeploymentConfig();
   const resource: TargetResource = {
     id: `/subscriptions/${context.subscriptionId}/resourceGroups/${context.resourceGroup}/providers/Microsoft.ContainerService/managedClusters/${context.clusterName}`,
     provider: 'Azure',
@@ -116,17 +119,17 @@ function getDeploymentReport(context: AksResourceContext, kubectl: Kubectl) {
       "images": InputParameters.containers.map(image => {
         return {
           "image": image,
-          "dockerfile": ""
+          "dockerfile": deploymentConfig.dockerfilePaths[image] || ""
         }
       }),
-      "helmchart": [],
-      "manifests": InputParameters.manifests 
+      "helmchart": deploymentConfig.helmChartFilePaths,
+      "manifests": deploymentConfig.manifestFilePaths
     }
   };
 
-  const deploymentReport: DeploymentReport = new DeploymentReport([ artifact ], 'succeeded', resource);
+  const deploymentReport: DeploymentReport = new DeploymentReport([artifact], 'succeeded', resource);
   const deploymentReportPath = deploymentReport.export();
 
   core.setOutput('deployment-report', deploymentReportPath);
-  return deploymentReport;
+  return Promise.resolve(deploymentReport);
 }
