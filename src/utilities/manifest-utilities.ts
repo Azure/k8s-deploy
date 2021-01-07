@@ -69,32 +69,65 @@ export function getDeleteCmdArgs(argsPrefix: string, inputArgs: string): string 
         return Value: `image: "example/example-image:identifiertag"`
 */
 
-export function substituteImageNameInSpecFile(currentString: string, imageName: string, imageNameWithNewTag: string) {
-    if (currentString.indexOf(imageName) < 0) {
-        core.debug(`No occurence of replacement token: ${imageName} found`);
-        return currentString;
+export function substituteImageNameInSpecFile(inputObject: any, containers: string[]) {
+    if (!inputObject || !inputObject.spec || !containers) {
+        return;
     }
 
-    return currentString.split('\n').reduce((acc, line) => {
-        const imageKeyword = line.match(/^ *image:/);
-        if (imageKeyword) {
-            let [currentImageName, currentImageTag] = line
-                .substring(imageKeyword[0].length) // consume the line from keyword onwards
-                .trim()
-                .replace(/[',"]/g, '') // replace allowed quotes with nothing
-                .split(':');
+    if (inputObject.spec.template && !!inputObject.spec.template.spec) {
+        if (inputObject.spec.template.spec.containers) {
+            updateContainers(inputObject.spec.template.spec.containers, containers);
+        }
+        if (inputObject.spec.template.spec.initContainers) {
+            updateContainers(inputObject.spec.template.spec.initContainers, containers);
+        }
+        return;
+    }
 
-            if (!currentImageTag && currentImageName.indexOf(' ') > 0) {
-                currentImageName = currentImageName.split(' ')[0]; // Stripping off comments
-            }
-
-            if (currentImageName === imageName) {
-                return acc + `${imageKeyword[0]} ${imageNameWithNewTag}\n`;
-            }
+    if (inputObject.spec.jobTemplate && inputObject.spec.jobTemplate.spec && inputObject.spec.jobTemplate.spec.template && inputObject.spec.jobTemplate.spec.template.spec) {
+        if (inputObject.spec.jobTemplate.spec.template.spec.containers) {
+            updateContainers(inputObject.spec.jobTemplate.spec.template.spec.containers, containers);
         }
 
-        return acc + line + '\n';
-    }, '');
+        if (inputObject.spec.jobTemplate.spec.template.spec.initContainers) {
+            updateContainers(inputObject.spec.jobTemplate.spec.template.spec.initContainers, containers);
+        }
+        return;
+    }
+
+    if (inputObject.spec.containers) {
+        updateContainers(inputObject.spec.containers, containers);
+    }
+
+    if (inputObject.spec.initContainers) {
+        updateContainers(inputObject.spec.initContainers, containers);
+    }
+}
+
+function updateContainers(inputContainers: any[], images: string[]) {
+    if (!inputContainers || inputContainers.length === 0) {
+        return inputContainers;
+    }
+    inputContainers.forEach((inputContainer) => {
+        const imageName: string = extractImageName(inputContainer.image.trim());
+        images.forEach(image => {
+            if (extractImageName(image) === imageName) {
+                inputContainer.image = image;
+            }
+        });
+    });
+}
+
+function extractImageName(imageName) {
+    let img = '';
+    if (imageName.indexOf('/') > 0) {
+        const registry = imageName.substring(0, imageName.indexOf('/'));
+        const imgName = imageName.substring(imageName.indexOf('/') + 1).split(':')[0];
+        img = `${registry}/${imgName}`;
+    } else {
+        img = imageName.split(':')[0];
+    }
+    return img;
 }
 
 function createInlineArray(str: string | string[]): string {
@@ -200,28 +233,28 @@ function substituteImageNameInSpecContent(currentString: string, imageName: stri
 
 function updateContainerImagesInManifestFiles(filePaths: string[], containers: string[]): string[] {
     if (!!containers && containers.length > 0) {
-        const newFilePaths = [];
+        const newObjectsList = [];
         const tempDirectory = fileHelper.getTempDirectory();
         filePaths.forEach((filePath: string) => {
-            let contents = fs.readFileSync(filePath).toString();
-            containers.forEach((container: string) => {
-                let imageName = container.split(':')[0];
-                if (imageName.indexOf('@') > 0) {
-                    imageName = imageName.split('@')[0];
-                }
-                if (contents.indexOf(imageName) > 0) {
-                    contents = substituteImageNameInSpecFile(contents, imageName, container);
+            const fileContents = fs.readFileSync(filePath).toString();
+            yaml.safeLoadAll(fileContents, function (inputObject: any) {
+                if (!!inputObject && !!inputObject.kind) {
+                    const kind = inputObject.kind;
+                    if (KubernetesObjectUtility.isWorkloadEntity(kind)) {
+                        substituteImageNameInSpecFile(inputObject, containers);
+                    }
+                    else if (isEqual(kind, 'list', true)) {
+                        let items = inputObject.items;
+                        if (items.length > 0) {
+                            items.forEach((item) => substituteImageNameInSpecFile(item, containers));
+                        }
+                    }
+                    newObjectsList.push(inputObject);
                 }
             });
-
-            const fileName = path.join(tempDirectory, path.basename(filePath));
-            fs.writeFileSync(
-                path.join(fileName),
-                contents
-            );
-            newFilePaths.push(fileName);
         });
-
+        core.debug('New K8s objects after updating container images are :' + JSON.stringify(newObjectsList));
+        const newFilePaths = fileHelper.writeObjectsToFile(newObjectsList);
         return newFilePaths;
     }
 
@@ -270,7 +303,7 @@ function updateImagePullSecretsInManifestFiles(filePaths: string[], imagePullSec
     return filePaths;
 }
 
-export function getUpdatedManifestFiles (manifestFilePaths: string[]) {
+export function getUpdatedManifestFiles(manifestFilePaths: string[]) {
     let inputManifestFiles: string[] = getManifestFiles(manifestFilePaths);
 
     if (!inputManifestFiles || inputManifestFiles.length === 0) {
