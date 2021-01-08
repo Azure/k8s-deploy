@@ -1,4 +1,5 @@
 import * as os from 'os';
+import { v4 as uuidv4 } from 'uuid';
 import * as core from '@actions/core';
 import { IExecSyncResult } from './tool-runner';
 import { Kubectl } from '../kubectl-object-model';
@@ -180,6 +181,10 @@ export function getRandomInt(max: number) {
 
 export function getCurrentTime(): number {
     return new Date().getTime();
+}
+
+export function getRandomGuid(): string {
+    return uuidv4();
 }
 
 async function checkDockerPath() {

@@ -1,15 +1,15 @@
 import * as path from 'path';
 import * as fs from 'fs';
-import { DeploymentReport, TargetResource, Artifact, Pipeline } from '@azure/azure-actions-traceability';
+import { DeploymentReport, TargetResource, Artifact } from '@azure/azure-actions-traceability';
 import { WebRequest, WebRequestOptions, WebResponse, sendRequest, StatusCodes } from "../utilities/httpClient";
 import * as InputParameters from "../input-parameters";
 import * as core from '@actions/core';
 import { Kubectl } from '../kubectl-object-model';
 import { getDeploymentConfig } from '../utilities/utility';
 import { getClusterMetadata } from '../utilities/kubeconfig-utility';
+import { getRandomGuid } from '../utilities/utility';
 
 const AKS_RESOURCE_TYPE = 'Microsoft.ContainerService/ManagedClusters';
-const KUBERNETES_OBJECTS_KEY = 'kubernetesObjects';
 
 interface AksResourceContext {
   subscriptionId: string;
@@ -39,12 +39,9 @@ function getDeploymentPayload(deploymentReport: DeploymentReport, aksResourceCon
       "targetResource": {
         "id": getAksResourceId(aksResourceContext),
         "type": AKS_RESOURCE_TYPE,
-        "properties": {
-          "namespace": InputParameters.namespace,
-          "kubernetesObjects": deploymentReport.targetResource.properties[KUBERNETES_OBJECTS_KEY]
-        }
+        "properties": deploymentReport.targetResource.properties
       },
-      "workflowRun": deploymentReport.pipeline,
+      "workflowRun": deploymentReport.workflowRun,
       "artifacts": deploymentReport.artifacts
     }
   };
@@ -97,7 +94,7 @@ function getAksResourceId(aksResourceContext: AksResourceContext): string {
 
 function getDeploymentResourceUri(aksResourceContext: AksResourceContext): string {
   // TODO: Finalize the right resource name.
-  const deploymentName = `${aksResourceContext.clusterName}-${InputParameters.namespace}-deployment-${process.env['GITHUB_SHA']}`;
+  const deploymentName = `${aksResourceContext.clusterName}-${InputParameters.namespace}-deployment-${getRandomGuid()}`;
   return `${aksResourceContext.managementUrl}subscriptions/${aksResourceContext.subscriptionId}/resourceGroups/${aksResourceContext.resourceGroup}/providers/Microsoft.Devops/deploymentdetails/${deploymentName}?api-version=2020-12-01-preview`;
 }
 
@@ -117,16 +114,15 @@ async function createDeploymentReport(kubectl: Kubectl): Promise<DeploymentRepor
   const artifacts: Artifact[] = InputParameters.containers.map((image): Artifact => {
     return {
       type: 'ContainerArtifact',
-      properties: {
-        "image": image,
-        "dockerfileUrl": deploymentConfig.dockerfilePaths[image] || "",
-        "helmchartUrls": deploymentConfig.helmChartFilePaths,
-        "manifestUrls": deploymentConfig.manifestFilePaths
-      }
+      image: image,
+      dockerfileUrl: deploymentConfig.dockerfilePaths[image] || "",
+      helmchartUrls: deploymentConfig.helmChartFilePaths,
+      manifestUrls: deploymentConfig.manifestFilePaths
     }
   });
 
-  const deploymentReport: DeploymentReport = new DeploymentReport(artifacts, 'succeeded', resource);
+  const deploymentReport: DeploymentReport = new DeploymentReport();
+  deploymentReport.initialize(InputParameters.githubToken, artifacts, 'succeeded', resource);
   const deploymentReportPath = deploymentReport.export();
 
   core.setOutput('deployment-report', deploymentReportPath);
