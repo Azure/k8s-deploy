@@ -122,7 +122,7 @@ async function createDeploymentReport(kubectl: Kubectl): Promise<DeploymentRepor
   });
 
   const deploymentReport: DeploymentReport = new DeploymentReport();
-  deploymentReport.initialize(InputParameters.githubToken, artifacts, 'succeeded', resource);
+  await deploymentReport.initialize(InputParameters.githubToken, artifacts, 'succeeded', resource);
   const deploymentReportPath = deploymentReport.export();
 
   core.setOutput('deployment-report', deploymentReportPath);
