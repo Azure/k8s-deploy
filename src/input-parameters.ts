@@ -4,7 +4,7 @@ import * as core from '@actions/core';
 import { resolveGlobPatterns } from './utilities/utility';
 
 export let namespace: string = core.getInput('namespace');
-export const containers: string[] = core.getInput('images').split('\n');
+export const containers: string[] = core.getInput('images').split('\n').filter(image => image.trim().length > 0);;
 export const imagePullSecrets: string[] = core.getInput('imagepullsecrets').split('\n').filter(secret => secret.trim().length > 0);
 export const manifests = resolveGlobPatterns(core.getInput('manifests'));
 export const canaryPercentage: string = core.getInput('percentage');
