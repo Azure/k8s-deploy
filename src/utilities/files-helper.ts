@@ -73,12 +73,17 @@ export function getManifestFileContents(filePath: string) {
     if (filePath &&
         filePath.length > 0) {
         try {
-            return yaml.safeLoad(fs.readFileSync(filePath, { encoding: "utf-8" }));
+            return getParsedYaml(filePath);
         } catch (ex) {
             core.debug(`Exception occurred while reading manifest file: '${filePath}'. Exception: '${ex}'`);
         }
     }
     return null;
+}
+
+export function getParsedYaml(filePath: string): any {
+    const rawContent = fs.readFileSync(filePath, { encoding: "utf-8" });
+    return yaml.safeLoad(rawContent);
 }
 
 function getManifestFileName(kind: string, name: string) {
