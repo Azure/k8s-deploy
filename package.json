@@ -13,8 +13,10 @@
         "@actions/io": "1.0.2",
         "@actions/tool-cache": "1.6.0",
         "@azure/azure-actions-traceability": "^1.0.3",
+        "@types/uuid": "^8.3.0",
         "js-yaml": "3.13.1",
-        "typed-rest-client": "1.7.2"
+        "typed-rest-client": "1.7.2",
+        "uuid": "^8.3.2"
     },
     "devDependencies": {
         "@types/node": "^12.0.10",
