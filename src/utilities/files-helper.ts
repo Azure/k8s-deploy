@@ -83,7 +83,9 @@ export function getManifestFileContents(filePath: string) {
 
 export function getParsedYaml(filePath: string): any {
     const rawContent = fs.readFileSync(filePath, { encoding: "utf-8" });
-    return yaml.safeLoad(rawContent);
+
+    // This always returns a JSON array after parsing the yaml
+    return yaml.safeLoadAll(rawContent);
 }
 
 function getManifestFileName(kind: string, name: string) {

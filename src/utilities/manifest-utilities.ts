@@ -101,9 +101,10 @@ export function getManifestObjects(paths: string[]): any[] {
     let manifestContents = [];
     if (paths.length > 0) {
         paths.forEach((path) => {
-            let manifestContent = fileHelper.getManifestFileContents(path);
-            if (manifestContent) {
-                manifestContents.push(manifestContent);
+            let contents = fileHelper.getManifestFileContents(path);
+            if (contents &&
+                contents.length > 0) {
+                manifestContents.push(...contents);
             }
         });
     }

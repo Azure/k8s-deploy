@@ -76,7 +76,10 @@ function readKubeconfig(): any {
   const kubeconfigPath = process.env[KUBECONFIG_VARIABLE];
   let kubeconfig = null;
   try {
-    kubeconfig = getParsedYaml(kubeconfigPath);
+    let parsedYaml = getParsedYaml(kubeconfigPath);
+    if (parsedYaml && parsedYaml.length > 0) {
+      kubeconfig = parsedYaml[0];
+    }
   } catch (error) {
     core.debug(`An error occured while reading the kubeconfig. Error: ${error}`);
   }
