@@ -144,22 +144,28 @@ export async function getDeploymentConfig(): Promise<DeploymentConfig> {
     let helmChartPaths: string[] = (process.env.HELM_CHART_PATHS && process.env.HELM_CHART_PATHS.split(';').filter(path => path != "")) || [];
     helmChartPaths = helmChartPaths.map(helmchart => getNormalizedPath(helmchart.trim()));
 
-    let inputManifestFiles: string[] = inputParams.manifests || [];
+    let inputManifestFiles: string[] = [];
     if (!helmChartPaths.length) {
+        inputManifestFiles = inputParams.manifests || [];
         inputManifestFiles = inputManifestFiles.map(manifestFile => getNormalizedPath(manifestFile));
     }
 
     const imageNames = inputParams.containers || [];
     let imageDockerfilePathMap: { [id: string]: string; } = {};
-
-    //Fetching from image label if available
-    for (const image of imageNames) {
-        try {
-            imageDockerfilePathMap[image] = await getDockerfilePath(image);
+    try {
+        await checkDockerPath();
+        //Fetching from image label if available
+        for (const image of imageNames) {
+            try {
+                imageDockerfilePathMap[image] = await getDockerfilePath(image);
+            }
+            catch (ex) {
+                core.warning(`Failed to get dockerfile path for image ${image.toString()} | ` + ex);
+            }
         }
-        catch (ex) {
-            core.warning(`Failed to get dockerfile path for image ${image.toString()} | ` + ex);
-        }
+    }
+    catch (ex) {
+        core.warning(`Failed to get dockerfile path for images | ` + ex);
     }
 
     const deploymentConfig = <DeploymentConfig>{
@@ -197,7 +203,6 @@ async function checkDockerPath() {
 async function getDockerfilePath(image: any): Promise<string> {
     let imageConfig: any, imageInspectResult: string;
     var dockerExec: DockerExec = new DockerExec('docker');
-    await checkDockerPath();
     dockerExec.pull(image, [], true);
     imageInspectResult = dockerExec.inspect(image, [], true);
     imageConfig = JSON.parse(imageInspectResult)[0];
