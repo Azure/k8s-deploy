@@ -5,9 +5,8 @@ import { WebRequest, WebRequestOptions, WebResponse, sendRequest, StatusCodes } 
 import * as InputParameters from "../input-parameters";
 import * as core from '@actions/core';
 import { Kubectl } from '../kubectl-object-model';
-import { getDeploymentConfig } from '../utilities/utility';
+import { DeploymentConfig, getRandomGuid } from '../utilities/utility';
 import { getClusterMetadata } from '../utilities/kubeconfig-utility';
-import { getRandomGuid } from '../utilities/utility';
 
 const AKS_RESOURCE_TYPE = 'Microsoft.ContainerService/ManagedClusters';
 
@@ -71,9 +70,9 @@ async function createDeploymentResource(aksResourceContext: AksResourceContext, 
   });
 }
 
-export async function addTraceability(kubectl: Kubectl): Promise<void> {
+export async function addTraceability(kubectl: Kubectl, deploymentConfig: DeploymentConfig): Promise<void> {
   try {
-    const deploymentReport = await createDeploymentReport(kubectl);
+    const deploymentReport = await createDeploymentReport(kubectl, deploymentConfig);
     const aksResourceContext = getAksResourceContext();
     if (aksResourceContext !== null) {
       const deploymentPayload = getDeploymentPayload(deploymentReport, aksResourceContext);
@@ -98,8 +97,7 @@ function getDeploymentResourceUri(aksResourceContext: AksResourceContext): strin
   return `${aksResourceContext.managementUrl}subscriptions/${aksResourceContext.subscriptionId}/resourceGroups/${aksResourceContext.resourceGroup}/providers/Microsoft.Devops/deploymentdetails/${deploymentName}?api-version=2020-12-01-preview`;
 }
 
-async function createDeploymentReport(kubectl: Kubectl): Promise<DeploymentReport> {
-  const deploymentConfig = await getDeploymentConfig();
+async function createDeploymentReport(kubectl: Kubectl, deploymentConfig: DeploymentConfig): Promise<DeploymentReport> {
   const clusterMetadata = getClusterMetadata();
   const resource: TargetResource = {
     type: 'kubernetes',

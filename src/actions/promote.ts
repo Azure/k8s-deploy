@@ -17,6 +17,7 @@ import { routeBlueGreenIngress, promoteBlueGreenIngress } from '../utilities/str
 import { routeBlueGreenSMI, promoteBlueGreenSMI, cleanupSMI } from '../utilities/strategy-helpers/smi-blue-green-helper';
 import { Kubectl, Resource } from '../kubectl-object-model';
 import * as AzureTraceabilityHelper from "../traceability/azure-traceability-helper";
+import { getDeploymentConfig } from '../utilities/utility';
 
 export async function promote() {
     const kubectl = new Kubectl(await utils.getKubectl(), TaskInputParameters.namespace, true);
@@ -25,13 +26,13 @@ export async function promote() {
         await promoteCanary(kubectl);
     } else if (isBlueGreenDeploymentStrategy()) {
         await promoteBlueGreen(kubectl);
+        // Adding traceability data
+        const deploymentConfig = await getDeploymentConfig();
+        await AzureTraceabilityHelper.addTraceability(kubectl, deploymentConfig);
     } else {
         core.debug('Strategy is not canary or blue-green deployment. Invalid request.');
         throw ('InvalidPromotetActionDeploymentStrategy');
     }
-
-    // Adding traceability data
-    await AzureTraceabilityHelper.addTraceability(kubectl);
 }
 
 async function promoteCanary(kubectl: Kubectl) {
@@ -68,7 +69,7 @@ async function promoteBlueGreen(kubectl: Kubectl) {
 
     core.debug('deleting old deployment and making new ones');
     let result;
-    if(isIngressRoute()) {
+    if (isIngressRoute()) {
         result = await promoteBlueGreenIngress(kubectl, manifestObjects);
     } else if (isSMIRoute()) {
         result = await promoteBlueGreenSMI(kubectl, manifestObjects);
@@ -80,15 +81,15 @@ async function promoteBlueGreen(kubectl: Kubectl) {
     const deployedManifestFiles = result.newFilePaths;
     const resources: Resource[] = KubernetesObjectUtility.getResources(deployedManifestFiles, models.deploymentTypes.concat([models.DiscoveryAndLoadBalancerResource.service]));
     await KubernetesManifestUtility.checkManifestStability(kubectl, resources);
-    
+
     core.debug('routing to new deployments');
-    if(isIngressRoute()) {
+    if (isIngressRoute()) {
         routeBlueGreenIngress(kubectl, null, manifestObjects.serviceNameMap, manifestObjects.ingressEntityList);
         deleteWorkloadsAndServicesWithLabel(kubectl, GREEN_LABEL_VALUE, manifestObjects.deploymentEntityList, manifestObjects.serviceEntityList);
     } else if (isSMIRoute()) {
         routeBlueGreenSMI(kubectl, NONE_LABEL_VALUE, manifestObjects.serviceEntityList);
         deleteWorkloadsWithLabel(kubectl, GREEN_LABEL_VALUE, manifestObjects.deploymentEntityList);
-        cleanupSMI(kubectl, manifestObjects.serviceEntityList);    
+        cleanupSMI(kubectl, manifestObjects.serviceEntityList);
     } else {
         routeBlueGreenService(kubectl, NONE_LABEL_VALUE, manifestObjects.serviceEntityList);
         deleteWorkloadsWithLabel(kubectl, GREEN_LABEL_VALUE, manifestObjects.deploymentEntityList);

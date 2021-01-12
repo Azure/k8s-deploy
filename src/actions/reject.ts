@@ -11,6 +11,7 @@ import { rejectBlueGreenSMI } from '../utilities/strategy-helpers/smi-blue-green
 import { isSMIRoute, isIngressRoute, isBlueGreenDeploymentStrategy } from '../utilities/strategy-helpers/blue-green-helper'
 import { getManifestFiles } from '../utilities/strategy-helpers/deployment-helper'
 import * as AzureTraceabilityHelper from "../traceability/azure-traceability-helper";
+import { getDeploymentConfig } from '../utilities/utility';
 
 export async function reject() {
     const kubectl = new Kubectl(await utils.getKubectl(), TaskInputParameters.namespace, true);
@@ -25,7 +26,8 @@ export async function reject() {
     }
 
     // Adding traceability data
-    await AzureTraceabilityHelper.addTraceability(kubectl);
+    const deploymentConfig = await getDeploymentConfig();
+    await AzureTraceabilityHelper.addTraceability(kubectl, deploymentConfig);
 }
 
 async function rejectCanary(kubectl: Kubectl) {
@@ -42,7 +44,7 @@ async function rejectCanary(kubectl: Kubectl) {
 
 async function rejectBlueGreen(kubectl: Kubectl) {
     let inputManifestFiles: string[] = getManifestFiles(TaskInputParameters.manifests);
-    if(isIngressRoute()) {
+    if (isIngressRoute()) {
         await rejectBlueGreenIngress(kubectl, inputManifestFiles);
     } else if (isSMIRoute()) {
         await rejectBlueGreenSMI(kubectl, inputManifestFiles);
