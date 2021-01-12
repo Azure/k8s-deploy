@@ -55,8 +55,7 @@ export async function deploy(kubectl: Kubectl, manifestFilePaths: string[], depl
         core.debug("Unable to parse pods; Error: " + e);
     }
 
-    annotateAndLabelResources(deployedManifestFiles, kubectl, resourceTypes, allPods);
-
+    await annotateAndLabelResources(deployedManifestFiles, kubectl, resourceTypes, allPods);
     await AzureTraceabilityHelper.addTraceability(kubectl);
 }
 
