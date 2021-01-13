@@ -10,7 +10,7 @@ import { Kubectl } from './kubectl-object-model';
 import { deploy } from './utilities/strategy-helpers/deployment-helper';
 import { promote } from './actions/promote';
 import { reject } from './actions/reject';
-import * as AzureTraceabilityHelper from "./utilities/../traceability/azure-traceability-helper";
+import * as AzureTraceabilityHelper from "./traceability/azure-traceability-helper";
 
 let kubectlPath = "";
 
@@ -68,7 +68,7 @@ export async function run() {
     else {
         const kubectl = new Kubectl(kubectlPath, namespace, true);
         const deploymentConfig = await getDeploymentConfig();
-        let status = 'success';
+        let runStatus = 'success';
         try {
             if (action === 'deploy') {
                 let strategy = core.getInput('strategy');
@@ -83,11 +83,11 @@ export async function run() {
             }
         }
         catch(error) {
-            status = 'failure';
+            runStatus = 'failure';
             throw error;
         }
         finally {
-            await AzureTraceabilityHelper.addTraceability(kubectl, deploymentConfig, status);
+            await AzureTraceabilityHelper.addTraceability(kubectl, deploymentConfig, runStatus);
         }
     }
 }

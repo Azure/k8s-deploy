@@ -71,9 +71,9 @@ async function createDeploymentResource(aksResourceContext: AksResourceContext, 
 }
 
 // Should not throw as it is executed in the finally block of run
-export async function addTraceability(kubectl: Kubectl, deploymentConfig: DeploymentConfig, status: string): Promise<void> {
+export async function addTraceability(kubectl: Kubectl, deploymentConfig: DeploymentConfig, runStatus: string): Promise<void> {
   try {
-    const deploymentReport = await createDeploymentReport(kubectl, deploymentConfig, status);
+    const deploymentReport = await createDeploymentReport(kubectl, deploymentConfig, runStatus);
     const aksResourceContext = getAksResourceContext();
     if (aksResourceContext !== null) {
       const deploymentPayload = getDeploymentPayload(deploymentReport, aksResourceContext);
@@ -98,7 +98,7 @@ function getDeploymentResourceUri(aksResourceContext: AksResourceContext): strin
   return `${aksResourceContext.managementUrl}subscriptions/${aksResourceContext.subscriptionId}/resourceGroups/${aksResourceContext.resourceGroup}/providers/Microsoft.Devops/deploymentdetails/${deploymentName}?api-version=2020-12-01-preview`;
 }
 
-async function createDeploymentReport(kubectl: Kubectl, deploymentConfig: DeploymentConfig, status: string): Promise<DeploymentReport> {
+async function createDeploymentReport(kubectl: Kubectl, deploymentConfig: DeploymentConfig, runStatus: string): Promise<DeploymentReport> {
   const clusterMetadata = getClusterMetadata();
   const resource: TargetResource = {
     type: 'kubernetes',
@@ -121,7 +121,7 @@ async function createDeploymentReport(kubectl: Kubectl, deploymentConfig: Deploy
   });
 
   const deploymentReport: DeploymentReport = new DeploymentReport();
-  await deploymentReport.initialize(InputParameters.githubToken, artifacts, status, resource);
+  await deploymentReport.initialize(InputParameters.githubToken, artifacts, runStatus, resource);
   const deploymentReportPath = deploymentReport.export();
 
   core.setOutput('deployment-report', deploymentReportPath);
