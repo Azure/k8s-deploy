@@ -17,14 +17,13 @@ import { IExecSyncResult } from '../../utilities/tool-runner';
 
 import { deployPodCanary } from './pod-canary-deployment-helper';
 import { deploySMICanary } from './smi-canary-deployment-helper';
-import { checkForErrors, annotateChildPods, getWorkflowFilePath, getLastSuccessfulRunSha, DeploymentConfig, getDeploymentConfig } from "../utility";
+import { checkForErrors, annotateChildPods, getWorkflowFilePath, getLastSuccessfulRunSha, DeploymentConfig } from "../utility";
 import { isBlueGreenDeploymentStrategy, isIngressRoute, isSMIRoute, routeBlueGreen } from './blue-green-helper';
 import { deployBlueGreenService } from './service-blue-green-helper';
 import { deployBlueGreenIngress } from './ingress-blue-green-helper';
 import { deployBlueGreenSMI } from './smi-blue-green-helper';
-import * as AzureTraceabilityHelper from "../../traceability/azure-traceability-helper";
 
-export async function deploy(kubectl: Kubectl, manifestFilePaths: string[], deploymentStrategy: string) {
+export async function deploy(kubectl: Kubectl, manifestFilePaths: string[], deploymentStrategy: string, deploymentConfig: DeploymentConfig) {
 
     // get manifest files
     let inputManifestFiles: string[] = getUpdatedManifestFiles(manifestFilePaths);
@@ -55,9 +54,7 @@ export async function deploy(kubectl: Kubectl, manifestFilePaths: string[], depl
         core.debug("Unable to parse pods; Error: " + e);
     }
 
-    const deploymentConfig = await getDeploymentConfig();
     await annotateAndLabelResources(deployedManifestFiles, kubectl, resourceTypes, allPods, deploymentConfig);
-    await AzureTraceabilityHelper.addTraceability(kubectl, deploymentConfig);
 }
 
 export function getManifestFiles(manifestFilePaths: string[]): string[] {

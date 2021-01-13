@@ -16,26 +16,20 @@ import { routeBlueGreenService, promoteBlueGreenService } from '../utilities/str
 import { routeBlueGreenIngress, promoteBlueGreenIngress } from '../utilities/strategy-helpers/ingress-blue-green-helper';
 import { routeBlueGreenSMI, promoteBlueGreenSMI, cleanupSMI } from '../utilities/strategy-helpers/smi-blue-green-helper';
 import { Kubectl, Resource } from '../kubectl-object-model';
-import * as AzureTraceabilityHelper from "../traceability/azure-traceability-helper";
-import { getDeploymentConfig } from '../utilities/utility';
+import { DeploymentConfig } from '../utilities/utility';
 
-export async function promote() {
-    const kubectl = new Kubectl(await utils.getKubectl(), TaskInputParameters.namespace, true);
-
+export async function promote(kubectl: Kubectl, deploymentConfig: DeploymentConfig) {
     if (canaryDeploymentHelper.isCanaryDeploymentStrategy()) {
-        await promoteCanary(kubectl);
+        await promoteCanary(kubectl, deploymentConfig);
     } else if (isBlueGreenDeploymentStrategy()) {
         await promoteBlueGreen(kubectl);
-        // Adding traceability data
-        const deploymentConfig = await getDeploymentConfig();
-        await AzureTraceabilityHelper.addTraceability(kubectl, deploymentConfig);
     } else {
         core.debug('Strategy is not canary or blue-green deployment. Invalid request.');
         throw ('InvalidPromotetActionDeploymentStrategy');
     }
 }
 
-async function promoteCanary(kubectl: Kubectl) {
+async function promoteCanary(kubectl: Kubectl, deploymentConfig: DeploymentConfig) {
     let includeServices = false;
     if (canaryDeploymentHelper.isSMICanaryStrategy()) {
         includeServices = true;
@@ -45,13 +39,13 @@ async function promoteCanary(kubectl: Kubectl) {
         SMICanaryDeploymentHelper.redirectTrafficToCanaryDeployment(kubectl, TaskInputParameters.manifests);
 
         core.debug('Deploying input manifests with SMI canary strategy');
-        await deploymentHelper.deploy(kubectl, TaskInputParameters.manifests, 'None');
+        await deploymentHelper.deploy(kubectl, TaskInputParameters.manifests, 'None', deploymentConfig);
 
         core.debug('Redirecting traffic to stable deployment');
         SMICanaryDeploymentHelper.redirectTrafficToStableDeployment(kubectl, TaskInputParameters.manifests);
     } else {
         core.debug('Deploying input manifests');
-        await deploymentHelper.deploy(kubectl, TaskInputParameters.manifests, 'None');
+        await deploymentHelper.deploy(kubectl, TaskInputParameters.manifests, 'None', deploymentConfig);
     }
 
     core.debug('Deployment strategy selected is Canary. Deleting canary and baseline workloads.');

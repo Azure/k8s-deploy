@@ -4,12 +4,13 @@ import * as path from 'path';
 import * as toolCache from '@actions/tool-cache';
 
 import { downloadKubectl, getStableKubectlVersion } from "./utilities/kubectl-util";
-import { getExecutableExtension, isEqual } from "./utilities/utility";
+import { getDeploymentConfig, getExecutableExtension, isEqual, isValidAction } from "./utilities/utility";
 
 import { Kubectl } from './kubectl-object-model';
 import { deploy } from './utilities/strategy-helpers/deployment-helper';
 import { promote } from './actions/promote';
 import { reject } from './actions/reject';
+import * as AzureTraceabilityHelper from "./utilities/../traceability/azure-traceability-helper";
 
 let kubectlPath = "";
 
@@ -61,19 +62,33 @@ export async function run() {
     let action = core.getInput('action');
     let manifests = manifestsInput.split('\n');
 
-    if (action === 'deploy') {
-        let strategy = core.getInput('strategy');
-        console.log("strategy: ", strategy)
-        await deploy(new Kubectl(kubectlPath, namespace), manifests, strategy);
-    }
-    else if (action === 'promote') {
-        await promote();
-    }
-    else if (action === 'reject') {
-        await reject();
+    if (!isValidAction(action)) {
+        core.setFailed('Not a valid action. The allowed actions are deploy, promote, reject');
     }
     else {
-        core.setFailed('Not a valid action. The allowed actions are deploy, promote, reject');
+        const kubectl = new Kubectl(kubectlPath, namespace, true);
+        const deploymentConfig = await getDeploymentConfig();
+        let status = 'success';
+        try {
+            if (action === 'deploy') {
+                let strategy = core.getInput('strategy');
+                console.log("strategy: ", strategy)
+                await deploy(kubectl, manifests, strategy, deploymentConfig);
+            }
+            else if (action === 'promote') {
+                await promote(kubectl, deploymentConfig);
+            }
+            else if (action === 'reject') {
+                await reject(kubectl);
+            }
+        }
+        catch(error) {
+            status = 'failure';
+            throw error;
+        }
+        finally {
+            await AzureTraceabilityHelper.addTraceability(kubectl, deploymentConfig, status);
+        }
     }
 }
 

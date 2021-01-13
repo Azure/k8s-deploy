@@ -139,6 +139,7 @@ export function annotateChildPods(kubectl: Kubectl, resourceType: string, resour
     return commandExecutionResults;
 }
 
+// Should never throw.
 export async function getDeploymentConfig(): Promise<DeploymentConfig> {
 
     let helmChartPaths: string[] = (process.env.HELM_CHART_PATHS && process.env.HELM_CHART_PATHS.split(';').filter(path => path != "")) || [];
@@ -227,4 +228,10 @@ export function getNormalizedPath(pathValue: string): string {
         return `https://github.com/${process.env.GITHUB_REPOSITORY}/blob/${process.env.GITHUB_SHA}/${pathValue}`;
     }
     return pathValue;
+}
+
+export function isValidAction(action: string): boolean {
+    return action === 'deploy'
+        || action === 'promote'
+        || action === 'reject';
 }
