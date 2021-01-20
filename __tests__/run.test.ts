@@ -6,7 +6,6 @@ import * as deployment from '../src/utilities/strategy-helpers/deployment-helper
 import * as fs from 'fs';
 import * as io from '@actions/io';
 import * as toolCache from '@actions/tool-cache';
-import * as fileHelper from '../src/utilities/files-helper';
 import * as glob from 'glob';
 import { getWorkflowAnnotationKeyLabel, getWorkflowAnnotationsJson } from '../src/constants';
 import * as inputParam from '../src/input-parameters';
@@ -113,7 +112,7 @@ test("setKubectlPath() - install a latest version", async () => {
     const kubectlVersion = 'latest'
     //Mocks
     coreMock.getInput = jest.fn().mockReturnValue(kubectlVersion);
-    jest.spyOn(fs, 'readFileSync').mockImplementation(() => "");
+    const readFileSpy = jest.spyOn(fs, 'readFileSync').mockImplementation(() => "");
     toolCacheMock.find = jest.fn().mockReturnValue(undefined);
     toolCacheMock.downloadTool = jest.fn().mockResolvedValue('');
     toolCacheMock.cacheFile = jest.fn().mockReturnValue('cachepath');
@@ -123,7 +122,7 @@ test("setKubectlPath() - install a latest version", async () => {
     await expect(action.run()).resolves.not.toThrow();
     expect(toolCacheMock.find).toBeCalledWith('kubectl', kubectlVersion);
     expect(toolCacheMock.downloadTool).toBeCalledWith(stableVersionUrl);
-
+    readFileSpy.mockRestore();
 });
 
 test("setKubectlPath() - kubectl version already avilable", async () => {
@@ -255,6 +254,7 @@ test("deployment - deploy() - Invokes with manifestfiles", async () => {
     kubeCtl.annotate = jest.fn().mockReturnValue("");
     kubeCtl.labelFiles = jest.fn().mockReturnValue("");
     KubernetesManifestUtilityMock.checkManifestStability = jest.fn().mockReturnValue("");
+    inputParamMock.containers = ['testcr.azurecr.io/testapp:2.0'];
 
     const readFileSpy = jest.spyOn(fs, 'readFileSync').mockImplementation(() => deploymentYaml);
     jest.spyOn(httpClient, 'sendRequest').mockImplementation(() => Promise.resolve(getWorkflowsUrlResponse));
@@ -263,6 +263,8 @@ test("deployment - deploy() - Invokes with manifestfiles", async () => {
     await expect(deployment.deploy(kubeCtl, ['manifests/deployment.yaml'], undefined)).resolves.not.toThrowError();
     expect(readFileSpy).toBeCalledWith("manifests/deployment.yaml");
     expect(kubeCtl.getResource).toBeCalledWith("ingress", "AppName");
+    readFileSpy.mockRestore();
+    inputParamMock.containers = [];
 });
 
 test("deployment - deploy() - deploy force flag on", async () => {
@@ -301,11 +303,10 @@ test("deployment - deploy() - Annotate & label resources", async () => {
     KubernetesManifestUtilityMock.checkManifestStability = jest.fn().mockReturnValue("");
     const KubernetesObjectUtilityMock = mocked(KubernetesObjectUtility, true);
     KubernetesObjectUtilityMock.getResources = jest.fn().mockReturnValue(resources);
-    const fileHelperMock = mocked(fileHelper, true);
     const fsMock = (mocked(fs, true));
-    fileHelperMock.getTempDirectory = jest.fn().mockReturnValue("~/Deployment_testapp_currentTimestamp");
     fsMock.writeFileSync =jest.fn().mockReturnValue("");
     jest.spyOn(utility, 'getWorkflowFilePath').mockImplementation(() => Promise.resolve(process.env.GITHUB_WORKFLOW));
+    const readFileSpy = jest.spyOn(fs, 'readFileSync').mockImplementation(() => deploymentYaml);
 
     const kubeCtl: jest.Mocked<Kubectl> = new Kubectl("") as any;
     kubeCtl.apply = jest.fn().mockReturnValue("");
@@ -318,10 +319,11 @@ test("deployment - deploy() - Annotate & label resources", async () => {
     //Invoke and assert
     await expect(deployment.deploy(kubeCtl, ['manifests/deployment.yaml'], undefined)).resolves.not.toThrowError();
     expect(kubeCtl.annotate).toHaveBeenNthCalledWith(1, 'namespace', 'default', annotationKeyValStr);
-    expect(kubeCtl.annotateFiles).toBeCalledWith(["~/Deployment_testapp_currentTimestamp/deployment.yaml"], annotationKeyValStr);
+    expect(kubeCtl.annotateFiles).toBeCalledWith(["manifests/deployment.yaml"], annotationKeyValStr);
     expect(kubeCtl.annotate).toBeCalledTimes(2);
-    expect(kubeCtl.labelFiles).toBeCalledWith(["~/Deployment_testapp_currentTimestamp/deployment.yaml"],
+    expect(kubeCtl.labelFiles).toBeCalledWith(["manifests/deployment.yaml"],
         [`workflowFriendlyName=workflow.yml`, `workflow=${getWorkflowAnnotationKeyLabel(process.env.GITHUB_WORKFLOW)}`]);
+    readFileSpy.mockRestore();
 });
 
 test("deployment - deploy() - Annotate & label resources for a new workflow", async () => {
@@ -331,11 +333,10 @@ test("deployment - deploy() - Annotate & label resources for a new workflow", as
     KubernetesManifestUtilityMock.checkManifestStability = jest.fn().mockReturnValue("");
     const KubernetesObjectUtilityMock = mocked(KubernetesObjectUtility, true);
     KubernetesObjectUtilityMock.getResources = jest.fn().mockReturnValue(resources);
-    const fileHelperMock = mocked(fileHelper, true);
     const fsMock = (mocked(fs, true));
-    fileHelperMock.getTempDirectory = jest.fn().mockReturnValue("~/Deployment_testapp_currentTimestamp");
     fsMock.writeFileSync =jest.fn().mockReturnValue("");
     jest.spyOn(httpClient, 'sendRequest').mockImplementation(() => Promise.resolve(getWorkflowsUrlResponse));
+    const readFileSpy = jest.spyOn(fs, 'readFileSync').mockImplementation(() => deploymentYaml);
 
     const kubeCtl: jest.Mocked<Kubectl> = new Kubectl("") as any;
     kubeCtl.apply = jest.fn().mockReturnValue("");
@@ -348,10 +349,11 @@ test("deployment - deploy() - Annotate & label resources for a new workflow", as
     //Invoke and assert
     await expect(deployment.deploy(kubeCtl, ['manifests/deployment.yaml'], undefined)).resolves.not.toThrowError();
     expect(kubeCtl.annotate).toHaveBeenNthCalledWith(1, 'namespace', 'default', annotationKeyValStr);
-    expect(kubeCtl.annotateFiles).toBeCalledWith(["~/Deployment_testapp_currentTimestamp/deployment.yaml"], annotationKeyValStr);
+    expect(kubeCtl.annotateFiles).toBeCalledWith(["manifests/deployment.yaml"], annotationKeyValStr);
     expect(kubeCtl.annotate).toBeCalledTimes(2);
-    expect(kubeCtl.labelFiles).toBeCalledWith(["~/Deployment_testapp_currentTimestamp/deployment.yaml"],
+    expect(kubeCtl.labelFiles).toBeCalledWith(["manifests/deployment.yaml"],
         [`workflowFriendlyName=NewWorkflow.yml`, `workflow=${getWorkflowAnnotationKeyLabel(process.env.GITHUB_WORKFLOW)}`]);
+    readFileSpy.mockRestore();
 });
 
 test("deployment - deploy() - Annotate resources failed", async () => {
