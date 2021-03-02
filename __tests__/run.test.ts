@@ -1,4 +1,4 @@
-import * as KubernetesManifestUtility from '../src/utilities/manifest-stability-utility';
+import * as KubernetesManifestUtility from '../src/utilities/manifest-stability-utility'; 
 import * as KubernetesObjectUtility from '../src/utilities/resource-object-utility';
 import * as action from '../src/run';
 import * as core from '@actions/core';
