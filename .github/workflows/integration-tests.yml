@@ -1,23 +1,20 @@
 name: "Trigger Integration tests"
 on:
-  # push:
-  #   branches:
-  ##    - master
-  #     - 'releases/*'
   pull_request:
     branches:
       - master
-      - 'releases/*'
 jobs: 
     trigger-integration-tests:
       name: Trigger Integration tests
       runs-on: ubuntu-latest
       steps:
-        - name: Check out repository
-          uses: actions/checkout@v2
+        - uses: actions/checkout@v2
+        - uses: actions/setup-node@v2
           with:
-              path: IntegrationTests
-            
-        - name: Trigger Test run
+            node-version: '14'
+        - name: setup repo
           run: |
-            bash ./IntegrationTests/.github/workflows/TriggerIntegrationTests.sh ${{ secrets.L2_REPO_TOKEN }} ${{ github.event.pull_request.head.sha }} ${{ github.repository }} ${{ github.event.pull_request.number }} ${{ github.event.pull_request.head.ref }} ${{ github.event.pull_request.base.ref }}
+            npm install yaml
+            npm install @octokit/core
+        - name: trigger everything
+          run: node __tests__/integrations-tests.js ${{ secrets.pat }} ${{ github.event.pull_request.head.sha }} ${{ github.event.pull_request.head.ref }} 
