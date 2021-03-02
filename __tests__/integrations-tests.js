@@ -169,14 +169,18 @@ class actionsTest {
             "run": "echo ${{job.status}}\nif [ ${{job.status}} = \"successs\" ]\nthen\n  curl   -X POST -u username:${{github.event.client_payload.token}} -H \"Accept: application/vnd.github.v3+json\" https://api.github.com/repos/sundargs2000/actions-e2e/statuses/${{github.event.client_payload.pullId}} -d '{\"state\":\"success\"}'\nelse\n  curl   -X POST -u username:${{github.event.client_payload.token}} -H \"Accept: application/vnd.github.v3+json\" https://api.github.com/repos/sundargs2000/actions-e2e/statuses/${{github.event.client_payload.pullId}} -d '{\"state\":\"failure\"}'\nfi\n"
         }
         mainWorkflowJson.jobs.runTests.steps.push(postBackStep);
-
-        if(!!this.cleanup) {
-            this.cleanup.forEach(cleanupStep => {
-                cleanupStep.if = "${{ always() }}"
-                mainWorkflowJson.jobs.runTests.steps.push(cleanupStep);
-            });
-        }
         
+        if(!!this.cleanup) {
+            this.cleanup = this.cleanup.map(cleanupStep => {
+                cleanupStep.if = "${{ always() }}"
+                return cleanupStep;
+            });
+            mainWorkflowJson.jobs.runTests.steps.push(...this.cleanup);
+        }
+        // console.log(this.cleanup);
+        
+        console.log(JSON.stringify(mainWorkflowJson, null, 2));
+
         const yf = new yaml.Document();
         yf.contents = mainWorkflowJson;
         console.log(yf.toString());
@@ -364,36 +368,34 @@ const fourthTestCleanup = {
     "run": "python K8sDeployActionResources/k8s-deploy-delete.py 'Service' 'nginx-service' ubuntu\npython K8sDeployActionResources/k8s-deploy-delete.py 'Deployment' 'nginx-deployment' ubuntu\n"
 }
 
-k8sDeployTestObject.addTest("basic-reject", [fourthTestWorkflow], [fourthTestChecks], [fourthTestCleanup]);
-
-k8sDeployTestObject.addCleanUp([deletePrevStep]);
+k8sDeployTestObject.addTest("basic-reject", [fourthTestWorkflow], [fourthTestChecks], [fourthTestCleanup, deletePrevStep]);
 
 k8sDeployTestObject.runTests(process.argv[2], process.argv[3]);
 
-k8sDeployTestObject.createFile('./manifests/test-ingress.yml', 'K8sDeployActionResources/manifests/test-ingress.yml')
-.then(() => 
-    k8sDeployTestObject.createFile('./manifests/test-service.yml', 'K8sDeployActionResources/manifests/test-service.yml')
-    .then(() =>
-        k8sDeployTestObject.createFile('./k8s-deploy-delete.py', 'K8sDeployActionResources/k8s-deploy-delete.py')
-        .then(() =>
-            k8sDeployTestObject.createFile('./k8s-deploy-test.py', 'K8sDeployActionResources/k8s-deploy-test.py')
-            .then(() => 
-                k8sDeployTestObject.runTests(process.argv[2], process.argv[3])
-                .then(() => 
-                    k8sDeployTestObject.deleteFile('K8sDeployActionResources/manifests/test-ingress.yml')
-                    .then(() =>
-                        k8sDeployTestObject.deleteFile('K8sDeployActionResources/manifests/test-service.yml')
-                        .then(() => 
-                            k8sDeployTestObject.deleteFile('K8sDeployActionResources/k8s-deploy-delete.py')
-                            .then(() =>
-                                k8sDeployTestObject.deleteFile('K8sDeployActionResources/k8s-deploy-test.py')
-                                .then(() => console.log("Everything done!!"))
-                            )
-                        )
-                    )
-                )
-            )
-        )
-    )
-);
+// k8sDeployTestObject.createFile('./manifests/test-ingress.yml', 'K8sDeployActionResources/manifests/test-ingress.yml')
+// .then(() => 
+//     k8sDeployTestObject.createFile('./manifests/test-service.yml', 'K8sDeployActionResources/manifests/test-service.yml')
+//     .then(() =>
+//         k8sDeployTestObject.createFile('./k8s-deploy-delete.py', 'K8sDeployActionResources/k8s-deploy-delete.py')
+//         .then(() =>
+//             k8sDeployTestObject.createFile('./k8s-deploy-test.py', 'K8sDeployActionResources/k8s-deploy-test.py')
+//             .then(() => 
+//                 k8sDeployTestObject.runTests(process.argv[2], process.argv[3])
+//                 .then(() => 
+//                     k8sDeployTestObject.deleteFile('K8sDeployActionResources/manifests/test-ingress.yml')
+//                     .then(() =>
+//                         k8sDeployTestObject.deleteFile('K8sDeployActionResources/manifests/test-service.yml')
+//                         .then(() => 
+//                             k8sDeployTestObject.deleteFile('K8sDeployActionResources/k8s-deploy-delete.py')
+//                             .then(() =>
+//                                 k8sDeployTestObject.deleteFile('K8sDeployActionResources/k8s-deploy-test.py')
+//                                 .then(() => console.log("Everything done!!"))
+//                             )
+//                         )
+//                     )
+//                 )
+//             )
+//         )
+//     )
+// );
 
