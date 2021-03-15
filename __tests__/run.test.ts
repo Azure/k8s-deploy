@@ -6,6 +6,7 @@ import * as deployment from '../src/utilities/strategy-helpers/deployment-helper
 import * as fs from 'fs';
 import * as io from '@actions/io';
 import * as toolCache from '@actions/tool-cache';
+import * as util from 'util';
 import * as fileHelper from '../src/utilities/files-helper';
 import { getWorkflowAnnotationKeyLabel, getWorkflowAnnotationsJson } from '../src/constants';
 import * as inputParam from '../src/input-parameters';
@@ -23,6 +24,7 @@ const os = require("os");
 const coreMock = mocked(core, true);
 const ioMock = mocked(io, true);
 const inputParamMock = mocked(inputParam, true);
+const osMock = mocked(os, true);
 
 const toolCacheMock = mocked(toolCache, true);
 const fileUtility = mocked(fs, true);
@@ -91,10 +93,15 @@ beforeEach(() => {
     process.env['GITHUB_TOKEN'] = 'testToken';
 })
 
-test("setKubectlPath() - install a particular version", async () => {
+test.each([
+    ['arm', 'arm'],
+    ['arm64', 'arm64'],
+    ['x64', 'amd64']
+])("setKubectlPath() - install a particular version on %s", async (osArch, kubectlArch) => {
     const kubectlVersion = 'v1.18.0'
     //Mocks
     coreMock.getInput = jest.fn().mockReturnValue(kubectlVersion);
+    osMock.arch = jest.fn().mockReturnValue(osArch);
     toolCacheMock.find = jest.fn().mockReturnValue(undefined);
     toolCacheMock.downloadTool = jest.fn().mockReturnValue('downloadpath');
     toolCacheMock.cacheFile = jest.fn().mockReturnValue('cachepath');
@@ -103,7 +110,7 @@ test("setKubectlPath() - install a particular version", async () => {
     //Invoke and assert
     await expect(action.run()).resolves.not.toThrow();
     expect(toolCacheMock.find).toBeCalledWith('kubectl', kubectlVersion);
-    expect(toolCacheMock.downloadTool).toBeCalledWith(getkubectlDownloadURL(kubectlVersion));
+    expect(toolCacheMock.downloadTool).toBeCalledWith(getkubectlDownloadURL(kubectlVersion, kubectlArch));
 });
 
 test("setKubectlPath() - install a latest version", async () => {
@@ -394,4 +401,19 @@ test("utility - getWorkflowFilePath() - Get workflow file path under API failure
     //Invoke and assert
     await expect(utility.getWorkflowFilePath(process.env.GITHUB_TOKEN)).resolves.not.toThrowError;
     await expect(utility.getWorkflowFilePath(process.env.GITHUB_TOKEN)).resolves.toBe(process.env.GITHUB_WORKFLOW);
+});
+
+test("action - run() - Throw kubectl error on 404 response", async () => {
+    const kubectlVersion = 'v1.18.0'
+    const arch = 'arm128';
+    // Mock
+    coreMock.getInput = jest.fn().mockReturnValue(kubectlVersion);
+    osMock.arch = jest.fn().mockReturnValue(arch);
+    toolCacheMock.find = jest.fn().mockReturnValue(undefined);
+    toolCacheMock.downloadTool = jest.fn().mockImplementation(_ => {
+        throw new toolCache.HTTPError(httpClient.StatusCodes.NOT_FOUND);
+    });
+
+    //Invoke and assert
+    await expect(action.run()).rejects.toThrow(util.format("Kubectl '%s' for '%s' arch not found.", kubectlVersion, arch));
 });
