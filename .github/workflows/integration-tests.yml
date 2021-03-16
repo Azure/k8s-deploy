@@ -6,7 +6,7 @@ on:
   #     - 'releases/*'
   pull_request:
     branches:
-      - master
+      - main
       - 'releases/*'
 jobs: 
     trigger-integration-tests:
