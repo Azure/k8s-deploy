@@ -130,6 +130,12 @@ export function annotateChildPods(kubectl: Kubectl, resourceType: string, resour
     return commandExecutionResults;
 }
 
+export function normaliseWorkflowStrLabel(workflowName: string): string {
+    workflowName = workflowName.startsWith('.github/workflows/') ?
+    workflowName.replace(".github/workflows/", "") : workflowName;
+    return workflowName.replace(/ /g, "_");
+}
+
 export function sleep(timeout: number) {
     return new Promise(resolve => setTimeout(resolve, timeout));
 }
