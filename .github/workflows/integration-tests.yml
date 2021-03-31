@@ -1,9 +1,5 @@
 name: "Trigger Integration tests"
 on:
-  # push:
-  #   branches:
-  ##    - master
-  #     - 'releases/*'
   pull_request:
     branches:
       - main
@@ -20,4 +16,4 @@ jobs:
             
         - name: Trigger Test run
           run: |
-            bash ./IntegrationTests/.github/workflows/TriggerIntegrationTests.sh ${{ secrets.L2_REPO_TOKEN }} ${{ github.event.pull_request.head.sha }} ${{ github.repository }} ${{ github.event.pull_request.number }} ${{ github.event.pull_request.head.ref }} ${{ github.event.pull_request.base.ref }}
+            bash ./IntegrationTests/.github/workflows/TriggerIntegrationTests.sh ${{ secrets.L2_REPO_TOKEN }} ${{ github.event.pull_request.head.sha }} ${{ github.repository }} ${{ github.event.pull_request.number }} ${{ github.event.pull_request.head.ref }} ${{ github.event.pull_request.base.ref }} ${{ secrets.L2_REPO_USER }}
