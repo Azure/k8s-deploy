@@ -1,5 +1,5 @@
 
-# Deploy manifests action for Kubernetes
+# Deploy manifests action for Kubernetes 
 
 This action can be used to deploy manifests to Kubernetes clusters.
 
