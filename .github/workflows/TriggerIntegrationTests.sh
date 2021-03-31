@@ -4,14 +4,14 @@ repository=$3
 prNumber=$4
 frombranch=$5
 tobranch=$6
-
+patUser=$7
 getPayLoad() {
     cat <<EOF
 {
     "event_type": "K8sDeployActionPR", 
     "client_payload": 
     {
-        "action": "CreateSecret", 
+        "action": "K8sDeploy", 
         "commit": "$commit", 
         "repository": "$repository", 
         "prNumber": "$prNumber", 
@@ -22,7 +22,7 @@ getPayLoad() {
 EOF
 }
 
-response=$(curl -X POST -H "Authorization: token $token" https://api.github.com/repos/Azure/azure-actions-integration-tests/dispatches --data "$(getPayLoad)")
+response=$(curl -u $patUser:$token -X POST https://api.github.com/repos/Azure/azure-actions-integration-tests/dispatches --data "$(getPayLoad)")
 
 if [ "$response" == "" ]; then
     echo "Integration tests triggered successfully"
