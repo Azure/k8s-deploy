@@ -327,8 +327,8 @@ test("deployment - deploy() - Annotate & label resources", async () => {
 });
 
 test("deployment - deploy() - Annotate & label resources for a new workflow", async () => {
-    process.env.GITHUB_WORKFLOW = '.github/workflows/NewWorkflow.yml';
-    let annotationKeyValStr = getWorkflowAnnotationKeyLabel(process.env.GITHUB_WORKFLOW) + '=' + getWorkflowAnnotationsJson('NA', '.github/workflows/NewWorkflow.yml');
+    process.env.GITHUB_WORKFLOW = '.github/workflows/New Workflow.yml';
+    let annotationKeyValStr = getWorkflowAnnotationKeyLabel(process.env.GITHUB_WORKFLOW) + '=' + getWorkflowAnnotationsJson('NA', '.github/workflows/New Workflow.yml');
     const KubernetesManifestUtilityMock = mocked(KubernetesManifestUtility, true);
     KubernetesManifestUtilityMock.checkManifestStability = jest.fn().mockReturnValue("");
     const KubernetesObjectUtilityMock = mocked(KubernetesObjectUtility, true);
@@ -352,7 +352,7 @@ test("deployment - deploy() - Annotate & label resources for a new workflow", as
     expect(kubeCtl.annotateFiles).toBeCalledWith(["manifests/deployment.yaml"], annotationKeyValStr);
     expect(kubeCtl.annotate).toBeCalledTimes(2);
     expect(kubeCtl.labelFiles).toBeCalledWith(["manifests/deployment.yaml"],
-        [`workflowFriendlyName=NewWorkflow.yml`, `workflow=${getWorkflowAnnotationKeyLabel(process.env.GITHUB_WORKFLOW)}`]);
+        [`workflowFriendlyName=New_Workflow.yml`, `workflow=${getWorkflowAnnotationKeyLabel(process.env.GITHUB_WORKFLOW)}`]);
     readFileSpy.mockRestore();
 });
 
