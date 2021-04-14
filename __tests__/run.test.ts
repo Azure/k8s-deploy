@@ -210,11 +210,32 @@ test("run() - deploy - Manifiest not provided", async () => {
     expect(coreMock.setFailed).toBeCalledWith('No manifests supplied to deploy');
 });
 
+test("run() - deploy - Only one manifest with no delimiters", async () => {
+    const kubectlVersion = 'v1.18.0'
+    coreMock.getInput = jest.fn().mockImplementation((name) => {
+        if (name == 'manifests') {
+            return "bg-smi.yml";
+        }
+        if (name == 'action') {
+            return 'deploy';
+        }
+        return kubectlVersion;
+    });
+    coreMock.setFailed = jest.fn();
+    toolCacheMock.find = jest.fn().mockReturnValue(undefined);
+    toolCacheMock.downloadTool = jest.fn().mockReturnValue('downloadpath');
+    toolCacheMock.cacheFile = jest.fn().mockReturnValue('cachepath');
+    fileUtility.chmodSync = jest.fn();
+
+    //Invoke and assert
+    await expect(action.run()).resolves.not.toThrow();
+});
+
 test("run() - deploy - Manifests provided by new line delimiter", async () => {
     const kubectlVersion = 'v1.18.0'
     coreMock.getInput = jest.fn().mockImplementation((name) => {
         if (name == 'manifests') {
-            return "bg-smi.yml\nbg.yml\ndeployment.yml";
+            return "bg-smi.yml\n  bg.yml\ndeployment.yml";
         }
         if (name == 'action') {
             return 'deploy';
@@ -235,7 +256,7 @@ test("run() - deploy - Manifests provided by comma as a delimiter", async () => 
     const kubectlVersion = 'v1.18.0'
     coreMock.getInput = jest.fn().mockImplementation((name) => {
         if (name == 'manifests') {
-            return "bg-smi.yml,bg.yml,deployment.yml";
+            return "bg-smi.yml, bg.yml, deployment.yml";
         }
         if (name == 'action') {
             return 'deploy';
