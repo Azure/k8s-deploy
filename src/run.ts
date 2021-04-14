@@ -61,6 +61,12 @@ export async function run() {
     let action = core.getInput('action');
     let manifests = manifestsInput.split(/[\n,]+/);
 
+    if (manifests.length > 0) {
+        manifests = manifests.map(manifest => {
+            return manifest.trim();
+        });
+    }
+
     if (action === 'deploy') {
         let strategy = core.getInput('strategy');
         console.log("strategy: ", strategy)
