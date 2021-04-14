@@ -59,7 +59,7 @@ export async function run() {
         namespace = 'default';
     }
     let action = core.getInput('action');
-    let manifests = manifestsInput.split('\n');
+    let manifests = manifestsInput.split(/[\n,]+/);
 
     if (action === 'deploy') {
         let strategy = core.getInput('strategy');
