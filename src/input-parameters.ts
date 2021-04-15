@@ -5,7 +5,7 @@ import * as core from '@actions/core';
 export let namespace: string = core.getInput('namespace');
 export const containers: string[] = core.getInput('images').split('\n');
 export const imagePullSecrets: string[] = core.getInput('imagepullsecrets').split('\n').filter(secret => secret.trim().length > 0);
-export const manifests = core.getInput('manifests').split(/[\n,]+/).filter(manifest => manifest.trim().length > 0);
+export const manifests = core.getInput('manifests').split(/[\n,;]+/).filter(manifest => manifest.trim().length > 0);
 export const canaryPercentage: string = core.getInput('percentage');
 export const deploymentStrategy: string = core.getInput('strategy');
 export const trafficSplitMethod: string = core.getInput('traffic-split-method');

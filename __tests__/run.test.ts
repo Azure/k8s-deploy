@@ -294,6 +294,27 @@ test("run() - deploy - Manifests provided by both new line and comma as a delimi
     await expect(action.run()).resolves.not.toThrow();
 });
 
+test("run() - deploy - Manifests provided by both new line and comma and semi-colon as a delimiter", async () => {
+    const kubectlVersion = 'v1.18.0'
+    coreMock.getInput = jest.fn().mockImplementation((name) => {
+        if (name == 'manifests') {
+            return "bg-smi.yml\nbg.yml,deployment.yml;bg.yml";
+        }
+        if (name == 'action') {
+            return 'deploy';
+        }
+        return kubectlVersion;
+    });
+    coreMock.setFailed = jest.fn();
+    toolCacheMock.find = jest.fn().mockReturnValue(undefined);
+    toolCacheMock.downloadTool = jest.fn().mockReturnValue('downloadpath');
+    toolCacheMock.cacheFile = jest.fn().mockReturnValue('cachepath');
+    fileUtility.chmodSync = jest.fn();
+
+    //Invoke and assert
+    await expect(action.run()).resolves.not.toThrow();
+});
+
 test("deployment - deploy() - Invokes with no manifestfiles", async () => {
     const kubeCtl: jest.Mocked<Kubectl> = new Kubectl("") as any;
 
