@@ -59,7 +59,13 @@ export async function run() {
         namespace = 'default';
     }
     let action = core.getInput('action');
-    let manifests = manifestsInput.split('\n');
+    let manifests = manifestsInput.split(/[\n,;]+/).filter(manifest => manifest.trim().length > 0);
+
+    if (manifests.length > 0) {
+        manifests = manifests.map(manifest => {
+            return manifest.trim();
+        });
+    }
 
     if (action === 'deploy') {
         let strategy = core.getInput('strategy');
