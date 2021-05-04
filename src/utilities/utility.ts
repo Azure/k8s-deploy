@@ -169,6 +169,12 @@ export async function getDeploymentConfig(): Promise<DeploymentConfig> {
     return Promise.resolve(deploymentConfig);
 }
 
+export function normaliseWorkflowStrLabel(workflowName: string): string {
+    workflowName = workflowName.startsWith('.github/workflows/') ?
+    workflowName.replace(".github/workflows/", "") : workflowName;
+    return workflowName.replace(/ /g, "_");
+}
+
 export function sleep(timeout: number) {
     return new Promise(resolve => setTimeout(resolve, timeout));
 }
