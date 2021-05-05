@@ -17,7 +17,7 @@ import { IExecSyncResult } from '../../utilities/tool-runner';
 
 import { deployPodCanary } from './pod-canary-deployment-helper';
 import { deploySMICanary } from './smi-canary-deployment-helper';
-import { checkForErrors, annotateChildPods, getWorkflowFilePath, getLastSuccessfulRunSha, DeploymentConfig, getDeploymentConfig } from "../utility";
+import { checkForErrors, annotateChildPods, getWorkflowFilePath, getLastSuccessfulRunSha, DeploymentConfig, getDeploymentConfig, normaliseWorkflowStrLabel } from "../utility";
 import { isBlueGreenDeploymentStrategy, isIngressRoute, isSMIRoute, routeBlueGreen } from './blue-green-helper';
 import { deployBlueGreenService } from './service-blue-green-helper';
 import { deployBlueGreenIngress } from './ingress-blue-green-helper';
@@ -152,10 +152,7 @@ function annotateResources(files: string[], kubectl: Kubectl, resourceTypes: Res
 }
 
 function labelResources(files: string[], kubectl: Kubectl, label: string) {
-    let workflowName = process.env.GITHUB_WORKFLOW;
-    workflowName = workflowName.startsWith('.github/workflows/') ?
-        workflowName.replace(".github/workflows/", "") : workflowName;
-    const labels = [`workflowFriendlyName=${workflowName}`, `workflow=${label}`];
+    const labels = [`workflowFriendlyName=${normaliseWorkflowStrLabel(process.env.GITHUB_WORKFLOW)}`, `workflow=${label}`];
     checkForErrors([kubectl.labelFiles(files, labels)], true);
 }
 
