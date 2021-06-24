@@ -42,9 +42,6 @@ inputs:
     description: 'Percentage of traffic redirect to canary deployment'
     required: false
     default: 0
-  args:
-    description: 'Arguments'
-    required: false
   action:
     description: 'deploy/promote/reject'
     required: true

@@ -12,7 +12,6 @@ export const trafficSplitMethod: string = core.getInput('traffic-split-method');
 export const routeMethod: string = core.getInput('route-method');
 export const versionSwitchBuffer: string = core.getInput('version-switch-buffer');
 export const baselineAndCanaryReplicas: string = core.getInput('baseline-and-canary-replicas');
-export const args: string = core.getInput('arguments');
 export const forceDeployment: boolean = core.getInput('force').toLowerCase() == 'true';
 export const githubToken = core.getInput("token");
 
