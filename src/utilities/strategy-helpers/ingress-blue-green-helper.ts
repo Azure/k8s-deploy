@@ -6,6 +6,7 @@ import * as fileHelper from '../files-helper';
 import { createWorkloadsWithLabel, getManifestObjects, getNewBlueGreenObject, addBlueGreenLabelsAndAnnotations, deleteWorkloadsAndServicesWithLabel, fetchResource, BlueGreenManifests } from './blue-green-helper';
 import { GREEN_LABEL_VALUE, NONE_LABEL_VALUE, BLUE_GREEN_VERSION_LABEL } from './blue-green-helper';
 const BACKEND = 'BACKEND';
+const INGRESS_API_VERSION_NETWORKING_K8S_IO_V1 = 'networking.k8s.io/v1';
 
 export function deployBlueGreenIngress(kubectl: Kubectl, filePaths: string[]) {
     // get all kubernetes objects defined in manifest files
@@ -118,7 +119,14 @@ function isIngressRouted(ingressObject: any, serviceNameMap: Map<string, string>
     let isIngressRouted: boolean = false;
     // sees if ingress targets a service in the given manifests
     JSON.parse(JSON.stringify(ingressObject), (key, value) => {
-        if (key === 'serviceName' && serviceNameMap.has(value)) {
+        // if the api version is the latest version, then parse using the newer field schema
+        if(ingressObject.apiVersion === INGRESS_API_VERSION_NETWORKING_K8S_IO_V1) {
+            if (key.toUpperCase() === BACKEND && value.service && value.service.name && serviceNameMap.has(value.service.name)) {
+                isIngressRouted = true;
+            }
+        }
+        // otherwise use the same test as before
+        else if (key === 'serviceName' && serviceNameMap.has(value)) {
             isIngressRouted = true;
         }
         return value;
@@ -144,6 +152,11 @@ export function getUpdatedBlueGreenIngress(inputObject: any, serviceNameMap: Map
 
 export function updateIngressBackend(inputObject: any, serviceNameMap: Map<string, string>): any {
     inputObject = JSON.parse(JSON.stringify(inputObject), (key, value) => {
+        if(inputObject.apiVersion === INGRESS_API_VERSION_NETWORKING_K8S_IO_V1) {
+            if (key.toUpperCase() === BACKEND && value.service && value.service.name && serviceNameMap.has(value.service.name)) {
+                value.service.name = serviceNameMap.get(value.service.name);
+            }
+        }
         if(key.toUpperCase() === BACKEND) {
             let serviceName = value.serviceName; 
             if (serviceNameMap.has(serviceName)) {
