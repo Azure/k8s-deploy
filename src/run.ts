@@ -19,6 +19,8 @@ async function setKubectlPath() {
         kubectlPath = toolCache.find('kubectl', version);
         if (!kubectlPath) {
             kubectlPath = await installKubectl(version);
+        } else {
+            kubectlPath = path.join(kubectlPath, `kubectl${getExecutableExtension()}`);
         }
     } else {
         kubectlPath = await io.which('kubectl', false);
