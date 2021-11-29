@@ -186,33 +186,31 @@ function getTrafficSplitObject(kubectl: Kubectl, name: string, stableWeight: num
     if (!trafficSplitAPIVersion) {
         trafficSplitAPIVersion = kubectlUtils.getTrafficSplitAPIVersion(kubectl);
     }
-    const trafficSplitObjectJson = `{
+
+    return `{
         "apiVersion": "${trafficSplitAPIVersion}",
         "kind": "TrafficSplit",
         "metadata": {
-            "name": "%s"
+            "name": "${getTrafficSplitResourceName(name)}"
         },
         "spec": {
             "backends": [
                 {
-                    "service": "%s",
-                    "weight": "%sm"
+                    "service": "${canaryDeploymentHelper.getStableResourceName(name)}",
+                    "weight": "${stableWeight}"
                 },
                 {
-                    "service": "%s",
-                    "weight": "%sm"
+                    "service": "${canaryDeploymentHelper.getBaselineResourceName(name)}",
+                    "weight": "${baselineWeight}"
                 },
                 {
-                    "service": "%s",
-                    "weight": "%sm"
+                    "service": "${canaryDeploymentHelper.getCanaryResourceName(name)}",
+                    "weight": "${canaryWeight}"
                 }
             ],
             "service": "%s"
         }
     }`;
-
-    const trafficSplitObject = util.format(trafficSplitObjectJson, getTrafficSplitResourceName(name), canaryDeploymentHelper.getStableResourceName(name), stableWeight, canaryDeploymentHelper.getBaselineResourceName(name), baselineWeight, canaryDeploymentHelper.getCanaryResourceName(name), canaryWeight, name);
-    return trafficSplitObject;
 }
 
 function getTrafficSplitResourceName(name: string) {
