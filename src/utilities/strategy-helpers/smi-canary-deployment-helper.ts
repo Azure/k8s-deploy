@@ -208,7 +208,7 @@ function getTrafficSplitObject(kubectl: Kubectl, name: string, stableWeight: num
                     "weight": "${canaryWeight}"
                 }
             ],
-            "service": "%s"
+            "service": "${name}"
         }
     }`;
 }
