@@ -1,4 +1,4 @@
-name: Integration test for k8s-deploy-action
+name: Minikube integration test for k8s-deploy
 on: pull_request
 
 jobs:
@@ -12,7 +12,6 @@ jobs:
 
       - name: Building latest changes
         run: |
-          cd k8s-deploy
           npm install
           npm run build
 
@@ -50,7 +49,7 @@ jobs:
           python ./K8sDeployActionResources/k8s-deploy-delete.py 'Ingress' 'nginx-ingress' ${{ steps.ns.outputs.name }}
 
       - name: Executing deploy action
-        uses: ./k8s-deploy
+        uses: ./
         with:
           namespace: test-${{ steps.ns.outputs.name }}
           images: nginx:1.14.2
