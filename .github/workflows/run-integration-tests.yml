@@ -40,7 +40,7 @@ jobs:
         timeout-minutes: 3
 
       - name: Create namespace to run tests
-        run: kubectl create ns test-${{ steps.ns.outputs.name }}-${{ matrix.os }}
+        run: kubectl create ns test-${{ steps.ns.outputs.name }}
 
       - uses: actions/setup-python@v2
         name: Install Python
@@ -49,16 +49,16 @@ jobs:
 
       - name: Cleaning any previously created items
         run: |
-          python K8sDeployActionResources/k8s-deploy-delete.py 'Service' 'nginx-service' ${{ steps.ns.outputs.name }}-${{ matrix.os }}
-          python K8sDeployActionResources/k8s-deploy-delete.py 'Service' 'nginx-service-green' ${{ steps.ns.outputs.name }}-${{ matrix.os }}
-          python K8sDeployActionResources/k8s-deploy-delete.py 'Deployment' 'nginx-deployment-green' ${{ steps.ns.outputs.name }}-${{ matrix.os }}
-          python K8sDeployActionResources/k8s-deploy-delete.py 'Deployment' 'nginx-deployment' ${{ steps.ns.outputs.name }}-${{ matrix.os }}
-          python K8sDeployActionResources/k8s-deploy-delete.py 'Ingress' 'nginx-ingress' ${{ steps.ns.outputs.name }}-${{ matrix.os }}
+          python K8sDeployActionResources/k8s-deploy-delete.py 'Service' 'nginx-service' ${{ steps.ns.outputs.name }}
+          python K8sDeployActionResources/k8s-deploy-delete.py 'Service' 'nginx-service-green' ${{ steps.ns.outputs.name }}
+          python K8sDeployActionResources/k8s-deploy-delete.py 'Deployment' 'nginx-deployment-green' ${{ steps.ns.outputs.name }}
+          python K8sDeployActionResources/k8s-deploy-delete.py 'Deployment' 'nginx-deployment' ${{ steps.ns.outputs.name }}
+          python K8sDeployActionResources/k8s-deploy-delete.py 'Ingress' 'nginx-ingress' ${{ steps.ns.outputs.name }}
 
-      - name: Executing deploy action on ${{ matrix.os }}
+      - name: Executing deploy action
         uses: ./k8s-deploy
         with:
-          namespace: test-${{ steps.ns.outputs.name }}-${{ matrix.os }}
+          namespace: test-${{ steps.ns.outputs.name }}
           images: nginx:1.14.2
           manifests: |
             K8sDeployActionResources/manifests/test-service.yml
@@ -68,13 +68,13 @@ jobs:
 
       - name: Checking if deploments and services were created with green labels
         run: |
-          python K8sDeployActionResources/k8s-deploy-test.py 'Deployment' 'nginx-deployment-green' 'green' ${{ steps.ns.outputs.name }}-${{ matrix.os }}
-          python K8sDeployActionResources/k8s-deploy-test.py 'Service' 'nginx-service' 'green' ${{ steps.ns.outputs.name }}-${{ matrix.os }}
+          python K8sDeployActionResources/k8s-deploy-test.py 'Deployment' 'nginx-deployment-green' 'green' ${{ steps.ns.outputs.name }}
+          python K8sDeployActionResources/k8s-deploy-test.py 'Service' 'nginx-service' 'green' ${{ steps.ns.outputs.name }}
 
-      - name: Executing promote action on ${{ matrix.os }}
+      - name: Executing promote action
         uses: ./k8s-deploy
         with:
-          namespace: test-${{ steps.ns.outputs.name }}-${{ matrix.os }}
+          namespace: test-${{ steps.ns.outputs.name }}
           images: nginx:1.14.2
           manifests: |
             K8sDeployActionResources/manifests/test-service.yml
@@ -84,13 +84,13 @@ jobs:
 
       - name: Checking if deploments and services were created with none labels after promote
         run: |
-          python K8sDeployActionResources/k8s-deploy-test.py 'Deployment' 'nginx-deployment' 'None' ${{ steps.ns.outputs.name }}-${{ matrix.os }}
-          python K8sDeployActionResources/k8s-deploy-test.py 'Service' 'nginx-service' 'None' ${{ steps.ns.outputs.name }}-${{ matrix.os }}
+          python K8sDeployActionResources/k8s-deploy-test.py 'Deployment' 'nginx-deployment' 'None' ${{ steps.ns.outputs.name }}
+          python K8sDeployActionResources/k8s-deploy-test.py 'Service' 'nginx-service' 'None' ${{ steps.ns.outputs.name }}
 
-      - name: Executing deploy action on ${{ matrix.os }}
+      - name: Executing deploy action on
         uses: ./k8s-deploy
         with:
-          namespace: test-${{ steps.ns.outputs.name }}-${{ matrix.os }}
+          namespace: test-${{ steps.ns.outputs.name }}
           images: nginx:1.19.1
           manifests: |
             K8sDeployActionResources/manifests/test-service.yml
@@ -100,14 +100,14 @@ jobs:
 
       - name: Checking if deploments and services were created with green labels, and old workloads persist on deploy
         run: |
-          python K8sDeployActionResources/k8s-deploy-test.py 'Deployment' 'nginx-deployment-green' 'green' ${{ steps.ns.outputs.name }}-${{ matrix.os }}
-          python K8sDeployActionResources/k8s-deploy-test.py 'Service' 'nginx-service' 'green' ${{ steps.ns.outputs.name }}-${{ matrix.os }}
-          python K8sDeployActionResources/k8s-deploy-test.py 'Deployment' 'nginx-deployment' 'None' ${{ steps.ns.outputs.name }}-${{ matrix.os }}
+          python K8sDeployActionResources/k8s-deploy-test.py 'Deployment' 'nginx-deployment-green' 'green' ${{ steps.ns.outputs.name }}
+          python K8sDeployActionResources/k8s-deploy-test.py 'Service' 'nginx-service' 'green' ${{ steps.ns.outputs.name }}
+          python K8sDeployActionResources/k8s-deploy-test.py 'Deployment' 'nginx-deployment' 'None' ${{ steps.ns.outputs.name }}
 
-      - name: Executing reject action on ${{ matrix.os }}
+      - name: Executing reject action
         uses: ./k8s-deploy
         with:
-          namespace: test-${{ steps.ns.outputs.name }}-${{ matrix.os }}
+          namespace: test-${{ steps.ns.outputs.name }}
           images: nginx:1.19.1
           manifests: |
             K8sDeployActionResources/manifests/test-service.yml
@@ -117,18 +117,18 @@ jobs:
 
       - name: Checking if deploments and services were routed back to none labels after reject
         run: |
-          python K8sDeployActionResources/k8s-deploy-test.py 'Deployment' 'nginx-deployment' 'None' ${{ steps.ns.outputs.name }}-${{ matrix.os }}
-          python K8sDeployActionResources/k8s-deploy-test.py 'Service' 'nginx-service' 'None' ${{ steps.ns.outputs.name }}-${{ matrix.os }}
+          python K8sDeployActionResources/k8s-deploy-test.py 'Deployment' 'nginx-deployment' 'None' ${{ steps.ns.outputs.name }}
+          python K8sDeployActionResources/k8s-deploy-test.py 'Service' 'nginx-service' 'None' ${{ steps.ns.outputs.name }}
 
       - name: Cleaning up current set up
         run: |
-          python K8sDeployActionResources/k8s-deploy-delete.py 'Service' 'nginx-service' ${{ steps.ns.outputs.name }}-${{ matrix.os }}
-          python K8sDeployActionResources/k8s-deploy-delete.py 'Deployment' 'nginx-deployment' ${{ steps.ns.outputs.name }}-${{ matrix.os }}
+          python K8sDeployActionResources/k8s-deploy-delete.py 'Service' 'nginx-service' ${{ steps.ns.outputs.name }}
+          python K8sDeployActionResources/k8s-deploy-delete.py 'Deployment' 'nginx-deployment' ${{ steps.ns.outputs.name }}
 
-      - name: Executing deploy action for ingress on ${{ matrix.os }}
+      - name: Executing deploy action for ingress
         uses: ./k8s-deploy
         with:
-          namespace: test-${{ steps.ns.outputs.name }}-${{ matrix.os }}
+          namespace: test-${{ steps.ns.outputs.name }}
           images: nginx:1.14.2
           manifests: |
             K8sDeployActionResources/manifests/test-ingress.yml
@@ -138,14 +138,14 @@ jobs:
 
       - name: Checking if deploments, services and ingresses were created with green labels
         run: |
-          python K8sDeployActionResources/k8s-deploy-test.py 'Deployment' 'nginx-deployment-green' 'green' ${{ steps.ns.outputs.name }}-${{ matrix.os }}
-          python K8sDeployActionResources/k8s-deploy-test.py 'Service' 'nginx-service-green' 'green' ${{ steps.ns.outputs.name }}-${{ matrix.os }}
-          python K8sDeployActionResources/k8s-deploy-test.py 'Ingress' 'nginx-ingress' 'green' ${{ steps.ns.outputs.name }}-${{ matrix.os }}
+          python K8sDeployActionResources/k8s-deploy-test.py 'Deployment' 'nginx-deployment-green' 'green' ${{ steps.ns.outputs.name }}
+          python K8sDeployActionResources/k8s-deploy-test.py 'Service' 'nginx-service-green' 'green' ${{ steps.ns.outputs.name }}
+          python K8sDeployActionResources/k8s-deploy-test.py 'Ingress' 'nginx-ingress' 'green' ${{ steps.ns.outputs.name }}
 
-      - name: Executing promote action for ingress on ${{ matrix.os }}
+      - name: Executing promote action for ingress
         uses: ./k8s-deploy
         with:
-          namespace: test-${{ steps.ns.outputs.name }}-${{ matrix.os }}
+          namespace: test-${{ steps.ns.outputs.name }}
           images: nginx:1.14.2
           manifests: |
             K8sDeployActionResources/manifests/test-ingress.yml
@@ -155,14 +155,14 @@ jobs:
 
       - name: Checking if deploments, services and ingresses were created with none labels after promote
         run: |
-          python K8sDeployActionResources/k8s-deploy-test.py 'Deployment' 'nginx-deployment' 'None' ${{ steps.ns.outputs.name }}-${{ matrix.os }}
-          python K8sDeployActionResources/k8s-deploy-test.py 'Service' 'nginx-service' 'None' ${{ steps.ns.outputs.name }}-${{ matrix.os }}
-          python K8sDeployActionResources/k8s-deploy-test.py 'Ingress' 'nginx-ingress' 'None' ${{ steps.ns.outputs.name }}-${{ matrix.os }}
+          python K8sDeployActionResources/k8s-deploy-test.py 'Deployment' 'nginx-deployment' 'None' ${{ steps.ns.outputs.name }}
+          python K8sDeployActionResources/k8s-deploy-test.py 'Service' 'nginx-service' 'None' ${{ steps.ns.outputs.name }}
+          python K8sDeployActionResources/k8s-deploy-test.py 'Ingress' 'nginx-ingress' 'None' ${{ steps.ns.outputs.name }}
 
-      - name: Executing deploy action for ingress on ${{ matrix.os }}
+      - name: Executing deploy action for ingress
         uses: ./k8s-deploy
         with:
-          namespace: test-${{ steps.ns.outputs.name }}-${{ matrix.os }}
+          namespace: test-${{ steps.ns.outputs.name }}
           images: nginx:1.19.1
           manifests: |
             K8sDeployActionResources/manifests/test-ingress.yml
@@ -172,16 +172,16 @@ jobs:
 
       - name: Checking if deploments, services and ingresses were created with green labels after deploy, and old deployment persists
         run: |
-          python K8sDeployActionResources/k8s-deploy-test.py 'Deployment' 'nginx-deployment-green' 'green' ${{ steps.ns.outputs.name }}-${{ matrix.os }}
-          python K8sDeployActionResources/k8s-deploy-test.py 'Deployment' 'nginx-deployment' 'None' ${{ steps.ns.outputs.name }}-${{ matrix.os }}
-          python K8sDeployActionResources/k8s-deploy-test.py 'Service' 'nginx-service' 'None' ${{ steps.ns.outputs.name }}-${{ matrix.os }}
-          python K8sDeployActionResources/k8s-deploy-test.py 'Service' 'nginx-service-green' 'green' ${{ steps.ns.outputs.name }}-${{ matrix.os }}
-          python K8sDeployActionResources/k8s-deploy-test.py 'Ingress' 'nginx-ingress' 'green' ${{ steps.ns.outputs.name }}-${{ matrix.os }}
+          python K8sDeployActionResources/k8s-deploy-test.py 'Deployment' 'nginx-deployment-green' 'green' ${{ steps.ns.outputs.name }}
+          python K8sDeployActionResources/k8s-deploy-test.py 'Deployment' 'nginx-deployment' 'None' ${{ steps.ns.outputs.name }}
+          python K8sDeployActionResources/k8s-deploy-test.py 'Service' 'nginx-service' 'None' ${{ steps.ns.outputs.name }}
+          python K8sDeployActionResources/k8s-deploy-test.py 'Service' 'nginx-service-green' 'green' ${{ steps.ns.outputs.name }}
+          python K8sDeployActionResources/k8s-deploy-test.py 'Ingress' 'nginx-ingress' 'green' ${{ steps.ns.outputs.name }}
 
-      - name: Executing reject action for ingress on ${{ matrix.os }}
+      - name: Executing reject action for ingress
         uses: ./k8s-deploy
         with:
-          namespace: test-${{ steps.ns.outputs.name }}-${{ matrix.os }}
+          namespace: test-${{ steps.ns.outputs.name }}
           images: nginx:1.19.1
           manifests: |
             K8sDeployActionResources/manifests/test-ingress.yml
@@ -191,13 +191,13 @@ jobs:
 
       - name: Checking if deploments, services and ingresses were created with none labels after reject
         run: |
-          python K8sDeployActionResources/k8s-deploy-test.py 'Deployment' 'nginx-deployment' 'None' ${{ steps.ns.outputs.name }}-${{ matrix.os }}
-          python K8sDeployActionResources/k8s-deploy-test.py 'Service' 'nginx-service' 'None' ${{ steps.ns.outputs.name }}-${{ matrix.os }}
-          python K8sDeployActionResources/k8s-deploy-test.py 'Ingress' 'nginx-ingress' 'None' ${{ steps.ns.outputs.name }}-${{ matrix.os }}
+          python K8sDeployActionResources/k8s-deploy-test.py 'Deployment' 'nginx-deployment' 'None' ${{ steps.ns.outputs.name }}
+          python K8sDeployActionResources/k8s-deploy-test.py 'Service' 'nginx-service' 'None' ${{ steps.ns.outputs.name }}
+          python K8sDeployActionResources/k8s-deploy-test.py 'Ingress' 'nginx-ingress' 'None' ${{ steps.ns.outputs.name }}
 
       - if: ${{ always() }}
         name: Delete created namespace
-        run: kubectl delete ns test-${{ steps.ns.outputs.name }}-${{ matrix.os }}
+        run: kubectl delete ns test-${{ steps.ns.outputs.name }}
 
       - if: ${{ always() }}
         name: Posting result back to PR
