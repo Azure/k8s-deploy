@@ -4,10 +4,7 @@ on: pull_request
 jobs:
   run-integration-test:
     name: Validate release and main branch
-    strategy:
-      matrix:
-        os: [windows-latest, ubuntu-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     env:
       KUBECONFIG: /home/runner/.kube/config
     steps:
