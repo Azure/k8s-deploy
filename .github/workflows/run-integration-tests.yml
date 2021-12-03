@@ -37,6 +37,7 @@ jobs:
           minikube version: "v1.24.0"
           kubernetes version: "v1.17.8"
           driver: "none"
+        timeout-minutes: 3
 
       - name: Create namespace to run tests
         run: kubectl create ns test-${{ steps.ns.outputs.name }}-${{ matrix.os }}
