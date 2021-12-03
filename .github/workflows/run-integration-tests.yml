@@ -9,12 +9,6 @@ jobs:
       KUBECONFIG: /home/runner/.kube/config
     steps:
       - uses: actions/checkout@v2
-        with:
-          path: k8s-deploy
-
-      - run: |
-          mkdir ./K8sDeployActionResources
-          cp -R ./k8s-deploy/K8sDeployActionResources ./K8sDeployActionResources
 
       - name: Building latest changes
         run: |
@@ -49,11 +43,11 @@ jobs:
 
       - name: Cleaning any previously created items
         run: |
-          python K8sDeployActionResources/k8s-deploy-delete.py 'Service' 'nginx-service' ${{ steps.ns.outputs.name }}
-          python K8sDeployActionResources/k8s-deploy-delete.py 'Service' 'nginx-service-green' ${{ steps.ns.outputs.name }}
-          python K8sDeployActionResources/k8s-deploy-delete.py 'Deployment' 'nginx-deployment-green' ${{ steps.ns.outputs.name }}
-          python K8sDeployActionResources/k8s-deploy-delete.py 'Deployment' 'nginx-deployment' ${{ steps.ns.outputs.name }}
-          python K8sDeployActionResources/k8s-deploy-delete.py 'Ingress' 'nginx-ingress' ${{ steps.ns.outputs.name }}
+          python ./K8sDeployActionResources/k8s-deploy-delete.py 'Service' 'nginx-service' ${{ steps.ns.outputs.name }}
+          python ./K8sDeployActionResources/k8s-deploy-delete.py 'Service' 'nginx-service-green' ${{ steps.ns.outputs.name }}
+          python ./K8sDeployActionResources/k8s-deploy-delete.py 'Deployment' 'nginx-deployment-green' ${{ steps.ns.outputs.name }}
+          python ./K8sDeployActionResources/k8s-deploy-delete.py 'Deployment' 'nginx-deployment' ${{ steps.ns.outputs.name }}
+          python ./K8sDeployActionResources/k8s-deploy-delete.py 'Ingress' 'nginx-ingress' ${{ steps.ns.outputs.name }}
 
       - name: Executing deploy action
         uses: ./k8s-deploy
