@@ -1,9 +1,9 @@
-name: Minikube integration test for k8s-deploy
+name: Minikube Integration Tests
 on: pull_request
 
 jobs:
   run-integration-test:
-    name: Validate release and main branch
+    name: Run Minikube Integration Tests
     runs-on: ubuntu-latest
     env:
       KUBECONFIG: /home/runner/.kube/config
