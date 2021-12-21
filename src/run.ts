@@ -10,88 +10,89 @@ import {
 import { getExecutableExtension, isEqual } from "./utilities/utility";
 
 import { Kubectl } from "./kubectl-object-model";
-import { deploy } from "./utilities/strategy-helpers/deployment-helper";
+import { deploy } from "./deploy/deploy";
 import { promote } from "./actions/promote";
 import { reject } from "./actions/reject";
+import { Action, parseAction } from "./types/action";
+import { parseDeploymentStrategy } from "./types/deploymentStrategy";
 
 let kubectlPath = "";
 
-async function setKubectlPath() {
-  if (core.getInput("kubectl-version")) {
-    const version = core.getInput("kubectl-version");
-    kubectlPath = toolCache.find("kubectl", version);
-    if (!kubectlPath) {
-      kubectlPath = await installKubectl(version);
-    }
-  } else {
-    kubectlPath = await io.which("kubectl", false);
-    if (!kubectlPath) {
-      const allVersions = toolCache.findAllVersions("kubectl");
-      kubectlPath =
-        allVersions.length > 0 ? toolCache.find("kubectl", allVersions[0]) : "";
-      if (!kubectlPath) {
-        throw new Error(
-          'Kubectl is not installed, either add install-kubectl action or provide "kubectl-version" input to download kubectl'
-        );
-      }
-      kubectlPath = path.join(
-        kubectlPath,
-        `kubectl${getExecutableExtension()}`
-      );
-    }
-  }
-}
-
-async function installKubectl(version: string) {
-  if (isEqual(version, "latest")) {
-    version = await getStableKubectlVersion();
-  }
-  return await downloadKubectl(version);
-}
-
-function checkClusterContext() {
+export async function run() {
   if (!process.env["KUBECONFIG"]) {
     core.warning(
-      "KUBECONFIG env is not explicitly set. Ensure cluster context is set by using k8s-set-context / aks-set-context action."
+      "KUBECONFIG env is not explicitly set. Ensure cluster context is set by using k8s-set-context action."
     );
-  }
-}
 
-export async function run() {
-  checkClusterContext();
-  await setKubectlPath();
-  let manifestsInput = core.getInput("manifests");
-  if (!manifestsInput) {
-    core.setFailed("No manifests supplied to deploy");
-    return;
-  }
-  let namespace = core.getInput("namespace");
-  if (!namespace) {
-    namespace = "default";
-  }
-  let action = core.getInput("action");
-  let manifests = manifestsInput
-    .split(/[\n,;]+/)
-    .filter((manifest) => manifest.trim().length > 0);
+    await setKubectlPath(); // todo: remove
 
-  if (manifests.length > 0) {
-    manifests = manifests.map((manifest) => {
-      return manifest.trim();
-    });
-  }
-
-  if (action === "deploy") {
-    let strategy = core.getInput("strategy");
-    console.log("strategy: ", strategy);
-    await deploy(new Kubectl(kubectlPath, namespace), manifests, strategy);
-  } else if (action === "promote") {
-    await promote();
-  } else if (action === "reject") {
-    await reject();
-  } else {
-    core.setFailed(
-      "Not a valid action. The allowed actions are deploy, promote, reject"
+    const action: Action | undefined = parseAction(
+      core.getInput("action", { required: true })
     );
+
+    switch (action) {
+      case Action.DEPLOY: {
+        // get inputs
+        const strategy = parseDeploymentStrategy(core.getInput("strategy"));
+        const manifestsInput = core.getInput("manifests", { required: true });
+        const manifestFilePaths = manifestsInput
+          .split(/[\n,;]+/) // split into each individual manifest
+          .map((manifest) => manifest.trim()) // remove surrounding whitespace
+          .filter((manifest) => manifest.length > 0); // remove any blanks
+        const namespace = core.getInput("namespace") || "default";
+
+        await deploy(manifestFilePaths, strategy);
+        break;
+      }
+      case Action.PROMOTE: {
+        await promote();
+        break;
+      }
+      case Action.REJECT: {
+        await reject();
+        break;
+      }
+      default: {
+        throw Error(
+          'Not a valid action. The allowed actions are "deploy", "promote", and "reject".'
+        );
+      }
+    }
+  }
+
+  async function setKubectlPath() {
+    if (core.getInput("kubectl-version")) {
+      const version = core.getInput("kubectl-version");
+      kubectlPath = toolCache.find("kubectl", version);
+      if (!kubectlPath) {
+        kubectlPath = await installKubectl(version);
+      }
+    } else {
+      kubectlPath = await io.which("kubectl", false);
+      if (!kubectlPath) {
+        const allVersions = toolCache.findAllVersions("kubectl");
+        kubectlPath =
+          allVersions.length > 0
+            ? toolCache.find("kubectl", allVersions[0])
+            : "";
+        if (!kubectlPath) {
+          throw new Error(
+            'Kubectl is not installed, either add install-kubectl action or provide "kubectl-version" input to download kubectl'
+          );
+        }
+        kubectlPath = path.join(
+          kubectlPath,
+          `kubectl${getExecutableExtension()}`
+        );
+      }
+    }
+  }
+
+  async function installKubectl(version: string) {
+    if (isEqual(version, "latest")) {
+      version = await getStableKubectlVersion();
+    }
+    return await downloadKubectl(version);
   }
 }
 

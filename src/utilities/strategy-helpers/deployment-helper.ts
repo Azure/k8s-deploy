@@ -1,7 +1,6 @@
 "use strict";
 
 import * as fs from "fs";
-import * as core from "@actions/core";
 import * as yaml from "js-yaml";
 import * as canaryDeploymentHelper from "./canary-deployment-helper";
 import * as KubernetesObjectUtility from "../resource-object-utility";
@@ -10,9 +9,7 @@ import * as models from "../../constants";
 import * as fileHelper from "../files-helper";
 import * as utils from "../manifest-utilities";
 import * as KubernetesManifestUtility from "../manifest-stability-utility";
-import * as KubernetesConstants from "../../constants";
 import { Kubectl, Resource } from "../../kubectl-object-model";
-import { getUpdatedManifestFiles } from "../manifest-utilities";
 import { IExecSyncResult } from "../../utilities/tool-runner";
 
 import { deployPodCanary } from "./pod-canary-deployment-helper";
@@ -26,73 +23,10 @@ import {
   getDeploymentConfig,
   normaliseWorkflowStrLabel,
 } from "../utility";
-import {
-  isBlueGreenDeploymentStrategy,
-  isIngressRoute,
-  isSMIRoute,
-  routeBlueGreen,
-} from "./blue-green-helper";
+import { isIngressRoute, isSMIRoute } from "./blue-green-helper";
 import { deployBlueGreenService } from "./service-blue-green-helper";
 import { deployBlueGreenIngress } from "./ingress-blue-green-helper";
 import { deployBlueGreenSMI } from "./smi-blue-green-helper";
-
-export async function deploy(
-  kubectl: Kubectl,
-  manifestFilePaths: string[],
-  deploymentStrategy: string
-) {
-  // get manifest files
-  let inputManifestFiles: string[] = getUpdatedManifestFiles(manifestFilePaths);
-
-  // deployment
-  const deployedManifestFiles = deployManifests(
-    inputManifestFiles,
-    kubectl,
-    isCanaryDeploymentStrategy(deploymentStrategy),
-    isBlueGreenDeploymentStrategy()
-  );
-
-  // check manifest stability
-  const resourceTypes: Resource[] = KubernetesObjectUtility.getResources(
-    deployedManifestFiles,
-    models.deploymentTypes.concat([
-      KubernetesConstants.DiscoveryAndLoadBalancerResource.service,
-    ])
-  );
-  await checkManifestStability(kubectl, resourceTypes);
-
-  // route blue-green deployments
-  if (isBlueGreenDeploymentStrategy()) {
-    await routeBlueGreen(kubectl, inputManifestFiles);
-  }
-
-  // print ingress resources
-  const ingressResources: Resource[] = KubernetesObjectUtility.getResources(
-    deployedManifestFiles,
-    [KubernetesConstants.DiscoveryAndLoadBalancerResource.ingress]
-  );
-  ingressResources.forEach((ingressResource) => {
-    kubectl.getResource(
-      KubernetesConstants.DiscoveryAndLoadBalancerResource.ingress,
-      ingressResource.name
-    );
-  });
-
-  // annotate resources
-  let allPods: any;
-  try {
-    allPods = JSON.parse(kubectl.getAllPods().stdout);
-  } catch (e) {
-    core.debug("Unable to parse pods; Error: " + e);
-  }
-
-  annotateAndLabelResources(
-    deployedManifestFiles,
-    kubectl,
-    resourceTypes,
-    allPods
-  );
-}
 
 export function getManifestFiles(manifestFilePaths: string[]): string[] {
   const files: string[] = utils.getManifestFiles(manifestFilePaths);
@@ -104,7 +38,7 @@ export function getManifestFiles(manifestFilePaths: string[]): string[] {
   return files;
 }
 
-function deployManifests(
+export function deployManifests(
   files: string[],
   kubectl: Kubectl,
   isCanaryDeploymentStrategy: boolean,
@@ -175,14 +109,14 @@ function appendStableVersionLabelToResource(
   return manifestFiles;
 }
 
-async function checkManifestStability(
+export async function checkManifestStability(
   kubectl: Kubectl,
   resources: Resource[]
 ): Promise<void> {
   await KubernetesManifestUtility.checkManifestStability(kubectl, resources);
 }
 
-async function annotateAndLabelResources(
+export async function annotateAndLabelResources(
   files: string[],
   kubectl: Kubectl,
   resourceTypes: Resource[],
@@ -264,7 +198,9 @@ function labelResources(files: string[], kubectl: Kubectl, label: string) {
   checkForErrors([kubectl.labelFiles(files, labels)], true);
 }
 
-function isCanaryDeploymentStrategy(deploymentStrategy: string): boolean {
+export function isCanaryDeploymentStrategy(
+  deploymentStrategy: string
+): boolean {
   return (
     deploymentStrategy != null &&
     deploymentStrategy.toUpperCase() ===

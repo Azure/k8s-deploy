@@ -8,6 +8,7 @@ import * as kubectlutility from "./kubectl-util";
 import * as io from "@actions/io";
 import { isEqual } from "./utility";
 import * as fileHelper from "./files-helper";
+import { getTempDirectory } from "./files-helper";
 import * as KubernetesObjectUtility from "./resource-object-utility";
 import * as TaskInputParameters from "../input-parameters";
 
@@ -78,16 +79,13 @@ export function getDeleteCmdArgs(
 */
 
 export function substituteImageNameInSpecFile(
-  currentString: string,
+  spec: string,
   imageName: string,
   imageNameWithNewTag: string
 ) {
-  if (currentString.indexOf(imageName) < 0) {
-    core.debug(`No occurence of replacement token: ${imageName} found`);
-    return currentString;
-  }
+  if (spec.indexOf(imageName) < 0) return spec;
 
-  return currentString.split("\n").reduce((acc, line) => {
+  return spec.split("\n").reduce((acc, line) => {
     const imageKeyword = line.match(/^ *image:/);
     if (imageKeyword) {
       let [currentImageName, currentImageTag] = line
@@ -96,8 +94,8 @@ export function substituteImageNameInSpecFile(
         .replace(/[',"]/g, "") // replace allowed quotes with nothing
         .split(":");
 
-      if (!currentImageTag && currentImageName.indexOf(" ") > 0) {
-        currentImageName = currentImageName.split(" ")[0]; // Stripping off comments
+      if (currentImageName?.indexOf(" ") > 0) {
+        currentImageName = currentImageName.split(" ")[0]; // remove comments
       }
 
       if (currentImageName === imageName) {
@@ -227,34 +225,35 @@ function updateContainerImagesInManifestFiles(
   filePaths: string[],
   containers: string[]
 ): string[] {
-  if (!!containers && containers.length > 0) {
-    const newFilePaths = [];
-    const tempDirectory = fileHelper.getTempDirectory();
-    filePaths.forEach((filePath: string) => {
-      let contents = fs.readFileSync(filePath).toString();
-      containers.forEach((container: string) => {
-        let imageName = container.split(":")[0];
-        if (imageName.indexOf("@") > 0) {
-          imageName = imageName.split("@")[0];
-        }
-        if (contents.indexOf(imageName) > 0) {
-          contents = substituteImageNameInSpecFile(
-            contents,
-            imageName,
-            container
-          );
-        }
-      });
+  if (!(filePaths?.length > 0)) return filePaths;
 
-      const fileName = path.join(tempDirectory, path.basename(filePath));
-      fs.writeFileSync(path.join(fileName), contents);
-      newFilePaths.push(fileName);
+  const newFilePaths = [];
+  const tempDirectory = getTempDirectory();
+
+  // update container images
+  filePaths.forEach((filePath: string) => {
+    let contents = fs.readFileSync(filePath).toString();
+
+    containers.forEach((container: string) => {
+      let imageName = container.split(":")[0];
+      if (imageName.indexOf("@") > 0) {
+        imageName = imageName.split("@")[0];
+      }
+
+      if (contents.indexOf(imageName) > 0)
+        contents = substituteImageNameInSpecFile(
+          contents,
+          imageName,
+          container
+        );
     });
 
-    return newFilePaths;
-  }
+    const fileName = path.join(tempDirectory, path.basename(filePath));
+    fs.writeFileSync(path.join(fileName), contents);
+    newFilePaths.push(fileName);
+  });
 
-  return filePaths;
+  return newFilePaths;
 }
 
 export function updateImagePullSecrets(
@@ -316,26 +315,22 @@ function updateImagePullSecretsInManifestFiles(
   return filePaths;
 }
 
-export function getUpdatedManifestFiles(manifestFilePaths: string[]) {
-  let inputManifestFiles: string[] = getManifestFiles(manifestFilePaths);
-
-  if (!inputManifestFiles || inputManifestFiles.length === 0) {
-    throw new Error(`ManifestFileNotFound : ${manifestFilePaths}`);
+export function updateManifestFiles(manifestFilePaths: string[]) {
+  if (!manifestFilePaths || manifestFilePaths.length === 0) {
+    throw new Error("Manifest files not provided");
   }
 
-  // artifact substitution
-  inputManifestFiles = updateContainerImagesInManifestFiles(
-    inputManifestFiles,
+  // update container images
+  const manifestFiles = updateContainerImagesInManifestFiles(
+    manifestFilePaths,
     TaskInputParameters.containers
   );
 
-  // imagePullSecrets addition
-  inputManifestFiles = updateImagePullSecretsInManifestFiles(
-    inputManifestFiles,
+  // update pull secrets
+  return updateImagePullSecretsInManifestFiles(
+    manifestFiles,
     TaskInputParameters.imagePullSecrets
   );
-
-  return inputManifestFiles;
 }
 
 const workloadTypes: string[] = [
