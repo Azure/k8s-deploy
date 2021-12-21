@@ -23,6 +23,7 @@ import {
 export async function deploy(
   manifestFilePaths: string[],
   deploymentStrategy: DeploymentStrategy
+  kubectl: Kubectl
 ) {
   const inputManifestFiles: string[] = updateManifestFiles(manifestFilePaths);
 
@@ -30,6 +31,7 @@ export async function deploy(
   const deployedManifestFiles = deployManifests(
     inputManifestFiles,
     deploymentStrategy
+    kubectl
   );
 
   // check manifest stability

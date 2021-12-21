@@ -13,31 +13,36 @@ import * as utils from "../manifest-utilities";
 import * as kubectlUtils from "../kubectl-util";
 import * as canaryDeploymentHelper from "./canary-deployment-helper";
 import { checkForErrors } from "../utility";
+import * as k8s from "@kubernetes/client-node";
 
 const TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX = "-workflow-rollout";
 const TRAFFIC_SPLIT_OBJECT = "TrafficSplit";
 let trafficSplitAPIVersion = "";
 
-export function deploySMICanary(filePaths: string[]) {
+export function deploySMICanary(filePaths: string[], kubectl: Kubectl) {
   const newObjectsList = [];
   const canaryReplicaCount = parseInt(
     core.getInput("baseline-and-canary-replicas")
   );
+
   if (canaryReplicaCount < 0 || canaryReplicaCount > 100)
     throw Error(
       "A valid baseline-and-canary-replicas value is between 0 and 100"
     );
 
-  core.debug("Replica count is " + canaryReplicaCount);
-
   filePaths.forEach((filePath: string) => {
     const fileContents = fs.readFileSync(filePath);
-    yaml.safeLoadAll(fileContents, function (inputObject) {
+    yaml.safeLoadAll(fileContents, (inputObject) => {
       const name = inputObject.metadata.name;
       const kind = inputObject.kind;
+
       if (helper.isDeploymentEntity(kind)) {
         // Get stable object
         core.debug("Querying stable object");
+
+        const kc = new k8s.KubeConfig();
+        kc.loadFromDefault();
+
         const stableObject = canaryDeploymentHelper.fetchResource(
           kubectl,
           kind,

@@ -47,7 +47,8 @@ export function getManifestFiles(manifestFilePaths: string[]): string[] {
 
 export function deployManifests(
   files: string[],
-  deploymentStrategy: DeploymentStrategy
+  deploymentStrategy: DeploymentStrategy,
+  kubectl: Kubectl
 ): string[] {
   switch (deploymentStrategy) {
     case DeploymentStrategy.CANARY: {
@@ -57,7 +58,7 @@ export function deployManifests(
 
       const { result, newFilePaths } =
         trafficSplitMethod == TrafficSplitMethod.SMI
-          ? deploySMICanary(files)
+          ? deploySMICanary(files, kubectl)
           : deployPodCanary(files);
 
       checkForErrors([result]);
