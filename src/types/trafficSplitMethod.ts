@@ -8,7 +8,9 @@ export enum TrafficSplitMethod {
  * @param str The traffic split method (case insensitive)
  * @returns The TrafficSplitMethod enum or undefined if it can't be parsed
  */
-export const parseTrafficSplitMethod = (str: string): Action | undefined =>
+export const parseTrafficSplitMethod = (
+  str: string
+): TrafficSplitMethod | undefined =>
   TrafficSplitMethod[
     Object.keys(TrafficSplitMethod).filter(
       (k) =>

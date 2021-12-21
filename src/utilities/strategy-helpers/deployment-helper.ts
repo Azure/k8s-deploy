@@ -27,6 +27,13 @@ import { isIngressRoute, isSMIRoute } from "./blue-green-helper";
 import { deployBlueGreenService } from "./service-blue-green-helper";
 import { deployBlueGreenIngress } from "./ingress-blue-green-helper";
 import { deployBlueGreenSMI } from "./smi-blue-green-helper";
+import { DeploymentStrategy } from "../../types/deploymentStrategy";
+import * as core from "@actions/core";
+import {
+  parseTrafficSplitMethod,
+  TrafficSplitMethod,
+} from "../../types/trafficSplitMethod";
+import { parseRouteStrategy, RouteStrategy } from "../../types/routeStrategy";
 
 export function getManifestFiles(manifestFilePaths: string[]): string[] {
   const files: string[] = utils.getManifestFiles(manifestFilePaths);
@@ -40,47 +47,61 @@ export function getManifestFiles(manifestFilePaths: string[]): string[] {
 
 export function deployManifests(
   files: string[],
-  kubectl: Kubectl,
-  isCanaryDeploymentStrategy: boolean,
-  isBlueGreenDeploymentStrategy: boolean
+  deploymentStrategy: DeploymentStrategy
 ): string[] {
-  let result;
-  if (isCanaryDeploymentStrategy) {
-    let canaryDeploymentOutput: any;
-    if (canaryDeploymentHelper.isSMICanaryStrategy()) {
-      canaryDeploymentOutput = deploySMICanary(kubectl, files);
-    } else {
-      canaryDeploymentOutput = deployPodCanary(kubectl, files);
-    }
-    result = canaryDeploymentOutput.result;
-    files = canaryDeploymentOutput.newFilePaths;
-  } else if (isBlueGreenDeploymentStrategy) {
-    let blueGreenDeploymentOutput: any;
-    if (isIngressRoute()) {
-      blueGreenDeploymentOutput = deployBlueGreenIngress(kubectl, files);
-    } else if (isSMIRoute()) {
-      blueGreenDeploymentOutput = deployBlueGreenSMI(kubectl, files);
-    } else {
-      blueGreenDeploymentOutput = deployBlueGreenService(kubectl, files);
-    }
-    result = blueGreenDeploymentOutput.result;
-    files = blueGreenDeploymentOutput.newFilePaths;
-  } else {
-    if (canaryDeploymentHelper.isSMICanaryStrategy()) {
-      const updatedManifests = appendStableVersionLabelToResource(
-        files,
-        kubectl
+  switch (deploymentStrategy) {
+    case DeploymentStrategy.CANARY: {
+      const trafficSplitMethod = parseTrafficSplitMethod(
+        core.getInput("traffic-split-method", { required: true })
       );
-      result = kubectl.apply(
-        updatedManifests,
-        TaskInputParameters.forceDeployment
+
+      const { result, newFilePaths } =
+        trafficSplitMethod == TrafficSplitMethod.SMI
+          ? deploySMICanary(files)
+          : deployPodCanary(files);
+
+      checkForErrors([result]);
+      return newFilePaths;
+    }
+    case DeploymentStrategy.BLUE_GREEN: {
+      const routeStrategy = parseRouteStrategy(
+        core.getInput("route-method", { required: true })
       );
-    } else {
-      result = kubectl.apply(files, TaskInputParameters.forceDeployment);
+      const { result, newFilePaths } =
+        (routeStrategy == RouteStrategy.INGRESS &&
+          deployBlueGreenIngress(files)) ||
+        (routeStrategy == RouteStrategy.SMI && deployBlueGreenSMI(files)) ||
+        deployBlueGreenService(files);
+      checkForErrors([result]);
+      return newFilePaths;
+    }
+    case undefined: {
+      core.warning("Deployment strategy is not recognized");
+    }
+    default: {
+      const trafficSplitMethod = parseTrafficSplitMethod(
+        core.getInput("traffic-split-method", { required: true })
+      );
+      if (trafficSplitMethod == TrafficSplitMethod.SMI) {
+        const updatedManifests = appendStableVersionLabelToResource(
+          files,
+          kubectl
+        );
+        const result = kubectl.apply(
+          updatedManifests,
+          TaskInputParameters.forceDeployment
+        );
+        checkForErrors([result]);
+      } else {
+        const result = kubectl.apply(
+          files,
+          TaskInputParameters.forceDeployment
+        );
+        checkForErrors([result]);
+      }
+      return files;
     }
   }
-  checkForErrors([result]);
-  return files;
 }
 
 function appendStableVersionLabelToResource(

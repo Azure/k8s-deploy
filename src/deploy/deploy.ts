@@ -15,7 +15,10 @@ import {
   checkManifestStability,
   annotateAndLabelResources,
 } from "../utilities/strategy-helpers/deployment-helper";
-import { DeploymentStrategy } from "../types/deploymentStrategy";
+import {
+  DeploymentStrategy,
+  parseDeploymentStrategy,
+} from "../types/deploymentStrategy";
 
 export async function deploy(
   manifestFilePaths: string[],
@@ -26,9 +29,7 @@ export async function deploy(
   // deployment
   const deployedManifestFiles = deployManifests(
     inputManifestFiles,
-    kubectl,
-    isCanaryDeploymentStrategy(deploymentStrategy),
-    isBlueGreenDeploymentStrategy()
+    deploymentStrategy
   );
 
   // check manifest stability

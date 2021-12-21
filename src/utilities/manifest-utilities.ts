@@ -248,6 +248,7 @@ function updateContainerImagesInManifestFiles(
         );
     });
 
+    // write updated files
     const fileName = path.join(tempDirectory, path.basename(filePath));
     fs.writeFileSync(path.join(fileName), contents);
     newFilePaths.push(fileName);
@@ -287,32 +288,26 @@ function updateImagePullSecretsInManifestFiles(
   filePaths: string[],
   imagePullSecrets: string[]
 ): string[] {
-  if (!!imagePullSecrets && imagePullSecrets.length > 0) {
-    const newObjectsList = [];
-    filePaths.forEach((filePath: string) => {
-      const fileContents = fs.readFileSync(filePath).toString();
-      yaml.safeLoadAll(fileContents, function (inputObject: any) {
-        if (!!inputObject && !!inputObject.kind) {
-          const kind = inputObject.kind;
-          if (KubernetesObjectUtility.isWorkloadEntity(kind)) {
-            KubernetesObjectUtility.updateImagePullSecrets(
-              inputObject,
-              imagePullSecrets,
-              false
-            );
-          }
-          newObjectsList.push(inputObject);
+  if (!(imagePullSecrets?.length > 0)) return filePaths;
+
+  const newObjectsList = [];
+  filePaths.forEach((filePath: string) => {
+    const fileContents = fs.readFileSync(filePath).toString();
+    yaml.safeLoadAll(fileContents, (inputObject: any) => {
+      if (inputObject?.kind) {
+        const { kind } = inputObject;
+        if (KubernetesObjectUtility.isWorkloadEntity(kind)) {
+          KubernetesObjectUtility.updateImagePullSecrets(
+            inputObject,
+            imagePullSecrets
+          );
         }
-      });
+        newObjectsList.push(inputObject);
+      }
     });
-    core.debug(
-      "New K8s objects after adding imagePullSecrets are :" +
-        JSON.stringify(newObjectsList)
-    );
-    const newFilePaths = fileHelper.writeObjectsToFile(newObjectsList);
-    return newFilePaths;
-  }
-  return filePaths;
+  });
+
+  return fileHelper.writeObjectsToFile(newObjectsList);
 }
 
 export function updateManifestFiles(manifestFilePaths: string[]) {
