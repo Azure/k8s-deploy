@@ -2,7 +2,7 @@
 import * as fs from "fs";
 import * as core from "@actions/core";
 import * as yaml from "js-yaml";
-import { Resource } from "../kubectl-object-model";
+import { Resource } from "../types/kubectl";
 import {
   KubernetesWorkload,
   deploymentTypes,

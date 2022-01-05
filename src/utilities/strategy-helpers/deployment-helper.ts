@@ -9,7 +9,7 @@ import * as models from "../../constants";
 import * as fileHelper from "../files-helper";
 import * as utils from "../manifest-utilities";
 import * as KubernetesManifestUtility from "../manifest-stability-utility";
-import { Kubectl, Resource } from "../../kubectl-object-model";
+import { Kubectl, Resource } from "../../types/kubectl";
 import { IExecSyncResult } from "../../utilities/tool-runner";
 
 import { deployPodCanary } from "./pod-canary-deployment-helper";

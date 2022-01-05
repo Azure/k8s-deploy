@@ -1,4 +1,4 @@
-import { Kubectl } from "../../kubectl-object-model";
+import { Kubectl } from "../../types/kubectl";
 import * as core from "@actions/core";
 import * as fs from "fs";
 import * as yaml from "js-yaml";

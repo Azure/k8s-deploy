@@ -37,7 +37,7 @@ import {
   promoteBlueGreenSMI,
   cleanupSMI,
 } from "../utilities/strategy-helpers/smi-blue-green-helper";
-import { Kubectl, Resource } from "../kubectl-object-model";
+import { Kubectl, Resource } from "../types/kubectl";
 
 export async function promote() {
   const kubectl = new Kubectl(

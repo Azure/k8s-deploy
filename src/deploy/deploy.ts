@@ -3,7 +3,7 @@ import * as core from "@actions/core";
 import * as KubernetesObjectUtility from "../utilities/resource-object-utility";
 import * as models from "../constants";
 import * as KubernetesConstants from "../constants";
-import { Kubectl, Resource } from "../kubectl-object-model";
+import { Kubectl, Resource } from "../types/kubectl";
 import { updateManifestFiles } from "../utilities/manifest-utilities";
 import {
   isBlueGreenDeploymentStrategy,
