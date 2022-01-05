@@ -1,10 +1,7 @@
-"use strict";
-
 import { Kubectl } from "../../kubectl-object-model";
 import * as core from "@actions/core";
 import * as fs from "fs";
 import * as yaml from "js-yaml";
-import * as util from "util";
 
 import * as TaskInputParameters from "../../input-parameters";
 import * as fileHelper from "../files-helper";
@@ -13,23 +10,20 @@ import * as utils from "../manifest-utilities";
 import * as kubectlUtils from "../kubectl-util";
 import * as canaryDeploymentHelper from "./canary-deployment-helper";
 import { checkForErrors } from "../utility";
-import * as k8s from "@kubernetes/client-node";
 
 const TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX = "-workflow-rollout";
 const TRAFFIC_SPLIT_OBJECT = "TrafficSplit";
 let trafficSplitAPIVersion = "";
 
 export function deploySMICanary(filePaths: string[], kubectl: Kubectl) {
-  const newObjectsList = [];
   const canaryReplicaCount = parseInt(
     core.getInput("baseline-and-canary-replicas")
   );
 
   if (canaryReplicaCount < 0 || canaryReplicaCount > 100)
-    throw Error(
-      "A valid baseline-and-canary-replicas value is between 0 and 100"
-    );
+    throw Error("Baseline-and-canary-replicas must be between 0 and 100");
 
+  const newObjectsList = [];
   filePaths.forEach((filePath: string) => {
     const fileContents = fs.readFileSync(filePath);
     yaml.safeLoadAll(fileContents, (inputObject) => {
@@ -37,17 +31,12 @@ export function deploySMICanary(filePaths: string[], kubectl: Kubectl) {
       const kind = inputObject.kind;
 
       if (helper.isDeploymentEntity(kind)) {
-        // Get stable object
-        core.debug("Querying stable object");
-
-        const kc = new k8s.KubeConfig();
-        kc.loadFromDefault();
-
         const stableObject = canaryDeploymentHelper.fetchResource(
           kubectl,
           kind,
           name
         );
+
         if (!stableObject) {
           core.debug("Stable object not found. Creating only canary object");
           // If stable object not found, create canary deployment.
@@ -55,19 +44,15 @@ export function deploySMICanary(filePaths: string[], kubectl: Kubectl) {
             inputObject,
             canaryReplicaCount
           );
-          core.debug(
-            "New canary object is: " + JSON.stringify(newCanaryObject)
-          );
           newObjectsList.push(newCanaryObject);
         } else {
           if (!canaryDeploymentHelper.isResourceMarkedAsStable(stableObject)) {
-            throw `StableSpecSelectorNotExist : ${name}`;
+            throw Error(`StableSpecSelectorNotExist : ${name}`);
           }
 
           core.debug(
             "Stable object found. Creating canary and baseline objects"
           );
-          // If canary object not found, create canary and baseline object.
           const newCanaryObject = canaryDeploymentHelper.getNewCanaryResource(
             inputObject,
             canaryReplicaCount
@@ -77,29 +62,23 @@ export function deploySMICanary(filePaths: string[], kubectl: Kubectl) {
               stableObject,
               canaryReplicaCount
             );
-          core.debug(
-            "New canary object is: " + JSON.stringify(newCanaryObject)
-          );
-          core.debug(
-            "New baseline object is: " + JSON.stringify(newBaselineObject)
-          );
           newObjectsList.push(newCanaryObject);
           newObjectsList.push(newBaselineObject);
         }
       } else {
-        // Updating non deployment entity as it is.
+        // Update non deployment entity as it is
         newObjectsList.push(inputObject);
       }
     });
   });
 
-  const manifestFiles = fileHelper.writeObjectsToFile(newObjectsList);
+  const newFilePaths = fileHelper.writeObjectsToFile(newObjectsList);
   const result = kubectl.apply(
-    manifestFiles,
+    newFilePaths,
     TaskInputParameters.forceDeployment
   );
   createCanaryService(kubectl, filePaths);
-  return { result: result, newFilePaths: manifestFiles };
+  return { result, newFilePaths };
 }
 
 function createCanaryService(kubectl: Kubectl, filePaths: string[]) {

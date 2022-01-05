@@ -1,10 +1,6 @@
 import * as core from "@actions/core";
 import * as io from "@actions/io";
-import * as path from "path";
 import * as toolCache from "@actions/tool-cache";
-
-import { getExecutableExtension, isEqual } from "./utilities/utility";
-
 import { Kubectl } from "./kubectl-object-model";
 import { deploy } from "./deploy/deploy";
 import { promote } from "./actions/promote";
@@ -59,6 +55,7 @@ export async function run() {
     const kubectlPath = version
       ? toolCache.find("kubectl", version)
       : await io.which("kubectl", false);
+
     if (!kubectlPath)
       throw Error(
         "kubectl not found. You must install it before running this action"

@@ -59,7 +59,7 @@ export function deployManifests(
       const { result, newFilePaths } =
         trafficSplitMethod == TrafficSplitMethod.SMI
           ? deploySMICanary(files, kubectl)
-          : deployPodCanary(files);
+          : deployPodCanary(files, kubectl);
 
       checkForErrors([result]);
       return newFilePaths;
