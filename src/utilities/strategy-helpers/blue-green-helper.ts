@@ -303,7 +303,7 @@ export function getDeploymentMatchLabels(deploymentObject: any): any {
   if (
     !!deploymentObject &&
     deploymentObject.kind.toUpperCase() ==
-      KubernetesWorkload.pod.toUpperCase() &&
+      KubernetesWorkload.POD.toUpperCase() &&
     !!deploymentObject.metadata &&
     !!deploymentObject.metadata.labels
   ) {

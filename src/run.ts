@@ -55,7 +55,6 @@ export async function run() {
     const kubectlPath = version
       ? toolCache.find("kubectl", version)
       : await io.which("kubectl", false);
-
     if (!kubectlPath)
       throw Error(
         "kubectl not found. You must install it before running this action"

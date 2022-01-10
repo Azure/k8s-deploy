@@ -14,7 +14,7 @@ export async function checkManifestStability(
   for (let i = 0; i < numberOfResources; i++) {
     const resource = resources[i];
     if (
-      KubernetesConstants.workloadTypesWithRolloutStatus.indexOf(
+      KubernetesConstants.WORKLOAD_TYPES_WITH_ROLLOUT_STATUS.indexOf(
         resource.type.toLowerCase()
       ) >= 0
     ) {
@@ -30,7 +30,7 @@ export async function checkManifestStability(
     if (
       utils.isEqual(
         resource.type,
-        KubernetesConstants.KubernetesWorkload.pod,
+        KubernetesConstants.KubernetesWorkload.POD,
         true
       )
     ) {
@@ -44,7 +44,7 @@ export async function checkManifestStability(
     if (
       utils.isEqual(
         resource.type,
-        KubernetesConstants.DiscoveryAndLoadBalancerResource.service,
+        KubernetesConstants.DiscoveryAndLoadBalancerResource.SERVICE,
         true
       )
     ) {
@@ -55,7 +55,7 @@ export async function checkManifestStability(
         if (
           utils.isEqual(
             spec.type,
-            KubernetesConstants.ServiceTypes.loadBalancer,
+            KubernetesConstants.ServiceTypes.LOAD_BALANCER,
             true
           )
         ) {
@@ -160,7 +160,7 @@ function isPodReady(podStatus: any): boolean {
 
 function getService(kubectl: Kubectl, serviceName) {
   const serviceResult = kubectl.getResource(
-    KubernetesConstants.DiscoveryAndLoadBalancerResource.service,
+    KubernetesConstants.DiscoveryAndLoadBalancerResource.SERVICE,
     serviceName
   );
   utils.checkForErrors([serviceResult]);

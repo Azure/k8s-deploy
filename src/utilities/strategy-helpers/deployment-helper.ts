@@ -196,7 +196,7 @@ function annotateResources(
   resourceTypes.forEach((resource) => {
     if (
       resource.type.toUpperCase() !==
-      models.KubernetesWorkload.pod.toUpperCase()
+      models.KubernetesWorkload.POD.toUpperCase()
     ) {
       annotateChildPods(
         kubectl,

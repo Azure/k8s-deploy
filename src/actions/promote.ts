@@ -122,8 +122,8 @@ async function promoteBlueGreen(kubectl: Kubectl) {
   const deployedManifestFiles = result.newFilePaths;
   const resources: Resource[] = KubernetesObjectUtility.getResources(
     deployedManifestFiles,
-    models.deploymentTypes.concat([
-      models.DiscoveryAndLoadBalancerResource.service,
+    models.DEPLOYMENT_TYPES.concat([
+      models.DiscoveryAndLoadBalancerResource.SERVICE,
     ])
   );
   await KubernetesManifestUtility.checkManifestStability(kubectl, resources);

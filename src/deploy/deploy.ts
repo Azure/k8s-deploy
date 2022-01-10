@@ -22,7 +22,7 @@ import {
 
 export async function deploy(
   manifestFilePaths: string[],
-  deploymentStrategy: DeploymentStrategy
+  deploymentStrategy: DeploymentStrategy,
   kubectl: Kubectl
 ) {
   const inputManifestFiles: string[] = updateManifestFiles(manifestFilePaths);
@@ -30,15 +30,15 @@ export async function deploy(
   // deployment
   const deployedManifestFiles = deployManifests(
     inputManifestFiles,
-    deploymentStrategy
+    deploymentStrategy,
     kubectl
   );
 
   // check manifest stability
   const resourceTypes: Resource[] = KubernetesObjectUtility.getResources(
     deployedManifestFiles,
-    models.deploymentTypes.concat([
-      KubernetesConstants.DiscoveryAndLoadBalancerResource.service,
+    models.DEPLOYMENT_TYPES.concat([
+      KubernetesConstants.DiscoveryAndLoadBalancerResource.SERVICE,
     ])
   );
   await checkManifestStability(kubectl, resourceTypes);
@@ -51,11 +51,11 @@ export async function deploy(
   // print ingress resources
   const ingressResources: Resource[] = KubernetesObjectUtility.getResources(
     deployedManifestFiles,
-    [KubernetesConstants.DiscoveryAndLoadBalancerResource.ingress]
+    [KubernetesConstants.DiscoveryAndLoadBalancerResource.INGRESS]
   );
   ingressResources.forEach((ingressResource) => {
     kubectl.getResource(
-      KubernetesConstants.DiscoveryAndLoadBalancerResource.ingress,
+      KubernetesConstants.DiscoveryAndLoadBalancerResource.INGRESS,
       ingressResource.name
     );
   });

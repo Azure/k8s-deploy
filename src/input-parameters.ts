@@ -1,5 +1,7 @@
 import * as core from "@actions/core";
 
+// delete this later (refactor into actions)
+
 export let namespace: string = core.getInput("namespace");
 export const containers: string[] = core.getInput("images").split("\n");
 export const imagePullSecrets: string[] = core

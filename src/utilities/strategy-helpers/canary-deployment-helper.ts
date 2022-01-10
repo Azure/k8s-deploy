@@ -195,10 +195,10 @@ function getNewCanaryObject(
 
 function isSpecContainsReplicas(kind: string) {
   return (
-    !isEqual(kind, KubernetesWorkload.pod, StringComparer.OrdinalIgnoreCase) &&
+    !isEqual(kind, KubernetesWorkload.POD, StringComparer.OrdinalIgnoreCase) &&
     !isEqual(
       kind,
-      KubernetesWorkload.daemonSet,
+      KubernetesWorkload.DAEMON_SET,
       StringComparer.OrdinalIgnoreCase
     ) &&
     !helper.isServiceEntity(kind)

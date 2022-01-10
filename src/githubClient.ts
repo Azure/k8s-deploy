@@ -1,26 +1,28 @@
-import * as core from '@actions/core';
-import { WebRequest, WebResponse, sendRequest } from "./utilities/httpClient";
+import * as core from "@actions/core";
+import { Octokit } from "@octokit/core";
+import { OctokitResponse } from "@octokit/types";
+import { retry } from "@octokit/plugin-retry";
+
+const RetryOctokit = Octokit.plugin(retry);
+const RETRY_COUNT = 5;
 
 export class GitHubClient {
-    constructor(repository: string, token: string) {
-        this._repository = repository;
-        this._token = token;
-    }
+  private repository: string;
+  private token: string;
 
-    public async getWorkflows(): Promise<any> {
-        const getWorkflowFileNameUrl = `https://api.github.com/repos/${this._repository}/actions/workflows`;
-        const webRequest = new WebRequest();
-        webRequest.method = "GET";
-        webRequest.uri = getWorkflowFileNameUrl;
-        webRequest.headers = {
-            Authorization: `Bearer ${this._token}`
-        };
+  constructor(repository: string, token: string) {
+    this.repository = repository;
+    this.token = token;
+  }
 
-        core.debug(`Getting workflows for repo: ${this._repository}`);
-        const response: WebResponse = await sendRequest(webRequest);
-        return Promise.resolve(response);
-    }
-
-    private _repository: string;
-    private _token: string;
-} 
+  public async getWorkflows(): Promise<OctokitResponse<any>> {
+    const octokit = new RetryOctokit({
+      auth: this.token,
+      request: { retries: RETRY_COUNT },
+    });
+    core.debug(`Getting workflows for repo: ${this.repository}`);
+    return Promise.resolve(
+      await octokit.request(`GET /repos/${this.repository}/actions/workflows`)
+    );
+  }
+}

@@ -5,8 +5,8 @@ import * as yaml from "js-yaml";
 import { Resource } from "../types/kubectl";
 import {
   KubernetesWorkload,
-  deploymentTypes,
-  workloadTypes,
+  DEPLOYMENT_TYPES,
+  WORKLOAD_TYPES,
 } from "../constants";
 import { StringComparer, isEqual } from "./string-comparison";
 
@@ -17,13 +17,13 @@ export function isDeploymentEntity(kind: string): boolean {
     throw "ResourceKindNotDefined";
   }
 
-  return deploymentTypes.some((type: string) => {
+  return DEPLOYMENT_TYPES.some((type: string) => {
     return isEqual(type, kind, StringComparer.OrdinalIgnoreCase);
   });
 }
 
 export function isWorkloadEntity(kind: string): boolean {
-  return workloadTypes.some(
+  return WORKLOAD_TYPES.some(
     (type: string) => type.toUpperCase() == kind.toUpperCase()
   );
 }
@@ -55,10 +55,10 @@ export function getReplicaCount(inputObject: any): any {
 
   const kind = inputObject.kind;
   if (
-    !isEqual(kind, KubernetesWorkload.pod, StringComparer.OrdinalIgnoreCase) &&
+    !isEqual(kind, KubernetesWorkload.POD, StringComparer.OrdinalIgnoreCase) &&
     !isEqual(
       kind,
-      KubernetesWorkload.daemonSet,
+      KubernetesWorkload.DAEMON_SET,
       StringComparer.OrdinalIgnoreCase
     )
   ) {
@@ -216,7 +216,7 @@ export function updateSelectorLabels(
   if (
     isEqual(
       inputObject.kind,
-      KubernetesWorkload.pod,
+      KubernetesWorkload.POD,
       StringComparer.OrdinalIgnoreCase
     )
   ) {
@@ -278,7 +278,7 @@ function getSpecLabels(inputObject: any) {
   if (
     isEqual(
       inputObject.kind,
-      KubernetesWorkload.pod,
+      KubernetesWorkload.POD,
       StringComparer.OrdinalIgnoreCase
     )
   ) {
@@ -303,7 +303,7 @@ function getImagePullSecrets(inputObject: any) {
   if (
     isEqual(
       inputObject.kind,
-      KubernetesWorkload.cronjob,
+      KubernetesWorkload.CRON_JOB,
       StringComparer.OrdinalIgnoreCase
     )
   ) {
@@ -322,7 +322,7 @@ function getImagePullSecrets(inputObject: any) {
   if (
     isEqual(
       inputObject.kind,
-      KubernetesWorkload.pod,
+      KubernetesWorkload.POD,
       StringComparer.OrdinalIgnoreCase
     )
   ) {
@@ -344,7 +344,7 @@ function setImagePullSecrets(inputObject: any, newImagePullSecrets: any) {
   if (
     isEqual(
       inputObject.kind,
-      KubernetesWorkload.pod,
+      KubernetesWorkload.POD,
       StringComparer.OrdinalIgnoreCase
     )
   ) {
@@ -355,7 +355,7 @@ function setImagePullSecrets(inputObject: any, newImagePullSecrets: any) {
   if (
     isEqual(
       inputObject.kind,
-      KubernetesWorkload.cronjob,
+      KubernetesWorkload.CRON_JOB,
       StringComparer.OrdinalIgnoreCase
     )
   ) {
