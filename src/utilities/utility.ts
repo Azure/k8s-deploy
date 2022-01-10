@@ -7,12 +7,7 @@ import { StatusCodes } from "./httpClient";
 import * as inputParams from "../input-parameters";
 import { DockerExec } from "../types/docker";
 import * as io from "@actions/io";
-
-export interface DeploymentConfig {
-  manifestFilePaths: string[];
-  helmChartFilePaths: string[];
-  dockerfilePaths: any;
-}
+import { DeploymentConfig } from "../types/deploymentConfig";
 
 export function getExecutableExtension(): string {
   if (os.type().match(/^Win/)) {

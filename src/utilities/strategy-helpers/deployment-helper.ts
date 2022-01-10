@@ -19,10 +19,10 @@ import {
   annotateChildPods,
   getWorkflowFilePath,
   getLastSuccessfulRunSha,
-  DeploymentConfig,
   getDeploymentConfig,
   normaliseWorkflowStrLabel,
 } from "../utility";
+import { DeploymentConfig } from "../../types/deploymentConfig";
 import { isIngressRoute, isSMIRoute } from "./blue-green-helper";
 import { deployBlueGreenService } from "./service-blue-green-helper";
 import { deployBlueGreenIngress } from "./ingress-blue-green-helper";

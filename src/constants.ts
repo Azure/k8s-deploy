@@ -1,4 +1,4 @@
-import { DeploymentConfig } from "./utilities/utility";
+import { DeploymentConfig } from "./types/deploymentConfig";
 
 export class KubernetesWorkload {
   public static POD: string = "Pod";
