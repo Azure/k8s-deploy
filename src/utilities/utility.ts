@@ -2,8 +2,7 @@ import * as os from "os";
 import * as core from "@actions/core";
 import { IExecSyncResult } from "./tool-runner";
 import { Kubectl } from "../types/kubectl";
-import { GitHubClient } from "../githubClient";
-import { StatusCodes } from "./httpClient";
+import { GitHubClient, OkStatusCode } from "../githubClient";
 import * as inputParams from "../input-parameters";
 import { DockerExec } from "../types/docker";
 import * as io from "@actions/io";
@@ -17,26 +16,6 @@ export function getExecutableExtension(): string {
   return "";
 }
 
-export function isEqual(
-  str1: string,
-  str2: string,
-  ignoreCase?: boolean
-): boolean {
-  if (str1 == null && str2 == null) {
-    return true;
-  }
-
-  if (str1 == null || str2 == null) {
-    return false;
-  }
-
-  if (ignoreCase) {
-    return str1.toUpperCase() === str2.toUpperCase();
-  } else {
-    return str1 === str2;
-  }
-}
-
 export function checkForErrors(
   execResults: IExecSyncResult[],
   warnIfError?: boolean
@@ -44,7 +23,7 @@ export function checkForErrors(
   if (execResults.length !== 0) {
     let stderr = "";
     execResults.forEach((result) => {
-      if (result && result.stderr) {
+      if (result?.stderr) {
         if (result.code !== 0) {
           stderr += result.stderr + "\n";
         } else {
@@ -52,6 +31,7 @@ export function checkForErrors(
         }
       }
     });
+
     if (stderr.length > 0) {
       if (warnIfError) {
         core.warning(stderr.trim());
@@ -62,25 +42,23 @@ export function checkForErrors(
   }
 }
 
-export function getLastSuccessfulRunSha(
+export async function getLastSuccessfulRunSha(
   kubectl: Kubectl,
   namespaceName: string,
   annotationKey: string
-): string {
+): Promise<string> {
   try {
-    const result = kubectl.getResource("namespace", namespaceName);
-    if (result) {
-      if (result.stderr) {
-        core.warning(`${result.stderr}`);
-        return process.env.GITHUB_SHA;
-      } else if (result.stdout) {
-        const annotationsSet = JSON.parse(result.stdout).metadata.annotations;
-        if (annotationsSet && annotationsSet[annotationKey]) {
-          return JSON.parse(annotationsSet[annotationKey].replace(/'/g, '"'))
-            .commit;
-        } else {
-          return "NA";
-        }
+    const result = await kubectl.getResource("namespace", namespaceName);
+    if (result?.stderr) {
+      core.warning(result.stderr);
+      return process.env.GITHUB_SHA;
+    } else if (result?.stdout) {
+      const annotationsSet = JSON.parse(result.stdout).metadata.annotations;
+      if (annotationsSet && annotationsSet[annotationKey]) {
+        return JSON.parse(annotationsSet[annotationKey].replace(/'/g, '"'))
+          .commit;
+      } else {
+        return "NA";
       }
     }
   } catch (ex) {
@@ -100,12 +78,8 @@ export async function getWorkflowFilePath(
     );
     const response = await githubClient.getWorkflows();
     if (response) {
-      if (
-        response.statusCode == StatusCodes.OK &&
-        response.body &&
-        response.body.total_count
-      ) {
-        if (response.body.total_count > 0) {
+      if (response.status === OkStatusCode && response.data.total_count) {
+        if (response.data.total_count > 0) {
           for (let workflow of response.body.workflows) {
             if (process.env.GITHUB_WORKFLOW === workflow.name) {
               workflowFilePath = workflow.path;

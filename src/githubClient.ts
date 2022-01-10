@@ -5,6 +5,8 @@ import { retry } from "@octokit/plugin-retry";
 
 const RetryOctokit = Octokit.plugin(retry);
 const RETRY_COUNT = 5;
+
+const requestUrl = "GET /repos/{owner}/{repo}/actions/workflows";
 type responseType =
   Endpoints["GET /repos/{owner}/{repo}/actions/workflows"]["response"];
 
@@ -17,14 +19,21 @@ export class GitHubClient {
     this.token = token;
   }
 
-  public async getWorkflows(): Promise<OctokitResponse<responseType>> {
+  public async getWorkflows(): Promise<responseType> {
     const octokit = new RetryOctokit({
       auth: this.token,
       request: { retries: RETRY_COUNT },
     });
+    const [owner, repo] = this.repository.split("/");
+
     core.debug(`Getting workflows for repo: ${this.repository}`);
     return Promise.resolve(
-      await octokit.request(`GET /repos/${this.repository}/actions/workflows`)
+      await octokit.request(requestUrl, {
+        owner,
+        repo,
+      })
     );
   }
 }
+
+export const OkStatusCode = 200;

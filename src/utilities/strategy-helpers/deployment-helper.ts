@@ -162,7 +162,7 @@ export async function annotateAndLabelResources(
   labelResources(files, kubectl, annotationKeyLabel);
 }
 
-function annotateResources(
+async function annotateResources(
   files: string[],
   kubectl: Kubectl,
   resourceTypes: Resource[],
@@ -172,7 +172,7 @@ function annotateResources(
   deploymentConfig: DeploymentConfig
 ) {
   const annotateResults: IExecSyncResult[] = [];
-  const lastSuccessSha = getLastSuccessfulRunSha(
+  const lastSuccessSha = await getLastSuccessfulRunSha(
     kubectl,
     TaskInputParameters.namespace,
     annotationKey
