@@ -80,43 +80,43 @@ export async function getWorkflowFilePath(
     if (response) {
       if (response.status === OkStatusCode && response.data.total_count) {
         if (response.data.total_count > 0) {
-          for (let workflow of response.body.workflows) {
+          for (const workflow of response.data.workflows) {
             if (process.env.GITHUB_WORKFLOW === workflow.name) {
               workflowFilePath = workflow.path;
               break;
             }
           }
         }
-      } else if (response.statusCode != StatusCodes.OK) {
-        core.debug(
-          `An error occured while getting list of workflows on the repo. Statuscode: ${response.statusCode}, StatusMessage: ${response.statusMessage}`
+      } else if (response.status != OkStatusCode) {
+        core.error(
+          `An error occured while getting list of workflows on the repo. Status code: ${response.status}`
         );
       }
     } else {
-      core.warning(`Failed to get response from workflow list API`);
+      core.error(`Failed to get response from workflow list API`);
     }
   }
   return Promise.resolve(workflowFilePath);
 }
 
-export function annotateChildPods(
+export async function annotateChildPods(
   kubectl: Kubectl,
   resourceType: string,
   resourceName: string,
   annotationKeyValStr: string,
   allPods
-): IExecSyncResult[] {
-  const commandExecutionResults = [];
+): Promise<IExecSyncResult[]> {
   let owner = resourceName;
   if (resourceType.toLowerCase().indexOf("deployment") > -1) {
-    owner = kubectl.getNewReplicaSet(resourceName);
+    owner = await kubectl.getNewReplicaSet(resourceName);
   }
 
-  if (allPods && allPods.items && allPods.items.length > 0) {
+  const commandExecutionResults = [];
+  if (allPods?.items && allPods.items?.length > 0) {
     allPods.items.forEach((pod) => {
-      const owners = pod.metadata.ownerReferences;
+      const owners = pod?.metadata?.ownerReferences;
       if (owners) {
-        for (let ownerRef of owners) {
+        for (const ownerRef of owners) {
           if (ownerRef.name === owner) {
             commandExecutionResults.push(
               kubectl.annotate("pod", pod.metadata.name, annotationKeyValStr)
@@ -128,27 +128,30 @@ export function annotateChildPods(
     });
   }
 
-  return commandExecutionResults;
+  return await Promise.all(commandExecutionResults);
 }
 
 export async function getDeploymentConfig(): Promise<DeploymentConfig> {
   let helmChartPaths: string[] =
-    (process.env.HELM_CHART_PATHS &&
-      process.env.HELM_CHART_PATHS.split(";").filter((path) => path != "")) ||
+    process.env?.HELM_CHART_PATHS?.split(";").filter((path) => path != "") ||
     [];
   helmChartPaths = helmChartPaths.map((helmchart) =>
     getNormalizedPath(helmchart.trim())
   );
 
-  let inputManifestFiles: string[] = inputParams.manifests || [];
-  if (!helmChartPaths || helmChartPaths.length == 0) {
+  let inputManifestFiles: string[] =
+    core
+      .getInput("manifests")
+      .split(/[\n,;]+/)
+      .filter((manifest) => manifest.trim().length > 0) || [];
+  if (helmChartPaths?.length == 0) {
     inputManifestFiles = inputManifestFiles.map((manifestFile) =>
       getNormalizedPath(manifestFile)
     );
   }
 
-  const imageNames = inputParams.containers || [];
-  let imageDockerfilePathMap: { [id: string]: string } = {};
+  const imageNames = core.getInput("images").split("\n") || [];
+  const imageDockerfilePathMap: { [id: string]: string } = {};
 
   //Fetching from image label if available
   for (const image of imageNames) {
@@ -156,22 +159,22 @@ export async function getDeploymentConfig(): Promise<DeploymentConfig> {
       imageDockerfilePathMap[image] = await getDockerfilePath(image);
     } catch (ex) {
       core.warning(
-        `Failed to get dockerfile path for image ${image.toString()} | ` + ex
+        `Failed to get dockerfile path for image ${image.toString()}: ${ex} `
       );
     }
   }
 
-  const deploymentConfig = <DeploymentConfig>{
+  return Promise.resolve(<DeploymentConfig>{
     manifestFilePaths: inputManifestFiles,
     helmChartFilePaths: helmChartPaths,
     dockerfilePaths: imageDockerfilePathMap,
-  };
-  return Promise.resolve(deploymentConfig);
+  });
 }
 
 export function normaliseWorkflowStrLabel(workflowName: string): string {
-  workflowName = workflowName.startsWith(".github/workflows/")
-    ? workflowName.replace(".github/workflows/", "")
+  const workflowsPath = ".github/workflows/";
+  workflowName = workflowName.startsWith(workflowsPath)
+    ? workflowName.replace(workflowsPath, "")
     : workflowName;
   return workflowName.replace(/ /g, "_");
 }
@@ -189,37 +192,35 @@ export function getCurrentTime(): number {
 }
 
 async function checkDockerPath() {
-  let dockerPath = await io.which("docker", false);
+  const dockerPath = await io.which("docker", false);
   if (!dockerPath) {
     throw new Error("Docker is not installed.");
   }
 }
 
 async function getDockerfilePath(image: any): Promise<string> {
-  let imageConfig: any, imageInspectResult: string;
-  var dockerExec: DockerExec = new DockerExec("docker");
   await checkDockerPath();
+  const dockerExec: DockerExec = new DockerExec("docker");
   dockerExec.pull(image, [], true);
-  imageInspectResult = dockerExec.inspect(image, [], true);
-  imageConfig = JSON.parse(imageInspectResult)[0];
+
+  const imageInspectResult: string = await dockerExec.inspect(image, [], true);
+  const imageConfig = JSON.parse(imageInspectResult)[0];
   const DOCKERFILE_PATH_LABEL_KEY = "dockerfile-path";
+
   let pathValue: string = "";
-  if (imageConfig) {
-    if (
-      imageConfig.Config &&
-      imageConfig.Config.Labels &&
-      imageConfig.Config.Labels[DOCKERFILE_PATH_LABEL_KEY]
-    ) {
-      const pathLabel = imageConfig.Config.Labels[DOCKERFILE_PATH_LABEL_KEY];
-      pathValue = getNormalizedPath(pathLabel);
-    }
+  if (
+    imageConfig?.Config &&
+    imageConfig.Config?.Labels &&
+    imageConfig.Config.Labels[DOCKERFILE_PATH_LABEL_KEY]
+  ) {
+    const pathLabel = imageConfig.Config.Labels[DOCKERFILE_PATH_LABEL_KEY];
+    pathValue = getNormalizedPath(pathLabel);
   }
   return Promise.resolve(pathValue);
 }
 
 export function isHttpUrl(url: string) {
-  const HTTP_REGEX = /^https?:\/\/.*$/;
-  return HTTP_REGEX.test(url);
+  return /^https?:\/\/.*$/.test(url);
 }
 
 export function getNormalizedPath(pathValue: string) {
