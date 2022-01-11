@@ -1,12 +1,11 @@
 import * as os from "os";
 import * as core from "@actions/core";
-import { IExecSyncResult } from "./tool-runner";
 import { Kubectl } from "../types/kubectl";
 import { GitHubClient, OkStatusCode } from "../githubClient";
-import * as inputParams from "../input-parameters";
 import { DockerExec } from "../types/docker";
 import * as io from "@actions/io";
 import { DeploymentConfig } from "../types/deploymentConfig";
+import { ExecOutput } from "@actions/exec";
 
 export function getExecutableExtension(): string {
   if (os.type().match(/^Win/)) {
@@ -17,14 +16,14 @@ export function getExecutableExtension(): string {
 }
 
 export function checkForErrors(
-  execResults: IExecSyncResult[],
+  execResults: ExecOutput[],
   warnIfError?: boolean
 ) {
   if (execResults.length !== 0) {
     let stderr = "";
     execResults.forEach((result) => {
       if (result?.stderr) {
-        if (result.code !== 0) {
+        if (result?.exitCode !== 0) {
           stderr += result.stderr + "\n";
         } else {
           core.warning(result.stderr);
@@ -105,7 +104,7 @@ export async function annotateChildPods(
   resourceName: string,
   annotationKeyValStr: string,
   allPods
-): Promise<IExecSyncResult[]> {
+): Promise<ExecOutput[]> {
   let owner = resourceName;
   if (resourceType.toLowerCase().indexOf("deployment") > -1) {
     owner = await kubectl.getNewReplicaSet(resourceName);
