@@ -15,6 +15,13 @@ export function getExecutableExtension(): string {
   return "";
 }
 
+export function createInlineArray(str: string | string[]): string {
+  if (typeof str === "string") {
+    return str;
+  }
+  return str.join(",");
+}
+
 export function checkForErrors(
   execResults: ExecOutput[],
   warnIfError?: boolean

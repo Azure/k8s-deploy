@@ -1,4 +1,5 @@
 import { ExecOutput, getExecOutput } from "@actions/exec";
+import { createInlineArray } from "../utilities/utility";
 
 export interface Resource {
   name: string;
@@ -172,11 +173,4 @@ export class Kubectl {
 
     return await getExecOutput(this.kubectlPath, args, { silent });
   }
-}
-
-function createInlineArray(str: string | string[]): string {
-  if (typeof str === "string") {
-    return str;
-  }
-  return str.join(",");
 }

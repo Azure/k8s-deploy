@@ -6,27 +6,19 @@ import * as yaml from "js-yaml";
 import * as path from "path";
 import * as kubectlutility from "./kubectl-util";
 import * as io from "@actions/io";
-import { isEqual } from "./utility";
 import * as fileHelper from "./files-helper";
 import { getTempDirectory } from "./files-helper";
 import * as KubernetesObjectUtility from "./resource-object-utility";
 import * as TaskInputParameters from "../input-parameters";
-
-export function getManifestFiles(manifestFilePaths: string[]): string[] {
-  if (!manifestFilePaths) {
-    core.debug("file input is not present");
-    return null;
-  }
-
-  return manifestFilePaths;
-}
+import { createInlineArray } from "./utility";
+import { KubernetesWorkload, WORKLOAD_TYPES } from "../constants";
 
 export async function getKubectl(): Promise<string> {
   try {
-    return Promise.resolve(io.which("kubectl", true));
+    return await io.which("kubectl", true);
   } catch (ex) {
-    return kubectlutility.downloadKubectl(
-      await kubectlutility.getStableKubectlVersion()
+    throw Error(
+      "kubectl not found. You must install it before running this action"
     );
   }
 }
@@ -36,12 +28,13 @@ export function createKubectlArgs(
   names: Set<string>
 ): string {
   let args = "";
-  if (!!kinds && kinds.size > 0) {
-    args = args + createInlineArray(Array.from(kinds.values()));
+
+  if (kinds?.size > 0) {
+    args += createInlineArray(Array.from(kinds.values()));
   }
 
-  if (!!names && names.size > 0) {
-    args = args + " " + Array.from(names.values()).join(" ");
+  if (names?.size > 0) {
+    args += " " + Array.from(names.values()).join(" ");
   }
 
   return args;
@@ -53,31 +46,32 @@ export function getDeleteCmdArgs(
 ): string {
   let args = "";
 
-  if (!!argsPrefix && argsPrefix.length > 0) {
+  if (argsPrefix?.length > 0) {
     args = argsPrefix;
   }
 
-  if (!!inputArgs && inputArgs.length > 0) {
+  if (inputArgs?.length > 0) {
     if (args.length > 0) {
-      args = args + " ";
+      args += " ";
     }
 
-    args = args + inputArgs;
+    args += inputArgs;
   }
 
   return args;
 }
 
 /*
-    For example,
-        currentString: `image: "example/example-image"`
-        imageName: `example/example-image`
-        imageNameWithNewTag: `example/example-image:identifiertag`
+  Example:
+  
+  Input of
+    currentString: `image: "example/example-image"`
+    imageName: `example/example-image`
+    imageNameWithNewTag: `example/example-image:identifiertag`
 
-    This substituteImageNameInSpecFile function would return
-        return Value: `image: "example/example-image:identifiertag"`
+  would return
+    `image: "example/example-image:identifiertag"`
 */
-
 export function substituteImageNameInSpecFile(
   spec: string,
   imageName: string,
@@ -88,7 +82,7 @@ export function substituteImageNameInSpecFile(
   return spec.split("\n").reduce((acc, line) => {
     const imageKeyword = line.match(/^ *image:/);
     if (imageKeyword) {
-      let [currentImageName, currentImageTag] = line
+      let [currentImageName] = line
         .substring(imageKeyword[0].length) // consume the line from keyword onwards
         .trim()
         .replace(/[',"]/g, "") // replace allowed quotes with nothing
@@ -107,135 +101,66 @@ export function substituteImageNameInSpecFile(
   }, "");
 }
 
-function createInlineArray(str: string | string[]): string {
-  if (typeof str === "string") {
-    return str;
-  }
-  return str.join(",");
-}
-
 function getImagePullSecrets(inputObject: any) {
-  if (!inputObject || !inputObject.spec) {
+  if (!inputObject?.spec) {
     return;
   }
 
   if (
-    isEqual(inputObject.kind, "pod") &&
-    inputObject &&
-    inputObject.spec &&
-    inputObject.spec.imagePullSecrets
+    inputObject.kind === KubernetesWorkload.POD.toLowerCase() &&
+    inputObject?.spec?.imagePullSecrets
   ) {
     return inputObject.spec.imagePullSecrets;
   } else if (
-    isEqual(inputObject.kind, "cronjob") &&
-    inputObject &&
-    inputObject.spec &&
-    inputObject.spec.jobTemplate &&
-    inputObject.spec.jobTemplate.spec &&
-    inputObject.spec.jobTemplate.spec.template &&
-    inputObject.spec.jobTemplate.spec.template.spec &&
-    inputObject.spec.jobTemplate.spec.template.spec.imagePullSecrets
+    inputObject.kind === KubernetesWorkload.CRON_JOB.toLowerCase() &&
+    inputObject?.spec?.jobTemplate?.spec?.template?.spec?.imagePullSecrets
   ) {
     return inputObject.spec.jobTemplate.spec.template.spec.imagePullSecrets;
-  } else if (
-    inputObject &&
-    inputObject.spec &&
-    inputObject.spec.template &&
-    inputObject.spec.template.spec &&
-    inputObject.spec.template.spec.imagePullSecrets
-  ) {
+  } else if (inputObject?.spec?.template?.spec?.imagePullSecrets) {
     return inputObject.spec.template.spec.imagePullSecrets;
   }
 }
 
 function setImagePullSecrets(inputObject: any, newImagePullSecrets: any) {
-  if (!inputObject || !inputObject.spec || !newImagePullSecrets) {
+  if (!inputObject?.spec || !newImagePullSecrets) {
     return;
   }
 
-  if (isEqual(inputObject.kind, "pod")) {
-    if (inputObject && inputObject.spec) {
-      if (newImagePullSecrets.length > 0) {
-        inputObject.spec.imagePullSecrets = newImagePullSecrets;
-      } else {
-        delete inputObject.spec.imagePullSecrets;
-      }
-    }
-  } else if (isEqual(inputObject.kind, "cronjob")) {
-    if (
-      inputObject &&
-      inputObject.spec &&
-      inputObject.spec.jobTemplate &&
-      inputObject.spec.jobTemplate.spec &&
-      inputObject.spec.jobTemplate.spec.template &&
-      inputObject.spec.jobTemplate.spec.template.spec
-    ) {
-      if (newImagePullSecrets.length > 0) {
+  if (inputObject.kind === KubernetesWorkload.POD.toLowerCase()) {
+    if (newImagePullSecrets.length > 0)
+      inputObject.spec.imagePullSecrets = newImagePullSecrets;
+    else delete inputObject.spec.imagePullSecrets;
+  } else if (inputObject.kind === KubernetesWorkload.CRON_JOB.toLowerCase()) {
+    if (inputObject?.spec?.jobTemplate?.spec?.template?.spec) {
+      if (newImagePullSecrets.length > 0)
         inputObject.spec.jobTemplate.spec.template.spec.imagePullSecrets =
           newImagePullSecrets;
-      } else {
+      else
         delete inputObject.spec.jobTemplate.spec.template.spec.imagePullSecrets;
-      }
     }
-  } else if (!!inputObject.spec.template && !!inputObject.spec.template.spec) {
-    if (
-      inputObject &&
-      inputObject.spec &&
-      inputObject.spec.template &&
-      inputObject.spec.template.spec
-    ) {
-      if (newImagePullSecrets.length > 0) {
+  } else if (inputObject?.spec?.template?.spec) {
+    if (inputObject?.spec?.template?.spec) {
+      if (newImagePullSecrets.length > 0)
         inputObject.spec.template.spec.imagePullSecrets = newImagePullSecrets;
-      } else {
-        delete inputObject.spec.template.spec.imagePullSecrets;
-      }
+      else delete inputObject.spec.template.spec.imagePullSecrets;
     }
   }
-}
-
-function substituteImageNameInSpecContent(
-  currentString: string,
-  imageName: string,
-  imageNameWithNewTag: string
-) {
-  if (currentString.indexOf(imageName) < 0) {
-    core.debug(`No occurence of replacement token: ${imageName} found`);
-    return currentString;
-  }
-
-  return currentString.split("\n").reduce((acc, line) => {
-    const imageKeyword = line.match(/^ *image:/);
-    if (imageKeyword) {
-      const [currentImageName, currentImageTag] = line
-        .substring(imageKeyword[0].length) // consume the line from keyword onwards
-        .trim()
-        .replace(/[',"]/g, "") // replace allowed quotes with nothing
-        .split(":");
-
-      if (currentImageName === imageName) {
-        return acc + `${imageKeyword[0]} ${imageNameWithNewTag}\n`;
-      }
-    }
-
-    return acc + line + "\n";
-  }, "");
 }
 
 function updateContainerImagesInManifestFiles(
   filePaths: string[],
   containers: string[]
 ): string[] {
-  if (!(filePaths?.length > 0)) return filePaths;
+  if (filePaths?.length <= 0) return filePaths;
 
   const newFilePaths = [];
-  const tempDirectory = getTempDirectory();
 
   // update container images
   filePaths.forEach((filePath: string) => {
     let contents = fs.readFileSync(filePath).toString();
 
     containers.forEach((container: string) => {
-      let imageName = container.split(":")[0];
+      let [imageName] = container.split(":");
       if (imageName.indexOf("@") > 0) {
         imageName = imageName.split("@")[0];
       }
@@ -249,6 +174,7 @@ function updateContainerImagesInManifestFiles(
     });
 
     // write updated files
+    const tempDirectory = getTempDirectory();
     const fileName = path.join(tempDirectory, path.basename(filePath));
     fs.writeFileSync(path.join(fileName), contents);
     newFilePaths.push(fileName);
@@ -261,7 +187,7 @@ export function updateImagePullSecrets(
   inputObject: any,
   newImagePullSecrets: string[]
 ) {
-  if (!inputObject || !inputObject.spec || !newImagePullSecrets) {
+  if (!inputObject?.spec || !newImagePullSecrets) {
     return;
   }
 
@@ -273,11 +199,9 @@ export function updateImagePullSecrets(
   } else {
     newImagePullSecretsObjects = [];
   }
-  let existingImagePullSecretObjects: any = getImagePullSecrets(inputObject);
-  if (!existingImagePullSecretObjects) {
-    existingImagePullSecretObjects = new Array();
-  }
 
+  let existingImagePullSecretObjects: any =
+    getImagePullSecrets(inputObject) || new Array();
   existingImagePullSecretObjects = existingImagePullSecretObjects.concat(
     newImagePullSecretsObjects
   );
@@ -288,7 +212,7 @@ function updateImagePullSecretsInManifestFiles(
   filePaths: string[],
   imagePullSecrets: string[]
 ): string[] {
-  if (!(imagePullSecrets?.length > 0)) return filePaths;
+  if (imagePullSecrets?.length <= 0) return filePaths;
 
   const newObjectsList = [];
   filePaths.forEach((filePath: string) => {
@@ -311,40 +235,32 @@ function updateImagePullSecretsInManifestFiles(
 }
 
 export function updateManifestFiles(manifestFilePaths: string[]) {
-  if (!manifestFilePaths || manifestFilePaths.length === 0) {
+  if (manifestFilePaths?.length === 0) {
     throw new Error("Manifest files not provided");
   }
 
   // update container images
+  const containers: string[] = core.getInput("images").split("\n");
   const manifestFiles = updateContainerImagesInManifestFiles(
     manifestFilePaths,
-    TaskInputParameters.containers
+    containers
   );
 
   // update pull secrets
-  return updateImagePullSecretsInManifestFiles(
-    manifestFiles,
-    TaskInputParameters.imagePullSecrets
-  );
+  const imagePullSecrets: string[] = core
+    .getInput("imagepullsecrets")
+    .split("\n")
+    .filter((secret) => secret.trim().length > 0);
+  return updateImagePullSecretsInManifestFiles(manifestFiles, imagePullSecrets);
 }
-
-const workloadTypes: string[] = [
-  "deployment",
-  "replicaset",
-  "daemonset",
-  "pod",
-  "statefulset",
-  "job",
-  "cronjob",
-];
 
 export function isWorkloadEntity(kind: string): boolean {
   if (!kind) {
-    core.debug("ResourceKindNotDefined");
+    core.debug("Kind not defined");
     return false;
   }
 
-  return workloadTypes.some((type: string) => {
-    return isEqual(type, kind);
+  return WORKLOAD_TYPES.some((type: string) => {
+    return type === kind;
   });
 }
