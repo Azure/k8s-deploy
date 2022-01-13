@@ -7,8 +7,9 @@ export function getTempDirectory(): string {
   return process.env["runner.tempDirectory"] || os.tmpdir();
 }
 
+const userDirPathTopLevel = "kubectlTask";
 export function getNewUserDirPath(): string {
-  let userDir = path.join(getTempDirectory(), "kubectlTask");
+  let userDir = path.join(getTempDirectory(), userDirPathTopLevel);
   ensureDirExists(userDir);
 
   userDir = path.join(userDir, getCurrentTime().toString());
@@ -25,8 +26,7 @@ export function ensureDirExists(dirPath: string): void {
 
 export function assertFileExists(path: string) {
   if (!fs.existsSync(path)) {
-    core.error(`FileNotFoundException : ${path}`);
-    throw new Error(`FileNotFoundException:  ${path}`);
+    throw new Error(`File not found:  ${path}`);
   }
 }
 
@@ -37,11 +37,8 @@ export function writeObjectsToFile(inputObjects: any[]): string[] {
     inputObjects.forEach((inputObject: any) => {
       try {
         const inputObjectString = JSON.stringify(inputObject);
-        if (
-          !!inputObject.kind &&
-          !!inputObject.metadata &&
-          !!inputObject.metadata.name
-        ) {
+
+        if (inputObject?.metadata?.name) {
           const fileName = getManifestFileName(
             inputObject.kind,
             inputObject.metadata.name
@@ -76,22 +73,17 @@ export function writeManifestToFile(
       fs.writeFileSync(path.join(fileName), inputObjectString);
       return fileName;
     } catch (ex) {
-      core.debug(
-        "Exception occurred while writing object to file : " +
-          inputObjectString +
-          " . Exception: " +
-          ex
+      throw Error(
+        `Exception occurred while writing object to file: ${inputObjectString}. Exception: ${ex}`
       );
     }
   }
-  return "";
 }
 
 function getManifestFileName(kind: string, name: string) {
-  const filePath = kind + "_" + name + "_" + getCurrentTime().toString();
+  const filePath = `${kind}_${name}_ ${getCurrentTime().toString()}`;
   const tempDirectory = getTempDirectory();
-  const fileName = path.join(tempDirectory, path.basename(filePath));
-  return fileName;
+  return path.join(tempDirectory, path.basename(filePath));
 }
 
 function getCurrentTime(): number {
