@@ -4,7 +4,7 @@ import * as core from "@actions/core";
 import * as fs from "fs";
 import * as yaml from "js-yaml";
 import * as path from "path";
-import * as kubectlutility from "./kubectl-util";
+import * as kubectlutility from "./traffic-split-utility";
 import * as io from "@actions/io";
 import * as fileHelper from "./files-helper";
 import { getTempDirectory } from "./files-helper";
