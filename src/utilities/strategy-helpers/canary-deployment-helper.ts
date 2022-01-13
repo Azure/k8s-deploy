@@ -24,16 +24,11 @@ export function deleteCanaryDeployment(
   manifestFilePaths: string[],
   includeServices: boolean
 ) {
-  // get manifest files
-  const inputManifestFiles: string[] =
-    utils.getManifestFiles(manifestFilePaths);
-
-  if (inputManifestFiles == null || inputManifestFiles.length == 0) {
-    throw new Error("ManifestFileNotFound");
+  if (manifestFilePaths == null || manifestFilePaths.length == 0) {
+    throw new Error("Manifest file not found");
   }
 
-  // create delete cmd prefix
-  cleanUpCanary(kubectl, inputManifestFiles, includeServices);
+  cleanUpCanary(kubectl, manifestFilePaths, includeServices);
 }
 
 export function markResourceAsStable(inputObject: any): object {
@@ -43,26 +38,23 @@ export function markResourceAsStable(inputObject: any): object {
 
   const newObject = JSON.parse(JSON.stringify(inputObject));
 
-  // Adding labels and annotations.
   addCanaryLabelsAndAnnotations(newObject, STABLE_LABEL_VALUE);
-
   core.debug("Added stable label: " + JSON.stringify(newObject));
+
   return newObject;
 }
 
 export function isResourceMarkedAsStable(inputObject: any): boolean {
   return (
-    inputObject &&
-    inputObject.metadata &&
-    inputObject.metadata.labels &&
-    inputObject.metadata.labels[CANARY_VERSION_LABEL] === STABLE_LABEL_VALUE
+    inputObject?.metadata?.labels[CANARY_VERSION_LABEL] === STABLE_LABEL_VALUE
   );
 }
 
 export function getStableResource(inputObject: any): object {
-  var replicaCount = isSpecContainsReplicas(inputObject.kind)
+  const replicaCount = specContainsReplicas(inputObject.kind)
     ? inputObject.metadata.replicas
     : 0;
+
   return getNewCanaryObject(inputObject, replicaCount, STABLE_LABEL_VALUE);
 }
 
@@ -88,8 +80,12 @@ export function fetchCanaryResource(
   return fetchResource(kubectl, kind, getCanaryResourceName(name));
 }
 
-export function fetchResource(kubectl: Kubectl, kind: string, name: string) {
-  const result = kubectl.getResource(kind, name);
+export async function fetchResource(
+  kubectl: Kubectl,
+  kind: string,
+  name: string
+) {
+  const result = await kubectl.getResource(kind, name);
 
   if (!result || result?.stderr) {
     return null;
@@ -97,32 +93,29 @@ export function fetchResource(kubectl: Kubectl, kind: string, name: string) {
 
   if (result.stdout) {
     const resource = JSON.parse(result.stdout);
+
     try {
-      UnsetsClusterSpecficDetails(resource);
+      utils.UnsetClusterSpecficDetails(resource);
       return resource;
     } catch (ex) {
       core.debug(
-        "Exception occurred while Parsing " + resource + " in JSON object"
+        `Exception occurred while Parsing ${resource} in JSON object: ${ex}`
       );
-      core.debug(`Exception: ${ex}`);
     }
   }
 }
 
 export function isCanaryDeploymentStrategy() {
-  const deploymentStrategy = TaskInputParameters.deploymentStrategy;
-  return (
-    deploymentStrategy &&
-    deploymentStrategy.toUpperCase() === CANARY_DEPLOYMENT_STRATEGY
-  );
+  const deploymentStrategy = core.getInput("strategy");
+  return deploymentStrategy?.toUpperCase() === CANARY_DEPLOYMENT_STRATEGY;
 }
 
 export function isSMICanaryStrategy() {
-  const deploymentStrategy = TaskInputParameters.trafficSplitMethod;
+  const deploymentStrategy = core.getInput("traffic-split-method");
+
   return (
     isCanaryDeploymentStrategy() &&
-    deploymentStrategy &&
-    deploymentStrategy.toUpperCase() === TRAFFIC_SPLIT_STRATEGY
+    deploymentStrategy?.toUpperCase() === TRAFFIC_SPLIT_STRATEGY
   );
 }
 
@@ -136,32 +129,6 @@ export function getBaselineResourceName(name: string) {
 
 export function getStableResourceName(name: string) {
   return name + STABLE_SUFFIX;
-}
-
-function UnsetsClusterSpecficDetails(resource: any) {
-  if (resource == null) {
-    return;
-  }
-
-  // Unsets the cluster specific details in the object
-  if (!!resource) {
-    const metadata = resource.metadata;
-    const status = resource.status;
-
-    if (!!metadata) {
-      const newMetadata = {
-        annotations: metadata.annotations,
-        labels: metadata.labels,
-        name: metadata.name,
-      };
-
-      resource.metadata = newMetadata;
-    }
-
-    if (!!status) {
-      resource.status = {};
-    }
-  }
 }
 
 function getNewCanaryObject(
@@ -182,25 +149,19 @@ function getNewCanaryObject(
     );
   }
 
-  // Adding labels and annotations.
   addCanaryLabelsAndAnnotations(newObject, type);
 
-  // Updating number of replicas
-  if (isSpecContainsReplicas(newObject.kind)) {
+  if (specContainsReplicas(newObject.kind)) {
     newObject.spec.replicas = replicas;
   }
 
   return newObject;
 }
 
-function isSpecContainsReplicas(kind: string) {
+function specContainsReplicas(kind: string) {
   return (
-    !isEqual(kind, KubernetesWorkload.POD, StringComparer.OrdinalIgnoreCase) &&
-    !isEqual(
-      kind,
-      KubernetesWorkload.DAEMON_SET,
-      StringComparer.OrdinalIgnoreCase
-    ) &&
+    kind.toLowerCase() !== KubernetesWorkload.POD.toLowerCase() &&
+    kind.toLowerCase() !== KubernetesWorkload.DAEMON_SET.toLowerCase() &&
     !helper.isServiceEntity(kind)
   );
 }
@@ -223,28 +184,31 @@ function cleanUpCanary(
   files: string[],
   includeServices: boolean
 ) {
-  var deleteObject = function (kind, name) {
+  const deleteObject = async function (kind, name) {
     try {
-      const result = kubectl.delete([kind, name]);
+      const result = await kubectl.delete([kind, name]);
       checkForErrors([result]);
     } catch (ex) {
-      // Ignore failures of delete if doesn't exist
+      // Ignore failures of delete if it doesn't exist
     }
   };
 
   files.forEach((filePath: string) => {
-    const fileContents = fs.readFileSync(filePath);
-    yaml.safeLoadAll(fileContents, function (inputObject) {
+    const fileContents = fs.readFileSync(filePath).toString();
+
+    yaml.safeLoadAll(fileContents, async function (inputObject) {
       const name = inputObject.metadata.name;
       const kind = inputObject.kind;
+
       if (
         helper.isDeploymentEntity(kind) ||
         (includeServices && helper.isServiceEntity(kind))
       ) {
         const canaryObjectName = getCanaryResourceName(name);
         const baselineObjectName = getBaselineResourceName(name);
-        deleteObject(kind, canaryObjectName);
-        deleteObject(kind, baselineObjectName);
+
+        await deleteObject(kind, canaryObjectName);
+        await deleteObject(kind, baselineObjectName);
       }
     });
   });

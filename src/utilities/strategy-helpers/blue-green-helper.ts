@@ -10,6 +10,7 @@ import * as TaskInputParameters from "../../input-parameters";
 import { routeBlueGreenService } from "./service-blue-green-helper";
 import { routeBlueGreenIngress } from "./ingress-blue-green-helper";
 import { routeBlueGreenSMI } from "./smi-blue-green-helper";
+import { UnsetClusterSpecficDetails } from "../manifest-utilities";
 
 export const BLUE_GREEN_DEPLOYMENT_STRATEGY = "BLUE-GREEN";
 export const GREEN_LABEL_VALUE = "green";
@@ -356,36 +357,12 @@ export async function fetchResource(
     const resource = JSON.parse(result.stdout);
 
     try {
-      UnsetsClusterSpecficDetails(resource);
+      UnsetClusterSpecficDetails(resource);
       return resource;
     } catch (ex) {
       core.debug(
         `Exception occurred while Parsing ${resource} in Json object: ${ex}`
       );
-    }
-  }
-}
-
-function UnsetsClusterSpecficDetails(resource: any) {
-  if (!resource) {
-    return;
-  }
-
-  // Unsets the cluster specific details in the object
-  if (!!resource) {
-    const { metadata, status } = resource;
-
-    if (!!metadata) {
-      const newMetadata = {
-        annotations: metadata.annotations,
-        labels: metadata.labels,
-        name: metadata.name,
-      };
-      resource.metadata = newMetadata;
-    }
-
-    if (!!status) {
-      resource.status = {};
     }
   }
 }

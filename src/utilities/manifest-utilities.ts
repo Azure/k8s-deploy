@@ -264,3 +264,28 @@ export function isWorkloadEntity(kind: string): boolean {
     return type === kind;
   });
 }
+
+export function UnsetClusterSpecficDetails(resource: any) {
+  if (!resource) {
+    return;
+  }
+
+  // Unset cluster specific details in the object
+  if (!!resource) {
+    const { metadata, status } = resource;
+
+    if (!!metadata) {
+      const newMetadata = {
+        annotations: metadata.annotations,
+        labels: metadata.labels,
+        name: metadata.name,
+      };
+
+      resource.metadata = newMetadata;
+    }
+
+    if (!!status) {
+      resource.status = {};
+    }
+  }
+}
