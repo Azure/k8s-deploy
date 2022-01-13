@@ -42,7 +42,7 @@ export async function checkManifestStability(
       KubernetesConstants.DiscoveryAndLoadBalancerResource.SERVICE
     ) {
       try {
-        const service = getService(kubectl, resource.name);
+        const service = await getService(kubectl, resource.name);
         const { spec, status } = service;
         if (spec.type === KubernetesConstants.ServiceTypes.LOAD_BALANCER) {
           if (!isLoadBalancerIPAssigned(status)) {

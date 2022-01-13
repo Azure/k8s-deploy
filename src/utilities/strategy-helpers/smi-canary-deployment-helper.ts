@@ -15,7 +15,7 @@ const TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX = "-workflow-rollout";
 const TRAFFIC_SPLIT_OBJECT = "TrafficSplit";
 let trafficSplitAPIVersion = "";
 
-export function deploySMICanary(filePaths: string[], kubectl: Kubectl) {
+export async function deploySMICanary(filePaths: string[], kubectl: Kubectl) {
   const canaryReplicaCount = parseInt(
     core.getInput("baseline-and-canary-replicas")
   );
@@ -25,7 +25,7 @@ export function deploySMICanary(filePaths: string[], kubectl: Kubectl) {
 
   const newObjectsList = [];
   filePaths.forEach((filePath: string) => {
-    const fileContents = fs.readFileSync(filePath);
+    const fileContents = fs.readFileSync(filePath).toString();
     yaml.safeLoadAll(fileContents, (inputObject) => {
       const name = inputObject.metadata.name;
       const kind = inputObject.kind;
@@ -73,7 +73,7 @@ export function deploySMICanary(filePaths: string[], kubectl: Kubectl) {
   });
 
   const newFilePaths = fileHelper.writeObjectsToFile(newObjectsList);
-  const result = kubectl.apply(
+  const result = await kubectl.apply(
     newFilePaths,
     TaskInputParameters.forceDeployment
   );

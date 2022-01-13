@@ -7,10 +7,8 @@ import * as KubernetesObjectUtility from "../resource-object-utility";
 import * as TaskInputParameters from "../../input-parameters";
 import * as models from "../../constants";
 import * as fileHelper from "../files-helper";
-import * as utils from "../manifest-utilities";
 import * as KubernetesManifestUtility from "../manifest-stability-utility";
 import { Kubectl, Resource } from "../../types/kubectl";
-import { IExecSyncResult } from "../../utilities/tool-runner";
 
 import { deployPodCanary } from "./pod-canary-deployment-helper";
 import { deploySMICanary } from "./smi-canary-deployment-helper";
@@ -34,22 +32,13 @@ import {
   TrafficSplitMethod,
 } from "../../types/trafficSplitMethod";
 import { parseRouteStrategy, RouteStrategy } from "../../types/routeStrategy";
+import { ExecOutput } from "@actions/exec";
 
-export function getManifestFiles(manifestFilePaths: string[]): string[] {
-  const files: string[] = utils.getManifestFiles(manifestFilePaths);
-
-  if (files == null || files.length === 0) {
-    throw new Error(`ManifestFileNotFound : ${manifestFilePaths}`);
-  }
-
-  return files;
-}
-
-export function deployManifests(
+export async function deployManifests(
   files: string[],
   deploymentStrategy: DeploymentStrategy,
   kubectl: Kubectl
-): string[] {
+): Promise<string[]> {
   switch (deploymentStrategy) {
     case DeploymentStrategy.CANARY: {
       const trafficSplitMethod = parseTrafficSplitMethod(
@@ -58,48 +47,57 @@ export function deployManifests(
 
       const { result, newFilePaths } =
         trafficSplitMethod == TrafficSplitMethod.SMI
-          ? deploySMICanary(files, kubectl)
-          : deployPodCanary(files, kubectl);
+          ? await deploySMICanary(files, kubectl)
+          : await deployPodCanary(files, kubectl);
 
       checkForErrors([result]);
       return newFilePaths;
     }
+
     case DeploymentStrategy.BLUE_GREEN: {
       const routeStrategy = parseRouteStrategy(
         core.getInput("route-method", { required: true })
       );
-      const { result, newFilePaths } =
+
+      const { result, newFilePaths } = await Promise.resolve(
         (routeStrategy == RouteStrategy.INGRESS &&
-          deployBlueGreenIngress(files)) ||
-        (routeStrategy == RouteStrategy.SMI && deployBlueGreenSMI(files)) ||
-        deployBlueGreenService(files);
+          deployBlueGreenIngress(kubectl, files)) ||
+          (routeStrategy == RouteStrategy.SMI &&
+            deployBlueGreenSMI(kubectl, files)) ||
+          deployBlueGreenService(kubectl, files)
+      );
+
       checkForErrors([result]);
       return newFilePaths;
     }
+
     case undefined: {
-      core.warning("Deployment strategy is not recognized");
+      core.warning("Deployment strategy is not recognized.");
     }
     default: {
       const trafficSplitMethod = parseTrafficSplitMethod(
         core.getInput("traffic-split-method", { required: true })
       );
-      if (trafficSplitMethod == TrafficSplitMethod.SMI) {
+
+      if (trafficSplitMethod === TrafficSplitMethod.SMI) {
         const updatedManifests = appendStableVersionLabelToResource(
           files,
           kubectl
         );
-        const result = kubectl.apply(
+
+        const result = await kubectl.apply(
           updatedManifests,
           TaskInputParameters.forceDeployment
         );
         checkForErrors([result]);
       } else {
-        const result = kubectl.apply(
+        const result = await kubectl.apply(
           files,
           TaskInputParameters.forceDeployment
         );
         checkForErrors([result]);
       }
+
       return files;
     }
   }
@@ -113,9 +111,11 @@ function appendStableVersionLabelToResource(
   const newObjectsList = [];
 
   files.forEach((filePath: string) => {
-    const fileContents = fs.readFileSync(filePath);
+    const fileContents = fs.readFileSync(filePath).toString();
+
     yaml.safeLoadAll(fileContents, function (inputObject) {
-      const kind = inputObject.kind;
+      const { kind } = inputObject;
+
       if (KubernetesObjectUtility.isDeploymentEntity(kind)) {
         const updatedObject =
           canaryDeploymentHelper.markResourceAsStable(inputObject);
@@ -128,6 +128,7 @@ function appendStableVersionLabelToResource(
 
   const updatedManifestFiles = fileHelper.writeObjectsToFile(newObjectsList);
   manifestFiles.push(...updatedManifestFiles);
+
   return manifestFiles;
 }
 
@@ -144,13 +145,14 @@ export async function annotateAndLabelResources(
   resourceTypes: Resource[],
   allPods: any
 ) {
-  const workflowFilePath = await getWorkflowFilePath(
-    TaskInputParameters.githubToken
-  );
+  const githubToken = core.getInput("token");
+  const workflowFilePath = await getWorkflowFilePath(githubToken);
+
   const deploymentConfig = await getDeploymentConfig();
   const annotationKeyLabel =
     models.getWorkflowAnnotationKeyLabel(workflowFilePath);
-  annotateResources(
+
+  await annotateResources(
     files,
     kubectl,
     resourceTypes,
@@ -171,61 +173,67 @@ async function annotateResources(
   workflowFilePath: string,
   deploymentConfig: DeploymentConfig
 ) {
-  const annotateResults: IExecSyncResult[] = [];
+  const annotateResults: ExecOutput[] = [];
   const lastSuccessSha = await getLastSuccessfulRunSha(
     kubectl,
     TaskInputParameters.namespace,
     annotationKey
   );
-  let annotationKeyValStr =
-    annotationKey +
-    "=" +
-    models.getWorkflowAnnotationsJson(
-      lastSuccessSha,
-      workflowFilePath,
-      deploymentConfig
-    );
+
+  let annotationKeyValStr = `${annotationKey}=${models.getWorkflowAnnotationsJson(
+    lastSuccessSha,
+    workflowFilePath,
+    deploymentConfig
+  )}`;
   annotateResults.push(
-    kubectl.annotate(
+    await kubectl.annotate(
       "namespace",
       TaskInputParameters.namespace,
       annotationKeyValStr
     )
   );
-  annotateResults.push(kubectl.annotateFiles(files, annotationKeyValStr));
-  resourceTypes.forEach((resource) => {
+  annotateResults.push(await kubectl.annotateFiles(files, annotationKeyValStr));
+
+  resourceTypes.forEach(async (resource) => {
     if (
-      resource.type.toUpperCase() !==
-      models.KubernetesWorkload.POD.toUpperCase()
+      resource.type.toLowerCase() !==
+      models.KubernetesWorkload.POD.toLowerCase()
     ) {
-      annotateChildPods(
-        kubectl,
-        resource.type,
-        resource.name,
-        annotationKeyValStr,
-        allPods
+      (
+        await annotateChildPods(
+          kubectl,
+          resource.type,
+          resource.name,
+          annotationKeyValStr,
+          allPods
+        )
       ).forEach((execResult) => annotateResults.push(execResult));
     }
   });
+
   checkForErrors(annotateResults, true);
 }
 
-function labelResources(files: string[], kubectl: Kubectl, label: string) {
+async function labelResources(
+  files: string[],
+  kubectl: Kubectl,
+  label: string
+) {
   const labels = [
     `workflowFriendlyName=${normaliseWorkflowStrLabel(
       process.env.GITHUB_WORKFLOW
     )}`,
     `workflow=${label}`,
   ];
-  checkForErrors([kubectl.labelFiles(files, labels)], true);
+
+  checkForErrors([await kubectl.labelFiles(files, labels)], true);
 }
 
 export function isCanaryDeploymentStrategy(
   deploymentStrategy: string
 ): boolean {
   return (
-    deploymentStrategy != null &&
-    deploymentStrategy.toUpperCase() ===
-      canaryDeploymentHelper.CANARY_DEPLOYMENT_STRATEGY.toUpperCase()
+    deploymentStrategy?.toLowerCase() ===
+    canaryDeploymentHelper.CANARY_DEPLOYMENT_STRATEGY.toLowerCase()
   );
 }
