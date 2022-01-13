@@ -2,7 +2,7 @@ import * as core from "@actions/core";
 import * as io from "@actions/io";
 import * as toolCache from "@actions/tool-cache";
 import { Kubectl } from "./types/kubectl";
-import { deploy } from "./deploy/deploy";
+import { deploy } from "./actions/deploy";
 import { promote } from "./actions/promote";
 import { reject } from "./actions/reject";
 import { Action, parseAction } from "./types/action";

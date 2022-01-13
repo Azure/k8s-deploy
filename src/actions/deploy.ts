@@ -1,4 +1,3 @@
-"use strict";
 import * as core from "@actions/core";
 import * as KubernetesObjectUtility from "../utilities/resource-object-utility";
 import * as models from "../constants";

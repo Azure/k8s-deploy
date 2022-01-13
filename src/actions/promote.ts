@@ -1,8 +1,6 @@
-"use strict";
-
 import * as core from "@actions/core";
 import * as deploymentHelper from "../utilities/strategy-helpers/deployment-helper";
-import * as deploy from "../deploy/deploy";
+import * as deploy from "./deploy";
 import * as canaryDeploymentHelper from "../utilities/strategy-helpers/canary-deployment-helper";
 import * as SMICanaryDeploymentHelper from "../utilities/strategy-helpers/smi-canary-deployment-helper";
 import * as utils from "../utilities/manifest-utilities";

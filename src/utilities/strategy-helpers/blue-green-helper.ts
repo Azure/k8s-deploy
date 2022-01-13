@@ -1,5 +1,3 @@
-"use strict";
-
 import * as core from "@actions/core";
 import * as fs from "fs";
 import * as yaml from "js-yaml";
@@ -19,25 +17,22 @@ export const NONE_LABEL_VALUE = "None";
 export const BLUE_GREEN_VERSION_LABEL = "k8s.deploy.color";
 export const GREEN_SUFFIX = "-green";
 export const STABLE_SUFFIX = "-stable";
-const INGRESS_ROUTE = "INGRESS";
-const SMI_ROUTE = "SMI";
+export const INGRESS_ROUTE = "INGRESS";
+export const SMI_ROUTE = "SMI";
 
 export function isBlueGreenDeploymentStrategy() {
-  const deploymentStrategy = TaskInputParameters.deploymentStrategy;
-  return (
-    deploymentStrategy &&
-    deploymentStrategy.toUpperCase() === BLUE_GREEN_DEPLOYMENT_STRATEGY
-  );
+  const deploymentStrategy = core.getInput("strategy");
+  return deploymentStrategy?.toUpperCase() === BLUE_GREEN_DEPLOYMENT_STRATEGY;
 }
 
 export function isIngressRoute(): boolean {
-  const routeMethod = TaskInputParameters.routeMethod;
-  return routeMethod && routeMethod.toUpperCase() === INGRESS_ROUTE;
+  const routeMethod = core.getInput("route-method");
+  return routeMethod?.toUpperCase() === INGRESS_ROUTE;
 }
 
 export function isSMIRoute(): boolean {
-  const routeMethod = TaskInputParameters.routeMethod;
-  return routeMethod && routeMethod.toUpperCase() === SMI_ROUTE;
+  const routeMethod = core.getInput("route-method");
+  return routeMethod?.toUpperCase() === SMI_ROUTE;
 }
 
 export interface BlueGreenManifests {
@@ -53,24 +48,24 @@ export async function routeBlueGreen(
   kubectl: Kubectl,
   inputManifestFiles: string[]
 ) {
-  // get buffer time
-  let bufferTime: number = parseInt(TaskInputParameters.versionSwitchBuffer);
+  const versionSwitchBuffer = core.getInput("version-switch-buffer");
+  const bufferTime: number = parseInt(TaskInputParameters.versionSwitchBuffer);
 
-  //logging start of buffer time
-  let dateNow = new Date();
-  console.log(
-    `Starting buffer time of ${bufferTime} minute(s) at ${dateNow.toISOString()}`
+  const startSleepDate = new Date();
+  core.info(
+    `Starting buffer time of ${bufferTime} minute(s) at ${startSleepDate.toISOString()}`
   );
-  // waiting
+
   await sleep(bufferTime * 1000 * 60);
-  // logging end of buffer time
-  dateNow = new Date();
-  console.log(
-    `Stopping buffer time of ${bufferTime} minute(s) at ${dateNow.toISOString()}`
+
+  const endSleepDate = new Date();
+  core.info(
+    `Stopping buffer time of ${bufferTime} minute(s) at ${endSleepDate.toISOString()}`
   );
 
   const manifestObjects: BlueGreenManifests =
     getManifestObjects(inputManifestFiles);
+
   // routing to new deployments
   if (isIngressRoute()) {
     routeBlueGreenIngress(
@@ -99,16 +94,17 @@ export function deleteWorkloadsWithLabel(
   deleteLabel: string,
   deploymentEntityList: any[]
 ) {
-  let resourcesToDelete = [];
+  const resourcesToDelete = [];
   deploymentEntityList.forEach((inputObject) => {
     const name = inputObject.metadata.name;
     const kind = inputObject.kind;
+
     if (deleteLabel === NONE_LABEL_VALUE) {
-      // if dellabel is none, deletes stable deployments
-      const resourceToDelete = { name: name, kind: kind };
+      // delete stable deployments
+      const resourceToDelete = { name, kind };
       resourcesToDelete.push(resourceToDelete);
     } else {
-      // if dellabel is not none, then deletes new green deployments
+      // delete new green deployments
       const resourceToDelete = {
         name: getBlueGreenResourceName(name, GREEN_SUFFIX),
         kind: kind,
@@ -117,7 +113,6 @@ export function deleteWorkloadsWithLabel(
     }
   });
 
-  // deletes the deployments
   deleteObjects(kubectl, resourcesToDelete);
 }
 
@@ -129,16 +124,18 @@ export function deleteWorkloadsAndServicesWithLabel(
 ) {
   // need to delete services and deployments
   const deletionEntitiesList = deploymentEntityList.concat(serviceEntityList);
-  let resourcesToDelete = [];
+  const resourcesToDelete = [];
+
   deletionEntitiesList.forEach((inputObject) => {
     const name = inputObject.metadata.name;
     const kind = inputObject.kind;
+
     if (deleteLabel === NONE_LABEL_VALUE) {
-      // if not dellabel, delete stable objects
-      const resourceToDelete = { name: name, kind: kind };
+      // delete stable objects
+      const resourceToDelete = { name, kind };
       resourcesToDelete.push(resourceToDelete);
     } else {
-      // else delete green labels
+      // delete green labels
       const resourceToDelete = {
         name: getBlueGreenResourceName(name, GREEN_SUFFIX),
         kind: kind,
@@ -146,17 +143,18 @@ export function deleteWorkloadsAndServicesWithLabel(
       resourcesToDelete.push(resourceToDelete);
     }
   });
+
   deleteObjects(kubectl, resourcesToDelete);
 }
 
 export function deleteObjects(kubectl: Kubectl, deleteList: any[]) {
   // delete services and deployments
-  deleteList.forEach((delObject) => {
+  deleteList.forEach(async (delObject) => {
     try {
-      const result = kubectl.delete([delObject.kind, delObject.name]);
+      const result = await kubectl.delete([delObject.kind, delObject.name]);
       checkForErrors([result]);
     } catch (ex) {
-      // Ignore failures of delete if doesn't exist
+      // Ignore failures of delete if it doesn't exist
     }
   });
 }
@@ -164,9 +162,9 @@ export function deleteObjects(kubectl: Kubectl, deleteList: any[]) {
 export function getSuffix(label: string): string {
   if (label === GREEN_LABEL_VALUE) {
     return GREEN_SUFFIX;
-  } else {
-    return "";
   }
+
+  return "";
 }
 
 // other common functions
@@ -176,13 +174,15 @@ export function getManifestObjects(filePaths: string[]): BlueGreenManifests {
   const unroutedServiceEntityList = [];
   const ingressEntityList = [];
   const otherEntitiesList = [];
-  let serviceNameMap = new Map<string, string>();
+  const serviceNameMap = new Map<string, string>();
+
   filePaths.forEach((filePath: string) => {
-    const fileContents = fs.readFileSync(filePath);
-    yaml.safeLoadAll(fileContents, function (inputObject) {
+    const fileContents = fs.readFileSync(filePath).toString();
+    yaml.safeLoadAll(fileContents, (inputObject) => {
       if (!!inputObject) {
         const kind = inputObject.kind;
         const name = inputObject.metadata.name;
+
         if (helper.isDeploymentEntity(kind)) {
           deploymentEntityList.push(inputObject);
         } else if (helper.isServiceEntity(kind)) {
@@ -220,13 +220,13 @@ export function isServiceRouted(
 ): boolean {
   let shouldBeRouted: boolean = false;
   const serviceSelector: any = getServiceSelector(serviceObject);
-  if (!!serviceSelector) {
+  if (serviceSelector) {
     if (
       deploymentEntityList.some((depObject) => {
         // finding if there is a deployment in the given manifests the service targets
         const matchLabels: any = getDeploymentMatchLabels(depObject);
         return (
-          !!matchLabels &&
+          matchLabels &&
           isServiceSelectorSubsetOfMatchLabel(serviceSelector, matchLabels)
         );
       })
@@ -234,10 +234,11 @@ export function isServiceRouted(
       shouldBeRouted = true;
     }
   }
+
   return shouldBeRouted;
 }
 
-export function createWorkloadsWithLabel(
+export async function createWorkloadsWithLabel(
   kubectl: Kubectl,
   deploymentObjectList: any[],
   nextLabel: string
@@ -251,8 +252,9 @@ export function createWorkloadsWithLabel(
     );
     newObjectsList.push(newBlueGreenObject);
   });
+
   const manifestFiles = fileHelper.writeObjectsToFile(newObjectsList);
-  const result = kubectl.apply(manifestFiles);
+  const result = await kubectl.apply(manifestFiles);
 
   return { result: result, newFilePaths: manifestFiles };
 }
@@ -273,7 +275,6 @@ export function getNewBlueGreenObject(
 
   // Adding labels and annotations
   addBlueGreenLabelsAndAnnotations(newObject, labelValue);
-
   return newObject;
 }
 
@@ -301,36 +302,28 @@ export function getBlueGreenResourceName(name: string, suffix: string) {
 
 export function getDeploymentMatchLabels(deploymentObject: any): any {
   if (
-    !!deploymentObject &&
-    deploymentObject.kind.toUpperCase() ==
+    deploymentObject?.kind?.toUpperCase() ==
       KubernetesWorkload.POD.toUpperCase() &&
-    !!deploymentObject.metadata &&
-    !!deploymentObject.metadata.labels
+    deploymentObject?.metadata?.labels
   ) {
     return deploymentObject.metadata.labels;
-  } else if (
-    !!deploymentObject &&
-    deploymentObject.spec &&
-    deploymentObject.spec.selector &&
-    deploymentObject.spec.selector.matchLabels
-  ) {
+  } else if (deploymentObject?.spec?.selector?.matchLabels) {
     return deploymentObject.spec.selector.matchLabels;
   }
-  return null;
 }
 
 export function getServiceSelector(serviceObject: any): any {
-  if (!!serviceObject && serviceObject.spec && serviceObject.spec.selector) {
+  if (serviceObject?.spec?.selector) {
     return serviceObject.spec.selector;
-  } else return null;
+  }
 }
 
 export function isServiceSelectorSubsetOfMatchLabel(
   serviceSelector: any,
   matchLabels: any
 ): boolean {
-  let serviceSelectorMap = new Map();
-  let matchLabelsMap = new Map();
+  const serviceSelectorMap = new Map();
+  const matchLabelsMap = new Map();
 
   JSON.parse(JSON.stringify(serviceSelector), (key, value) => {
     serviceSelectorMap.set(key, value);
@@ -342,47 +335,45 @@ export function isServiceSelectorSubsetOfMatchLabel(
 
   let isMatch = true;
   serviceSelectorMap.forEach((value, key) => {
-    if (
-      !!key &&
-      (!matchLabelsMap.has(key) || matchLabelsMap.get(key)) != value
-    ) {
+    if (!!key && (!matchLabelsMap.has(key) || matchLabelsMap.get(key)) != value)
       isMatch = false;
-    }
   });
 
   return isMatch;
 }
 
-export function fetchResource(kubectl: Kubectl, kind: string, name: string) {
-  const result = kubectl.getResource(kind, name);
+export async function fetchResource(
+  kubectl: Kubectl,
+  kind: string,
+  name: string
+) {
+  const result = await kubectl.getResource(kind, name);
   if (result == null || !!result.stderr) {
     return null;
   }
 
   if (!!result.stdout) {
     const resource = JSON.parse(result.stdout);
+
     try {
       UnsetsClusterSpecficDetails(resource);
       return resource;
     } catch (ex) {
       core.debug(
-        "Exception occurred while Parsing " + resource + " in Json object"
+        `Exception occurred while Parsing ${resource} in Json object: ${ex}`
       );
-      core.debug(`Exception:${ex}`);
     }
   }
-  return null;
 }
 
 function UnsetsClusterSpecficDetails(resource: any) {
-  if (resource == null) {
+  if (!resource) {
     return;
   }
 
   // Unsets the cluster specific details in the object
   if (!!resource) {
-    const metadata = resource.metadata;
-    const status = resource.status;
+    const { metadata, status } = resource;
 
     if (!!metadata) {
       const newMetadata = {
@@ -390,7 +381,6 @@ function UnsetsClusterSpecficDetails(resource: any) {
         labels: metadata.labels,
         name: metadata.name,
       };
-
       resource.metadata = newMetadata;
     }
 
