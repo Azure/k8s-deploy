@@ -219,10 +219,10 @@ async function adjustTraffic(
   checkForErrors([result]);
 }
 
-function updateTrafficSplitObject(
+async function updateTrafficSplitObject(
   kubectl: Kubectl,
   serviceName: string
-): string {
+): Promise<string> {
   const percentage = parseInt(core.getInput("percentage")) * 10;
   const baselineAndCanaryWeight = percentage / 2;
   const stableDeploymentWeight = 1000 - percentage;
@@ -235,7 +235,7 @@ function updateTrafficSplitObject(
       ",stable: " +
       stableDeploymentWeight
   );
-  return createTrafficSplitManifestFile(
+  return await createTrafficSplitManifestFile(
     kubectl,
     serviceName,
     stableDeploymentWeight,
@@ -244,14 +244,14 @@ function updateTrafficSplitObject(
   );
 }
 
-function createTrafficSplitManifestFile(
+async function createTrafficSplitManifestFile(
   kubectl: Kubectl,
   serviceName: string,
   stableWeight: number,
   baselineWeight: number,
   canaryWeight: number
-): string {
-  const smiObjectString = getTrafficSplitObject(
+): Promise<string> {
+  const smiObjectString = await getTrafficSplitObject(
     kubectl,
     serviceName,
     stableWeight,
