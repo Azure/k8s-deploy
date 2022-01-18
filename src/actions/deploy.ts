@@ -26,8 +26,7 @@ export async function deploy(
 ) {
   const inputManifestFiles: string[] = updateManifestFiles(manifestFilePaths);
 
-  // deployment
-  const deployedManifestFiles = deployManifests(
+  const deployedManifestFiles = await deployManifests(
     inputManifestFiles,
     deploymentStrategy,
     kubectl
@@ -47,27 +46,27 @@ export async function deploy(
     await routeBlueGreen(kubectl, inputManifestFiles);
   }
 
-  // print ingress resources
+  // print ingresses
   const ingressResources: Resource[] = KubernetesObjectUtility.getResources(
     deployedManifestFiles,
     [KubernetesConstants.DiscoveryAndLoadBalancerResource.INGRESS]
   );
-  ingressResources.forEach((ingressResource) => {
-    kubectl.getResource(
+  for (const ingressResource of ingressResources) {
+    await kubectl.getResource(
       KubernetesConstants.DiscoveryAndLoadBalancerResource.INGRESS,
       ingressResource.name
     );
-  });
-
-  // annotate resources
-  let allPods: any;
-  try {
-    allPods = JSON.parse(kubectl.getAllPods().stdout);
-  } catch (e) {
-    core.debug("Unable to parse pods; Error: " + e);
   }
 
-  annotateAndLabelResources(
+  // annotate resources
+  let allPods;
+  try {
+    allPods = JSON.parse((await kubectl.getAllPods()).stdout);
+  } catch (e) {
+    core.debug("Unable to parse pods: " + e);
+  }
+
+  await annotateAndLabelResources(
     deployedManifestFiles,
     kubectl,
     resourceTypes,
