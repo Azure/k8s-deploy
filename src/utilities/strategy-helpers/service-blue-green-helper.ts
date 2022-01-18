@@ -1,5 +1,3 @@
-"use strict";
-
 import { Kubectl } from "../../types/kubectl";
 import * as fileHelper from "../files-helper";
 import {
@@ -16,12 +14,14 @@ import {
   BLUE_GREEN_VERSION_LABEL,
 } from "./blue-green-helper";
 
-export function deployBlueGreenService(kubectl: Kubectl, filePaths: string[]) {
-  // get all kubernetes objects defined in manifest files
+export async function deployBlueGreenService(
+  kubectl: Kubectl,
+  filePaths: string[]
+) {
   const manifestObjects: BlueGreenManifests = getManifestObjects(filePaths);
 
   // create deployments with green label value
-  const result = createWorkloadsWithLabel(
+  const result = await createWorkloadsWithLabel(
     kubectl,
     manifestObjects.deploymentEntityList,
     GREEN_LABEL_VALUE
@@ -32,7 +32,7 @@ export function deployBlueGreenService(kubectl: Kubectl, filePaths: string[]) {
     .concat(manifestObjects.ingressEntityList)
     .concat(manifestObjects.unroutedServiceEntityList);
   const manifestFiles = fileHelper.writeObjectsToFile(newObjectsList);
-  kubectl.apply(manifestFiles);
+  await kubectl.apply(manifestFiles);
 
   // returning deployment details to check for rollout stability
   return result;
@@ -44,18 +44,15 @@ export async function promoteBlueGreenService(
 ) {
   // checking if services are in the right state ie. targeting green deployments
   if (!validateServicesState(kubectl, manifestObjects.serviceEntityList)) {
-    throw "NotInPromoteState";
+    throw "Not inP promote state";
   }
 
   // creating stable deployments with new configurations
-  const result = createWorkloadsWithLabel(
+  return await createWorkloadsWithLabel(
     kubectl,
     manifestObjects.deploymentEntityList,
     NONE_LABEL_VALUE
   );
-
-  // returning deployment details to check for rollout stability
-  return result;
 }
 
 export async function rejectBlueGreenService(
@@ -65,14 +62,14 @@ export async function rejectBlueGreenService(
   // get all kubernetes objects defined in manifest files
   const manifestObjects: BlueGreenManifests = getManifestObjects(filePaths);
 
-  // routing to stable objects
+  // route to stable objects
   routeBlueGreenService(
     kubectl,
     NONE_LABEL_VALUE,
     manifestObjects.serviceEntityList
   );
 
-  // deleting the new deployments with green suffix
+  // delete new deployments with green suffix
   deleteWorkloadsWithLabel(
     kubectl,
     GREEN_LABEL_VALUE,
@@ -80,7 +77,7 @@ export async function rejectBlueGreenService(
   );
 }
 
-export function routeBlueGreenService(
+export async function routeBlueGreenService(
   kubectl: Kubectl,
   nextLabel: string,
   serviceEntityList: any[]
@@ -93,17 +90,19 @@ export function routeBlueGreenService(
     );
     newObjectsList.push(newBlueGreenServiceObject);
   });
+
   // configures the services
   const manifestFiles = fileHelper.writeObjectsToFile(newObjectsList);
-  kubectl.apply(manifestFiles);
+  await kubectl.apply(manifestFiles);
 }
 
-// adding green labels to configure existing service
+// add green labels to configure existing service
 function getUpdatedBlueGreenService(
   inputObject: any,
   labelValue: string
 ): object {
   const newObject = JSON.parse(JSON.stringify(inputObject));
+
   // Adding labels and annotations.
   addBlueGreenLabelsAndAnnotations(newObject, labelValue);
   return newObject;
@@ -114,15 +113,16 @@ export function validateServicesState(
   serviceEntityList: any[]
 ): boolean {
   let areServicesGreen: boolean = true;
-  serviceEntityList.forEach((serviceObject) => {
+  serviceEntityList.forEach(async (serviceObject) => {
     // finding the existing routed service
-    const existingService = fetchResource(
+    const existingService = await fetchResource(
       kubectl,
       serviceObject.kind,
       serviceObject.metadata.name
     );
+
     if (!!existingService) {
-      let currentLabel: string = getServiceSpecLabel(existingService);
+      const currentLabel: string = getServiceSpecLabel(existingService);
       if (currentLabel != GREEN_LABEL_VALUE) {
         // service should be targeting deployments with green label
         areServicesGreen = false;
@@ -132,17 +132,14 @@ export function validateServicesState(
       areServicesGreen = false;
     }
   });
+
   return areServicesGreen;
 }
 
 export function getServiceSpecLabel(inputObject: any): string {
-  if (
-    !!inputObject &&
-    inputObject.spec &&
-    inputObject.spec.selector &&
-    inputObject.spec.selector[BLUE_GREEN_VERSION_LABEL]
-  ) {
+  if (inputObject?.spec?.selector[BLUE_GREEN_VERSION_LABEL]) {
     return inputObject.spec.selector[BLUE_GREEN_VERSION_LABEL];
   }
+
   return "";
 }
