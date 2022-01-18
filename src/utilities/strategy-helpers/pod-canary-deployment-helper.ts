@@ -12,13 +12,14 @@ import * as canaryDeploymentHelper from "./canary-deployment-helper";
 
 export async function deployPodCanary(filePaths: string[], kubectl: Kubectl) {
   const newObjectsList = [];
-  const percentage = parseInt(TaskInputParameters.canaryPercentage);
+  const percentage = parseInt(core.getInput("percentage"));
 
   filePaths.forEach((filePath: string) => {
-    const fileContents = fs.readFileSync(filePath);
-    yaml.safeLoadAll(fileContents, function (inputObject) {
+    const fileContents = fs.readFileSync(filePath).toString();
+    yaml.safeLoadAll(fileContents, (inputObject) => {
       const name = inputObject.metadata.name;
       const kind = inputObject.kind;
+
       if (helper.isDeploymentEntity(kind)) {
         core.debug("Calculating replica count for canary");
         const canaryReplicaCount = calculateReplicaCountForCanary(
@@ -34,22 +35,18 @@ export async function deployPodCanary(filePaths: string[], kubectl: Kubectl) {
           kind,
           name
         );
+
         if (!stableObject) {
-          core.debug("Stable object not found. Creating only canary object");
-          // If stable object not found, create canary deployment.
+          core.debug("Stable object not found. Creating canary object");
           const newCanaryObject = canaryDeploymentHelper.getNewCanaryResource(
             inputObject,
             canaryReplicaCount
-          );
-          core.debug(
-            "New canary object is: " + JSON.stringify(newCanaryObject)
           );
           newObjectsList.push(newCanaryObject);
         } else {
           core.debug(
             "Stable object found. Creating canary and baseline objects"
           );
-          // If canary object not found, create canary and baseline object.
           const newCanaryObject = canaryDeploymentHelper.getNewCanaryResource(
             inputObject,
             canaryReplicaCount
@@ -59,17 +56,11 @@ export async function deployPodCanary(filePaths: string[], kubectl: Kubectl) {
               stableObject,
               canaryReplicaCount
             );
-          core.debug(
-            "New canary object is: " + JSON.stringify(newCanaryObject)
-          );
-          core.debug(
-            "New baseline object is: " + JSON.stringify(newBaselineObject)
-          );
           newObjectsList.push(newCanaryObject);
           newObjectsList.push(newBaselineObject);
         }
       } else {
-        // Updating non deployment entity as it is.
+        // update non deployment entity as it is
         newObjectsList.push(inputObject);
       }
     });
@@ -80,7 +71,7 @@ export async function deployPodCanary(filePaths: string[], kubectl: Kubectl) {
     manifestFiles,
     TaskInputParameters.forceDeployment
   );
-  return { result: result, newFilePaths: manifestFiles };
+  return { result, newFilePaths: manifestFiles };
 }
 
 function calculateReplicaCountForCanary(inputObject: any, percentage: number) {
