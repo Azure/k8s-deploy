@@ -148,16 +148,16 @@ export function deleteWorkloadsAndServicesWithLabel(
   deleteObjects(kubectl, resourcesToDelete);
 }
 
-export function deleteObjects(kubectl: Kubectl, deleteList: any[]) {
+export async function deleteObjects(kubectl: Kubectl, deleteList: any[]) {
   // delete services and deployments
-  deleteList.forEach(async (delObject) => {
+  for (const delObject of deleteList) {
     try {
       const result = await kubectl.delete([delObject.kind, delObject.name]);
       checkForErrors([result]);
     } catch (ex) {
       // Ignore failures of delete if it doesn't exist
     }
-  });
+  }
 }
 
 export function getSuffix(label: string): string {

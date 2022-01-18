@@ -108,12 +108,13 @@ function getUpdatedBlueGreenService(
   return newObject;
 }
 
-export function validateServicesState(
+export async function validateServicesState(
   kubectl: Kubectl,
   serviceEntityList: any[]
-): boolean {
+): Promise<boolean> {
   let areServicesGreen: boolean = true;
-  serviceEntityList.forEach(async (serviceObject) => {
+
+  for (const serviceObject of serviceEntityList) {
     // finding the existing routed service
     const existingService = await fetchResource(
       kubectl,
@@ -131,7 +132,7 @@ export function validateServicesState(
       // service targeting deployment doesn't exist
       areServicesGreen = false;
     }
-  });
+  }
 
   return areServicesGreen;
 }
