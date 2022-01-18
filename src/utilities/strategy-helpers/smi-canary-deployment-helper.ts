@@ -190,13 +190,13 @@ async function adjustTraffic(
   const trafficSplitManifests = [];
   manifestFilePaths.forEach((filePath: string) => {
     const fileContents = fs.readFileSync(filePath).toString();
-    yaml.safeLoadAll(fileContents, (inputObject) => {
+    yaml.safeLoadAll(fileContents, async (inputObject) => {
       const name = inputObject.metadata.name;
       const kind = inputObject.kind;
 
       if (helper.isServiceEntity(kind)) {
         trafficSplitManifests.push(
-          createTrafficSplitManifestFile(
+          await createTrafficSplitManifestFile(
             kubectl,
             name,
             stableWeight,

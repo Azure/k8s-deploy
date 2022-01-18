@@ -36,40 +36,41 @@ import {
   cleanupSMI,
 } from "../utilities/strategy-helpers/smi-blue-green-helper";
 import { Kubectl, Resource } from "../types/kubectl";
+import { DeploymentStrategy } from "../types/deploymentStrategy";
 
 export async function promote() {
-  const kubectl = new Kubectl(
-    await utils.getKubectl(),
-    TaskInputParameters.namespace,
-    true
-  );
+  const namespace: string = core.getInput("namespace") || "default";
+  const kubectl = new Kubectl(await utils.getKubectl(), namespace, true);
 
   if (canaryDeploymentHelper.isCanaryDeploymentStrategy()) {
     await promoteCanary(kubectl);
   } else if (isBlueGreenDeploymentStrategy()) {
     await promoteBlueGreen(kubectl);
   } else {
-    core.debug(
-      "Strategy is not canary or blue-green deployment. Invalid request."
-    );
-    throw "InvalidPromotetActionDeploymentStrategy";
+    throw Error("Invalid promote action deployment strategy");
   }
 }
 
 async function promoteCanary(kubectl: Kubectl) {
   let includeServices = false;
+
   if (canaryDeploymentHelper.isSMICanaryStrategy()) {
     includeServices = true;
+
     // In case of SMI traffic split strategy when deployment is promoted, first we will redirect traffic to
-    // Canary deployment, then update stable deployment and then redirect traffic to stable deployment
+    // canary deployment, then update stable deployment and then redirect traffic to stable deployment
     core.debug("Redirecting traffic to canary deployment");
+    const manifests = core
+      .getInput("manifests")
+      .split(/[\n,;]+/)
+      .filter((manifest) => manifest.trim().length > 0);
     SMICanaryDeploymentHelper.redirectTrafficToCanaryDeployment(
       kubectl,
-      TaskInputParameters.manifests
+      manifests
     );
 
     core.debug("Deploying input manifests with SMI canary strategy");
-    await deploy.deploy(kubectl, TaskInputParameters.manifests, "None");
+    await deploy.deploy(manifests, DeploymentStrategy.CANARY, kubectl);
 
     core.debug("Redirecting traffic to stable deployment");
     SMICanaryDeploymentHelper.redirectTrafficToStableDeployment(
@@ -78,7 +79,11 @@ async function promoteCanary(kubectl: Kubectl) {
     );
   } else {
     core.debug("Deploying input manifests");
-    await deploy.deploy(kubectl, TaskInputParameters.manifests, "None");
+    await deploy.deploy(
+      TaskInputParameters.manifests,
+      DeploymentStrategy.CANARY,
+      kubectl
+    );
   }
 
   core.debug(
@@ -92,21 +97,20 @@ async function promoteCanary(kubectl: Kubectl) {
     );
   } catch (ex) {
     core.warning(
-      "Exception occurred while deleting canary and baseline workloads. Exception: " +
-        ex
+      "Exception occurred while deleting canary and baseline workloads: " + ex
     );
   }
 }
 
 async function promoteBlueGreen(kubectl: Kubectl) {
   // updated container images and pull secrets
-  let inputManifestFiles: string[] = updateManifestFiles(
+  const inputManifestFiles: string[] = updateManifestFiles(
     TaskInputParameters.manifests
   );
   const manifestObjects: BlueGreenManifests =
     getManifestObjects(inputManifestFiles);
 
-  core.debug("deleting old deployment and making new ones");
+  core.debug("Deleting old deployment and making new ones");
   let result;
   if (isIngressRoute()) {
     result = await promoteBlueGreenIngress(kubectl, manifestObjects);
@@ -126,9 +130,9 @@ async function promoteBlueGreen(kubectl: Kubectl) {
   );
   await KubernetesManifestUtility.checkManifestStability(kubectl, resources);
 
-  core.debug("routing to new deployments");
+  core.debug("Routing to new deployments");
   if (isIngressRoute()) {
-    routeBlueGreenIngress(
+    await routeBlueGreenIngress(
       kubectl,
       null,
       manifestObjects.serviceNameMap,
@@ -141,7 +145,7 @@ async function promoteBlueGreen(kubectl: Kubectl) {
       manifestObjects.serviceEntityList
     );
   } else if (isSMIRoute()) {
-    routeBlueGreenSMI(
+    await routeBlueGreenSMI(
       kubectl,
       NONE_LABEL_VALUE,
       manifestObjects.serviceEntityList
@@ -151,9 +155,9 @@ async function promoteBlueGreen(kubectl: Kubectl) {
       GREEN_LABEL_VALUE,
       manifestObjects.deploymentEntityList
     );
-    cleanupSMI(kubectl, manifestObjects.serviceEntityList);
+    await cleanupSMI(kubectl, manifestObjects.serviceEntityList);
   } else {
-    routeBlueGreenService(
+    await routeBlueGreenService(
       kubectl,
       NONE_LABEL_VALUE,
       manifestObjects.serviceEntityList
