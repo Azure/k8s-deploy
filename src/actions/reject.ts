@@ -1,4 +1,3 @@
-"use strict";
 import * as core from "@actions/core";
 import * as canaryDeploymentHelper from "../utilities/strategy-helpers/canary-deployment-helper";
 import * as SMICanaryDeploymentHelper from "../utilities/strategy-helpers/smi-canary-deployment-helper";
@@ -13,14 +12,10 @@ import {
   isIngressRoute,
   isBlueGreenDeploymentStrategy,
 } from "../utilities/strategy-helpers/blue-green-helper";
-import { getManifestFiles } from "../utilities/strategy-helpers/deployment-helper";
 
 export async function reject() {
-  const kubectl = new Kubectl(
-    await utils.getKubectl(),
-    TaskInputParameters.namespace,
-    true
-  );
+  const namespace = core.getInput("namespace") || "default";
+  const kubectl = new Kubectl(await utils.getKubectl(), namespace, true);
 
   if (canaryDeploymentHelper.isCanaryDeploymentStrategy()) {
     await rejectCanary(kubectl);
@@ -30,40 +25,46 @@ export async function reject() {
     core.debug(
       "Strategy is not canary or blue-green deployment. Invalid request."
     );
-    throw "InvalidDeletetActionDeploymentStrategy";
+    throw "Invalid delete action deployment strategy";
   }
 }
 
 async function rejectCanary(kubectl: Kubectl) {
   let includeServices = false;
+  const manifests = core
+    .getInput("manifests")
+    .split(/[\n,;]+/)
+    .filter((manifest) => manifest.trim().length > 0);
+
   if (canaryDeploymentHelper.isSMICanaryStrategy()) {
     core.debug("Reject deployment with SMI canary strategy");
     includeServices = true;
+
     SMICanaryDeploymentHelper.redirectTrafficToStableDeployment(
       kubectl,
-      TaskInputParameters.manifests
+      manifests
     );
   }
 
-  core.debug(
-    "Deployment strategy selected is Canary. Deleting baseline and canary workloads."
-  );
+  core.debug("Deleting baseline and canary workloads");
   canaryDeploymentHelper.deleteCanaryDeployment(
     kubectl,
-    TaskInputParameters.manifests,
+    manifests,
     includeServices
   );
 }
 
 async function rejectBlueGreen(kubectl: Kubectl) {
-  let inputManifestFiles: string[] = getManifestFiles(
-    TaskInputParameters.manifests
-  );
+  let manifests: string[] = core
+    .getInput("manifests")
+    .split(/[\n,;]+/)
+    .filter((manifest) => manifest.trim().length > 0);
+
   if (isIngressRoute()) {
-    await rejectBlueGreenIngress(kubectl, inputManifestFiles);
+    await rejectBlueGreenIngress(kubectl, manifests);
   } else if (isSMIRoute()) {
-    await rejectBlueGreenSMI(kubectl, inputManifestFiles);
+    await rejectBlueGreenSMI(kubectl, manifests);
   } else {
-    await rejectBlueGreenService(kubectl, inputManifestFiles);
+    await rejectBlueGreenService(kubectl, manifests);
   }
 }
