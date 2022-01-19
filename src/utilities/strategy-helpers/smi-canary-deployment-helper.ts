@@ -18,7 +18,6 @@ export async function deploySMICanary(filePaths: string[], kubectl: Kubectl) {
   const canaryReplicaCount = parseInt(
     core.getInput("baseline-and-canary-replicas")
   );
-
   if (canaryReplicaCount < 0 || canaryReplicaCount > 100)
     throw Error("Baseline-and-canary-replicas must be between 0 and 100");
 
@@ -71,10 +70,8 @@ export async function deploySMICanary(filePaths: string[], kubectl: Kubectl) {
   });
 
   const newFilePaths = fileHelper.writeObjectsToFile(newObjectsList);
-  const result = await kubectl.apply(
-    newFilePaths,
-    TaskInputParameters.forceDeployment
-  );
+  const forceDeployment = core.getInput("force").toLowerCase() === "true";
+  const result = await kubectl.apply(newFilePaths, forceDeployment);
   createCanaryService(kubectl, filePaths);
   return { result, newFilePaths };
 }
@@ -156,10 +153,9 @@ async function createCanaryService(kubectl: Kubectl, filePaths: string[]) {
 
   const manifestFiles = fileHelper.writeObjectsToFile(newObjectsList);
   manifestFiles.push(...trafficObjectsList);
-  const result = await kubectl.apply(
-    manifestFiles,
-    TaskInputParameters.forceDeployment
-  );
+  const forceDeployment = core.getInput("force").toLowerCase() === "true";
+
+  const result = await kubectl.apply(manifestFiles, forceDeployment);
   checkForErrors([result]);
 }
 
@@ -212,10 +208,8 @@ async function adjustTraffic(
     return;
   }
 
-  const result = await kubectl.apply(
-    trafficSplitManifests,
-    TaskInputParameters.forceDeployment
-  );
+  const forceDeployment = core.getInput("force").toLowerCase() === "true";
+  const result = await kubectl.apply(trafficSplitManifests, forceDeployment);
   checkForErrors([result]);
 }
 
@@ -223,9 +217,13 @@ async function updateTrafficSplitObject(
   kubectl: Kubectl,
   serviceName: string
 ): Promise<string> {
-  const percentage = parseInt(core.getInput("percentage")) * 10;
-  const baselineAndCanaryWeight = percentage / 2;
-  const stableDeploymentWeight = 1000 - percentage;
+  const percentage = parseInt(core.getInput("percentage"));
+  if (percentage < 0 || percentage > 100)
+    throw Error("Percentage must be between 0 and 100");
+
+  const percentageWithMuliplier = percentage * 10;
+  const baselineAndCanaryWeight = percentageWithMuliplier / 2;
+  const stableDeploymentWeight = 1000 - percentageWithMuliplier;
 
   core.debug(
     "Creating the traffic object with canary weight: " +

@@ -79,22 +79,17 @@ export async function deployManifests(
         core.getInput("traffic-split-method", { required: true })
       );
 
+      const forceDeployment = core.getInput("force").toLowerCase() === "true";
       if (trafficSplitMethod === TrafficSplitMethod.SMI) {
         const updatedManifests = appendStableVersionLabelToResource(
           files,
           kubectl
         );
 
-        const result = await kubectl.apply(
-          updatedManifests,
-          TaskInputParameters.forceDeployment
-        );
+        const result = await kubectl.apply(updatedManifests, forceDeployment);
         checkForErrors([result]);
       } else {
-        const result = await kubectl.apply(
-          files,
-          TaskInputParameters.forceDeployment
-        );
+        const result = await kubectl.apply(files, forceDeployment);
         checkForErrors([result]);
       }
 
@@ -174,23 +169,20 @@ async function annotateResources(
   deploymentConfig: DeploymentConfig
 ) {
   const annotateResults: ExecOutput[] = [];
+  const namespace = core.getInput("namespace") || "default";
   const lastSuccessSha = await getLastSuccessfulRunSha(
     kubectl,
-    TaskInputParameters.namespace,
+    namespace,
     annotationKey
   );
 
-  let annotationKeyValStr = `${annotationKey}=${models.getWorkflowAnnotationsJson(
+  const annotationKeyValStr = `${annotationKey}=${models.getWorkflowAnnotationsJson(
     lastSuccessSha,
     workflowFilePath,
     deploymentConfig
   )}`;
   annotateResults.push(
-    await kubectl.annotate(
-      "namespace",
-      TaskInputParameters.namespace,
-      annotationKeyValStr
-    )
+    await kubectl.annotate("namespace", namespace, annotationKeyValStr)
   );
   annotateResults.push(await kubectl.annotateFiles(files, annotationKeyValStr));
 

@@ -53,6 +53,10 @@ export async function promote() {
 
 async function promoteCanary(kubectl: Kubectl) {
   let includeServices = false;
+  const manifests = core
+    .getInput("manifests")
+    .split(/[\n,;]+/)
+    .filter((manifest) => manifest.trim().length > 0);
 
   if (canaryDeploymentHelper.isSMICanaryStrategy()) {
     includeServices = true;
@@ -60,10 +64,6 @@ async function promoteCanary(kubectl: Kubectl) {
     // In case of SMI traffic split strategy when deployment is promoted, first we will redirect traffic to
     // canary deployment, then update stable deployment and then redirect traffic to stable deployment
     core.debug("Redirecting traffic to canary deployment");
-    const manifests = core
-      .getInput("manifests")
-      .split(/[\n,;]+/)
-      .filter((manifest) => manifest.trim().length > 0);
     SMICanaryDeploymentHelper.redirectTrafficToCanaryDeployment(
       kubectl,
       manifests
@@ -75,15 +75,11 @@ async function promoteCanary(kubectl: Kubectl) {
     core.debug("Redirecting traffic to stable deployment");
     SMICanaryDeploymentHelper.redirectTrafficToStableDeployment(
       kubectl,
-      TaskInputParameters.manifests
+      manifests
     );
   } else {
     core.debug("Deploying input manifests");
-    await deploy.deploy(
-      TaskInputParameters.manifests,
-      DeploymentStrategy.CANARY,
-      kubectl
-    );
+    await deploy.deploy(manifests, DeploymentStrategy.CANARY, kubectl);
   }
 
   core.debug(
@@ -92,7 +88,7 @@ async function promoteCanary(kubectl: Kubectl) {
   try {
     canaryDeploymentHelper.deleteCanaryDeployment(
       kubectl,
-      TaskInputParameters.manifests,
+      manifests,
       includeServices
     );
   } catch (ex) {
@@ -103,10 +99,13 @@ async function promoteCanary(kubectl: Kubectl) {
 }
 
 async function promoteBlueGreen(kubectl: Kubectl) {
-  // updated container images and pull secrets
-  const inputManifestFiles: string[] = updateManifestFiles(
-    TaskInputParameters.manifests
-  );
+  const manifests = core
+    .getInput("manifests")
+    .split(/[\n,;]+/)
+    .filter((manifest) => manifest.trim().length > 0);
+
+  // update container images and pull secrets
+  const inputManifestFiles: string[] = updateManifestFiles(manifests);
   const manifestObjects: BlueGreenManifests =
     getManifestObjects(inputManifestFiles);
 

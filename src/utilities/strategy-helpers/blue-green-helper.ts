@@ -50,7 +50,9 @@ export async function routeBlueGreen(
   inputManifestFiles: string[]
 ) {
   const versionSwitchBuffer = core.getInput("version-switch-buffer");
-  const bufferTime: number = parseInt(TaskInputParameters.versionSwitchBuffer);
+  const bufferTime: number = parseInt(core.getInput("version-switch-buffer"));
+  if (bufferTime < 0 || bufferTime > 300)
+    throw Error("Version switch buffer must be between 0 and 300 (inclusive)");
 
   const startSleepDate = new Date();
   core.info(

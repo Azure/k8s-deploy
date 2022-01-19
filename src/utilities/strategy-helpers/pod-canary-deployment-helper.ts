@@ -14,6 +14,9 @@ export async function deployPodCanary(filePaths: string[], kubectl: Kubectl) {
   const newObjectsList = [];
   const percentage = parseInt(core.getInput("percentage"));
 
+  if (percentage < 0 || percentage > 100)
+    throw Error("Percentage must be between 0 and 100");
+
   filePaths.forEach((filePath: string) => {
     const fileContents = fs.readFileSync(filePath).toString();
     yaml.safeLoadAll(fileContents, (inputObject) => {
@@ -67,10 +70,9 @@ export async function deployPodCanary(filePaths: string[], kubectl: Kubectl) {
   });
 
   const manifestFiles = fileHelper.writeObjectsToFile(newObjectsList);
-  const result = await kubectl.apply(
-    manifestFiles,
-    TaskInputParameters.forceDeployment
-  );
+  const forceDeployment = core.getInput("force").toLowerCase() === "true";
+
+  const result = await kubectl.apply(manifestFiles, forceDeployment);
   return { result, newFilePaths: manifestFiles };
 }
 
