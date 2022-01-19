@@ -7,7 +7,7 @@ import {
   KubernetesWorkload,
   DEPLOYMENT_TYPES,
   WORKLOAD_TYPES,
-} from "../constants";
+} from "../types/kubernetes-types";
 import { StringComparer, isEqual } from "./string-comparison";
 
 const ResourceKindNotDefinedError = Error("Resource kind not defined");

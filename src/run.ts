@@ -18,6 +18,11 @@ export async function run() {
       core.getInput("action", { required: true })
     );
 
+    // create kubectl
+    const kubectlPath = await getKubectlPath();
+    const namespace = core.getInput("namespace") || "default";
+    const kubectl = new Kubectl(kubectlPath, namespace, true);
+
     switch (action) {
       case Action.DEPLOY: {
         // get inputs
@@ -27,19 +32,16 @@ export async function run() {
           .split(/[\n,;]+/) // split into each individual manifest
           .map((manifest) => manifest.trim()) // remove surrounding whitespace
           .filter((manifest) => manifest.length > 0); // remove any blanks
-        const kubectlPath = await getKubectlPath();
-        const namespace = core.getInput("namespace") || "default";
-        const kubectl = new Kubectl(kubectlPath, namespace);
 
         await deploy(manifestFilePaths, strategy, kubectl);
         break;
       }
       case Action.PROMOTE: {
-        await promote();
+        await promote(kubectl);
         break;
       }
       case Action.REJECT: {
-        await reject();
+        await reject(kubectl);
         break;
       }
       default: {
@@ -52,15 +54,21 @@ export async function run() {
 
   async function getKubectlPath() {
     const version = core.getInput("kubectl-version");
-    const kubectlPath = version
-      ? toolCache.find("kubectl", version)
-      : await io.which("kubectl", false);
-    if (!kubectlPath)
+    try {
+      const kubectlPath = version
+        ? toolCache.find("kubectl", version)
+        : await io.which("kubectl", true);
+
+      if (!kubectlPath)
+        throw Error(
+          "kubectl not found. You must install it before running this action"
+        );
+      return kubectlPath;
+    } catch (ex) {
       throw Error(
         "kubectl not found. You must install it before running this action"
       );
-
-    return kubectlPath;
+    }
   }
 }
 

@@ -7,7 +7,7 @@ import * as utils from "../utilities/manifest-utilities";
 import * as TaskInputParameters from "../input-parameters";
 import { updateManifestFiles } from "../utilities/manifest-utilities";
 import * as KubernetesObjectUtility from "../utilities/resource-object-utility";
-import * as models from "../constants";
+import * as models from "../types/kubernetes-types";
 import * as KubernetesManifestUtility from "../utilities/manifest-stability-utility";
 import {
   getManifestObjects,
@@ -38,10 +38,7 @@ import {
 import { Kubectl, Resource } from "../types/kubectl";
 import { DeploymentStrategy } from "../types/deploymentStrategy";
 
-export async function promote() {
-  const namespace: string = core.getInput("namespace") || "default";
-  const kubectl = new Kubectl(await utils.getKubectl(), namespace, true);
-
+export async function promote(kubectl: Kubectl) {
   if (canaryDeploymentHelper.isCanaryDeploymentStrategy()) {
     await promoteCanary(kubectl);
   } else if (isBlueGreenDeploymentStrategy()) {

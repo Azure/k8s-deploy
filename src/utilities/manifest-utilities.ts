@@ -11,17 +11,7 @@ import { getTempDirectory } from "./files-helper";
 import * as KubernetesObjectUtility from "./resource-object-utility";
 import * as TaskInputParameters from "../input-parameters";
 import { createInlineArray } from "./utility";
-import { KubernetesWorkload, WORKLOAD_TYPES } from "../constants";
-
-export async function getKubectl(): Promise<string> {
-  try {
-    return await io.which("kubectl", true);
-  } catch (ex) {
-    throw Error(
-      "kubectl not found. You must install it before running this action"
-    );
-  }
-}
+import { KubernetesWorkload, WORKLOAD_TYPES } from "../types/kubernetes-types";
 
 export function createKubectlArgs(
   kinds: Set<string>,

@@ -13,10 +13,7 @@ import {
   isBlueGreenDeploymentStrategy,
 } from "../strategy-helpers/blue-green-helper";
 
-export async function reject() {
-  const namespace = core.getInput("namespace") || "default";
-  const kubectl = new Kubectl(await utils.getKubectl(), namespace, true);
-
+export async function reject(kubectl: Kubectl) {
   if (canaryDeploymentHelper.isCanaryDeploymentStrategy()) {
     await rejectCanary(kubectl);
   } else if (isBlueGreenDeploymentStrategy()) {

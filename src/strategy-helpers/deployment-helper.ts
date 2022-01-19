@@ -5,7 +5,7 @@ import * as yaml from "js-yaml";
 import * as canaryDeploymentHelper from "./canary-deployment-helper";
 import * as KubernetesObjectUtility from "../utilities/resource-object-utility";
 import * as TaskInputParameters from "../../input-parameters";
-import * as models from "../constants";
+import * as models from "../types/kubernetes-types";
 import * as fileHelper from "../utilities/files-helper";
 import * as KubernetesManifestUtility from "../utilities/manifest-stability-utility";
 import { Kubectl, Resource } from "../types/kubectl";
@@ -176,7 +176,7 @@ async function annotateResources(
     annotationKey
   );
 
-  const annotationKeyValStr = `${annotationKey}=${models.getWorkflowAnnotationsJson(
+  const annotationKeyValStr = `${annotationKey}=${models.getWorkflowAnnotations(
     lastSuccessSha,
     workflowFilePath,
     deploymentConfig
