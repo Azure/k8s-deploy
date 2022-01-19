@@ -2,6 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as core from "@actions/core";
 import * as os from "os";
+import { getCurrentTime } from "./utility";
 
 export function getTempDirectory(): string {
   return process.env["runner.tempDirectory"] || os.tmpdir();
@@ -84,8 +85,4 @@ function getManifestFileName(kind: string, name: string) {
   const filePath = `${kind}_${name}_ ${getCurrentTime().toString()}`;
   const tempDirectory = getTempDirectory();
   return path.join(tempDirectory, path.basename(filePath));
-}
-
-function getCurrentTime(): number {
-  return new Date().getTime();
 }

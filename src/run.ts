@@ -34,7 +34,6 @@ export async function run() {
     switch (action) {
       case Action.DEPLOY: {
         const strategy = parseDeploymentStrategy(core.getInput("strategy"));
-
         await deploy(kubectl, manifestFilePaths, strategy);
         break;
       }
