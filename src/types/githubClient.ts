@@ -3,9 +3,10 @@ import { Octokit } from "@octokit/core";
 import { OctokitResponse, Endpoints } from "@octokit/types";
 import { retry } from "@octokit/plugin-retry";
 
+export const OkStatusCode = 200;
+
 const RetryOctokit = Octokit.plugin(retry);
 const RETRY_COUNT = 5;
-
 const requestUrl = "GET /repos/{owner}/{repo}/actions/workflows";
 type responseType =
   Endpoints["GET /repos/{owner}/{repo}/actions/workflows"]["response"];
@@ -35,5 +36,3 @@ export class GitHubClient {
     );
   }
 }
-
-export const OkStatusCode = 200;

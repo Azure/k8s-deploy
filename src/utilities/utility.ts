@@ -1,7 +1,7 @@
 import * as os from "os";
 import * as core from "@actions/core";
 import { Kubectl } from "../types/kubectl";
-import { GitHubClient, OkStatusCode } from "../githubClient";
+import { GitHubClient, OkStatusCode } from "../types/githubClient";
 import { DockerExec } from "../types/docker";
 import * as io from "@actions/io";
 import { DeploymentConfig } from "../types/deploymentConfig";
