@@ -1,8 +1,8 @@
 import * as core from "@actions/core";
-import * as deploymentHelper from "../utilities/strategy-helpers/deployment-helper";
+import * as deploymentHelper from "../strategy-helpers/deployment-helper";
 import * as deploy from "./deploy";
-import * as canaryDeploymentHelper from "../utilities/strategy-helpers/canary-deployment-helper";
-import * as SMICanaryDeploymentHelper from "../utilities/strategy-helpers/smi-canary-deployment-helper";
+import * as canaryDeploymentHelper from "../strategy-helpers/canary-deployment-helper";
+import * as SMICanaryDeploymentHelper from "../strategy-helpers/smi-canary-deployment-helper";
 import * as utils from "../utilities/manifest-utilities";
 import * as TaskInputParameters from "../input-parameters";
 import { updateManifestFiles } from "../utilities/manifest-utilities";
@@ -14,27 +14,27 @@ import {
   deleteWorkloadsWithLabel,
   deleteWorkloadsAndServicesWithLabel,
   BlueGreenManifests,
-} from "../utilities/strategy-helpers/blue-green-helper";
+} from "../strategy-helpers/blue-green-helper";
 import {
   isBlueGreenDeploymentStrategy,
   isIngressRoute,
   isSMIRoute,
   GREEN_LABEL_VALUE,
   NONE_LABEL_VALUE,
-} from "../utilities/strategy-helpers/blue-green-helper";
+} from "../strategy-helpers/blue-green-helper";
 import {
   routeBlueGreenService,
   promoteBlueGreenService,
-} from "../utilities/strategy-helpers/service-blue-green-helper";
+} from "../strategy-helpers/service-blue-green-helper";
 import {
   routeBlueGreenIngress,
   promoteBlueGreenIngress,
-} from "../utilities/strategy-helpers/ingress-blue-green-helper";
+} from "../strategy-helpers/ingress-blue-green-helper";
 import {
   routeBlueGreenSMI,
   promoteBlueGreenSMI,
   cleanupSMI,
-} from "../utilities/strategy-helpers/smi-blue-green-helper";
+} from "../strategy-helpers/smi-blue-green-helper";
 import { Kubectl, Resource } from "../types/kubectl";
 import { DeploymentStrategy } from "../types/deploymentStrategy";
 

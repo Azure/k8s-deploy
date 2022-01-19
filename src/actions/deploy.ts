@@ -7,13 +7,13 @@ import { updateManifestFiles } from "../utilities/manifest-utilities";
 import {
   isBlueGreenDeploymentStrategy,
   routeBlueGreen,
-} from "../utilities/strategy-helpers/blue-green-helper";
+} from "../strategy-helpers/blue-green-helper";
 import {
   deployManifests,
   isCanaryDeploymentStrategy,
   checkManifestStability,
   annotateAndLabelResources,
-} from "../utilities/strategy-helpers/deployment-helper";
+} from "../strategy-helpers/deployment-helper";
 import {
   DeploymentStrategy,
   parseDeploymentStrategy,

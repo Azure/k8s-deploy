@@ -1,16 +1,16 @@
 import * as core from "@actions/core";
 import * as fs from "fs";
 import * as yaml from "js-yaml";
-import { checkForErrors, sleep } from "../utility";
-import { Kubectl } from "../../types/kubectl";
-import { KubernetesWorkload } from "../../constants";
-import * as fileHelper from "../files-helper";
-import * as helper from "../resource-object-utility";
+import { checkForErrors, sleep } from "../utilities/utility";
+import { Kubectl } from "../types/kubectl";
+import { KubernetesWorkload } from "../constants";
+import * as fileHelper from "../utilities/files-helper";
+import * as helper from "../utilities/resource-object-utility";
 import * as TaskInputParameters from "../../input-parameters";
 import { routeBlueGreenService } from "./service-blue-green-helper";
 import { routeBlueGreenIngress } from "./ingress-blue-green-helper";
 import { routeBlueGreenSMI } from "./smi-blue-green-helper";
-import { UnsetClusterSpecficDetails } from "../manifest-utilities";
+import { UnsetClusterSpecficDetails } from "../utilities/manifest-utilities";
 
 export const BLUE_GREEN_DEPLOYMENT_STRATEGY = "BLUE-GREEN";
 export const GREEN_LABEL_VALUE = "green";

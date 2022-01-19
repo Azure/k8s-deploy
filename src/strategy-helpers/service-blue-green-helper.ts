@@ -1,5 +1,5 @@
-import { Kubectl } from "../../types/kubectl";
-import * as fileHelper from "../files-helper";
+import { Kubectl } from "../types/kubectl";
+import * as fileHelper from "../utilities/files-helper";
 import {
   createWorkloadsWithLabel,
   getManifestObjects,

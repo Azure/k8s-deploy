@@ -1,17 +1,17 @@
 import * as core from "@actions/core";
-import * as canaryDeploymentHelper from "../utilities/strategy-helpers/canary-deployment-helper";
-import * as SMICanaryDeploymentHelper from "../utilities/strategy-helpers/smi-canary-deployment-helper";
+import * as canaryDeploymentHelper from "../strategy-helpers/canary-deployment-helper";
+import * as SMICanaryDeploymentHelper from "../strategy-helpers/smi-canary-deployment-helper";
 import { Kubectl } from "../types/kubectl";
 import * as utils from "../utilities/manifest-utilities";
 import * as TaskInputParameters from "../input-parameters";
-import { rejectBlueGreenService } from "../utilities/strategy-helpers/service-blue-green-helper";
-import { rejectBlueGreenIngress } from "../utilities/strategy-helpers/ingress-blue-green-helper";
-import { rejectBlueGreenSMI } from "../utilities/strategy-helpers/smi-blue-green-helper";
+import { rejectBlueGreenService } from "../strategy-helpers/service-blue-green-helper";
+import { rejectBlueGreenIngress } from "../strategy-helpers/ingress-blue-green-helper";
+import { rejectBlueGreenSMI } from "../strategy-helpers/smi-blue-green-helper";
 import {
   isSMIRoute,
   isIngressRoute,
   isBlueGreenDeploymentStrategy,
-} from "../utilities/strategy-helpers/blue-green-helper";
+} from "../strategy-helpers/blue-green-helper";
 
 export async function reject() {
   const namespace = core.getInput("namespace") || "default";

@@ -1,15 +1,15 @@
-import { Kubectl } from "../../types/kubectl";
+import { Kubectl } from "../types/kubectl";
 import * as core from "@actions/core";
 import * as fs from "fs";
 import * as yaml from "js-yaml";
 
 import * as TaskInputParameters from "../../input-parameters";
-import * as fileHelper from "../files-helper";
-import * as helper from "../resource-object-utility";
-import * as utils from "../manifest-utilities";
-import * as kubectlUtils from "../traffic-split-utility";
+import * as fileHelper from "../utilities/files-helper";
+import * as helper from "../utilities/resource-object-utility";
+import * as utils from "../utilities/manifest-utilities";
+import * as kubectlUtils from "../utilities/traffic-split-utility";
 import * as canaryDeploymentHelper from "./canary-deployment-helper";
-import { checkForErrors } from "../utility";
+import { checkForErrors } from "../utilities/utility";
 
 const TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX = "-workflow-rollout";
 const TRAFFIC_SPLIT_OBJECT = "TrafficSplit";

@@ -3,12 +3,12 @@
 import * as fs from "fs";
 import * as yaml from "js-yaml";
 import * as canaryDeploymentHelper from "./canary-deployment-helper";
-import * as KubernetesObjectUtility from "../resource-object-utility";
+import * as KubernetesObjectUtility from "../utilities/resource-object-utility";
 import * as TaskInputParameters from "../../input-parameters";
-import * as models from "../../constants";
-import * as fileHelper from "../files-helper";
-import * as KubernetesManifestUtility from "../manifest-stability-utility";
-import { Kubectl, Resource } from "../../types/kubectl";
+import * as models from "../constants";
+import * as fileHelper from "../utilities/files-helper";
+import * as KubernetesManifestUtility from "../utilities/manifest-stability-utility";
+import { Kubectl, Resource } from "../types/kubectl";
 
 import { deployPodCanary } from "./pod-canary-deployment-helper";
 import { deploySMICanary } from "./smi-canary-deployment-helper";
@@ -19,19 +19,19 @@ import {
   getLastSuccessfulRunSha,
   getDeploymentConfig,
   normaliseWorkflowStrLabel,
-} from "../utility";
-import { DeploymentConfig } from "../../types/deploymentConfig";
+} from "../utilities/utility";
+import { DeploymentConfig } from "../types/deploymentConfig";
 import { isIngressRoute, isSMIRoute } from "./blue-green-helper";
 import { deployBlueGreenService } from "./service-blue-green-helper";
 import { deployBlueGreenIngress } from "./ingress-blue-green-helper";
 import { deployBlueGreenSMI } from "./smi-blue-green-helper";
-import { DeploymentStrategy } from "../../types/deploymentStrategy";
+import { DeploymentStrategy } from "../types/deploymentStrategy";
 import * as core from "@actions/core";
 import {
   parseTrafficSplitMethod,
   TrafficSplitMethod,
-} from "../../types/trafficSplitMethod";
-import { parseRouteStrategy, RouteStrategy } from "../../types/routeStrategy";
+} from "../types/trafficSplitMethod";
+import { parseRouteStrategy, RouteStrategy } from "../types/routeStrategy";
 import { ExecOutput } from "@actions/exec";
 
 export async function deployManifests(
