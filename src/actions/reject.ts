@@ -2,8 +2,6 @@ import * as core from "@actions/core";
 import * as canaryDeploymentHelper from "../strategy-helpers/canary-deployment-helper";
 import * as SMICanaryDeploymentHelper from "../strategy-helpers/smi-canary-deployment-helper";
 import { Kubectl } from "../types/kubectl";
-import * as utils from "../utilities/manifest-utilities";
-import * as TaskInputParameters from "../input-parameters";
 import { rejectBlueGreenService } from "../strategy-helpers/service-blue-green-helper";
 import { rejectBlueGreenIngress } from "../strategy-helpers/ingress-blue-green-helper";
 import { rejectBlueGreenSMI } from "../strategy-helpers/smi-blue-green-helper";
@@ -13,11 +11,11 @@ import {
   isBlueGreenDeploymentStrategy,
 } from "../strategy-helpers/blue-green-helper";
 
-export async function reject(kubectl: Kubectl) {
+export async function reject(kubectl: Kubectl, manifests: string[]) {
   if (canaryDeploymentHelper.isCanaryDeploymentStrategy()) {
-    await rejectCanary(kubectl);
+    await rejectCanary(kubectl, manifests);
   } else if (isBlueGreenDeploymentStrategy()) {
-    await rejectBlueGreen(kubectl);
+    await rejectBlueGreen(kubectl, manifests);
   } else {
     core.debug(
       "Strategy is not canary or blue-green deployment. Invalid request."
@@ -26,12 +24,8 @@ export async function reject(kubectl: Kubectl) {
   }
 }
 
-async function rejectCanary(kubectl: Kubectl) {
+async function rejectCanary(kubectl: Kubectl, manifests: string[]) {
   let includeServices = false;
-  const manifests = core
-    .getInput("manifests")
-    .split(/[\n,;]+/)
-    .filter((manifest) => manifest.trim().length > 0);
 
   if (canaryDeploymentHelper.isSMICanaryStrategy()) {
     core.debug("Reject deployment with SMI canary strategy");
@@ -51,12 +45,7 @@ async function rejectCanary(kubectl: Kubectl) {
   );
 }
 
-async function rejectBlueGreen(kubectl: Kubectl) {
-  let manifests: string[] = core
-    .getInput("manifests")
-    .split(/[\n,;]+/)
-    .filter((manifest) => manifest.trim().length > 0);
-
+async function rejectBlueGreen(kubectl: Kubectl, manifests: string[]) {
   if (isIngressRoute()) {
     await rejectBlueGreenIngress(kubectl, manifests);
   } else if (isSMIRoute()) {

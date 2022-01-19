@@ -1,10 +1,7 @@
 import * as core from "@actions/core";
-import * as deploymentHelper from "../strategy-helpers/deployment-helper";
 import * as deploy from "./deploy";
 import * as canaryDeploymentHelper from "../strategy-helpers/canary-deployment-helper";
 import * as SMICanaryDeploymentHelper from "../strategy-helpers/smi-canary-deployment-helper";
-import * as utils from "../utilities/manifest-utilities";
-import * as TaskInputParameters from "../input-parameters";
 import { updateManifestFiles } from "../utilities/manifest-utilities";
 import * as KubernetesObjectUtility from "../utilities/resource-object-utility";
 import * as models from "../types/kubernetes-types";
@@ -38,22 +35,18 @@ import {
 import { Kubectl, Resource } from "../types/kubectl";
 import { DeploymentStrategy } from "../types/deploymentStrategy";
 
-export async function promote(kubectl: Kubectl) {
+export async function promote(kubectl: Kubectl, manifests: string[]) {
   if (canaryDeploymentHelper.isCanaryDeploymentStrategy()) {
-    await promoteCanary(kubectl);
+    await promoteCanary(kubectl, manifests);
   } else if (isBlueGreenDeploymentStrategy()) {
-    await promoteBlueGreen(kubectl);
+    await promoteBlueGreen(kubectl, manifests);
   } else {
     throw Error("Invalid promote action deployment strategy");
   }
 }
 
-async function promoteCanary(kubectl: Kubectl) {
+async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
   let includeServices = false;
-  const manifests = core
-    .getInput("manifests")
-    .split(/[\n,;]+/)
-    .filter((manifest) => manifest.trim().length > 0);
 
   if (canaryDeploymentHelper.isSMICanaryStrategy()) {
     includeServices = true;
@@ -95,12 +88,7 @@ async function promoteCanary(kubectl: Kubectl) {
   }
 }
 
-async function promoteBlueGreen(kubectl: Kubectl) {
-  const manifests = core
-    .getInput("manifests")
-    .split(/[\n,;]+/)
-    .filter((manifest) => manifest.trim().length > 0);
-
+async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
   // update container images and pull secrets
   const inputManifestFiles: string[] = updateManifestFiles(manifests);
   const manifestObjects: BlueGreenManifests =

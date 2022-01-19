@@ -20,9 +20,9 @@ import {
 } from "../types/deploymentStrategy";
 
 export async function deploy(
+  kubectl: Kubectl,
   manifestFilePaths: string[],
-  deploymentStrategy: DeploymentStrategy,
-  kubectl: Kubectl
+  deploymentStrategy: DeploymentStrategy
 ) {
   const inputManifestFiles: string[] = updateManifestFiles(manifestFilePaths);
 
