@@ -1,5 +1,8 @@
-import { ExecOutput, getExecOutput } from "@actions/exec";
-import { createInlineArray } from "../utilities/utility";
+import {ExecOutput, getExecOutput} from "@actions/exec";
+import {createInlineArray} from "../utilities/utility";
+import * as core from "@actions/core";
+import * as toolCache from "@actions/tool-cache";
+import * as io from "@actions/io";
 
 export interface Resource {
   name: string;
@@ -169,4 +172,17 @@ export class Kubectl {
 
     return await getExecOutput(this.kubectlPath, args, { silent });
   }
+}
+
+export async function getKubectlPath() {
+  const version = core.getInput("kubectl-version");
+  const kubectlPath = version
+      ? toolCache.find("kubectl", version)
+      : await io.which("kubectl", true);
+  if (!kubectlPath)
+    throw Error(
+        "kubectl not found. You must install it before running this action"
+    );
+
+  return kubectlPath;
 }
