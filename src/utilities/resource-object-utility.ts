@@ -1,6 +1,5 @@
 "use strict";
 import * as fs from "fs";
-import * as core from "@actions/core";
 import * as yaml from "js-yaml";
 import { Resource } from "../types/kubectl";
 import {
@@ -8,7 +7,6 @@ import {
   DEPLOYMENT_TYPES,
   WORKLOAD_TYPES,
 } from "../types/kubernetes-types";
-import { StringComparer, isEqual } from "./string-comparison";
 
 const ResourceKindNotDefinedError = Error("Resource kind not defined");
 const NullInputObjectError = Error("Null inputObject");

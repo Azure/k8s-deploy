@@ -11,7 +11,7 @@ export async function getTrafficSplitAPIVersion(
     .find((version) => version.startsWith(trafficSplitAPIVersionPrefix));
 
   if (!trafficSplitAPIVersion) {
-    throw new Error("Unable to create traffic split manifest file");
+    throw new Error("Unable to find traffic split api version");
   }
 
   return trafficSplitAPIVersion;

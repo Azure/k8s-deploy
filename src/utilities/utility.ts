@@ -1,4 +1,3 @@
-import * as os from "os";
 import * as core from "@actions/core";
 import { Kubectl } from "../types/kubectl";
 import { GitHubClient, OkStatusCode } from "../types/githubClient";
@@ -6,14 +5,6 @@ import { DockerExec } from "../types/docker";
 import * as io from "@actions/io";
 import { DeploymentConfig } from "../types/deploymentConfig";
 import { ExecOutput } from "@actions/exec";
-
-export function getExecutableExtension(): string {
-  if (os.type().match(/^Win/)) {
-    return ".exe";
-  }
-
-  return "";
-}
 
 export function createInlineArray(str: string | string[]): string {
   if (typeof str === "string") {
@@ -95,7 +86,7 @@ export async function getWorkflowFilePath(
         }
       } else if (response.status != OkStatusCode) {
         core.error(
-          `An error occured while getting list of workflows on the repo. Status code: ${response.status}`
+          `An error occurred while getting list of workflows on the repo. Status code: ${response.status}`
         );
       }
     } else {
@@ -189,10 +180,6 @@ export function sleep(timeout: number) {
   return new Promise((resolve) => setTimeout(resolve, timeout));
 }
 
-export function getRandomInt(max: number) {
-  return Math.floor(Math.random() * Math.floor(max));
-}
-
 export function getCurrentTime(): number {
   return new Date().getTime();
 }
@@ -207,7 +194,7 @@ async function checkDockerPath() {
 async function getDockerfilePath(image: any): Promise<string> {
   await checkDockerPath();
   const dockerExec: DockerExec = new DockerExec("docker");
-  dockerExec.pull(image, [], true);
+  await dockerExec.pull(image, [], true);
 
   const imageInspectResult: string = await dockerExec.inspect(image, [], true);
   const imageConfig = JSON.parse(imageInspectResult)[0];

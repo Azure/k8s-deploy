@@ -2,10 +2,8 @@ import { Kubectl } from "../types/kubectl";
 import * as fs from "fs";
 import * as yaml from "js-yaml";
 import * as core from "@actions/core";
-import * as TaskInputParameters from "../../input-parameters";
 import * as helper from "../utilities/resource-object-utility";
 import { KubernetesWorkload } from "../types/kubernetes-types";
-import { StringComparer, isEqual } from "../utilities/string-comparison";
 import { checkForErrors } from "../utilities/utility";
 import * as utils from "../utilities/manifest-utilities";
 
