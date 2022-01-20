@@ -4,10 +4,9 @@ import * as fs from "fs";
 import * as yaml from "js-yaml";
 import * as canaryDeploymentHelper from "./canary-deployment-helper";
 import * as KubernetesObjectUtility from "../utilities/resource-object-utility";
-import * as TaskInputParameters from "../../input-parameters";
 import * as models from "../types/kubernetes-types";
-import * as fileHelper from "../utilities/files-helper";
-import * as KubernetesManifestUtility from "../utilities/manifest-stability-utility";
+import * as fileHelper from "../utilities/file-util";
+import * as KubernetesManifestUtility from "../utilities/manifest-stability-util";
 import { Kubectl, Resource } from "../types/kubectl";
 
 import { deployPodCanary } from "./pod-canary-deployment-helper";
@@ -21,7 +20,6 @@ import {
   normaliseWorkflowStrLabel,
 } from "../utilities/utility";
 import { DeploymentConfig } from "../types/deploymentConfig";
-import { isIngressRoute, isSMIRoute } from "./blue-green-helper";
 import { deployBlueGreenService } from "./service-blue-green-helper";
 import { deployBlueGreenIngress } from "./ingress-blue-green-helper";
 import { deployBlueGreenSMI } from "./smi-blue-green-helper";
@@ -81,10 +79,7 @@ export async function deployManifests(
 
       const forceDeployment = core.getInput("force").toLowerCase() === "true";
       if (trafficSplitMethod === TrafficSplitMethod.SMI) {
-        const updatedManifests = appendStableVersionLabelToResource(
-          files,
-          kubectl
-        );
+        const updatedManifests = appendStableVersionLabelToResource(files);
 
         const result = await kubectl.apply(updatedManifests, forceDeployment);
         checkForErrors([result]);
@@ -99,8 +94,7 @@ export async function deployManifests(
 }
 
 function appendStableVersionLabelToResource(
-  files: string[],
-  kubectl: Kubectl
+    files: string[]
 ): string[] {
   const manifestFiles = [];
   const newObjectsList = [];
@@ -156,7 +150,7 @@ export async function annotateAndLabelResources(
     workflowFilePath,
     deploymentConfig
   );
-  labelResources(files, kubectl, annotationKeyLabel);
+  await labelResources(files, kubectl, annotationKeyLabel);
 }
 
 async function annotateResources(
@@ -186,7 +180,7 @@ async function annotateResources(
   );
   annotateResults.push(await kubectl.annotateFiles(files, annotationKeyValStr));
 
-  resourceTypes.forEach(async (resource) => {
+  for (const resource of resourceTypes) {
     if (
       resource.type.toLowerCase() !==
       models.KubernetesWorkload.POD.toLowerCase()
@@ -201,7 +195,7 @@ async function annotateResources(
         )
       ).forEach((execResult) => annotateResults.push(execResult));
     }
-  });
+  }
 
   checkForErrors(annotateResults, true);
 }

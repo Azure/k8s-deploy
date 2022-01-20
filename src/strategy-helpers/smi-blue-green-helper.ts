@@ -2,7 +2,7 @@
 
 import { Kubectl } from "../types/kubectl";
 import * as kubectlUtils from "../utilities/traffic-split-utility";
-import * as fileHelper from "../utilities/files-helper";
+import * as fileHelper from "../utilities/file-util";
 import {
   createWorkloadsWithLabel,
   getManifestObjects,

@@ -6,7 +6,7 @@ import * as fs from "fs";
 import * as yaml from "js-yaml";
 
 import * as TaskInputParameters from "../../input-parameters";
-import * as fileHelper from "../utilities/files-helper";
+import * as fileHelper from "../utilities/file-util";
 import * as helper from "../utilities/resource-object-utility";
 import * as canaryDeploymentHelper from "./canary-deployment-helper";
 

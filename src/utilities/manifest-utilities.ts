@@ -1,15 +1,10 @@
-"use strict";
-
 import * as core from "@actions/core";
 import * as fs from "fs";
 import * as yaml from "js-yaml";
 import * as path from "path";
-import * as kubectlutility from "./traffic-split-utility";
-import * as io from "@actions/io";
-import * as fileHelper from "./files-helper";
-import { getTempDirectory } from "./files-helper";
+import * as fileHelper from "./file-util";
+import { getTempDirectory } from "./file-util";
 import * as KubernetesObjectUtility from "./resource-object-utility";
-import * as TaskInputParameters from "../input-parameters";
 import { createInlineArray } from "./utility";
 import { KubernetesWorkload, WORKLOAD_TYPES } from "../types/kubernetes-types";
 

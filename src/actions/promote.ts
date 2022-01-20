@@ -5,7 +5,7 @@ import * as SMICanaryDeploymentHelper from "../strategy-helpers/smi-canary-deplo
 import { updateManifestFiles } from "../utilities/manifest-utilities";
 import * as KubernetesObjectUtility from "../utilities/resource-object-utility";
 import * as models from "../types/kubernetes-types";
-import * as KubernetesManifestUtility from "../utilities/manifest-stability-utility";
+import * as KubernetesManifestUtility from "../utilities/manifest-stability-util";
 import {
   getManifestObjects,
   deleteWorkloadsWithLabel,

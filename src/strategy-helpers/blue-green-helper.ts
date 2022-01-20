@@ -4,7 +4,7 @@ import * as yaml from "js-yaml";
 import { checkForErrors, sleep } from "../utilities/utility";
 import { Kubectl } from "../types/kubectl";
 import { KubernetesWorkload } from "../types/kubernetes-types";
-import * as fileHelper from "../utilities/files-helper";
+import * as fileHelper from "../utilities/file-util";
 import * as helper from "../utilities/resource-object-utility";
 import * as TaskInputParameters from "../../input-parameters";
 import { routeBlueGreenService } from "./service-blue-green-helper";
