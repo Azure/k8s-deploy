@@ -1,6 +1,6 @@
 import * as core from "@actions/core";
 import { Octokit } from "@octokit/core";
-import { OctokitResponse, Endpoints } from "@octokit/types";
+import { Endpoints } from "@octokit/types";
 import { retry } from "@octokit/plugin-retry";
 
 export const OkStatusCode = 200;
@@ -12,8 +12,8 @@ type responseType =
   Endpoints["GET /repos/{owner}/{repo}/actions/workflows"]["response"];
 
 export class GitHubClient {
-  private repository: string;
-  private token: string;
+  private readonly repository: string;
+  private readonly token: string;
 
   constructor(repository: string, token: string) {
     this.repository = repository;

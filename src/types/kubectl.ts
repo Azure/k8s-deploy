@@ -7,9 +7,9 @@ export interface Resource {
 }
 
 export class Kubectl {
-  private kubectlPath: string;
-  private namespace: string;
-  private ignoreSSLErrors: boolean;
+  private readonly kubectlPath: string;
+  private readonly namespace: string;
+  private readonly ignoreSSLErrors: boolean;
 
   constructor(
     kubectlPath: string,
@@ -107,10 +107,6 @@ export class Kubectl {
 
   public async getAllPods(): Promise<ExecOutput> {
     return await this.execute(["get", "pods", "-o", "json"], true);
-  }
-
-  public async getClusterInfo(): Promise<ExecOutput> {
-    return await this.execute(["cluster-info"], true);
   }
 
   public async checkRolloutStatus(

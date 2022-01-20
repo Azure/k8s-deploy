@@ -3,48 +3,8 @@ import * as fs from "fs";
 import * as yaml from "js-yaml";
 import * as path from "path";
 import * as fileHelper from "./file-util";
-import { getTempDirectory } from "./file-util";
+import {getTempDirectory} from "./file-util";
 import * as KubernetesObjectUtility from "./resource-object-utility";
-import { createInlineArray } from "./utility";
-import { KubernetesWorkload, WORKLOAD_TYPES } from "../types/kubernetes-types";
-
-export function createKubectlArgs(
-  kinds: Set<string>,
-  names: Set<string>
-): string {
-  let args = "";
-
-  if (kinds?.size > 0) {
-    args += createInlineArray(Array.from(kinds.values()));
-  }
-
-  if (names?.size > 0) {
-    args += " " + Array.from(names.values()).join(" ");
-  }
-
-  return args;
-}
-
-export function getDeleteCmdArgs(
-  argsPrefix: string,
-  inputArgs: string
-): string {
-  let args = "";
-
-  if (argsPrefix?.length > 0) {
-    args = argsPrefix;
-  }
-
-  if (inputArgs?.length > 0) {
-    if (args.length > 0) {
-      args += " ";
-    }
-
-    args += inputArgs;
-  }
-
-  return args;
-}
 
 /*
   Example:
@@ -86,52 +46,6 @@ export function substituteImageNameInSpecFile(
   }, "");
 }
 
-function getImagePullSecrets(inputObject: any) {
-  if (!inputObject?.spec) {
-    return;
-  }
-
-  if (
-    inputObject.kind === KubernetesWorkload.POD.toLowerCase() &&
-    inputObject?.spec?.imagePullSecrets
-  ) {
-    return inputObject.spec.imagePullSecrets;
-  } else if (
-    inputObject.kind === KubernetesWorkload.CRON_JOB.toLowerCase() &&
-    inputObject?.spec?.jobTemplate?.spec?.template?.spec?.imagePullSecrets
-  ) {
-    return inputObject.spec.jobTemplate.spec.template.spec.imagePullSecrets;
-  } else if (inputObject?.spec?.template?.spec?.imagePullSecrets) {
-    return inputObject.spec.template.spec.imagePullSecrets;
-  }
-}
-
-function setImagePullSecrets(inputObject: any, newImagePullSecrets: any) {
-  if (!inputObject?.spec || !newImagePullSecrets) {
-    return;
-  }
-
-  if (inputObject.kind === KubernetesWorkload.POD.toLowerCase()) {
-    if (newImagePullSecrets.length > 0)
-      inputObject.spec.imagePullSecrets = newImagePullSecrets;
-    else delete inputObject.spec.imagePullSecrets;
-  } else if (inputObject.kind === KubernetesWorkload.CRON_JOB.toLowerCase()) {
-    if (inputObject?.spec?.jobTemplate?.spec?.template?.spec) {
-      if (newImagePullSecrets.length > 0)
-        inputObject.spec.jobTemplate.spec.template.spec.imagePullSecrets =
-          newImagePullSecrets;
-      else
-        delete inputObject.spec.jobTemplate.spec.template.spec.imagePullSecrets;
-    }
-  } else if (inputObject?.spec?.template?.spec) {
-    if (inputObject?.spec?.template?.spec) {
-      if (newImagePullSecrets.length > 0)
-        inputObject.spec.template.spec.imagePullSecrets = newImagePullSecrets;
-      else delete inputObject.spec.template.spec.imagePullSecrets;
-    }
-  }
-}
-
 function updateContainerImagesInManifestFiles(
   filePaths: string[],
   containers: string[]
@@ -166,31 +80,6 @@ function updateContainerImagesInManifestFiles(
   });
 
   return newFilePaths;
-}
-
-export function updateImagePullSecrets(
-  inputObject: any,
-  newImagePullSecrets: string[]
-) {
-  if (!inputObject?.spec || !newImagePullSecrets) {
-    return;
-  }
-
-  let newImagePullSecretsObjects;
-  if (newImagePullSecrets.length > 0) {
-    newImagePullSecretsObjects = Array.from(newImagePullSecrets, (x) => {
-      return !!x ? { name: x } : null;
-    });
-  } else {
-    newImagePullSecretsObjects = [];
-  }
-
-  let existingImagePullSecretObjects: any =
-    getImagePullSecrets(inputObject) || new Array();
-  existingImagePullSecretObjects = existingImagePullSecretObjects.concat(
-    newImagePullSecretsObjects
-  );
-  setImagePullSecrets(inputObject, existingImagePullSecretObjects);
 }
 
 function updateImagePullSecretsInManifestFiles(
@@ -239,18 +128,7 @@ export function updateManifestFiles(manifestFilePaths: string[]) {
   return updateImagePullSecretsInManifestFiles(manifestFiles, imagePullSecrets);
 }
 
-export function isWorkloadEntity(kind: string): boolean {
-  if (!kind) {
-    core.debug("Kind not defined");
-    return false;
-  }
-
-  return WORKLOAD_TYPES.some((type: string) => {
-    return type === kind;
-  });
-}
-
-export function UnsetClusterSpecficDetails(resource: any) {
+export function UnsetClusterSpecificDetails(resource: any) {
   if (!resource) {
     return;
   }
@@ -260,13 +138,11 @@ export function UnsetClusterSpecficDetails(resource: any) {
     const { metadata, status } = resource;
 
     if (!!metadata) {
-      const newMetadata = {
+      resource.metadata = {
         annotations: metadata.annotations,
         labels: metadata.labels,
         name: metadata.name,
       };
-
-      resource.metadata = newMetadata;
     }
 
     if (!!status) {

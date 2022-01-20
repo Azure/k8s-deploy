@@ -93,7 +93,7 @@ export async function fetchResource(
     const resource = JSON.parse(result.stdout);
 
     try {
-      utils.UnsetClusterSpecficDetails(resource);
+      utils.UnsetClusterSpecificDetails(resource);
       return resource;
     } catch (ex) {
       core.debug(

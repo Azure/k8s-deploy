@@ -8,29 +8,6 @@ export function getTempDirectory(): string {
   return process.env["runner.tempDirectory"] || os.tmpdir();
 }
 
-const userDirPathTopLevel = "kubectlTask";
-export function getNewUserDirPath(): string {
-  let userDir = path.join(getTempDirectory(), userDirPathTopLevel);
-  ensureDirExists(userDir);
-
-  userDir = path.join(userDir, getCurrentTime().toString());
-  ensureDirExists(userDir);
-
-  return userDir;
-}
-
-export function ensureDirExists(dirPath: string): void {
-  if (!fs.existsSync(dirPath)) {
-    fs.mkdirSync(dirPath);
-  }
-}
-
-export function assertFileExists(path: string) {
-  if (!fs.existsSync(path)) {
-    throw new Error(`File not found:  ${path}`);
-  }
-}
-
 export function writeObjectsToFile(inputObjects: any[]): string[] {
   const newFilePaths = [];
 

@@ -1,7 +1,7 @@
-import { ExecOutput, getExecOutput } from "@actions/exec";
+import { getExecOutput } from "@actions/exec";
 
 export class DockerExec {
-  private dockerPath: string;
+  private readonly dockerPath: string;
 
   constructor(dockerPath: string) {
     this.dockerPath = dockerPath;

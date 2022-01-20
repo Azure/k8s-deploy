@@ -10,7 +10,7 @@ import * as TaskInputParameters from "../../input-parameters";
 import { routeBlueGreenService } from "./service-blue-green-helper";
 import { routeBlueGreenIngress } from "./ingress-blue-green-helper";
 import { routeBlueGreenSMI } from "./smi-blue-green-helper";
-import { UnsetClusterSpecficDetails } from "../utilities/manifest-utilities";
+import { UnsetClusterSpecificDetails } from "../utilities/manifest-utilities";
 
 export const BLUE_GREEN_DEPLOYMENT_STRATEGY = "BLUE-GREEN";
 export const GREEN_LABEL_VALUE = "green";
@@ -359,7 +359,7 @@ export async function fetchResource(
     const resource = JSON.parse(result.stdout);
 
     try {
-      UnsetClusterSpecficDetails(resource);
+      UnsetClusterSpecificDetails(resource);
       return resource;
     } catch (ex) {
       core.debug(

@@ -103,7 +103,7 @@ export async function checkPodStatus(
       break;
     case "Pending":
       if (!isPodReady(podStatus)) {
-        core.warning(`pod/${podName} rollout status check timedout`);
+        core.warning(`pod/${podName} rollout status check timed out`);
         kubectlDescribeNeeded = true;
       }
       break;

@@ -1,4 +1,3 @@
-"use strict";
 import * as fs from "fs";
 import * as yaml from "js-yaml";
 import { Resource } from "../types/kubectl";
@@ -145,8 +144,7 @@ export function updateImagePullSecrets(
   if (override) {
     existingImagePullSecretObjects = newImagePullSecretsObjects;
   } else {
-    existingImagePullSecretObjects =
-      existingImagePullSecretObjects || new Array();
+    existingImagePullSecretObjects = existingImagePullSecretObjects || [];
 
     existingImagePullSecretObjects = existingImagePullSecretObjects.concat(
       newImagePullSecretsObjects
@@ -230,7 +228,7 @@ export function getResources(
   const resources: Resource[] = [];
 
   filePaths.forEach((filePath: string) => {
-    const fileContents = fs.readFileSync(filePath);
+    const fileContents = fs.readFileSync(filePath).toString();
     yaml.safeLoadAll(fileContents, (inputObject) => {
       const inputObjectKind = inputObject?.kind || "";
       if (
@@ -276,8 +274,6 @@ function getImagePullSecrets(inputObject: any) {
   if (inputObject?.spec?.template?.spec) {
     return inputObject.spec.template.spec.imagePullSecrets;
   }
-
-  return null;
 }
 
 function setImagePullSecrets(inputObject: any, newImagePullSecrets: any) {
@@ -328,10 +324,8 @@ function getSpecSelectorLabels(inputObject: any) {
 
 function setSpecSelectorLabels(inputObject: any, newLabels: any) {
   if (inputObject?.spec?.selector) {
-    if (isServiceEntity(inputObject.kind)) {
+    if (isServiceEntity(inputObject.kind))
       inputObject.spec.selector = newLabels;
-    } else {
-      inputObject.spec.selector.matchLabels = newLabels;
-    }
+    else inputObject.spec.selector.matchLabels = newLabels;
   }
 }

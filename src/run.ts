@@ -56,10 +56,12 @@ export async function run() {
   async function getKubectlPath() {
     const version = core.getInput("kubectl-version");
     const kubectlPath = version
-        ? toolCache.find("kubectl", version)
-        : await io.which("kubectl", true);
+      ? toolCache.find("kubectl", version)
+      : await io.which("kubectl", true);
     if (!kubectlPath)
-      throw Error("kubectl not found. You must install it before running this action");
+      throw Error(
+        "kubectl not found. You must install it before running this action"
+      );
 
     return kubectlPath;
   }
