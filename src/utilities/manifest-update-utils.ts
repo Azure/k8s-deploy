@@ -2,8 +2,8 @@ import * as core from "@actions/core";
 import * as fs from "fs";
 import * as yaml from "js-yaml";
 import * as path from "path";
-import * as fileHelper from "./file-util";
-import {getTempDirectory} from "./file-util";
+import * as fileHelper from "./file-utils";
+import {getTempDirectory} from "./file-utils";
 import * as KubernetesObjectUtility from "./resource-object-utility";
 
 export function UnsetClusterSpecificDetails(resource: any) {
