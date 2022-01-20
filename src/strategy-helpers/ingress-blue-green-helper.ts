@@ -1,4 +1,3 @@
-import * as core from "@actions/core";
 import { Kubectl } from "../types/kubectl";
 import * as fileHelper from "../utilities/file-util";
 import {
@@ -97,7 +96,7 @@ export async function rejectBlueGreenIngress(
   const manifestObjects: BlueGreenManifests = getManifestObjects(filePaths);
 
   // route ingress to stables services
-  routeBlueGreenIngress(
+  await routeBlueGreenIngress(
     kubectl,
     null,
     manifestObjects.serviceNameMap,
@@ -105,7 +104,7 @@ export async function rejectBlueGreenIngress(
   );
 
   // delete green services and deployments
-  deleteWorkloadsAndServicesWithLabel(
+  await deleteWorkloadsAndServicesWithLabel(
     kubectl,
     GREEN_LABEL_VALUE,
     manifestObjects.deploymentEntityList,

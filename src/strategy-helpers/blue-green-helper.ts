@@ -6,7 +6,6 @@ import { Kubectl } from "../types/kubectl";
 import { KubernetesWorkload } from "../types/kubernetes-types";
 import * as fileHelper from "../utilities/file-util";
 import * as helper from "../utilities/resource-object-utility";
-import * as TaskInputParameters from "../../input-parameters";
 import { routeBlueGreenService } from "./service-blue-green-helper";
 import { routeBlueGreenIngress } from "./ingress-blue-green-helper";
 import { routeBlueGreenSMI } from "./smi-blue-green-helper";
@@ -49,7 +48,6 @@ export async function routeBlueGreen(
   kubectl: Kubectl,
   inputManifestFiles: string[]
 ) {
-  const versionSwitchBuffer = core.getInput("version-switch-buffer");
   const bufferTime: number = parseInt(core.getInput("version-switch-buffer"));
   if (bufferTime < 0 || bufferTime > 300)
     throw Error("Version switch buffer must be between 0 and 300 (inclusive)");
@@ -71,20 +69,20 @@ export async function routeBlueGreen(
 
   // routing to new deployments
   if (isIngressRoute()) {
-    routeBlueGreenIngress(
+    await routeBlueGreenIngress(
       kubectl,
       GREEN_LABEL_VALUE,
       manifestObjects.serviceNameMap,
       manifestObjects.ingressEntityList
     );
   } else if (isSMIRoute()) {
-    routeBlueGreenSMI(
+    await routeBlueGreenSMI(
       kubectl,
       GREEN_LABEL_VALUE,
       manifestObjects.serviceEntityList
     );
   } else {
-    routeBlueGreenService(
+    await routeBlueGreenService(
       kubectl,
       GREEN_LABEL_VALUE,
       manifestObjects.serviceEntityList
@@ -92,10 +90,10 @@ export async function routeBlueGreen(
   }
 }
 
-export function deleteWorkloadsWithLabel(
-  kubectl: Kubectl,
-  deleteLabel: string,
-  deploymentEntityList: any[]
+export async function deleteWorkloadsWithLabel(
+    kubectl: Kubectl,
+    deleteLabel: string,
+    deploymentEntityList: any[]
 ) {
   const resourcesToDelete = [];
   deploymentEntityList.forEach((inputObject) => {
@@ -104,7 +102,7 @@ export function deleteWorkloadsWithLabel(
 
     if (deleteLabel === NONE_LABEL_VALUE) {
       // delete stable deployments
-      const resourceToDelete = { name, kind };
+      const resourceToDelete = {name, kind};
       resourcesToDelete.push(resourceToDelete);
     } else {
       // delete new green deployments
@@ -116,14 +114,14 @@ export function deleteWorkloadsWithLabel(
     }
   });
 
-  deleteObjects(kubectl, resourcesToDelete);
+  await deleteObjects(kubectl, resourcesToDelete);
 }
 
-export function deleteWorkloadsAndServicesWithLabel(
-  kubectl: Kubectl,
-  deleteLabel: string,
-  deploymentEntityList: any[],
-  serviceEntityList: any[]
+export async function deleteWorkloadsAndServicesWithLabel(
+    kubectl: Kubectl,
+    deleteLabel: string,
+    deploymentEntityList: any[],
+    serviceEntityList: any[]
 ) {
   // need to delete services and deployments
   const deletionEntitiesList = deploymentEntityList.concat(serviceEntityList);
@@ -135,7 +133,7 @@ export function deleteWorkloadsAndServicesWithLabel(
 
     if (deleteLabel === NONE_LABEL_VALUE) {
       // delete stable objects
-      const resourceToDelete = { name, kind };
+      const resourceToDelete = {name, kind};
       resourcesToDelete.push(resourceToDelete);
     } else {
       // delete green labels
@@ -147,7 +145,7 @@ export function deleteWorkloadsAndServicesWithLabel(
     }
   });
 
-  deleteObjects(kubectl, resourcesToDelete);
+  await deleteObjects(kubectl, resourcesToDelete);
 }
 
 export async function deleteObjects(kubectl: Kubectl, deleteList: any[]) {
@@ -160,14 +158,6 @@ export async function deleteObjects(kubectl: Kubectl, deleteList: any[]) {
       // Ignore failures of delete if it doesn't exist
     }
   }
-}
-
-export function getSuffix(label: string): string {
-  if (label === GREEN_LABEL_VALUE) {
-    return GREEN_SUFFIX;
-  }
-
-  return "";
 }
 
 // other common functions

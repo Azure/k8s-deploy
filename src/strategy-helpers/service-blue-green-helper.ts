@@ -43,7 +43,7 @@ export async function promoteBlueGreenService(
   manifestObjects
 ) {
   // checking if services are in the right state ie. targeting green deployments
-  if (!validateServicesState(kubectl, manifestObjects.serviceEntityList)) {
+  if (!(await validateServicesState(kubectl, manifestObjects.serviceEntityList))) {
     throw "Not inP promote state";
   }
 
@@ -63,14 +63,14 @@ export async function rejectBlueGreenService(
   const manifestObjects: BlueGreenManifests = getManifestObjects(filePaths);
 
   // route to stable objects
-  routeBlueGreenService(
+  await routeBlueGreenService(
     kubectl,
     NONE_LABEL_VALUE,
     manifestObjects.serviceEntityList
   );
 
   // delete new deployments with green suffix
-  deleteWorkloadsWithLabel(
+  await deleteWorkloadsWithLabel(
     kubectl,
     GREEN_LABEL_VALUE,
     manifestObjects.deploymentEntityList

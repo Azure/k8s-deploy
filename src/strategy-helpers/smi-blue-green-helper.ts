@@ -41,7 +41,7 @@ export async function deployBlueGreenSMI(
   await kubectl.apply(manifestFiles);
 
   // make extraservices and trafficsplit
-  setupSMI(kubectl, manifestObjects.serviceEntityList);
+  await setupSMI(kubectl, manifestObjects.serviceEntityList);
 
   // create new deloyments
   return await createWorkloadsWithLabel(
@@ -53,7 +53,7 @@ export async function deployBlueGreenSMI(
 
 export async function promoteBlueGreenSMI(kubectl: Kubectl, manifestObjects) {
   // checking if there is something to promote
-  if (!validateTrafficSplitsState(kubectl, manifestObjects.serviceEntityList)) {
+  if (!(await validateTrafficSplitsState(kubectl, manifestObjects.serviceEntityList))) {
     throw Error("Not in promote state SMI");
   }
 
@@ -73,21 +73,21 @@ export async function rejectBlueGreenSMI(
   const manifestObjects: BlueGreenManifests = getManifestObjects(filePaths);
 
   // route trafficsplit to stable deploymetns
-  routeBlueGreenSMI(
+  await routeBlueGreenSMI(
     kubectl,
     NONE_LABEL_VALUE,
     manifestObjects.serviceEntityList
   );
 
   // delete rejected new bluegreen deployments
-  deleteWorkloadsWithLabel(
+  await deleteWorkloadsWithLabel(
     kubectl,
     GREEN_LABEL_VALUE,
     manifestObjects.deploymentEntityList
   );
 
   // delete trafficsplit and extra services
-  cleanupSMI(kubectl, manifestObjects.serviceEntityList);
+  await cleanupSMI(kubectl, manifestObjects.serviceEntityList);
 }
 
 export async function setupSMI(kubectl: Kubectl, serviceEntityList: any[]) {

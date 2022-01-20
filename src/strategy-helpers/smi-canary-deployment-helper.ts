@@ -3,10 +3,8 @@ import * as core from "@actions/core";
 import * as fs from "fs";
 import * as yaml from "js-yaml";
 
-import * as TaskInputParameters from "../../input-parameters";
 import * as fileHelper from "../utilities/file-util";
 import * as helper from "../utilities/resource-object-utility";
-import * as utils from "../utilities/manifest-utilities";
 import * as kubectlUtils from "../utilities/traffic-split-utility";
 import * as canaryDeploymentHelper from "./canary-deployment-helper";
 import { checkForErrors } from "../utilities/utility";
@@ -72,7 +70,7 @@ export async function deploySMICanary(filePaths: string[], kubectl: Kubectl) {
   const newFilePaths = fileHelper.writeObjectsToFile(newObjectsList);
   const forceDeployment = core.getInput("force").toLowerCase() === "true";
   const result = await kubectl.apply(newFilePaths, forceDeployment);
-  createCanaryService(kubectl, filePaths);
+  await createCanaryService(kubectl, filePaths);
   return { result, newFilePaths };
 }
 
@@ -159,18 +157,18 @@ async function createCanaryService(kubectl: Kubectl, filePaths: string[]) {
   checkForErrors([result]);
 }
 
-export function redirectTrafficToCanaryDeployment(
-  kubectl: Kubectl,
-  manifestFilePaths: string[]
+export async function redirectTrafficToCanaryDeployment(
+    kubectl: Kubectl,
+    manifestFilePaths: string[]
 ) {
-  adjustTraffic(kubectl, manifestFilePaths, 0, 1000);
+  await adjustTraffic(kubectl, manifestFilePaths, 0, 1000);
 }
 
-export function redirectTrafficToStableDeployment(
-  kubectl: Kubectl,
-  manifestFilePaths: string[]
+export async function redirectTrafficToStableDeployment(
+    kubectl: Kubectl,
+    manifestFilePaths: string[]
 ) {
-  adjustTraffic(kubectl, manifestFilePaths, 1000, 0);
+  await adjustTraffic(kubectl, manifestFilePaths, 1000, 0);
 }
 
 async function adjustTraffic(

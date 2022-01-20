@@ -70,14 +70,6 @@ export function getNewCanaryResource(
   return getNewCanaryObject(inputObject, replicas, CANARY_LABEL_VALUE);
 }
 
-export function fetchCanaryResource(
-  kubectl: Kubectl,
-  kind: string,
-  name: string
-): object {
-  return fetchResource(kubectl, kind, getCanaryResourceName(name));
-}
-
 export async function fetchResource(
   kubectl: Kubectl,
   kind: string,
