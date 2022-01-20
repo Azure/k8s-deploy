@@ -54,22 +54,22 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
     // In case of SMI traffic split strategy when deployment is promoted, first we will redirect traffic to
     // canary deployment, then update stable deployment and then redirect traffic to stable deployment
     core.debug("Redirecting traffic to canary deployment");
-    SMICanaryDeploymentHelper.redirectTrafficToCanaryDeployment(
+    await SMICanaryDeploymentHelper.redirectTrafficToCanaryDeployment(
       kubectl,
       manifests
     );
 
     core.debug("Deploying input manifests with SMI canary strategy");
-    await deploy.deploy(manifests, DeploymentStrategy.CANARY, kubectl);
+    await deploy.deploy(kubectl, manifests, DeploymentStrategy.CANARY);
 
     core.debug("Redirecting traffic to stable deployment");
-    SMICanaryDeploymentHelper.redirectTrafficToStableDeployment(
+    await SMICanaryDeploymentHelper.redirectTrafficToStableDeployment(
       kubectl,
       manifests
     );
   } else {
     core.debug("Deploying input manifests");
-    await deploy.deploy(manifests, DeploymentStrategy.CANARY, kubectl);
+    await deploy.deploy(kubectl, manifests, DeploymentStrategy.CANARY);
   }
 
   core.debug(
@@ -122,7 +122,7 @@ async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
       manifestObjects.serviceNameMap,
       manifestObjects.ingressEntityList
     );
-    deleteWorkloadsAndServicesWithLabel(
+    await deleteWorkloadsAndServicesWithLabel(
       kubectl,
       GREEN_LABEL_VALUE,
       manifestObjects.deploymentEntityList,
@@ -134,7 +134,7 @@ async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
       NONE_LABEL_VALUE,
       manifestObjects.serviceEntityList
     );
-    deleteWorkloadsWithLabel(
+    await deleteWorkloadsWithLabel(
       kubectl,
       GREEN_LABEL_VALUE,
       manifestObjects.deploymentEntityList
@@ -146,7 +146,7 @@ async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
       NONE_LABEL_VALUE,
       manifestObjects.serviceEntityList
     );
-    deleteWorkloadsWithLabel(
+    await deleteWorkloadsWithLabel(
       kubectl,
       GREEN_LABEL_VALUE,
       manifestObjects.deploymentEntityList

@@ -31,7 +31,7 @@ async function rejectCanary(kubectl: Kubectl, manifests: string[]) {
     core.debug("Reject deployment with SMI canary strategy");
     includeServices = true;
 
-    SMICanaryDeploymentHelper.redirectTrafficToStableDeployment(
+    await SMICanaryDeploymentHelper.redirectTrafficToStableDeployment(
       kubectl,
       manifests
     );

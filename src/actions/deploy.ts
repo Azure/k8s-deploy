@@ -10,13 +10,11 @@ import {
 } from "../strategy-helpers/blue-green-helper";
 import {
   deployManifests,
-  isCanaryDeploymentStrategy,
   checkManifestStability,
   annotateAndLabelResources,
 } from "../strategy-helpers/deployment-helper";
 import {
   DeploymentStrategy,
-  parseDeploymentStrategy,
 } from "../types/deploymentStrategy";
 
 export async function deploy(
