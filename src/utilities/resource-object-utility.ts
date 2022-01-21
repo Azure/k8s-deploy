@@ -15,9 +15,7 @@ const InputObjectMetadataNotDefinedError = Error(
 );
 
 export function isDeploymentEntity(kind: string): boolean {
-  if (!kind) {
-    throw ResourceKindNotDefinedError;
-  }
+  if (!kind) throw ResourceKindNotDefinedError;
 
   return DEPLOYMENT_TYPES.some((type: string) => {
     return type.toLowerCase() === kind.toLowerCase();
@@ -25,31 +23,27 @@ export function isDeploymentEntity(kind: string): boolean {
 }
 
 export function isWorkloadEntity(kind: string): boolean {
+  if (!kind) throw ResourceKindNotDefinedError;
+
   return WORKLOAD_TYPES.some(
-    (type: string) => type.toUpperCase() === kind.toUpperCase()
+    (type: string) => type.toLowerCase() === kind.toLowerCase()
   );
 }
 
 export function isServiceEntity(kind: string): boolean {
-  if (!kind) {
-    throw ResourceKindNotDefinedError;
-  }
+  if (!kind) throw ResourceKindNotDefinedError;
 
   return "service" === kind.toLowerCase();
 }
 
 export function isIngressEntity(kind: string): boolean {
-  if (!kind) {
-    throw ResourceKindNotDefinedError;
-  }
+  if (!kind) throw ResourceKindNotDefinedError;
 
   return "ingress" === kind.toLowerCase();
 }
 
 export function getReplicaCount(inputObject: any): any {
-  if (!inputObject) {
-    throw NullInputObjectError;
-  }
+  if (!inputObject) throw NullInputObjectError;
 
   if (!inputObject.kind) {
     throw InputObjectKindNotDefinedError;
@@ -70,17 +64,11 @@ export function updateObjectLabels(
   newLabels: Map<string, string>,
   override: boolean = false
 ) {
-  if (!inputObject) {
-    throw NullInputObjectError;
-  }
+  if (!inputObject) throw NullInputObjectError;
 
-  if (!inputObject.metadata) {
-    throw InputObjectMetadataNotDefinedError;
-  }
+  if (!inputObject.metadata) throw InputObjectMetadataNotDefinedError;
 
-  if (!newLabels) {
-    return;
-  }
+  if (!newLabels) return;
 
   if (override) {
     inputObject.metadata.labels = newLabels;
@@ -101,22 +89,16 @@ export function updateObjectAnnotations(
   newAnnotations: Map<string, string>,
   override: boolean = false
 ) {
-  if (!inputObject) {
-    throw NullInputObjectError;
-  }
+  if (!inputObject) throw NullInputObjectError;
 
-  if (!inputObject.metadata) {
-    throw InputObjectMetadataNotDefinedError;
-  }
+  if (!inputObject.metadata) throw InputObjectMetadataNotDefinedError;
 
-  if (!newAnnotations) {
-    return;
-  }
+  if (!newAnnotations) return;
 
   if (override) {
     inputObject.metadata.annotations = newAnnotations;
   } else {
-    let existingAnnotations =
+    const existingAnnotations =
       inputObject.metadata.annotations || new Map<string, string>();
 
     Object.keys(newAnnotations).forEach(
@@ -132,9 +114,7 @@ export function updateImagePullSecrets(
   newImagePullSecrets: string[],
   override: boolean = false
 ) {
-  if (!inputObject?.spec || !newImagePullSecrets) {
-    return;
-  }
+  if (!inputObject?.spec || !newImagePullSecrets) return;
 
   const newImagePullSecretsObjects = Array.from(newImagePullSecrets, (name) => {
     return { name };
@@ -159,17 +139,11 @@ export function updateSpecLabels(
   newLabels: Map<string, string>,
   override: boolean
 ) {
-  if (!inputObject) {
-    throw NullInputObjectError;
-  }
+  if (!inputObject) throw NullInputObjectError;
 
-  if (!inputObject.kind) {
-    throw InputObjectKindNotDefinedError;
-  }
+  if (!inputObject.kind) throw InputObjectKindNotDefinedError;
 
-  if (!newLabels) {
-    return;
-  }
+  if (!newLabels) return;
 
   let existingLabels = getSpecLabels(inputObject);
   if (override) {
@@ -189,17 +163,11 @@ export function updateSelectorLabels(
   newLabels: Map<string, string>,
   override: boolean
 ) {
-  if (!inputObject) {
-    throw NullInputObjectError;
-  }
+  if (!inputObject) throw NullInputObjectError;
 
-  if (!inputObject.kind) {
-    throw InputObjectKindNotDefinedError;
-  }
+  if (!inputObject.kind) throw InputObjectKindNotDefinedError;
 
-  if (!newLabels) {
-    return;
-  }
+  if (!newLabels) return;
 
   if (inputObject.kind.toLowerCase() === KubernetesWorkload.POD.toLowerCase())
     return;
@@ -221,12 +189,9 @@ export function getResources(
   filePaths: string[],
   filterResourceTypes: string[]
 ): Resource[] {
-  if (!filePaths) {
-    return [];
-  }
+  if (!filePaths) return [];
 
   const resources: Resource[] = [];
-
   filePaths.forEach((filePath: string) => {
     const fileContents = fs.readFileSync(filePath).toString();
     yaml.safeLoadAll(fileContents, (inputObject) => {
@@ -277,9 +242,7 @@ function getImagePullSecrets(inputObject: any) {
 }
 
 function setImagePullSecrets(inputObject: any, newImagePullSecrets: any) {
-  if (!inputObject || !inputObject.spec || !newImagePullSecrets) {
-    return;
-  }
+  if (!inputObject || !inputObject.spec || !newImagePullSecrets) return;
 
   if (inputObject.kind.toLowerCase() === KubernetesWorkload.POD.toLowerCase()) {
     inputObject.spec.imagePullSecrets = newImagePullSecrets;
