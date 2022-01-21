@@ -1,32 +1,32 @@
-import { getExecOutput } from "@actions/exec";
+import {getExecOutput} from "@actions/exec";
 
 export class DockerExec {
-  private readonly dockerPath: string;
+    private readonly dockerPath: string;
 
-  constructor(dockerPath: string) {
-    this.dockerPath = dockerPath;
-  }
-
-  public async pull(image: string, args: string[], silent?: boolean) {
-    const result = await this.execute(["pull", image, ...args], silent);
-    if (result.stderr != "" || result.exitCode != 0) {
-      throw new Error(`docker images pull failed: ${result.stderr}`);
+    constructor(dockerPath: string) {
+        this.dockerPath = dockerPath;
     }
-  }
 
-  public async inspect(
-    image: string,
-    args: string[],
-    silent?: boolean
-  ): Promise<string> {
-    const result = await this.execute(["inspect", image, ...args], silent);
-    if (result.stderr != "" || result.exitCode != 0)
-      throw new Error(`docker inspect failed: ${result.stderr}`);
+    public async pull(image: string, args: string[], silent?: boolean) {
+        const result = await this.execute(["pull", image, ...args], silent);
+        if (result.stderr != "" || result.exitCode != 0) {
+            throw new Error(`docker images pull failed: ${result.stderr}`);
+        }
+    }
 
-    return result.stdout;
-  }
+    public async inspect(
+        image: string,
+        args: string[],
+        silent?: boolean
+    ): Promise<string> {
+        const result = await this.execute(["inspect", image, ...args], silent);
+        if (result.stderr != "" || result.exitCode != 0)
+            throw new Error(`docker inspect failed: ${result.stderr}`);
 
-  private async execute(args: string[], silent?: boolean) {
-    return await getExecOutput(this.dockerPath, args, { silent });
-  }
+        return result.stdout;
+    }
+
+    private async execute(args: string[], silent?: boolean) {
+        return await getExecOutput(this.dockerPath, args, {silent});
+    }
 }
