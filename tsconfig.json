@@ -2,7 +2,7 @@
   "compilerOptions": {
     "target": "ES6",
     "module": "commonjs",
-    "moduleResolution": "node"
+    "moduleResolution": "classic"
   },
   "exclude": ["node_modules", "__tests__", "test"]
 }
