@@ -1,8 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES6",
-    "module": "commonjs",
-    "moduleResolution": "classic"
+    "module": "commonjs"
   },
   "exclude": ["node_modules", "__tests__", "test"]
 }
