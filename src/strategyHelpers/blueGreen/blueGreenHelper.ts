@@ -1,17 +1,17 @@
 import * as core from "@actions/core";
 import * as fs from "fs";
 import * as yaml from "js-yaml";
-import {Kubectl} from "../types/kubectl";
-import {isDeploymentEntity, isIngressEntity, isServiceEntity, KubernetesWorkload,} from "../types/kubernetesTypes";
-import * as fileHelper from "../utilities/fileUtils";
+import {Kubectl} from "../../types/kubectl";
+import {isDeploymentEntity, isIngressEntity, isServiceEntity, KubernetesWorkload,} from "../../types/kubernetesTypes";
+import * as fileHelper from "../../utilities/fileUtils";
 import {routeBlueGreenService} from "./serviceBlueGreenHelper";
 import {routeBlueGreenIngress} from "./ingressBlueGreenHelper";
 import {routeBlueGreenSMI} from "./smiBlueGreenHelper";
-import {UnsetClusterSpecificDetails, updateObjectLabels, updateSelectorLabels,} from "../utilities/manifestUpdateUtils";
-import {updateSpecLabels} from "../utilities/manifestSpecLabelUtils";
-import {checkForErrors} from "../utilities/kubectlUtils";
-import {sleep} from "../utilities/timeUtils";
-import {RouteStrategy} from "../types/routeStrategy";
+import {UnsetClusterSpecificDetails, updateObjectLabels, updateSelectorLabels,} from "../../utilities/manifestUpdateUtils";
+import {updateSpecLabels} from "../../utilities/manifestSpecLabelUtils";
+import {checkForErrors} from "../../utilities/kubectlUtils";
+import {sleep} from "../../utilities/timeUtils";
+import {RouteStrategy} from "../../types/routeStrategy";
 
 export const GREEN_LABEL_VALUE = "green";
 export const NONE_LABEL_VALUE = "None";
@@ -33,17 +33,15 @@ export async function routeBlueGreen(
     inputManifestFiles: string[],
     routeStrategy: RouteStrategy
 ) {
+    // sleep for buffer time
     const bufferTime: number = parseInt(core.getInput("version-switch-buffer"));
     if (bufferTime < 0 || bufferTime > 300)
         throw Error("Version switch buffer must be between 0 and 300 (inclusive)");
-
     const startSleepDate = new Date();
     core.info(
         `Starting buffer time of ${bufferTime} minute(s) at ${startSleepDate.toISOString()}`
     );
-
     await sleep(bufferTime * 1000 * 60);
-
     const endSleepDate = new Date();
     core.info(
         `Stopping buffer time of ${bufferTime} minute(s) at ${endSleepDate.toISOString()}`
@@ -52,7 +50,7 @@ export async function routeBlueGreen(
     const manifestObjects: BlueGreenManifests =
         getManifestObjects(inputManifestFiles);
 
-    // routing to new deployments
+    // route to new deployments
     if (routeStrategy == RouteStrategy.INGRESS) {
         await routeBlueGreenIngress(
             kubectl,

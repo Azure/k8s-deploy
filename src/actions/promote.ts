@@ -1,7 +1,7 @@
 import * as core from "@actions/core";
 import * as deploy from "./deploy";
-import * as canaryDeploymentHelper from "../strategyHelpers/canaryDeploymentHelper";
-import * as SMICanaryDeploymentHelper from "../strategyHelpers/smiCanaryDeploymentHelper";
+import * as canaryDeploymentHelper from "../strategyHelpers/canary/canaryHelper";
+import * as SMICanaryDeploymentHelper from "../strategyHelpers/canary/smiCanaryHelper";
 import {getResources, updateManifestFiles} from "../utilities/manifestUpdateUtils";
 import * as models from "../types/kubernetesTypes";
 import * as KubernetesManifestUtility from "../utilities/manifestStabilityUtils";
@@ -12,10 +12,10 @@ import {
   getManifestObjects,
   GREEN_LABEL_VALUE,
   NONE_LABEL_VALUE,
-} from "../strategyHelpers/blueGreenHelper";
-import {promoteBlueGreenService, routeBlueGreenService,} from "../strategyHelpers/serviceBlueGreenHelper";
-import {promoteBlueGreenIngress, routeBlueGreenIngress,} from "../strategyHelpers/ingressBlueGreenHelper";
-import {cleanupSMI, promoteBlueGreenSMI, routeBlueGreenSMI,} from "../strategyHelpers/smiBlueGreenHelper";
+} from "../strategyHelpers/blueGreen/blueGreenHelper";
+import {promoteBlueGreenService, routeBlueGreenService,} from "../strategyHelpers/blueGreen/serviceBlueGreenHelper";
+import {promoteBlueGreenIngress, routeBlueGreenIngress,} from "../strategyHelpers/blueGreen/ingressBlueGreenHelper";
+import {cleanupSMI, promoteBlueGreenSMI, routeBlueGreenSMI,} from "../strategyHelpers/blueGreen/smiBlueGreenHelper";
 import {Kubectl, Resource} from "../types/kubectl";
 import {DeploymentStrategy} from "../types/deploymentStrategy";
 import {parseTrafficSplitMethod, TrafficSplitMethod} from "../types/trafficSplitMethod";
@@ -63,7 +63,7 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
     }
 
     core.debug(
-        "Deployment strategy selected is Canary. Deleting canary and baseline workloads."
+        "Deleting canary and baseline workloads."
     );
     try {
         canaryDeploymentHelper.deleteCanaryDeployment(

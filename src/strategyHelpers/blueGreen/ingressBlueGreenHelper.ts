@@ -1,5 +1,5 @@
-import {Kubectl} from "../types/kubectl";
-import * as fileHelper from "../utilities/fileUtils";
+import {Kubectl} from "../../types/kubectl";
+import * as fileHelper from "../../utilities/fileUtils";
 import {
     addBlueGreenLabelsAndAnnotations,
     BLUE_GREEN_VERSION_LABEL,

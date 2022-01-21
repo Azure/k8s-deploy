@@ -1,10 +1,10 @@
 import * as core from "@actions/core";
-import * as canaryDeploymentHelper from "../strategyHelpers/canaryDeploymentHelper";
-import * as SMICanaryDeploymentHelper from "../strategyHelpers/smiCanaryDeploymentHelper";
+import * as canaryDeploymentHelper from "../strategyHelpers/canary/canaryHelper";
+import * as SMICanaryDeploymentHelper from "../strategyHelpers/canary/smiCanaryHelper";
 import {Kubectl} from "../types/kubectl";
-import {rejectBlueGreenService} from "../strategyHelpers/serviceBlueGreenHelper";
-import {rejectBlueGreenIngress} from "../strategyHelpers/ingressBlueGreenHelper";
-import {rejectBlueGreenSMI} from "../strategyHelpers/smiBlueGreenHelper";
+import {rejectBlueGreenService} from "../strategyHelpers/blueGreen/serviceBlueGreenHelper";
+import {rejectBlueGreenIngress} from "../strategyHelpers/blueGreen/ingressBlueGreenHelper";
+import {rejectBlueGreenSMI} from "../strategyHelpers/blueGreen/smiBlueGreenHelper";
 import {DeploymentStrategy} from "../types/deploymentStrategy";
 import {parseTrafficSplitMethod, TrafficSplitMethod} from "../types/trafficSplitMethod";
 import {parseRouteStrategy, RouteStrategy} from "../types/routeStrategy";

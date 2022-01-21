@@ -1,12 +1,12 @@
-import {Kubectl} from "../types/kubectl";
+import {Kubectl} from "../../types/kubectl";
 import * as core from "@actions/core";
 import * as fs from "fs";
 import * as yaml from "js-yaml";
 
-import * as fileHelper from "../utilities/fileUtils";
-import * as canaryDeploymentHelper from "./canaryDeploymentHelper";
-import {isDeploymentEntity} from "../types/kubernetesTypes";
-import {getReplicaCount} from "../utilities/manifestUpdateUtils";
+import * as fileHelper from "../../utilities/fileUtils";
+import * as canaryDeploymentHelper from "./canaryHelper";
+import {isDeploymentEntity} from "../../types/kubernetesTypes";
+import {getReplicaCount} from "../../utilities/manifestUpdateUtils";
 
 export async function deployPodCanary(filePaths: string[], kubectl: Kubectl) {
     const newObjectsList = [];

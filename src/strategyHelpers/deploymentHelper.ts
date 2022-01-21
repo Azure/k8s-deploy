@@ -2,19 +2,19 @@
 
 import * as fs from "fs";
 import * as yaml from "js-yaml";
-import * as canaryDeploymentHelper from "./canaryDeploymentHelper";
+import * as canaryDeploymentHelper from "./canary/canaryHelper";
 import * as models from "../types/kubernetesTypes";
 import {isDeploymentEntity} from "../types/kubernetesTypes";
 import * as fileHelper from "../utilities/fileUtils";
 import * as KubernetesManifestUtility from "../utilities/manifestStabilityUtils";
 import {Kubectl, Resource} from "../types/kubectl";
 
-import {deployPodCanary} from "./podCanaryDeploymentHelper";
-import {deploySMICanary} from "./smiCanaryDeploymentHelper";
+import {deployPodCanary} from "./canary/podCanaryHelper";
+import {deploySMICanary} from "./canary/smiCanaryHelper";
 import {DeploymentConfig} from "../types/deploymentConfig";
-import {deployBlueGreenService} from "./serviceBlueGreenHelper";
-import {deployBlueGreenIngress} from "./ingressBlueGreenHelper";
-import {deployBlueGreenSMI} from "./smiBlueGreenHelper";
+import {deployBlueGreenService} from "./blueGreen/serviceBlueGreenHelper";
+import {deployBlueGreenIngress} from "./blueGreen/ingressBlueGreenHelper";
+import {deployBlueGreenSMI} from "./blueGreen/smiBlueGreenHelper";
 import {DeploymentStrategy} from "../types/deploymentStrategy";
 import * as core from "@actions/core";
 import {parseTrafficSplitMethod, TrafficSplitMethod,} from "../types/trafficSplitMethod";

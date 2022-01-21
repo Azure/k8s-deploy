@@ -3,7 +3,7 @@ import * as models from "../types/kubernetesTypes";
 import * as KubernetesConstants from "../types/kubernetesTypes";
 import {Kubectl, Resource} from "../types/kubectl";
 import {getResources, updateManifestFiles} from "../utilities/manifestUpdateUtils";
-import {routeBlueGreen,} from "../strategyHelpers/blueGreenHelper";
+import {routeBlueGreen,} from "../strategyHelpers/blueGreen/blueGreenHelper";
 import {annotateAndLabelResources, checkManifestStability, deployManifests,} from "../strategyHelpers/deploymentHelper";
 import {DeploymentStrategy,} from "../types/deploymentStrategy";
 import {parseTrafficSplitMethod} from "../types/trafficSplitMethod";
