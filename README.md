@@ -1,8 +1,6 @@
 # Deploy manifests action for Kubernetes
 
-This action can be used to deploy manifests to Kubernetes clusters.
-
-This action requires that the cluster context be set earlier in the workflow by using either the [Azure/aks-set-context](https://github.com/Azure/aks-set-context/tree/releases/v1) action or the [Azure/k8s-set-context](https://github.com/Azure/k8s-set-context/tree/releases/v1) action.
+This action is used to deploy manifests to Kubernetes clusters. It requires that the cluster context be set earlier in the workflow by using either the [Azure/aks-set-context](https://github.com/Azure/aks-set-context/tree/releases/v1) action or the [Azure/k8s-set-context](https://github.com/Azure/k8s-set-context/tree/releases/v1) action. It also requires Kubectl to be installed (you can use the [Azure/setup-kubectl](https://github.com/Azure/setup-kubectl) action).
 
 If you are looking to automate your workflows to deploy to [Azure Web Apps](https://azure.microsoft.com/en-us/services/app-service/web/) and [Azure Web App for Containers](https://azure.microsoft.com/en-us/services/app-service/containers/), consider using [`Azure/webapps-deploy`](https://github.com/Azure/webapps-deploy) action.
 
