@@ -3,17 +3,17 @@ on: # rebuild any PRs and main branch changes
   pull_request:
     branches:
       - master
-      - 'releases/*'
+      - "releases/*"
   push:
     branches:
       - master
-      - 'releases/*'
+      - "releases/*"
 
 jobs:
   build: # make sure build/ci works properly
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v1
-    - run: |
-        npm install
-        npm test
+      - uses: actions/checkout@v1
+      - run: |
+          npm install
+          npm test

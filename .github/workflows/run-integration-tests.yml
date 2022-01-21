@@ -1,5 +1,13 @@
 name: Minikube Integration Tests
-on: pull_request
+on:
+  pull_request:
+    branches:
+      - master
+      - "releases/*"
+  push:
+    branches:
+      - master
+      - "releases/*"
 
 jobs:
   run-integration-test:
