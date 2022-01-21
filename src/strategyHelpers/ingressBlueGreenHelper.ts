@@ -8,12 +8,12 @@ import {
   deleteWorkloadsAndServicesWithLabel,
   fetchResource,
   BlueGreenManifests,
-} from "./blue-green-helper";
+} from "./blueGreenHelper";
 import {
   GREEN_LABEL_VALUE,
   NONE_LABEL_VALUE,
   BLUE_GREEN_VERSION_LABEL,
-} from "./blue-green-helper";
+} from "./blueGreenHelper";
 
 const BACKEND = "BACKEND";
 

@@ -4,7 +4,7 @@ import * as fs from "fs";
 import * as yaml from "js-yaml";
 
 import * as fileHelper from "../utilities/fileUtils";
-import * as canaryDeploymentHelper from "./canary-deployment-helper";
+import * as canaryDeploymentHelper from "./canaryDeploymentHelper";
 import {isDeploymentEntity} from "../types/kubernetesTypes";
 import {getReplicaCount} from "../utilities/manifestUpdateUtils";
 

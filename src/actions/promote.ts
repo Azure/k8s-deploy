@@ -1,7 +1,7 @@
 import * as core from "@actions/core";
 import * as deploy from "./deploy";
-import * as canaryDeploymentHelper from "../strategy-helpers/canary-deployment-helper";
-import * as SMICanaryDeploymentHelper from "../strategy-helpers/smi-canary-deployment-helper";
+import * as canaryDeploymentHelper from "../strategyHelpers/canaryDeploymentHelper";
+import * as SMICanaryDeploymentHelper from "../strategyHelpers/smiCanaryDeploymentHelper";
 import {getResources, updateManifestFiles} from "../utilities/manifestUpdateUtils";
 import * as models from "../types/kubernetesTypes";
 import * as KubernetesManifestUtility from "../utilities/manifestStabilityUtils";
@@ -12,10 +12,10 @@ import {
   getManifestObjects,
   GREEN_LABEL_VALUE,
   NONE_LABEL_VALUE,
-} from "../strategy-helpers/blue-green-helper";
-import {promoteBlueGreenService, routeBlueGreenService,} from "../strategy-helpers/service-blue-green-helper";
-import {promoteBlueGreenIngress, routeBlueGreenIngress,} from "../strategy-helpers/ingress-blue-green-helper";
-import {cleanupSMI, promoteBlueGreenSMI, routeBlueGreenSMI,} from "../strategy-helpers/smi-blue-green-helper";
+} from "../strategyHelpers/blueGreenHelper";
+import {promoteBlueGreenService, routeBlueGreenService,} from "../strategyHelpers/serviceBlueGreenHelper";
+import {promoteBlueGreenIngress, routeBlueGreenIngress,} from "../strategyHelpers/ingressBlueGreenHelper";
+import {cleanupSMI, promoteBlueGreenSMI, routeBlueGreenSMI,} from "../strategyHelpers/smiBlueGreenHelper";
 import {Kubectl, Resource} from "../types/kubectl";
 import {DeploymentStrategy} from "../types/deploymentStrategy";
 import {parseTrafficSplitMethod, TrafficSplitMethod} from "../types/trafficSplitMethod";

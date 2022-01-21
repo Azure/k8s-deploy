@@ -9,9 +9,9 @@ import {
   KubernetesWorkload,
 } from "../types/kubernetesTypes";
 import * as fileHelper from "../utilities/fileUtils";
-import { routeBlueGreenService } from "./service-blue-green-helper";
-import { routeBlueGreenIngress } from "./ingress-blue-green-helper";
-import { routeBlueGreenSMI } from "./smi-blue-green-helper";
+import { routeBlueGreenService } from "./serviceBlueGreenHelper";
+import { routeBlueGreenIngress } from "./ingressBlueGreenHelper";
+import { routeBlueGreenSMI } from "./smiBlueGreenHelper";
 import {
   UnsetClusterSpecificDetails,
   updateObjectLabels,

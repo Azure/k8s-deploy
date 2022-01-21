@@ -12,13 +12,13 @@ import {
   getBlueGreenResourceName,
   deleteObjects,
   BlueGreenManifests,
-} from "./blue-green-helper";
+} from "./blueGreenHelper";
 import {
   GREEN_LABEL_VALUE,
   NONE_LABEL_VALUE,
   GREEN_SUFFIX,
   STABLE_SUFFIX,
-} from "./blue-green-helper";
+} from "./blueGreenHelper";
 
 const TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX = "-trafficsplit";
 const TRAFFIC_SPLIT_OBJECT = "TrafficSplit";

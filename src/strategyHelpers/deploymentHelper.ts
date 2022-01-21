@@ -2,18 +2,18 @@
 
 import * as fs from "fs";
 import * as yaml from "js-yaml";
-import * as canaryDeploymentHelper from "./canary-deployment-helper";
+import * as canaryDeploymentHelper from "./canaryDeploymentHelper";
 import * as models from "../types/kubernetesTypes";
 import * as fileHelper from "../utilities/fileUtils";
 import * as KubernetesManifestUtility from "../utilities/manifestStabilityUtils";
 import { Kubectl, Resource } from "../types/kubectl";
 
-import { deployPodCanary } from "./pod-canary-deployment-helper";
-import { deploySMICanary } from "./smi-canary-deployment-helper";
+import { deployPodCanary } from "./podCanaryDeploymentHelper";
+import { deploySMICanary } from "./smiCanaryDeploymentHelper";
 import { DeploymentConfig } from "../types/deploymentConfig";
-import { deployBlueGreenService } from "./service-blue-green-helper";
-import { deployBlueGreenIngress } from "./ingress-blue-green-helper";
-import { deployBlueGreenSMI } from "./smi-blue-green-helper";
+import { deployBlueGreenService } from "./serviceBlueGreenHelper";
+import { deployBlueGreenIngress } from "./ingressBlueGreenHelper";
+import { deployBlueGreenSMI } from "./smiBlueGreenHelper";
 import { DeploymentStrategy } from "../types/deploymentStrategy";
 import * as core from "@actions/core";
 import {

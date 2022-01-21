@@ -5,7 +5,7 @@ import * as yaml from "js-yaml";
 
 import * as fileHelper from "../utilities/fileUtils";
 import * as kubectlUtils from "../utilities/trafficSplitUtils";
-import * as canaryDeploymentHelper from "./canary-deployment-helper";
+import * as canaryDeploymentHelper from "./canaryDeploymentHelper";
 import {isDeploymentEntity, isServiceEntity} from "../types/kubernetesTypes";
 import {checkForErrors} from "../utilities/kubectlUtils";
 
