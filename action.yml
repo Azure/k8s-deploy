@@ -2,21 +2,18 @@ name: "Deploy to Kubernetes cluster"
 description: "Deploy to a Kubernetes cluster including, but not limited to Azure Kubernetes Service (AKS) clusters"
 inputs:
   # Please ensure you have used either azure/k8s-actions/aks-set-context or azure/k8s-actions/k8s-set-context in the workflow before this action
+  # You also need to have kubectl installed (azure/setup-kubectl)
   namespace:
     description: "Choose the target Kubernetes namespace. If the namespace is not provided, the commands will run in the default namespace."
     required: false
   manifests:
     description: "Path to the manifest files which will be used for deployment."
     required: true
-    default: ""
   images:
     description: "Fully qualified resource URL of the image(s) to be used for substitutions on the manifest files Example: contosodemo.azurecr.io/helloworld:test"
     required: false
   imagepullsecrets:
     description: "Name of a docker-registry secret that has already been set up within the cluster. Each of these secret names are added under imagePullSecrets field for the workloads found in the input manifest files"
-    required: false
-  kubectl-version:
-    description: "Version of kubectl. Installs a specific version of kubectl binary"
     required: false
   strategy:
     description: "Deployment strategy to be used. Allowed values are none, canary and blue-green"
@@ -31,22 +28,19 @@ inputs:
     required: false
     default: 0
   traffic-split-method:
-    description: "Traffic split method to be used. Allowed values are pod, smi"
+    description: "Traffic split method to be used. Allowed values are pod and smi"
     required: false
     default: "pod"
   baseline-and-canary-replicas:
-    description: "Baseline and canary replicas count; valid value i.e between 0 to 100."
+    description: "Baseline and canary replicas count. Valid value between 0 to 100 (inclusive)"
     required: false
     default: 0
   percentage:
     description: "Percentage of traffic redirect to canary deployment"
     required: false
     default: 0
-  args:
-    description: "Arguments"
-    required: false
   action:
-    description: "deploy/promote/reject"
+    description: "deploy, promote, or reject"
     required: true
     default: "deploy"
   force:

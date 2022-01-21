@@ -36,14 +36,17 @@ Following are the key capabilities of this action:
       <th>Description</th>
     </tr>
   </thead>
-
   <tr>
-    <td>namespace </br></br>(Optional)
-    <td>Namespace within the cluster to deploy to.</td>
+    <td>action </br></br>(Required)</td>
+    <td>Acceptable values: deploy/promote/reject.</br>Promote or reject actions are used to promote or reject canary/blue-green deployments. Sample YAML snippets are provided below for guidance.</td>
   </tr>
   <tr>
     <td>manifests </br></br>(Required)</td>
     <td>Path to the manifest files to be used for deployment</td>
+  </tr>  
+  <tr>
+    <td>namespace </br></br>(Optional)
+    <td>Namespace within the cluster to deploy to.</td>
   </tr>
   <tr>
     <td>images </br></br>(Optional)</td>
@@ -84,10 +87,6 @@ Following are the key capabilities of this action:
     <td>Acceptable values: 1-300.</br>Default value: 0.</br>Waits for the given input in minutes before routing traffic to '-green' workloads.</td>
   </tr>
   <tr>
-    <td>action </br></br>(Required)</td>
-    <td>Acceptable values: deploy/promote/reject.</br>Promote or reject actions are used to promote or reject canary/blue-green deployments. Sample YAML snippets are provided below for guidance.</td>
-  </tr>
-  <tr>
     <td>force </br></br>(Optional)</td>
     <td>Deploy when a previous deployment already exists. If true then '--force' argument is added to the apply command. Using '--force' argument is not recommended in production.</td>
   </tr>
@@ -125,6 +124,7 @@ Following are the key capabilities of this action:
       deployment.yaml
       service.yaml
     strategy: canary
+    action: deploy
     percentage: 20
 ```
 
@@ -159,6 +159,7 @@ To promote/reject the canary created by the above snippet, the following YAML sn
       deployment.yaml
       service.yaml
     strategy: canary
+    action: deploy
     traffic-split-method: smi
     percentage: 20
     baseline-and-canary-replicas: 1
@@ -197,6 +198,7 @@ To promote/reject the canary created by the above snippet, the following YAML sn
       service.yaml
       ingress.yml
     strategy: blue-green
+    action: deploy
     route-method: ingress # substitute with service/smi as per need
     version-switch-buffer: 15
 ```
@@ -263,6 +265,7 @@ jobs:
 
       - uses: Azure/k8s-deploy@v1.4
         with:
+          action: deploy
           manifests: |
             manifests/deployment.yml
             manifests/service.yml
@@ -308,6 +311,7 @@ jobs:
 
       - uses: Azure/k8s-deploy@v1.4
         with:
+          action: deploy
           manifests: |
             manifests/deployment.yml
             manifests/service.yml
@@ -356,6 +360,7 @@ jobs:
 
       - uses: Azure/k8s-deploy@v1.2
         with:
+          action: deploy
           manifests: |
             manifests/deployment.yml
             manifests/service.yml
@@ -367,7 +372,7 @@ jobs:
 
 ### Build image and add `dockerfile-path` label to it
 
-This image can we used in other workflows once built.
+We can use this image in other workflows once built.
 
 ```yaml
 on: [push]
@@ -391,7 +396,7 @@ jobs:
           docker push contoso.azurecr.io/k8sdemo:${{ github.sha }}
 ```
 
-### Using bake action to get manifests deploying to a Kubernetes cluster
+### Use bake action to get manifests deploying to a Kubernetes cluster
 
 ```yaml
 on: [push]
@@ -439,6 +444,7 @@ jobs:
 
       - uses: Azure/k8s-deploy@v1.2
         with:
+          action: deploy
           manifests: ${{ steps.bake.outputs.manifestsBundle }}
           images: |
             contoso.azurecr.io/k8sdemo:${{ github.sha }}
