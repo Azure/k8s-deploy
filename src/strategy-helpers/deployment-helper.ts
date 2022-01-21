@@ -41,14 +41,11 @@ import { getDeploymentConfig } from "../utilities/dockerUtils";
 export async function deployManifests(
   files: string[],
   deploymentStrategy: DeploymentStrategy,
-  kubectl: Kubectl
+  kubectl: Kubectl,
+  trafficSplitMethod: TrafficSplitMethod
 ): Promise<string[]> {
   switch (deploymentStrategy) {
     case DeploymentStrategy.CANARY: {
-      const trafficSplitMethod = parseTrafficSplitMethod(
-        core.getInput("traffic-split-method", { required: true })
-      );
-
       const { result, newFilePaths } =
         trafficSplitMethod == TrafficSplitMethod.SMI
           ? await deploySMICanary(files, kubectl)

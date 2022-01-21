@@ -16,8 +16,6 @@ import {
 import { updateSpecLabels } from "../utilities/manifestSpecLabelUtils";
 import { checkForErrors } from "../utilities/kubectlUtils";
 
-export const CANARY_DEPLOYMENT_STRATEGY = "CANARY";
-export const TRAFFIC_SPLIT_STRATEGY = "SMI";
 export const CANARY_VERSION_LABEL = "workflow/version";
 const BASELINE_SUFFIX = "-baseline";
 export const BASELINE_LABEL_VALUE = "baseline";
@@ -102,20 +100,6 @@ export async function fetchResource(
       );
     }
   }
-}
-
-export function isCanaryDeploymentStrategy() {
-  const deploymentStrategy = core.getInput("strategy");
-  return deploymentStrategy?.toUpperCase() === CANARY_DEPLOYMENT_STRATEGY;
-}
-
-export function isSMICanaryStrategy() {
-  const deploymentStrategy = core.getInput("traffic-split-method");
-
-  return (
-    isCanaryDeploymentStrategy() &&
-    deploymentStrategy?.toUpperCase() === TRAFFIC_SPLIT_STRATEGY
-  );
 }
 
 export function getCanaryResourceName(name: string) {

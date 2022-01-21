@@ -10,6 +10,8 @@ import {
   deployManifests,
 } from "../strategy-helpers/deployment-helper";
 import {DeploymentStrategy,} from "../types/deploymentStrategy";
+import {parseTrafficSplitMethod} from "../types/trafficSplitMethod";
+import {parseRouteStrategy} from "../types/routeStrategy";
 
 export async function deploy(
   kubectl: Kubectl,
@@ -18,10 +20,14 @@ export async function deploy(
 ) {
   const inputManifestFiles: string[] = updateManifestFiles(manifestFilePaths);
 
+  const trafficSplitMethod = parseTrafficSplitMethod(
+      core.getInput("traffic-split-method", { required: true })
+  );
   const deployedManifestFiles = await deployManifests(
     inputManifestFiles,
     deploymentStrategy,
-    kubectl
+    kubectl,
+      trafficSplitMethod
   );
 
   // check manifest stability
@@ -35,7 +41,10 @@ export async function deploy(
 
   // route blue-green deployments
   if (deploymentStrategy == DeploymentStrategy.BLUE_GREEN) {
-    await routeBlueGreen(kubectl, inputManifestFiles);
+    const routeStrategy = parseRouteStrategy(
+        core.getInput("route-method", { required: true })
+    );
+    await routeBlueGreen(kubectl, inputManifestFiles, routeStrategy);
   }
 
   // print ingresses

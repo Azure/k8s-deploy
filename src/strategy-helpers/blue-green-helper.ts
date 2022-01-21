@@ -1,40 +1,32 @@
 import * as core from "@actions/core";
 import * as fs from "fs";
 import * as yaml from "js-yaml";
-import {Kubectl} from "../types/kubectl";
-import {isDeploymentEntity, isIngressEntity, isServiceEntity, KubernetesWorkload} from "../types/kubernetesTypes";
+import { Kubectl } from "../types/kubectl";
+import {
+  isDeploymentEntity,
+  isIngressEntity,
+  isServiceEntity,
+  KubernetesWorkload,
+} from "../types/kubernetesTypes";
 import * as fileHelper from "../utilities/fileUtils";
-import {routeBlueGreenService} from "./service-blue-green-helper";
-import {routeBlueGreenIngress} from "./ingress-blue-green-helper";
-import {routeBlueGreenSMI} from "./smi-blue-green-helper";
-import {UnsetClusterSpecificDetails, updateObjectLabels, updateSelectorLabels} from "../utilities/manifestUpdateUtils";
-import {updateSpecLabels} from "../utilities/manifestSpecLabelUtils";
-import {checkForErrors} from "../utilities/kubectlUtils";
-import {sleep} from "../utilities/timeUtils";
+import { routeBlueGreenService } from "./service-blue-green-helper";
+import { routeBlueGreenIngress } from "./ingress-blue-green-helper";
+import { routeBlueGreenSMI } from "./smi-blue-green-helper";
+import {
+  UnsetClusterSpecificDetails,
+  updateObjectLabels,
+  updateSelectorLabels,
+} from "../utilities/manifestUpdateUtils";
+import { updateSpecLabels } from "../utilities/manifestSpecLabelUtils";
+import { checkForErrors } from "../utilities/kubectlUtils";
+import { sleep } from "../utilities/timeUtils";
+import { RouteStrategy } from "../types/routeStrategy";
 
-export const BLUE_GREEN_DEPLOYMENT_STRATEGY = "BLUE-GREEN";
 export const GREEN_LABEL_VALUE = "green";
 export const NONE_LABEL_VALUE = "None";
 export const BLUE_GREEN_VERSION_LABEL = "k8s.deploy.color";
 export const GREEN_SUFFIX = "-green";
 export const STABLE_SUFFIX = "-stable";
-export const INGRESS_ROUTE = "INGRESS";
-export const SMI_ROUTE = "SMI";
-
-export function isBlueGreenDeploymentStrategy() {
-  const deploymentStrategy = core.getInput("strategy");
-  return deploymentStrategy?.toUpperCase() === BLUE_GREEN_DEPLOYMENT_STRATEGY;
-}
-
-export function isIngressRoute(): boolean {
-  const routeMethod = core.getInput("route-method");
-  return routeMethod?.toUpperCase() === INGRESS_ROUTE;
-}
-
-export function isSMIRoute(): boolean {
-  const routeMethod = core.getInput("route-method");
-  return routeMethod?.toUpperCase() === SMI_ROUTE;
-}
 
 export interface BlueGreenManifests {
   serviceEntityList: any[];
@@ -47,7 +39,8 @@ export interface BlueGreenManifests {
 
 export async function routeBlueGreen(
   kubectl: Kubectl,
-  inputManifestFiles: string[]
+  inputManifestFiles: string[],
+  routeStrategy: RouteStrategy
 ) {
   const bufferTime: number = parseInt(core.getInput("version-switch-buffer"));
   if (bufferTime < 0 || bufferTime > 300)
@@ -69,14 +62,14 @@ export async function routeBlueGreen(
     getManifestObjects(inputManifestFiles);
 
   // routing to new deployments
-  if (isIngressRoute()) {
+  if (routeStrategy == RouteStrategy.INGRESS) {
     await routeBlueGreenIngress(
       kubectl,
       GREEN_LABEL_VALUE,
       manifestObjects.serviceNameMap,
       manifestObjects.ingressEntityList
     );
-  } else if (isSMIRoute()) {
+  } else if (routeStrategy == RouteStrategy.SMI) {
     await routeBlueGreenSMI(
       kubectl,
       GREEN_LABEL_VALUE,
@@ -92,9 +85,9 @@ export async function routeBlueGreen(
 }
 
 export async function deleteWorkloadsWithLabel(
-    kubectl: Kubectl,
-    deleteLabel: string,
-    deploymentEntityList: any[]
+  kubectl: Kubectl,
+  deleteLabel: string,
+  deploymentEntityList: any[]
 ) {
   const resourcesToDelete = [];
   deploymentEntityList.forEach((inputObject) => {
@@ -103,7 +96,7 @@ export async function deleteWorkloadsWithLabel(
 
     if (deleteLabel === NONE_LABEL_VALUE) {
       // delete stable deployments
-      const resourceToDelete = {name, kind};
+      const resourceToDelete = { name, kind };
       resourcesToDelete.push(resourceToDelete);
     } else {
       // delete new green deployments
@@ -119,10 +112,10 @@ export async function deleteWorkloadsWithLabel(
 }
 
 export async function deleteWorkloadsAndServicesWithLabel(
-    kubectl: Kubectl,
-    deleteLabel: string,
-    deploymentEntityList: any[],
-    serviceEntityList: any[]
+  kubectl: Kubectl,
+  deleteLabel: string,
+  deploymentEntityList: any[],
+  serviceEntityList: any[]
 ) {
   // need to delete services and deployments
   const deletionEntitiesList = deploymentEntityList.concat(serviceEntityList);
@@ -134,7 +127,7 @@ export async function deleteWorkloadsAndServicesWithLabel(
 
     if (deleteLabel === NONE_LABEL_VALUE) {
       // delete stable objects
-      const resourceToDelete = {name, kind};
+      const resourceToDelete = { name, kind };
       resourcesToDelete.push(resourceToDelete);
     } else {
       // delete green labels
