@@ -93,7 +93,7 @@ Following are the key capabilities of this action:
   </tr>
 </table>
 
-## Examples YAML snippets
+## Usage Examples
 
 ### Basic deployment (without any deployment strategy)
 
@@ -111,7 +111,7 @@ Following are the key capabilities of this action:
     kubectl-version: "latest"
 ```
 
-### Deployment Strategies - Canary deployment without service mesh
+### Canary deployment without service mesh
 
 ```yaml
 - uses: Azure/k8s-deploy@v1.4
@@ -128,7 +128,7 @@ Following are the key capabilities of this action:
     percentage: 20
 ```
 
-### To promote/reject the canary created by the above snippet, the following YAML snippet could be used:
+To promote/reject the canary created by the above snippet, the following YAML snippet could be used:
 
 ```yaml
 - uses: Azure/k8s-deploy@v1.4
@@ -145,7 +145,7 @@ Following are the key capabilities of this action:
     action: promote # substitute reject if you want to reject
 ```
 
-### Deployment Strategies - Canary deployment based on Service Mesh Interface
+### Canary deployment based on Service Mesh Interface
 
 ```yaml
 - uses: Azure/k8s-deploy@v1.4
@@ -164,7 +164,7 @@ Following are the key capabilities of this action:
     baseline-and-canary-replicas: 1
 ```
 
-### To promote/reject the canary created by the above snippet, the following YAML snippet could be used:
+To promote/reject the canary created by the above snippet, the following YAML snippet could be used:
 
 ```yaml
 - uses: Azure/k8s-deploy@v1.4
@@ -182,7 +182,7 @@ Following are the key capabilities of this action:
     action: reject # substitute reject if you want to reject
 ```
 
-### Deployment Strategies - Blue-Green deployment with different route methods
+### Blue-Green deployment with different route methods
 
 ```yaml
 - uses: Azure/k8s-deploy@v1.4
@@ -201,7 +201,7 @@ Following are the key capabilities of this action:
     version-switch-buffer: 15
 ```
 
-### **To promote/reject the green workload created by the above snippet, the following YAML snippet could be used:**
+To promote/reject the green workload created by the above snippet, the following YAML snippet could be used:
 
 ```yaml
 - uses: Azure/k8s-deploy@v1.4
@@ -245,6 +245,8 @@ jobs:
           docker build . -t contoso.azurecr.io/k8sdemo:${{ github.sha }}
           docker push contoso.azurecr.io/k8sdemo:${{ github.sha }}
 
+      - uses: azure/setup-kubectl@v2.0
+
       # Set the target AKS cluster.
       - uses: Azure/aks-set-context@v1
         with:
@@ -252,7 +254,7 @@ jobs:
           cluster-name: contoso
           resource-group: contoso-rg
 
-      - uses: Azure/k8s-create-secret@v1
+      - uses: Azure/k8s-create-secret@v2
         with:
           container-registry-url: contoso.azurecr.io
           container-registry-username: ${{ secrets.REGISTRY_USERNAME }}
@@ -291,11 +293,13 @@ jobs:
           docker build . -t contoso.azurecr.io/k8sdemo:${{ github.sha }}
           docker push contoso.azurecr.io/k8sdemo:${{ github.sha }}
 
-      - uses: Azure/k8s-set-context@v1
+      - uses: azure/setup-kubectl@v2.0
+
+      - uses: Azure/k8s-set-context@v2
         with:
           kubeconfig: ${{ secrets.KUBE_CONFIG }}
 
-      - uses: Azure/k8s-create-secret@v1
+      - uses: Azure/k8s-create-secret@v2
         with:
           container-registry-url: contoso.azurecr.io
           container-registry-username: ${{ secrets.REGISTRY_USERNAME }}
@@ -318,8 +322,10 @@ jobs:
 - Environment variable `HELM_CHART_PATHS` is a list of helmchart files expected by k8s-deploy - it will be populated automatically if you are using `k8s-bake` to generate the manifests.
 - Use script to build image and add `dockerfile-path` label to it.
   The value expected is the link to the dockerfile : `https://github.com/${{github.repo}}/blob/${{github.sha}}/Dockerfile`
+
   If your dockerfile is in the same repo and branch where the workflow is run, it can be a relative path and it will be converted to a link for traceability.
-- Run docker login action for each image registry - in case image build and image deploy are 2 distinct jobs in the same or separate workflows.
+
+- Run docker login action for each image registry - in case image build and image deploy are two distinct jobs in the same or separate workflows.
 
 ### End to end workflow for building and deploying container images
 
@@ -412,6 +418,8 @@ jobs:
           username: ${{ secrets.REGISTRY_USERNAME }}
           password: ${{ secrets.REGISTRY_PASSWORD }}
 
+      - uses: azure/setup-kubectl@v2.0
+
       # Set the target AKS cluster.
       - uses: Azure/aks-set-context@v1
         with:
@@ -419,7 +427,7 @@ jobs:
           cluster-name: contoso
           resource-group: contoso-rg
 
-      - uses: Azure/k8s-create-secret@v1
+      - uses: Azure/k8s-create-secret@v2
         with:
           namespace: ${{ env.NAMESPACE  }}
           container-registry-url: contoso.azurecr.io
@@ -427,7 +435,7 @@ jobs:
           container-registry-password: ${{ secrets.REGISTRY_PASSWORD }}
           secret-name: demo-k8s-secret
 
-      - uses: azure/k8s-bake@v1
+      - uses: azure/k8s-bake@v2
         with:
           renderEngine: "helm"
           helmChart: "./aks-helloworld/"
@@ -446,7 +454,7 @@ jobs:
             demo-k8s-secret
 ```
 
-# Contributing
+## Contributing
 
 This project welcomes contributions and suggestions. Most contributions require you to agree to a
 Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
