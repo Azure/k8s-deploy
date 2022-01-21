@@ -2,7 +2,7 @@ import * as fs from "fs";
 import * as path from "path";
 import * as core from "@actions/core";
 import * as os from "os";
-import { getCurrentTime } from "./utility";
+import {getCurrentTime} from "./timeUtils";
 
 export function getTempDirectory(): string {
   return process.env["runner.tempDirectory"] || os.tmpdir();

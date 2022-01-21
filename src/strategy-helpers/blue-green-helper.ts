@@ -1,7 +1,6 @@
 import * as core from "@actions/core";
 import * as fs from "fs";
 import * as yaml from "js-yaml";
-import {checkForErrors, sleep} from "../utilities/utility";
 import {Kubectl} from "../types/kubectl";
 import {isDeploymentEntity, isIngressEntity, isServiceEntity, KubernetesWorkload} from "../types/kubernetesTypes";
 import * as fileHelper from "../utilities/fileUtils";
@@ -10,6 +9,8 @@ import {routeBlueGreenIngress} from "./ingress-blue-green-helper";
 import {routeBlueGreenSMI} from "./smi-blue-green-helper";
 import {UnsetClusterSpecificDetails, updateObjectLabels, updateSelectorLabels} from "../utilities/manifestUpdateUtils";
 import {updateSpecLabels} from "../utilities/manifestSpecLabelUtils";
+import {checkForErrors} from "../utilities/kubectlUtils";
+import {sleep} from "../utilities/timeUtils";
 
 export const BLUE_GREEN_DEPLOYMENT_STRATEGY = "BLUE-GREEN";
 export const GREEN_LABEL_VALUE = "green";

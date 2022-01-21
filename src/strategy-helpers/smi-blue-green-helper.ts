@@ -1,7 +1,7 @@
 "use strict";
 
 import { Kubectl } from "../types/kubectl";
-import * as kubectlUtils from "../utilities/trafficSplitUtil";
+import * as kubectlUtils from "../utilities/trafficSplitUtils";
 import * as fileHelper from "../utilities/fileUtils";
 import {
   createWorkloadsWithLabel,

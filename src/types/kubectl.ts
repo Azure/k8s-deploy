@@ -1,5 +1,5 @@
 import {ExecOutput, getExecOutput} from "@actions/exec";
-import {createInlineArray} from "../utilities/utility";
+import {createInlineArray} from "../utilities/arrayUtils";
 import * as core from "@actions/core";
 import * as toolCache from "@actions/tool-cache";
 import * as io from "@actions/io";

@@ -4,10 +4,10 @@ import * as fs from "fs";
 import * as yaml from "js-yaml";
 
 import * as fileHelper from "../utilities/fileUtils";
-import * as kubectlUtils from "../utilities/trafficSplitUtil";
+import * as kubectlUtils from "../utilities/trafficSplitUtils";
 import * as canaryDeploymentHelper from "./canary-deployment-helper";
-import {checkForErrors} from "../utilities/utility";
 import {isDeploymentEntity, isServiceEntity} from "../types/kubernetesTypes";
+import {checkForErrors} from "../utilities/kubectlUtils";
 
 const TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX = "-workflow-rollout";
 const TRAFFIC_SPLIT_OBJECT = "TrafficSplit";

@@ -1,7 +1,8 @@
 import * as core from "@actions/core";
-import * as utils from "./utility";
 import * as KubernetesConstants from "../types/kubernetesTypes";
-import { Kubectl, Resource } from "../types/kubectl";
+import {Kubectl, Resource} from "../types/kubectl";
+import {checkForErrors} from "./kubectlUtils";
+import {sleep} from "./timeUtils";
 
 export async function checkManifestStability(
   kubectl: Kubectl,
@@ -21,7 +22,7 @@ export async function checkManifestStability(
           resource.type,
           resource.name
         );
-        utils.checkForErrors([result]);
+        checkForErrors([result]);
       } catch (ex) {
         core.error(ex);
         await kubectl.describe(resource.type, resource.name);
@@ -77,7 +78,7 @@ export async function checkPodStatus(
   let podStatus;
   let kubectlDescribeNeeded = false;
   for (let i = 0; i < iterations; i++) {
-    await utils.sleep(sleepTimeout);
+    await sleep(sleepTimeout);
 
     core.debug(`Polling for pod status: ${podName}`);
     podStatus = await getPodStatus(kubectl, podName);
@@ -122,7 +123,7 @@ export async function checkPodStatus(
 
 async function getPodStatus(kubectl: Kubectl, podName: string) {
   const podResult = await kubectl.getResource("pod", podName);
-  utils.checkForErrors([podResult]);
+  checkForErrors([podResult]);
 
   return JSON.parse(podResult.stdout).status;
 }
@@ -151,7 +152,7 @@ async function getService(kubectl: Kubectl, serviceName) {
     serviceName
   );
 
-  utils.checkForErrors([serviceResult]);
+  checkForErrors([serviceResult]);
   return JSON.parse(serviceResult.stdout);
 }
 
@@ -164,7 +165,7 @@ async function waitForServiceExternalIPAssignment(
 
   for (let i = 0; i < iterations; i++) {
     core.info(`Wait for service ip assignment : ${serviceName}`);
-    await utils.sleep(sleepTimeout);
+    await sleep(sleepTimeout);
 
     const status = (await getService(kubectl, serviceName)).status;
     if (isLoadBalancerIPAssigned(status)) {

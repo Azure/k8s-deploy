@@ -10,14 +10,6 @@ import {Kubectl, Resource} from "../types/kubectl";
 
 import {deployPodCanary} from "./pod-canary-deployment-helper";
 import {deploySMICanary} from "./smi-canary-deployment-helper";
-import {
-    annotateChildPods,
-    checkForErrors,
-    getDeploymentConfig,
-    getLastSuccessfulRunSha,
-    getWorkflowFilePath,
-    normaliseWorkflowStrLabel,
-} from "../utilities/utility";
 import {DeploymentConfig} from "../types/deploymentConfig";
 import {deployBlueGreenService} from "./service-blue-green-helper";
 import {deployBlueGreenIngress} from "./ingress-blue-green-helper";
@@ -29,6 +21,12 @@ import {parseRouteStrategy, RouteStrategy} from "../types/routeStrategy";
 import {ExecOutput} from "@actions/exec";
 import {getWorkflowAnnotationKeyLabel, getWorkflowAnnotations} from "../utilities/workflowAnnotationUtils";
 import {isDeploymentEntity} from "../types/kubernetesTypes";
+import {
+  annotateChildPods, checkForErrors,
+  getLastSuccessfulRunSha
+} from "../utilities/kubectlUtils";
+import {getWorkflowFilePath, normaliseWorkflowStrLabel} from "../utilities/githubUtils";
+import {getDeploymentConfig} from "../utilities/dockerUtils";
 
 export async function deployManifests(
   files: string[],
