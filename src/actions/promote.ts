@@ -11,9 +11,6 @@ import {
   deleteWorkloadsWithLabel,
   getManifestObjects,
   GREEN_LABEL_VALUE,
-  isBlueGreenDeploymentStrategy,
-  isIngressRoute,
-  isSMIRoute,
   NONE_LABEL_VALUE,
 } from "../strategy-helpers/blue-green-helper";
 import {promoteBlueGreenService, routeBlueGreenService,} from "../strategy-helpers/service-blue-green-helper";
@@ -21,21 +18,27 @@ import {promoteBlueGreenIngress, routeBlueGreenIngress,} from "../strategy-helpe
 import {cleanupSMI, promoteBlueGreenSMI, routeBlueGreenSMI,} from "../strategy-helpers/smi-blue-green-helper";
 import {Kubectl, Resource} from "../types/kubectl";
 import {DeploymentStrategy} from "../types/deploymentStrategy";
+import {parseTrafficSplitMethod, TrafficSplitMethod} from "../types/trafficSplitMethod";
+import {parseRouteStrategy, RouteStrategy} from "../types/routeStrategy";
 
-export async function promote(kubectl: Kubectl, manifests: string[]) {
-  if (canaryDeploymentHelper.isCanaryDeploymentStrategy()) {
-    await promoteCanary(kubectl, manifests);
-  } else if (isBlueGreenDeploymentStrategy()) {
-    await promoteBlueGreen(kubectl, manifests);
-  } else {
-    throw Error("Invalid promote action deployment strategy");
+export async function promote(kubectl: Kubectl, manifests: string[], deploymentStrategy: DeploymentStrategy) {
+  switch (deploymentStrategy) {
+    case DeploymentStrategy.CANARY:
+      await promoteCanary(kubectl, manifests);
+      break;
+    case DeploymentStrategy.BLUE_GREEN:
+      await promoteBlueGreen(kubectl, manifests);
+      break;
+    default:
+      throw Error("Invalid promote deployment strategy")
   }
 }
 
 async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
   let includeServices = false;
 
-  if (canaryDeploymentHelper.isSMICanaryStrategy()) {
+  const trafficSplitMethod = parseTrafficSplitMethod(core.getInput("traffic-split-method", {required: true}))
+  if (trafficSplitMethod == TrafficSplitMethod.SMI) {
     includeServices = true;
 
     // In case of SMI traffic split strategy when deployment is promoted, first we will redirect traffic to
@@ -81,11 +84,15 @@ async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
   const manifestObjects: BlueGreenManifests =
     getManifestObjects(inputManifestFiles);
 
+  const routeStrategy = parseRouteStrategy(
+      core.getInput("route-method", { required: true })
+  );
+
   core.debug("Deleting old deployment and making new ones");
   let result;
-  if (isIngressRoute()) {
+  if (routeStrategy == RouteStrategy.INGRESS) {
     result = await promoteBlueGreenIngress(kubectl, manifestObjects);
-  } else if (isSMIRoute()) {
+  } else if (routeStrategy == RouteStrategy.SMI) {
     result = await promoteBlueGreenSMI(kubectl, manifestObjects);
   } else {
     result = await promoteBlueGreenService(kubectl, manifestObjects);
@@ -102,7 +109,7 @@ async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
   await KubernetesManifestUtility.checkManifestStability(kubectl, resources);
 
   core.debug("Routing to new deployments");
-  if (isIngressRoute()) {
+  if (routeStrategy == RouteStrategy.INGRESS){
     await routeBlueGreenIngress(
       kubectl,
       null,
@@ -115,7 +122,7 @@ async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
       manifestObjects.deploymentEntityList,
       manifestObjects.serviceEntityList
     );
-  } else if (isSMIRoute()) {
+  } else if (routeStrategy == RouteStrategy.SMI) {
     await routeBlueGreenSMI(
       kubectl,
       NONE_LABEL_VALUE,

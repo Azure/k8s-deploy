@@ -3,7 +3,7 @@ import * as models from "../types/kubernetesTypes";
 import * as KubernetesConstants from "../types/kubernetesTypes";
 import {Kubectl, Resource} from "../types/kubectl";
 import {getResources, updateManifestFiles} from "../utilities/manifestUpdateUtils";
-import {isBlueGreenDeploymentStrategy, routeBlueGreen,} from "../strategy-helpers/blue-green-helper";
+import { routeBlueGreen,} from "../strategy-helpers/blue-green-helper";
 import {
   annotateAndLabelResources,
   checkManifestStability,
@@ -34,7 +34,7 @@ export async function deploy(
   await checkManifestStability(kubectl, resourceTypes);
 
   // route blue-green deployments
-  if (isBlueGreenDeploymentStrategy()) {
+  if (deploymentStrategy == DeploymentStrategy.BLUE_GREEN) {
     await routeBlueGreen(kubectl, inputManifestFiles);
   }
 

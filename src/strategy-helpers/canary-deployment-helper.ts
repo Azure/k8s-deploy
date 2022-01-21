@@ -1,12 +1,20 @@
-import {Kubectl} from "../types/kubectl";
+import { Kubectl } from "../types/kubectl";
 import * as fs from "fs";
 import * as yaml from "js-yaml";
 import * as core from "@actions/core";
-import {isDeploymentEntity, isServiceEntity, KubernetesWorkload} from "../types/kubernetesTypes";
+import {
+  isDeploymentEntity,
+  isServiceEntity,
+  KubernetesWorkload,
+} from "../types/kubernetesTypes";
 import * as utils from "../utilities/manifestUpdateUtils";
-import {updateObjectAnnotations, updateObjectLabels, updateSelectorLabels} from "../utilities/manifestUpdateUtils";
-import {updateSpecLabels} from "../utilities/manifestSpecLabelUtils";
-import {checkForErrors} from "../utilities/kubectlUtils";
+import {
+  updateObjectAnnotations,
+  updateObjectLabels,
+  updateSelectorLabels,
+} from "../utilities/manifestUpdateUtils";
+import { updateSpecLabels } from "../utilities/manifestSpecLabelUtils";
+import { checkForErrors } from "../utilities/kubectlUtils";
 
 export const CANARY_DEPLOYMENT_STRATEGY = "CANARY";
 export const TRAFFIC_SPLIT_STRATEGY = "SMI";

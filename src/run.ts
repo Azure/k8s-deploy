@@ -17,6 +17,7 @@ export async function run() {
     const action: Action | undefined = parseAction(
       core.getInput("action", { required: true })
     );
+    const strategy = parseDeploymentStrategy(core.getInput("strategy"));
     const manifestsInput = core.getInput("manifests", { required: true });
     const manifestFilePaths = manifestsInput
       .split(/[\n,;]+/) // split into each individual manifest
@@ -31,16 +32,15 @@ export async function run() {
     // run action
     switch (action) {
       case Action.DEPLOY: {
-        const strategy = parseDeploymentStrategy(core.getInput("strategy"));
         await deploy(kubectl, manifestFilePaths, strategy);
         break;
       }
       case Action.PROMOTE: {
-        await promote(kubectl, manifestFilePaths);
+        await promote(kubectl, manifestFilePaths, strategy);
         break;
       }
       case Action.REJECT: {
-        await reject(kubectl, manifestFilePaths);
+        await reject(kubectl, manifestFilePaths, strategy);
         break;
       }
       default: {
