@@ -1,13 +1,13 @@
-import { Kubectl } from "../types/kubectl";
+import {Kubectl} from "../types/kubectl";
 import * as core from "@actions/core";
 import * as fs from "fs";
 import * as yaml from "js-yaml";
 
-import * as fileHelper from "../utilities/file-util";
-import * as helper from "../utilities/resource-object-utility";
-import * as kubectlUtils from "../utilities/traffic-split-utility";
+import * as fileHelper from "../utilities/fileUtils";
+import * as kubectlUtils from "../utilities/trafficSplitUtil";
 import * as canaryDeploymentHelper from "./canary-deployment-helper";
-import { checkForErrors } from "../utilities/utility";
+import {checkForErrors} from "../utilities/utility";
+import {isDeploymentEntity, isServiceEntity} from "../types/kubernetesTypes";
 
 const TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX = "-workflow-rollout";
 const TRAFFIC_SPLIT_OBJECT = "TrafficSplit";
@@ -26,7 +26,7 @@ export async function deploySMICanary(filePaths: string[], kubectl: Kubectl) {
       const name = inputObject.metadata.name;
       const kind = inputObject.kind;
 
-      if (helper.isDeploymentEntity(kind)) {
+      if (isDeploymentEntity(kind)) {
         const stableObject = canaryDeploymentHelper.fetchResource(
           kubectl,
           kind,
@@ -84,7 +84,7 @@ async function createCanaryService(kubectl: Kubectl, filePaths: string[]) {
       const name = inputObject.metadata.name;
       const kind = inputObject.kind;
 
-      if (helper.isServiceEntity(kind)) {
+      if (isServiceEntity(kind)) {
         const newCanaryServiceObject =
           canaryDeploymentHelper.getNewCanaryResource(inputObject);
         newObjectsList.push(newCanaryServiceObject);
@@ -188,7 +188,7 @@ async function adjustTraffic(
       const name = inputObject.metadata.name;
       const kind = inputObject.kind;
 
-      if (helper.isServiceEntity(kind)) {
+      if (isServiceEntity(kind)) {
         trafficSplitManifests.push(
           await createTrafficSplitManifestFile(
             kubectl,

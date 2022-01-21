@@ -1,21 +1,15 @@
 import * as core from "@actions/core";
-import * as KubernetesObjectUtility from "../utilities/resource-object-utility";
-import * as models from "../types/kubernetes-types";
-import * as KubernetesConstants from "../types/kubernetes-types";
-import { Kubectl, Resource } from "../types/kubectl";
-import { updateManifestFiles } from "../utilities/manifest-utilities";
+import * as models from "../types/kubernetesTypes";
+import * as KubernetesConstants from "../types/kubernetesTypes";
+import {Kubectl, Resource} from "../types/kubectl";
+import {getResources, updateManifestFiles} from "../utilities/manifestUpdateUtils";
+import {isBlueGreenDeploymentStrategy, routeBlueGreen,} from "../strategy-helpers/blue-green-helper";
 import {
-  isBlueGreenDeploymentStrategy,
-  routeBlueGreen,
-} from "../strategy-helpers/blue-green-helper";
-import {
-  deployManifests,
-  checkManifestStability,
   annotateAndLabelResources,
+  checkManifestStability,
+  deployManifests,
 } from "../strategy-helpers/deployment-helper";
-import {
-  DeploymentStrategy,
-} from "../types/deploymentStrategy";
+import {DeploymentStrategy,} from "../types/deploymentStrategy";
 
 export async function deploy(
   kubectl: Kubectl,
@@ -31,7 +25,7 @@ export async function deploy(
   );
 
   // check manifest stability
-  const resourceTypes: Resource[] = KubernetesObjectUtility.getResources(
+  const resourceTypes: Resource[] = getResources(
     deployedManifestFiles,
     models.DEPLOYMENT_TYPES.concat([
       KubernetesConstants.DiscoveryAndLoadBalancerResource.SERVICE,
@@ -45,7 +39,7 @@ export async function deploy(
   }
 
   // print ingresses
-  const ingressResources: Resource[] = KubernetesObjectUtility.getResources(
+  const ingressResources: Resource[] = getResources(
     deployedManifestFiles,
     [KubernetesConstants.DiscoveryAndLoadBalancerResource.INGRESS]
   );

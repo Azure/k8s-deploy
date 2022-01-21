@@ -1,15 +1,15 @@
 import * as core from "@actions/core";
 import * as fs from "fs";
 import * as yaml from "js-yaml";
-import { checkForErrors, sleep } from "../utilities/utility";
-import { Kubectl } from "../types/kubectl";
-import { KubernetesWorkload } from "../types/kubernetes-types";
-import * as fileHelper from "../utilities/file-util";
-import * as helper from "../utilities/resource-object-utility";
-import { routeBlueGreenService } from "./service-blue-green-helper";
-import { routeBlueGreenIngress } from "./ingress-blue-green-helper";
-import { routeBlueGreenSMI } from "./smi-blue-green-helper";
-import { UnsetClusterSpecificDetails } from "../utilities/manifest-utilities";
+import {checkForErrors, sleep} from "../utilities/utility";
+import {Kubectl} from "../types/kubectl";
+import {isDeploymentEntity, isIngressEntity, isServiceEntity, KubernetesWorkload} from "../types/kubernetesTypes";
+import * as fileHelper from "../utilities/fileUtils";
+import {routeBlueGreenService} from "./service-blue-green-helper";
+import {routeBlueGreenIngress} from "./ingress-blue-green-helper";
+import {routeBlueGreenSMI} from "./smi-blue-green-helper";
+import {UnsetClusterSpecificDetails, updateObjectLabels, updateSelectorLabels} from "../utilities/manifestUpdateUtils";
+import {updateSpecLabels} from "../utilities/manifestSpecLabelUtils";
 
 export const BLUE_GREEN_DEPLOYMENT_STRATEGY = "BLUE-GREEN";
 export const GREEN_LABEL_VALUE = "green";
@@ -176,9 +176,9 @@ export function getManifestObjects(filePaths: string[]): BlueGreenManifests {
         const kind = inputObject.kind;
         const name = inputObject.metadata.name;
 
-        if (helper.isDeploymentEntity(kind)) {
+        if (isDeploymentEntity(kind)) {
           deploymentEntityList.push(inputObject);
-        } else if (helper.isServiceEntity(kind)) {
+        } else if (isServiceEntity(kind)) {
           if (isServiceRouted(inputObject, deploymentEntityList)) {
             routedServiceEntityList.push(inputObject);
             serviceNameMap.set(
@@ -188,7 +188,7 @@ export function getManifestObjects(filePaths: string[]): BlueGreenManifests {
           } else {
             unroutedServiceEntityList.push(inputObject);
           }
-        } else if (helper.isIngressEntity(kind)) {
+        } else if (isIngressEntity(kind)) {
           ingressEntityList.push(inputObject);
         } else {
           otherEntitiesList.push(inputObject);
@@ -280,12 +280,12 @@ export function addBlueGreenLabelsAndAnnotations(
   newLabels[BLUE_GREEN_VERSION_LABEL] = labelValue;
 
   // updating object labels and selector labels
-  helper.updateObjectLabels(inputObject, newLabels, false);
-  helper.updateSelectorLabels(inputObject, newLabels, false);
+  updateObjectLabels(inputObject, newLabels, false);
+  updateSelectorLabels(inputObject, newLabels, false);
 
   // updating spec labels if it is a service
-  if (!helper.isServiceEntity(inputObject.kind)) {
-    helper.updateSpecLabels(inputObject, newLabels, false);
+  if (!isServiceEntity(inputObject.kind)) {
+    updateSpecLabels(inputObject, newLabels, false);
   }
 }
 

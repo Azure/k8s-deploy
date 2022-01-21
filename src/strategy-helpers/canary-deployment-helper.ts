@@ -1,11 +1,12 @@
-import { Kubectl } from "../types/kubectl";
+import {Kubectl} from "../types/kubectl";
 import * as fs from "fs";
 import * as yaml from "js-yaml";
 import * as core from "@actions/core";
-import * as helper from "../utilities/resource-object-utility";
-import { KubernetesWorkload } from "../types/kubernetes-types";
-import { checkForErrors } from "../utilities/utility";
-import * as utils from "../utilities/manifest-utilities";
+import {isDeploymentEntity, isServiceEntity, KubernetesWorkload} from "../types/kubernetesTypes";
+import {checkForErrors} from "../utilities/utility";
+import * as utils from "../utilities/manifestUpdateUtils";
+import {updateObjectAnnotations, updateObjectLabels, updateSelectorLabels} from "../utilities/manifestUpdateUtils";
+import {updateSpecLabels} from "../utilities/manifestSpecLabelUtils";
 
 export const CANARY_DEPLOYMENT_STRATEGY = "CANARY";
 export const TRAFFIC_SPLIT_STRATEGY = "SMI";
@@ -152,7 +153,7 @@ function specContainsReplicas(kind: string) {
   return (
     kind.toLowerCase() !== KubernetesWorkload.POD.toLowerCase() &&
     kind.toLowerCase() !== KubernetesWorkload.DAEMON_SET.toLowerCase() &&
-    !helper.isServiceEntity(kind)
+    !isServiceEntity(kind)
   );
 }
 
@@ -160,12 +161,12 @@ function addCanaryLabelsAndAnnotations(inputObject: any, type: string) {
   const newLabels = new Map<string, string>();
   newLabels[CANARY_VERSION_LABEL] = type;
 
-  helper.updateObjectLabels(inputObject, newLabels, false);
-  helper.updateObjectAnnotations(inputObject, newLabels, false);
-  helper.updateSelectorLabels(inputObject, newLabels, false);
+  updateObjectLabels(inputObject, newLabels, false);
+  updateObjectAnnotations(inputObject, newLabels, false);
+  updateSelectorLabels(inputObject, newLabels, false);
 
-  if (!helper.isServiceEntity(inputObject.kind)) {
-    helper.updateSpecLabels(inputObject, newLabels, false);
+  if (!isServiceEntity(inputObject.kind)) {
+    updateSpecLabels(inputObject, newLabels, false);
   }
 }
 
@@ -191,8 +192,8 @@ function cleanUpCanary(
       const kind = inputObject.kind;
 
       if (
-        helper.isDeploymentEntity(kind) ||
-        (includeServices && helper.isServiceEntity(kind))
+        isDeploymentEntity(kind) ||
+        (includeServices && isServiceEntity(kind))
       ) {
         const canaryObjectName = getCanaryResourceName(name);
         const baselineObjectName = getBaselineResourceName(name);

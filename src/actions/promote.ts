@@ -2,38 +2,25 @@ import * as core from "@actions/core";
 import * as deploy from "./deploy";
 import * as canaryDeploymentHelper from "../strategy-helpers/canary-deployment-helper";
 import * as SMICanaryDeploymentHelper from "../strategy-helpers/smi-canary-deployment-helper";
-import { updateManifestFiles } from "../utilities/manifest-utilities";
-import * as KubernetesObjectUtility from "../utilities/resource-object-utility";
-import * as models from "../types/kubernetes-types";
-import * as KubernetesManifestUtility from "../utilities/manifest-stability-util";
+import {getResources, updateManifestFiles} from "../utilities/manifestUpdateUtils";
+import * as models from "../types/kubernetesTypes";
+import * as KubernetesManifestUtility from "../utilities/manifestStabilityUtils";
 import {
-  getManifestObjects,
-  deleteWorkloadsWithLabel,
-  deleteWorkloadsAndServicesWithLabel,
   BlueGreenManifests,
-} from "../strategy-helpers/blue-green-helper";
-import {
+  deleteWorkloadsAndServicesWithLabel,
+  deleteWorkloadsWithLabel,
+  getManifestObjects,
+  GREEN_LABEL_VALUE,
   isBlueGreenDeploymentStrategy,
   isIngressRoute,
   isSMIRoute,
-  GREEN_LABEL_VALUE,
   NONE_LABEL_VALUE,
 } from "../strategy-helpers/blue-green-helper";
-import {
-  routeBlueGreenService,
-  promoteBlueGreenService,
-} from "../strategy-helpers/service-blue-green-helper";
-import {
-  routeBlueGreenIngress,
-  promoteBlueGreenIngress,
-} from "../strategy-helpers/ingress-blue-green-helper";
-import {
-  routeBlueGreenSMI,
-  promoteBlueGreenSMI,
-  cleanupSMI,
-} from "../strategy-helpers/smi-blue-green-helper";
-import { Kubectl, Resource } from "../types/kubectl";
-import { DeploymentStrategy } from "../types/deploymentStrategy";
+import {promoteBlueGreenService, routeBlueGreenService,} from "../strategy-helpers/service-blue-green-helper";
+import {promoteBlueGreenIngress, routeBlueGreenIngress,} from "../strategy-helpers/ingress-blue-green-helper";
+import {cleanupSMI, promoteBlueGreenSMI, routeBlueGreenSMI,} from "../strategy-helpers/smi-blue-green-helper";
+import {Kubectl, Resource} from "../types/kubectl";
+import {DeploymentStrategy} from "../types/deploymentStrategy";
 
 export async function promote(kubectl: Kubectl, manifests: string[]) {
   if (canaryDeploymentHelper.isCanaryDeploymentStrategy()) {
@@ -106,7 +93,7 @@ async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
 
   // checking stability of newly created deployments
   const deployedManifestFiles = result.newFilePaths;
-  const resources: Resource[] = KubernetesObjectUtility.getResources(
+  const resources: Resource[] = getResources(
     deployedManifestFiles,
     models.DEPLOYMENT_TYPES.concat([
       models.DiscoveryAndLoadBalancerResource.SERVICE,

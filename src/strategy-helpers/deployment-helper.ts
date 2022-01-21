@@ -3,34 +3,32 @@
 import * as fs from "fs";
 import * as yaml from "js-yaml";
 import * as canaryDeploymentHelper from "./canary-deployment-helper";
-import * as KubernetesObjectUtility from "../utilities/resource-object-utility";
-import * as models from "../types/kubernetes-types";
-import * as fileHelper from "../utilities/file-util";
-import * as KubernetesManifestUtility from "../utilities/manifest-stability-util";
-import { Kubectl, Resource } from "../types/kubectl";
+import * as models from "../types/kubernetesTypes";
+import * as fileHelper from "../utilities/fileUtils";
+import * as KubernetesManifestUtility from "../utilities/manifestStabilityUtils";
+import {Kubectl, Resource} from "../types/kubectl";
 
-import { deployPodCanary } from "./pod-canary-deployment-helper";
-import { deploySMICanary } from "./smi-canary-deployment-helper";
+import {deployPodCanary} from "./pod-canary-deployment-helper";
+import {deploySMICanary} from "./smi-canary-deployment-helper";
 import {
-  checkForErrors,
-  annotateChildPods,
-  getWorkflowFilePath,
-  getLastSuccessfulRunSha,
-  getDeploymentConfig,
-  normaliseWorkflowStrLabel,
+    annotateChildPods,
+    checkForErrors,
+    getDeploymentConfig,
+    getLastSuccessfulRunSha,
+    getWorkflowFilePath,
+    normaliseWorkflowStrLabel,
 } from "../utilities/utility";
-import { DeploymentConfig } from "../types/deploymentConfig";
-import { deployBlueGreenService } from "./service-blue-green-helper";
-import { deployBlueGreenIngress } from "./ingress-blue-green-helper";
-import { deployBlueGreenSMI } from "./smi-blue-green-helper";
-import { DeploymentStrategy } from "../types/deploymentStrategy";
+import {DeploymentConfig} from "../types/deploymentConfig";
+import {deployBlueGreenService} from "./service-blue-green-helper";
+import {deployBlueGreenIngress} from "./ingress-blue-green-helper";
+import {deployBlueGreenSMI} from "./smi-blue-green-helper";
+import {DeploymentStrategy} from "../types/deploymentStrategy";
 import * as core from "@actions/core";
-import {
-  parseTrafficSplitMethod,
-  TrafficSplitMethod,
-} from "../types/trafficSplitMethod";
-import { parseRouteStrategy, RouteStrategy } from "../types/routeStrategy";
-import { ExecOutput } from "@actions/exec";
+import {parseTrafficSplitMethod, TrafficSplitMethod,} from "../types/trafficSplitMethod";
+import {parseRouteStrategy, RouteStrategy} from "../types/routeStrategy";
+import {ExecOutput} from "@actions/exec";
+import {getWorkflowAnnotationKeyLabel, getWorkflowAnnotations} from "../utilities/workflowAnnotationUtils";
+import {isDeploymentEntity} from "../types/kubernetesTypes";
 
 export async function deployManifests(
   files: string[],
@@ -105,7 +103,7 @@ function appendStableVersionLabelToResource(
     yaml.safeLoadAll(fileContents, function (inputObject) {
       const { kind } = inputObject;
 
-      if (KubernetesObjectUtility.isDeploymentEntity(kind)) {
+      if (isDeploymentEntity(kind)) {
         const updatedObject =
           canaryDeploymentHelper.markResourceAsStable(inputObject);
         newObjectsList.push(updatedObject);
@@ -139,7 +137,7 @@ export async function annotateAndLabelResources(
 
   const deploymentConfig = await getDeploymentConfig();
   const annotationKeyLabel =
-    models.getWorkflowAnnotationKeyLabel(workflowFilePath);
+    getWorkflowAnnotationKeyLabel(workflowFilePath);
 
   await annotateResources(
     files,
@@ -170,7 +168,7 @@ async function annotateResources(
     annotationKey
   );
 
-  const annotationKeyValStr = `${annotationKey}=${models.getWorkflowAnnotations(
+  const annotationKeyValStr = `${annotationKey}=${getWorkflowAnnotations(
     lastSuccessSha,
     workflowFilePath,
     deploymentConfig

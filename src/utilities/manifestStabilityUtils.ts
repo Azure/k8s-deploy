@@ -1,6 +1,6 @@
 import * as core from "@actions/core";
 import * as utils from "./utility";
-import * as KubernetesConstants from "../types/kubernetes-types";
+import * as KubernetesConstants from "../types/kubernetesTypes";
 import { Kubectl, Resource } from "../types/kubectl";
 
 export async function checkManifestStability(

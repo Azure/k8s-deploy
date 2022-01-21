@@ -1,11 +1,12 @@
-import { Kubectl } from "../types/kubectl";
+import {Kubectl} from "../types/kubectl";
 import * as core from "@actions/core";
 import * as fs from "fs";
 import * as yaml from "js-yaml";
 
-import * as fileHelper from "../utilities/file-util";
-import * as helper from "../utilities/resource-object-utility";
+import * as fileHelper from "../utilities/fileUtils";
 import * as canaryDeploymentHelper from "./canary-deployment-helper";
+import {isDeploymentEntity} from "../types/kubernetesTypes";
+import {getReplicaCount} from "../utilities/manifestUpdateUtils";
 
 export async function deployPodCanary(filePaths: string[], kubectl: Kubectl) {
   const newObjectsList = [];
@@ -20,7 +21,7 @@ export async function deployPodCanary(filePaths: string[], kubectl: Kubectl) {
       const name = inputObject.metadata.name;
       const kind = inputObject.kind;
 
-      if (helper.isDeploymentEntity(kind)) {
+      if (isDeploymentEntity(kind)) {
         core.debug("Calculating replica count for canary");
         const canaryReplicaCount = calculateReplicaCountForCanary(
           inputObject,
@@ -74,6 +75,6 @@ export async function deployPodCanary(filePaths: string[], kubectl: Kubectl) {
 }
 
 function calculateReplicaCountForCanary(inputObject: any, percentage: number) {
-  const inputReplicaCount = helper.getReplicaCount(inputObject);
+  const inputReplicaCount = getReplicaCount(inputObject);
   return Math.round((inputReplicaCount * percentage) / 100);
 }
