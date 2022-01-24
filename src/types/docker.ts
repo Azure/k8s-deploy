@@ -17,7 +17,7 @@ export class DockerExec {
   public async inspect(
     image: string,
     args: string[],
-    silent?: boolean
+    silent: boolean = false
   ): Promise<string> {
     const result = await this.execute(["inspect", image, ...args], silent);
     if (result.stderr != "" || result.exitCode != 0)
@@ -26,7 +26,7 @@ export class DockerExec {
     return result.stdout;
   }
 
-  private async execute(args: string[], silent?: boolean) {
+  private async execute(args: string[], silent: boolean = false) {
     return await getExecOutput(this.dockerPath, args, { silent });
   }
 }
