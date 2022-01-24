@@ -12,7 +12,6 @@
     "@actions/exec": "^1.0.0",
     "@actions/io": "^1.0.0",
     "@actions/tool-cache": "1.1.2",
-    "@kubernetes/client-node": "^0.16.1",
     "@octokit/core": "^3.5.1",
     "@octokit/plugin-retry": "^3.0.9",
     "@types/minipass": "^3.1.2",
