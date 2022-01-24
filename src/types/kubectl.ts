@@ -37,6 +37,8 @@ export class Kubectl {
     ];
     if (force) applyArgs.push("--force");
 
+    console.log(applyArgs);
+
     return await this.execute(applyArgs);
   }
 
