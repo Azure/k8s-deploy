@@ -28,6 +28,8 @@ export class Kubectl {
     configurationPaths: string | string[],
     force: boolean = false
   ): Promise<ExecOutput> {
+    if (!configurationPaths) throw Error("Configuration paths must exist");
+
     const applyArgs: string[] = [
       "apply",
       "-f",
