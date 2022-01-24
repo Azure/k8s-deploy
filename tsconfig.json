@@ -3,5 +3,5 @@
     "target": "ES6",
     "module": "commonjs"
   },
-  "exclude": ["node_modules", "__tests__", "test"]
+  "exclude": ["node_modules", "test"]
 }
