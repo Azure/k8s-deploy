@@ -29,7 +29,7 @@ export class Kubectl {
     force: boolean = false
   ): Promise<ExecOutput> {
     if (!configurationPaths || configurationPaths?.length === 0)
-      throw new Error("Configuration paths must exist");
+      throw Error("Configuration paths must exist");
 
     const applyArgs: string[] = [
       "apply",
@@ -37,8 +37,6 @@ export class Kubectl {
       createInlineArray(configurationPaths),
     ];
     if (force) applyArgs.push("--force");
-
-    console.log(applyArgs);
 
     return await this.execute(applyArgs);
   }

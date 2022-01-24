@@ -25,6 +25,7 @@ export async function deploy(
   const inputManifestFiles: string[] = updateManifestFiles(manifestFilePaths);
 
   // deploy manifests
+  core.info("Deploying manifests");
   const trafficSplitMethod = parseTrafficSplitMethod(
     core.getInput("traffic-split-method", { required: true })
   );
@@ -36,6 +37,7 @@ export async function deploy(
   );
 
   // check manifest stability
+  core.info("Checking manifest stability");
   const resourceTypes: Resource[] = getResources(
     deployedManifestFiles,
     models.DEPLOYMENT_TYPES.concat([
