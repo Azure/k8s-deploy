@@ -36,16 +36,15 @@ async function rejectCanary(kubectl: Kubectl, manifests: string[]) {
     core.getInput("traffic-split-method", { required: true })
   );
   if (trafficSplitMethod == TrafficSplitMethod.SMI) {
-    core.debug("Reject deployment with SMI canary strategy");
+    core.info("Rejecting deployment with SMI canary strategy");
     includeServices = true;
-
     await SMICanaryDeploymentHelper.redirectTrafficToStableDeployment(
       kubectl,
       manifests
     );
   }
 
-  core.debug("Deleting baseline and canary workloads");
+  core.info("Deleting baseline and canary workloads");
   canaryDeploymentHelper.deleteCanaryDeployment(
     kubectl,
     manifests,
@@ -54,6 +53,8 @@ async function rejectCanary(kubectl: Kubectl, manifests: string[]) {
 }
 
 async function rejectBlueGreen(kubectl: Kubectl, manifests: string[]) {
+  core.info("Rejecting deployment with blue green strategy");
+
   const routeStrategy = parseRouteStrategy(
     core.getInput("route-method", { required: true })
   );
