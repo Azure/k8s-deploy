@@ -47,6 +47,7 @@ export async function deploy(
   await checkManifestStability(kubectl, resourceTypes);
 
   if (deploymentStrategy == DeploymentStrategy.BLUE_GREEN) {
+    core.info("Routing blue green");
     const routeStrategy = parseRouteStrategy(
       core.getInput("route-method", { required: true })
     );
@@ -54,6 +55,7 @@ export async function deploy(
   }
 
   // print ingresses
+  core.info("Printing ingresses");
   const ingressResources: Resource[] = getResources(deployedManifestFiles, [
     KubernetesConstants.DiscoveryAndLoadBalancerResource.INGRESS,
   ]);
@@ -65,6 +67,7 @@ export async function deploy(
   }
 
   // annotate resources
+  core.info("Annotating resources");
   let allPods;
   try {
     allPods = JSON.parse((await kubectl.getAllPods()).stdout);
