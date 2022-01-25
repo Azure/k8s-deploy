@@ -129,34 +129,6 @@ export class Kubectl {
     return await this.execute(["get", `${resourceType}/${name}`, "-o", "json"]);
   }
 
-  public getResources(
-    applyOutput: string,
-    filterResourceTypes: string[]
-  ): Resource[] {
-    const outputLines = applyOutput.split("\n");
-    const results = [];
-    outputLines.forEach((line) => {
-      const words = line.split(" ");
-      if (words.length > 2) {
-        const resourceType = words[0].trim();
-        const resourceName = JSON.parse(words[1].trim());
-        if (
-          filterResourceTypes.filter(
-            (type) =>
-              !!type &&
-              resourceType.toLowerCase().startsWith(type.toLowerCase())
-          ).length > 0
-        )
-          results.push({
-            type: resourceType,
-            name: resourceName,
-          } as Resource);
-      }
-    });
-
-    return results;
-  }
-
   public executeCommand(command: string, args?: string) {
     if (!command) throw new Error("Command must be defined");
     return args ? this.execute([command, args]) : this.execute([command]);
@@ -167,7 +139,7 @@ export class Kubectl {
     return this.execute(["delete", ...args]);
   }
 
-  private async execute(args: string[], silent?: boolean) {
+  private async execute(args: string[], silent: boolean = false) {
     if (this.ignoreSSLErrors) {
       args.push("--insecure-skip-tls-verify");
     }
