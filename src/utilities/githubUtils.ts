@@ -33,16 +33,12 @@ export async function getWorkflowFilePath(
   return Promise.resolve(workflowFilePath);
 }
 
-export function normaliseWorkflowStrLabel(workflowName: string): string {
+export function normalizeWorkflowStrLabel(workflowName: string): string {
   const workflowsPath = ".github/workflows/";
   workflowName = workflowName.startsWith(workflowsPath)
     ? workflowName.replace(workflowsPath, "")
     : workflowName;
   return workflowName.replace(/ /g, "_");
-}
-
-export function isHttpUrl(url: string) {
-  return /^https?:\/\/.*$/.test(url);
 }
 
 export function getNormalizedPath(pathValue: string) {
@@ -51,4 +47,8 @@ export function getNormalizedPath(pathValue: string) {
     return `https://github.com/${process.env.GITHUB_REPOSITORY}/blob/${process.env.GITHUB_SHA}/${pathValue}`;
   }
   return pathValue;
+}
+
+export function isHttpUrl(url: string) {
+  return /^https?:\/\/.*$/.test(url);
 }

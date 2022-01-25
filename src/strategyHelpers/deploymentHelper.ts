@@ -32,7 +32,7 @@ import {
 } from "../utilities/kubectlUtils";
 import {
   getWorkflowFilePath,
-  normaliseWorkflowStrLabel,
+  normalizeWorkflowStrLabel,
 } from "../utilities/githubUtils";
 import { getDeploymentConfig } from "../utilities/dockerUtils";
 
@@ -204,7 +204,7 @@ async function labelResources(
   label: string
 ) {
   const labels = [
-    `workflowFriendlyName=${normaliseWorkflowStrLabel(
+    `workflowFriendlyName=${normalizeWorkflowStrLabel(
       process.env.GITHUB_WORKFLOW
     )}`,
     `workflow=${label}`,
