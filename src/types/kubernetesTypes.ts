@@ -43,8 +43,6 @@ export const WORKLOAD_TYPES_WITH_ROLLOUT_STATUS: string[] = [
   "statefulset",
 ];
 
-const ResourceKindNotDefinedError = Error("Resource kind not defined");
-
 export function isDeploymentEntity(kind: string): boolean {
   if (!kind) throw ResourceKindNotDefinedError;
 
@@ -73,6 +71,7 @@ export function isIngressEntity(kind: string): boolean {
   return "ingress" === kind.toLowerCase();
 }
 
+export const ResourceKindNotDefinedError = Error("Resource kind not defined");
 export const NullInputObjectError = Error("Null inputObject");
 export const InputObjectKindNotDefinedError = Error(
   "Input object kind not defined"
