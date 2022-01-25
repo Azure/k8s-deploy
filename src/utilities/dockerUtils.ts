@@ -44,13 +44,6 @@ export async function getDeploymentConfig(): Promise<DeploymentConfig> {
   });
 }
 
-async function checkDockerPath() {
-  const dockerPath = await io.which("docker", false);
-  if (!dockerPath) {
-    throw new Error("Docker is not installed.");
-  }
-}
-
 async function getDockerfilePath(image: any): Promise<string> {
   await checkDockerPath();
   const dockerExec: DockerExec = new DockerExec("docker");
@@ -66,4 +59,11 @@ async function getDockerfilePath(image: any): Promise<string> {
     pathValue = getNormalizedPath(pathLabel);
   }
   return Promise.resolve(pathValue);
+}
+
+export async function checkDockerPath() {
+  const dockerPath = await io.which("docker", false);
+  if (!dockerPath) {
+    throw new Error("Docker is not installed.");
+  }
 }
