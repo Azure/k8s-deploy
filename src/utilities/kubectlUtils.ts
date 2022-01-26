@@ -6,24 +6,20 @@ export function checkForErrors(
   execResults: ExecOutput[],
   warnIfError?: boolean
 ) {
-  if (execResults.length !== 0) {
-    let stderr = "";
-    execResults.forEach((result) => {
-      if (result?.stderr) {
-        if (result?.exitCode !== 0) {
-          stderr += result.stderr + "\n";
-        } else {
-          core.warning(result.stderr);
-        }
-      }
-    });
+  let stderr = "";
+  execResults.forEach((result) => {
+    if (result?.exitCode !== 0) {
+      stderr += result?.stderr + " \n";
+    } else if (result?.stderr) {
+      core.warning(result.stderr);
+    }
+  });
 
-    if (stderr.length > 0) {
-      if (warnIfError) {
-        core.warning(stderr.trim());
-      } else {
-        throw new Error(stderr.trim());
-      }
+  if (stderr.length > 0) {
+    if (warnIfError) {
+      core.warning(stderr.trim());
+    } else {
+      throw new Error(stderr.trim());
     }
   }
 }
