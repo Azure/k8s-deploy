@@ -256,7 +256,7 @@ jobs:
           cluster-name: contoso
           resource-group: contoso-rg
 
-      - uses: Azure/k8s-create-secret@v2
+      - uses: Azure/k8s-create-secret@v1.1
         with:
           container-registry-url: contoso.azurecr.io
           container-registry-username: ${{ secrets.REGISTRY_USERNAME }}
@@ -302,7 +302,7 @@ jobs:
         with:
           kubeconfig: ${{ secrets.KUBE_CONFIG }}
 
-      - uses: Azure/k8s-create-secret@v2
+      - uses: Azure/k8s-create-secret@v1.1
         with:
           container-registry-url: contoso.azurecr.io
           container-registry-username: ${{ secrets.REGISTRY_USERNAME }}
@@ -375,7 +375,7 @@ jobs:
           cluster-name: contoso
           resource-group: contoso-rg
 
-      - uses: Azure/k8s-create-secret@v2
+      - uses: Azure/k8s-create-secret@v1.1
         with:
           namespace: ${{ env.NAMESPACE  }}
           container-registry-url: contoso.azurecr.io
