@@ -54,7 +54,10 @@ async function getDockerfilePath(image: any): Promise<string> {
   const DOCKERFILE_PATH_LABEL_KEY = "dockerfile-path";
 
   let pathValue: string = "";
-  if (imageConfig?.Config?.Labels[DOCKERFILE_PATH_LABEL_KEY]) {
+  if (
+    imageConfig?.Config?.Labels &&
+    imageConfig?.Config?.Labels[DOCKERFILE_PATH_LABEL_KEY]
+  ) {
     const pathLabel = imageConfig.Config.Labels[DOCKERFILE_PATH_LABEL_KEY];
     pathValue = getNormalizedPath(pathLabel);
   }
