@@ -107,7 +107,7 @@ async function createCanaryService(kubectl: Kubectl, filePaths: string[]) {
           newObjectsList.push(newStableServiceObject);
 
           core.debug("Creating the traffic object for service: " + name);
-          const trafficObject = createTrafficSplitManifestFile(
+          const trafficObject = await createTrafficSplitManifestFile(
             kubectl,
             name,
             0,
