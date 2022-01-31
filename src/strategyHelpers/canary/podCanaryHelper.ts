@@ -17,7 +17,7 @@ export async function deployPodCanary(filePaths: string[], kubectl: Kubectl) {
 
   filePaths.forEach((filePath: string) => {
     const fileContents = fs.readFileSync(filePath).toString();
-    yaml.safeLoadAll(fileContents, (inputObject) => {
+    yaml.safeLoadAll(fileContents, async (inputObject) => {
       const name = inputObject.metadata.name;
       const kind = inputObject.kind;
 
@@ -31,7 +31,7 @@ export async function deployPodCanary(filePaths: string[], kubectl: Kubectl) {
 
         // Get stable object
         core.debug("Querying stable object");
-        const stableObject = canaryDeploymentHelper.fetchResource(
+        const stableObject = await canaryDeploymentHelper.fetchResource(
           kubectl,
           kind,
           name
