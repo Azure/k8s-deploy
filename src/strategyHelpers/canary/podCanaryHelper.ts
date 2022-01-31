@@ -47,20 +47,22 @@ export async function deployPodCanary(filePaths: string[], kubectl: Kubectl) {
         } else {
           core.debug(
             "Creating canary and baseline objects. Stable object found: " +
-              stableObject
+              JSON.stringify(stableObject)
           );
           const newCanaryObject = canaryDeploymentHelper.getNewCanaryResource(
             inputObject,
             canaryReplicaCount
           );
-          core.debug("New canary object: " + newCanaryObject);
+          core.debug("New canary object: " + JSON.stringify(newCanaryObject));
 
           const newBaselineObject =
             canaryDeploymentHelper.getNewBaselineResource(
               stableObject,
               canaryReplicaCount
             );
-          core.debug("New baseline object: " + newBaselineObject);
+          core.debug(
+            "New baseline object: " + JSON.stringify(newBaselineObject)
+          );
 
           newObjectsList.push(newCanaryObject);
           newObjectsList.push(newBaselineObject);
