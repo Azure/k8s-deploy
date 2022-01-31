@@ -108,7 +108,7 @@ async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
     core.getInput("route-method", { required: true })
   );
 
-  core.info("Deleting old deployment and making new ones");
+  core.info("Deleting old deployment and making new one");
   let result;
   if (routeStrategy == RouteStrategy.INGRESS) {
     result = await promoteBlueGreenIngress(kubectl, manifestObjects);
