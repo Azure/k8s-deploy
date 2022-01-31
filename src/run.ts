@@ -51,7 +51,7 @@ export async function run() {
   }
 }
 
-run().catch((error) => {
-  core.error(error.stack());
+run().catch(async (error) => {
+  core.error(await error?.stack());
   core.setFailed(error);
 });
