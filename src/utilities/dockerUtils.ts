@@ -47,9 +47,9 @@ export async function getDeploymentConfig(): Promise<DeploymentConfig> {
 async function getDockerfilePath(image: any): Promise<string> {
   await checkDockerPath();
   const dockerExec: DockerExec = new DockerExec("docker");
-  await dockerExec.pull(image, [], true);
+  await dockerExec.pull(image, [], false);
 
-  const imageInspectResult: string = await dockerExec.inspect(image, [], true);
+  const imageInspectResult: string = await dockerExec.inspect(image, [], false);
   const imageConfig = JSON.parse(imageInspectResult)[0];
   const DOCKERFILE_PATH_LABEL_KEY = "dockerfile-path";
 
