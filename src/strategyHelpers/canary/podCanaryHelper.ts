@@ -17,7 +17,8 @@ export async function deployPodCanary(filePaths: string[], kubectl: Kubectl) {
 
   for (const filePath of filePaths) {
     const fileContents = fs.readFileSync(filePath).toString();
-    yaml.safeLoadAll(fileContents, async (inputObject) => {
+    const parsedYaml = yaml.safeLoadAll(fileContents);
+    for (const inputObject of parsedYaml) {
       const name = inputObject.metadata.name;
       const kind = inputObject.kind;
 
@@ -72,7 +73,7 @@ export async function deployPodCanary(filePaths: string[], kubectl: Kubectl) {
         // update non deployment entity as it is
         newObjectsList.push(inputObject);
       }
-    });
+    }
   }
 
   core.debug("New objects list: " + JSON.stringify(newObjectsList));
