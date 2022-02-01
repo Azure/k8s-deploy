@@ -45,7 +45,7 @@ async function rejectCanary(kubectl: Kubectl, manifests: string[]) {
   }
 
   core.info("Deleting baseline and canary workloads");
-  canaryDeploymentHelper.deleteCanaryDeployment(
+  await canaryDeploymentHelper.deleteCanaryDeployment(
     kubectl,
     manifests,
     includeServices

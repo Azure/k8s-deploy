@@ -81,9 +81,10 @@ async function createCanaryService(kubectl: Kubectl, filePaths: string[]) {
   const newObjectsList = [];
   const trafficObjectsList = [];
 
-  filePaths.forEach((filePath: string) => {
+  for (const filePath of filePaths) {
     const fileContents = fs.readFileSync(filePath).toString();
-    yaml.safeLoadAll(fileContents, async function (inputObject) {
+    const parsedYaml = yaml.safeLoadAll(fileContents);
+    for (const inputObject of parsedYaml) {
       const name = inputObject.metadata.name;
       const kind = inputObject.kind;
 
@@ -149,8 +150,8 @@ async function createCanaryService(kubectl: Kubectl, filePaths: string[]) {
           }
         }
       }
-    });
-  });
+    }
+  }
 
   const manifestFiles = fileHelper.writeObjectsToFile(newObjectsList);
   manifestFiles.push(...trafficObjectsList);
@@ -185,9 +186,10 @@ async function adjustTraffic(
   }
 
   const trafficSplitManifests = [];
-  manifestFilePaths.forEach((filePath: string) => {
+  for (const filePath of manifestFilePaths) {
     const fileContents = fs.readFileSync(filePath).toString();
-    yaml.safeLoadAll(fileContents, async (inputObject) => {
+    const parsedYaml = yaml.safeLoadAll(fileContents);
+    for (const inputObject of parsedYaml) {
       const name = inputObject.metadata.name;
       const kind = inputObject.kind;
 
@@ -202,8 +204,8 @@ async function adjustTraffic(
           )
         );
       }
-    });
-  });
+    }
+  }
 
   if (trafficSplitManifests.length <= 0) {
     return;

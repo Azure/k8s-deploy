@@ -24,7 +24,7 @@ export const CANARY_LABEL_VALUE = "canary";
 export const STABLE_SUFFIX = "-stable";
 export const STABLE_LABEL_VALUE = "stable";
 
-export function deleteCanaryDeployment(
+export async function deleteCanaryDeployment(
   kubectl: Kubectl,
   manifestFilePaths: string[],
   includeServices: boolean
@@ -33,7 +33,7 @@ export function deleteCanaryDeployment(
     throw new Error("Manifest file not found");
   }
 
-  cleanUpCanary(kubectl, manifestFilePaths, includeServices);
+  await cleanUpCanary(kubectl, manifestFilePaths, includeServices);
 }
 
 export function markResourceAsStable(inputObject: any): object {
@@ -159,7 +159,7 @@ function addCanaryLabelsAndAnnotations(inputObject: any, type: string) {
   }
 }
 
-function cleanUpCanary(
+async function cleanUpCanary(
   kubectl: Kubectl,
   files: string[],
   includeServices: boolean
@@ -173,10 +173,11 @@ function cleanUpCanary(
     }
   };
 
-  files.forEach((filePath: string) => {
+  for (const filePath of files) {
     const fileContents = fs.readFileSync(filePath).toString();
 
-    yaml.safeLoadAll(fileContents, async function (inputObject) {
+    const parsedYaml = yaml.safeLoadAll(fileContents);
+    for (const inputObject of parsedYaml) {
       const name = inputObject.metadata.name;
       const kind = inputObject.kind;
 
@@ -190,6 +191,6 @@ function cleanUpCanary(
         await deleteObject(kind, canaryObjectName);
         await deleteObject(kind, baselineObjectName);
       }
-    });
-  });
+    }
+  }
 }

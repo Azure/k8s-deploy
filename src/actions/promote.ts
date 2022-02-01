@@ -86,7 +86,7 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
 
   core.info("Deleting canary and baseline workloads");
   try {
-    canaryDeploymentHelper.deleteCanaryDeployment(
+    await canaryDeploymentHelper.deleteCanaryDeployment(
       kubectl,
       manifests,
       includeServices
