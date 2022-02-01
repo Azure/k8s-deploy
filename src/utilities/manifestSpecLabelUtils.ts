@@ -63,6 +63,9 @@ export function getSpecSelectorLabels(inputObject: any) {
 }
 
 export function setSpecSelectorLabels(inputObject: any, newLabels: any) {
-  let selectorLabels = getSpecSelectorLabels(inputObject);
-  if (!!selectorLabels) selectorLabels = newLabels;
+  if (inputObject?.spec?.selector) {
+    if (isServiceEntity(inputObject.kind))
+      inputObject.spec.selector = newLabels;
+    else inputObject.spec.selector.matchLabels = newLabels;
+  }
 }

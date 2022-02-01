@@ -60,6 +60,7 @@ export async function routeBlueGreen(
 
   const manifestObjects: BlueGreenManifests =
     getManifestObjects(inputManifestFiles);
+  core.debug("Manifest objects: " + JSON.stringify(manifestObjects));
 
   // route to new deployments
   if (routeStrategy == RouteStrategy.INGRESS) {

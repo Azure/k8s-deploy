@@ -12,6 +12,7 @@ import {
   GREEN_LABEL_VALUE,
   NONE_LABEL_VALUE,
 } from "./blueGreenHelper";
+import * as core from "@actions/core";
 
 const BACKEND = "BACKEND";
 
@@ -137,6 +138,7 @@ export async function routeBlueGreenIngress(
     });
   }
 
+  core.debug("New objects: " + JSON.stringify(newObjectsList));
   const manifestFiles = fileHelper.writeObjectsToFile(newObjectsList);
   await kubectl.apply(manifestFiles);
 }

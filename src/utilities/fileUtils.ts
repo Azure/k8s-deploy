@@ -11,31 +11,29 @@ export function getTempDirectory(): string {
 export function writeObjectsToFile(inputObjects: any[]): string[] {
   const newFilePaths = [];
 
-  if (!!inputObjects) {
-    inputObjects.forEach((inputObject: any) => {
-      try {
-        const inputObjectString = JSON.stringify(inputObject);
+  inputObjects.forEach((inputObject: any) => {
+    try {
+      const inputObjectString = JSON.stringify(inputObject);
 
-        if (inputObject?.metadata?.name) {
-          const fileName = getManifestFileName(
-            inputObject.kind,
-            inputObject.metadata.name
-          );
-          fs.writeFileSync(path.join(fileName), inputObjectString);
-          newFilePaths.push(fileName);
-        } else {
-          core.debug(
-            "Input object is not proper K8s resource object. Object: " +
-              inputObjectString
-          );
-        }
-      } catch (ex) {
+      if (inputObject?.metadata?.name) {
+        const fileName = getManifestFileName(
+          inputObject.kind,
+          inputObject.metadata.name
+        );
+        fs.writeFileSync(path.join(fileName), inputObjectString);
+        newFilePaths.push(fileName);
+      } else {
         core.debug(
-          `Exception occurred while writing object to file ${inputObject}: ${ex}`
+          "Input object is not proper K8s resource object. Object: " +
+            inputObjectString
         );
       }
-    });
-  }
+    } catch (ex) {
+      core.debug(
+        `Exception occurred while writing object to file ${inputObject}: ${ex}`
+      );
+    }
+  });
 
   return newFilePaths;
 }
