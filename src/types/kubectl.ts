@@ -28,17 +28,21 @@ export class Kubectl {
     configurationPaths: string | string[],
     force: boolean = false
   ): Promise<ExecOutput> {
-    if (!configurationPaths || configurationPaths?.length === 0)
-      throw Error("Configuration paths must exist");
+    try {
+      if (!configurationPaths || configurationPaths?.length === 0)
+        throw Error("Configuration paths must exist");
 
-    const applyArgs: string[] = [
-      "apply",
-      "-f",
-      createInlineArray(configurationPaths),
-    ];
-    if (force) applyArgs.push("--force");
+      const applyArgs: string[] = [
+        "apply",
+        "-f",
+        createInlineArray(configurationPaths),
+      ];
+      if (force) applyArgs.push("--force");
 
-    return await this.execute(applyArgs);
+      return await this.execute(applyArgs);
+    } catch (err) {
+      core.debug("Kubectl apply failed:" + err);
+    }
   }
 
   public async describe(
