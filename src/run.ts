@@ -51,5 +51,4 @@ export async function run() {
   }
 }
 
-// run().catch(core.setFailed);
-run(); // no catch to show errors
+run().catch(core.setFailed);
