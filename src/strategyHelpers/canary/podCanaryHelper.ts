@@ -49,6 +49,7 @@ export async function deployPodCanary(filePaths: string[], kubectl: Kubectl) {
             "Creating canary and baseline objects. Stable object found: " +
               JSON.stringify(stableObject)
           );
+
           const newCanaryObject = canaryDeploymentHelper.getNewCanaryResource(
             inputObject,
             canaryReplicaCount
@@ -74,6 +75,7 @@ export async function deployPodCanary(filePaths: string[], kubectl: Kubectl) {
     });
   }
 
+  core.debug("New objects list: " + JSON.stringify(newObjectsList));
   const manifestFiles = fileHelper.writeObjectsToFile(newObjectsList);
   const forceDeployment = core.getInput("force").toLowerCase() === "true";
 

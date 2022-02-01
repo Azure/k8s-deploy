@@ -149,6 +149,7 @@ export class Kubectl {
     }
     args = args.concat(["--namespace", this.namespace]);
 
+    core.debug(`Kubectl run with command: ${this.kubectlPath} ${args}`);
     return await getExecOutput(this.kubectlPath, args, { silent });
   }
 }
