@@ -23,6 +23,7 @@ export async function deploy(
 ) {
   // update manifests
   const inputManifestFiles: string[] = updateManifestFiles(manifestFilePaths);
+  core.debug("Input manifest files: " + inputManifestFiles);
 
   // deploy manifests
   core.info("Deploying manifests");
@@ -35,6 +36,7 @@ export async function deploy(
     kubectl,
     trafficSplitMethod
   );
+  core.debug("Deployed manifest files: " + deployedManifestFiles);
 
   // check manifest stability
   core.info("Checking manifest stability");
