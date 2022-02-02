@@ -1,5 +1,16 @@
 name: Minikube Integration Tests
-on: pull_request
+on:
+  pull_request:
+    branches:
+      - master
+      - main
+      - "releases/*"
+  push:
+    branches:
+      - master
+      - main
+      - "releases/*"
+  workflow_dispatch:
 
 jobs:
   run-integration-test:
@@ -12,6 +23,7 @@ jobs:
 
       - name: Building latest changes
         run: |
+          rm -rf node_modules/
           npm install
           npm run build
 

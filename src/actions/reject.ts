@@ -1,48 +1,68 @@
-'use strict';
-import * as core from '@actions/core';
-import * as canaryDeploymentHelper from '../utilities/strategy-helpers/canary-deployment-helper';
-import * as SMICanaryDeploymentHelper from '../utilities/strategy-helpers/smi-canary-deployment-helper';
-import { Kubectl } from '../kubectl-object-model';
-import * as utils from '../utilities/manifest-utilities';
-import * as TaskInputParameters from '../input-parameters';
-import { rejectBlueGreenService } from '../utilities/strategy-helpers/service-blue-green-helper';
-import { rejectBlueGreenIngress } from '../utilities/strategy-helpers/ingress-blue-green-helper';
-import { rejectBlueGreenSMI } from '../utilities/strategy-helpers/smi-blue-green-helper'
-import { isSMIRoute, isIngressRoute, isBlueGreenDeploymentStrategy } from '../utilities/strategy-helpers/blue-green-helper'
-import { getManifestFiles } from '../utilities/strategy-helpers/deployment-helper'
+import * as core from "@actions/core";
+import * as canaryDeploymentHelper from "../strategyHelpers/canary/canaryHelper";
+import * as SMICanaryDeploymentHelper from "../strategyHelpers/canary/smiCanaryHelper";
+import { Kubectl } from "../types/kubectl";
+import { rejectBlueGreenService } from "../strategyHelpers/blueGreen/serviceBlueGreenHelper";
+import { rejectBlueGreenIngress } from "../strategyHelpers/blueGreen/ingressBlueGreenHelper";
+import { rejectBlueGreenSMI } from "../strategyHelpers/blueGreen/smiBlueGreenHelper";
+import { DeploymentStrategy } from "../types/deploymentStrategy";
+import {
+  parseTrafficSplitMethod,
+  TrafficSplitMethod,
+} from "../types/trafficSplitMethod";
+import { parseRouteStrategy, RouteStrategy } from "../types/routeStrategy";
 
-export async function reject() {
-    const kubectl = new Kubectl(await utils.getKubectl(), TaskInputParameters.namespace, true);
-
-    if (canaryDeploymentHelper.isCanaryDeploymentStrategy()) {
-        await rejectCanary(kubectl);
-    } else if (isBlueGreenDeploymentStrategy()) {
-        await rejectBlueGreen(kubectl);
-    } else {
-        core.debug('Strategy is not canary or blue-green deployment. Invalid request.');
-        throw ('InvalidDeletetActionDeploymentStrategy');
-    }
+export async function reject(
+  kubectl: Kubectl,
+  manifests: string[],
+  deploymentStrategy: DeploymentStrategy
+) {
+  switch (deploymentStrategy) {
+    case DeploymentStrategy.CANARY:
+      await rejectCanary(kubectl, manifests);
+      break;
+    case DeploymentStrategy.BLUE_GREEN:
+      await rejectBlueGreen(kubectl, manifests);
+      break;
+    default:
+      throw "Invalid delete deployment strategy";
+  }
 }
 
-async function rejectCanary(kubectl: Kubectl) {
-    let includeServices = false;
-    if (canaryDeploymentHelper.isSMICanaryStrategy()) {
-        core.debug('Reject deployment with SMI canary strategy');
-        includeServices = true;
-        SMICanaryDeploymentHelper.redirectTrafficToStableDeployment(kubectl, TaskInputParameters.manifests);
-    }
+async function rejectCanary(kubectl: Kubectl, manifests: string[]) {
+  let includeServices = false;
 
-    core.debug('Deployment strategy selected is Canary. Deleting baseline and canary workloads.');
-    canaryDeploymentHelper.deleteCanaryDeployment(kubectl, TaskInputParameters.manifests, includeServices);
+  const trafficSplitMethod = parseTrafficSplitMethod(
+    core.getInput("traffic-split-method", { required: true })
+  );
+  if (trafficSplitMethod == TrafficSplitMethod.SMI) {
+    core.info("Rejecting deployment with SMI canary strategy");
+    includeServices = true;
+    await SMICanaryDeploymentHelper.redirectTrafficToStableDeployment(
+      kubectl,
+      manifests
+    );
+  }
+
+  core.info("Deleting baseline and canary workloads");
+  await canaryDeploymentHelper.deleteCanaryDeployment(
+    kubectl,
+    manifests,
+    includeServices
+  );
 }
 
-async function rejectBlueGreen(kubectl: Kubectl) {
-    let inputManifestFiles: string[] = getManifestFiles(TaskInputParameters.manifests);
-    if(isIngressRoute()) {
-        await rejectBlueGreenIngress(kubectl, inputManifestFiles);
-    } else if (isSMIRoute()) {
-        await rejectBlueGreenSMI(kubectl, inputManifestFiles);
-    } else {
-        await rejectBlueGreenService(kubectl, inputManifestFiles);
-    }
+async function rejectBlueGreen(kubectl: Kubectl, manifests: string[]) {
+  core.info("Rejecting deployment with blue green strategy");
+
+  const routeStrategy = parseRouteStrategy(
+    core.getInput("route-method", { required: true })
+  );
+  if (routeStrategy == RouteStrategy.INGRESS) {
+    await rejectBlueGreenIngress(kubectl, manifests);
+  } else if (routeStrategy == RouteStrategy.SMI) {
+    await rejectBlueGreenSMI(kubectl, manifests);
+  } else {
+    await rejectBlueGreenService(kubectl, manifests);
+  }
 }

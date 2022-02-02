@@ -1,65 +1,59 @@
-name: 'Deploy to Kubernetes cluster'
-description: 'Deploy to a Kubernetes cluster including, but not limited to Azure Kubernetes Service (AKS) clusters'
-inputs: 
-# Please ensure you have used either azure/k8s-actions/aks-set-context or azure/k8s-actions/k8s-set-context in the workflow before this action
+name: "Deploy to Kubernetes cluster"
+description: "Deploy to a Kubernetes cluster including, but not limited to Azure Kubernetes Service (AKS) clusters"
+inputs:
+  # Please ensure you have used either azure/k8s-actions/aks-set-context or azure/k8s-actions/k8s-set-context in the workflow before this action
+  # You also need to have kubectl installed (azure/setup-kubectl)
   namespace:
-    description: 'Choose the target Kubernetes namespace. If the namespace is not provided, the commands will run in the default namespace.'
+    description: "Choose the target Kubernetes namespace. If the namespace is not provided, the commands will run in the default namespace."
     required: false
   manifests:
-    description: 'Path to the manifest files which will be used for deployment.'
+    description: "Path to the manifest files which will be used for deployment."
     required: true
-    default: ''
-  images: 
-    description: 'Fully qualified resource URL of the image(s) to be used for substitutions on the manifest files Example: contosodemo.azurecr.io/helloworld:test'
+  images:
+    description: "Fully qualified resource URL of the image(s) to be used for substitutions on the manifest files Example: contosodemo.azurecr.io/helloworld:test"
     required: false
   imagepullsecrets:
-    description: 'Name of a docker-registry secret that has already been set up within the cluster. Each of these secret names are added under imagePullSecrets field for the workloads found in the input manifest files'
+    description: "Name of a docker-registry secret that has already been set up within the cluster. Each of these secret names are added under imagePullSecrets field for the workloads found in the input manifest files"
     required: false
-  kubectl-version:
-      description: 'Version of kubectl. Installs a specific version of kubectl binary'
-      required: false
   strategy:
-    description: 'Deployment strategy to be used. Allowed values are none, canary and blue-green'
+    description: "Deployment strategy to be used. Allowed values are none, canary and blue-green"
     required: false
-    default: 'none'
+    default: "none"
   route-method:
-    description: 'Route based on service, ingress or SMI for blue-green strategy'
+    description: "Route based on service, ingress or SMI for blue-green strategy"
     required: false
-    default: 'service'
+    default: "service"
   version-switch-buffer:
-    description: 'Indicates the buffer time in minutes before the switch is made to the green version (max is 300 min ie. 5hrs)'
+    description: "Indicates the buffer time in minutes before the switch is made to the green version (max is 300 min ie. 5hrs)"
     required: false
     default: 0
   traffic-split-method:
-    description: "Traffic split method to be used. Allowed values are pod, smi"
+    description: "Traffic split method to be used. Allowed values are pod and smi"
     required: false
-    default: 'pod'
+    default: "pod"
   baseline-and-canary-replicas:
-    description: 'Baseline and canary replicas count; valid value i.e between 0 to 100.'
+    description: "Baseline and canary replicas count. Valid value between 0 to 100 (inclusive)"
     required: false
     default: 0
-  percentage: 
-    description: 'Percentage of traffic redirect to canary deployment'
+  percentage:
+    description: "Percentage of traffic redirect to canary deployment"
     required: false
     default: 0
-  args:
-    description: 'Arguments'
-    required: false
   action:
-    description: 'deploy/promote/reject'
+    description: "deploy, promote, or reject"
     required: true
-    default: 'deploy'
+    default: "deploy"
   force:
-    description: 'Deploy when a previous deployment already exists. If true then --force argument is added to the apply command'
+    description: "Deploy when a previous deployment already exists. If true then --force argument is added to the apply command"
     required: false
     default: false
   token:
-    description: 'Github token'
+    description: "Github token"
     default: ${{ github.token }}
     required: true
 
 branding:
-  color: 'green' # optional, decorates the entry in the GitHub Marketplace
+  color: "green"
 runs:
-  using: 'node12'
-  main: 'lib/run.js'
+  using: "node12"
+  main: "lib/run.js"
