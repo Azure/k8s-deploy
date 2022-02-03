@@ -1,4 +1,4 @@
-name: "Tag and create release draft"
+name: Tag and create release draft
 
 on:
   push:
@@ -6,72 +6,5 @@ on:
       - releases/*
 
 jobs:
-  gh_tagged_release:
-    runs-on: "ubuntu-latest"
-
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          fetch-depth: 0
-      - name: Test release
-        run: |
-          sudo npm install n 
-          sudo n latest
-          npm test
-      - name: Get branch ending
-        run: echo "##[set-output name=branch;]$(echo ${GITHUB_REF##*/} | sed 's:.*/::')"
-        id: extract-branch
-      - name: Get tags
-        run: |
-          echo "##[set-output name=tags;]$(echo $(git tag))"
-        id: extract-tags
-      - name: Get latest tag
-        uses: actions/github-script@v5
-        env:
-          TAGS: ${{ steps.extract-tags.outputs.tags }}
-          BRANCH: ${{ steps.extract-branch.outputs.branch }}
-        with:
-          script: |
-            const tags = process.env["TAGS"]
-              .split(" ")
-              .map((x) => x.trim());
-            const branch = process.env["BRANCH"];
-            const splitTag = (x) =>
-              x
-                .substring(branch.length + 1)
-                .split(".")
-                .map((x) => Number(x));
-            function compareTags(nums1, nums2, position = 0) {
-              if (nums1.length < position && nums2.length < position) return nums2;
-              const num1 = splitTag(nums1)[position] || 0;
-              const num2 = splitTag(nums2)[position] || 0;
-              if (num1 === num2) return compareTags(nums1, nums2, position + 1);
-              else if (num1 > num2) return nums1;
-              else return nums2;
-            }
-            const branchTags = tags.filter((tag) => tag.startsWith(branch));
-            if (branchTags.length < 1) return branch + ".-1"
-            return branchTags.reduce((prev, curr) => compareTags(prev, curr));
-          result-encoding: string
-        id: get-latest-tag
-      - name: Get new tag
-        uses: actions/github-script@v5
-        env:
-          PREV: ${{ steps.get-latest-tag.outputs.result }}
-        with:
-          script: |
-            let version = process.env["PREV"]
-            if (!version.includes(".")) version += ".0"; // case of v1 or v2
-            const prefix = /^([a-zA-Z]+)/.exec(version)[0];
-            const numbers = version.substring(prefix.length);
-            let split = numbers.split(".");
-            split[split.length - 1] = parseInt(split[split.length - 1]) + 1;
-            return prefix + split.join(".");
-          result-encoding: string
-        id: get-new-tag
-      - uses: "marvinpinto/action-automatic-releases@v1.2.1"
-        with:
-          title: ${{ steps.get-new-tag.outputs.result }} release
-          automatic_release_tag: ${{ steps.get-new-tag.outputs.result }}
-          repo_token: "${{ secrets.GITHUB_TOKEN }}"
-          draft: true
+  tag-and-release:
+    uses: OliverMKing/javascript-release-workflow/.github/workflows/tag-and-release.yml@main
