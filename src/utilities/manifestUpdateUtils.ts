@@ -119,7 +119,7 @@ export function substituteImageNameInSpecFile(
   if (spec.indexOf(imageName) < 0) return spec;
 
   return spec.split("\n").reduce((acc, line) => {
-    const imageKeyword = line.match(/^ *image:/);
+    const imageKeyword = line.match(/^ *-? *image:/);
     if (imageKeyword) {
       let [currentImageName] = line
         .substring(imageKeyword[0].length) // consume the line from keyword onwards
