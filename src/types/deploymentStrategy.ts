@@ -1,6 +1,7 @@
 export enum DeploymentStrategy {
   CANARY = "canary",
   BLUE_GREEN = "blue-green",
+  NONE = "none",
 }
 
 /**
