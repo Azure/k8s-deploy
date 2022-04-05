@@ -51,6 +51,10 @@ inputs:
     description: "Github token"
     default: ${{ github.token }}
     required: true
+  annotate-namespace:
+    description: "Annotate the target namespace"
+    required: false
+    default: true
 
 branding:
   color: "green"

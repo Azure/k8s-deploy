@@ -173,9 +173,13 @@ async function annotateResources(
     workflowFilePath,
     deploymentConfig
   )}`;
-  annotateResults.push(
-    await kubectl.annotate("namespace", namespace, annotationKeyValStr)
-  );
+
+  const annotateNamespace = core.getInput("annotate-namespace").toLowerCase() === "true";
+  if (annotateNamespace) {
+    annotateResults.push(
+        await kubectl.annotate("namespace", namespace, annotationKeyValStr)
+    );
+  }
   annotateResults.push(await kubectl.annotateFiles(files, annotationKeyValStr));
 
   for (const resource of resourceTypes) {
