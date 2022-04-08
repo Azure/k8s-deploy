@@ -56,7 +56,3 @@ describe('File utils', () => {
       ).toHaveLength(6)
    })
 })
-
-// files that don't exist / nested files that don't exist / something else with non-manifest
-// lots of combinations of pointing to a directory and non yaml/yaml file
-// similarly named files in different folders
