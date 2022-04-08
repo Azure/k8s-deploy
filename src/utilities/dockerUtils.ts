@@ -26,7 +26,7 @@ export async function getDeploymentConfig(): Promise<DeploymentConfig> {
   const imageNames = core.getInput("images").split("\n") || [];
   const imageDockerfilePathMap: { [id: string]: string } = {};
 
-  const pullImages = core.getInput("pull-images").toLowerCase() === "true";
+  const pullImages = !(core.getInput("pull-images").toLowerCase() === "false");
   if (pullImages) {
     //Fetching from image label if available
     for (const image of imageNames) {
