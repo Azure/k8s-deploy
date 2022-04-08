@@ -40,9 +40,7 @@ import {
         const innerPath = path.join("test", "unit", "manifests", "manifest_test_dir")
 
         expect(searchFilesRec([outerPath, fileAtOuter, innerPath])).toHaveLength(5)
-
     })
-  
   });
 
   
