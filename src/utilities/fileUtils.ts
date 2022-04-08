@@ -61,3 +61,49 @@ function getManifestFileName(kind: string, name: string) {
   const tempDirectory = getTempDirectory();
   return path.join(tempDirectory, path.basename(filePath));
 }
+
+export function searchFilesRec(
+  filePaths: string[]
+): string[]{
+
+  const fullPathSet: Set<string> = new Set<string>()
+
+  filePaths.forEach((fileName => {
+      try {
+          if(fs.lstatSync(fileName).isDirectory()){
+              recurisveManifestGetter(fileName).forEach((file) => {fullPathSet.add(file)})
+          } else if(getFileExtension(fileName) === "yml" || getFileExtension(fileName) === "yaml"){
+              fullPathSet.add(fileName)
+          } else{
+              core.debug(`Detected non-manifest file, ${fileName}, continuing... ` )
+          }
+      } catch (ex) {
+          throw Error(
+           `Exception occurred while reading the file ${fileName}: ${ex}`
+          );
+      }
+  }))
+
+  return Array.from(fullPathSet)
+}
+
+function recurisveManifestGetter(dirName: string): string[]{
+  const toRet: string[] = []
+
+  fs.readdirSync(dirName).forEach((fileName) => {
+      const fnwd: string = path.join(dirName, fileName)
+      if(fs.lstatSync(fnwd).isDirectory()){
+          toRet.push(...recurisveManifestGetter(fnwd))
+      } else if(getFileExtension(fileName) === "yml" || getFileExtension(fileName) === "yaml"){
+          toRet.push(path.join(dirName, fileName))
+      } else{
+          core.debug(`Detected non-manifest file, ${fileName}, continuing... ` )
+      }
+  })
+
+  return toRet
+}
+
+function getFileExtension(fileName: string){
+  return fileName.slice((fileName.lastIndexOf(".") - 1 >>> 0) + 2)
+}
