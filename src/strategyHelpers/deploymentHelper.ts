@@ -174,7 +174,7 @@ async function annotateResources(
     deploymentConfig
   )}`;
 
-  const annotateNamespace = core.getInput("annotate-namespace").toLowerCase() === "true";
+  const annotateNamespace = !(core.getInput("annotate-namespace").toLowerCase() === "false");
   if (annotateNamespace) {
     annotateResults.push(
         await kubectl.annotate("namespace", namespace, annotationKeyValStr)
