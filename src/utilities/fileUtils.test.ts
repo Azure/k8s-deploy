@@ -5,7 +5,7 @@ import {
   import * as path from "path";
 
   describe("File utils", () => {
-    it("detects files in nested directories and ignores non-manifest files", () => {
+    it("detects files in nested directories and ignores non-manifest files and empty dirs", () => {
       const testPath = path.join("test", "unit", "manifests")
       const testSearch: string[] = searchFilesRec([testPath])
 
