@@ -1,5 +1,4 @@
 import {getFilesFromDirectories} from './fileUtils'
-
 import * as path from 'path'
 
 describe('File utils', () => {
