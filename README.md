@@ -57,6 +57,10 @@ Following are the key capabilities of this action:
   <tr>
     <td>imagepullsecrets </br></br>(Optional)</td>
     <td>Multiline input where each line contains the name of a docker-registry secret that has already been setup within the cluster. Each of these secret names are added under imagePullSecrets field for the workloads found in the input manifest files</td>
+  </tr>  
+  <tr>
+    <td>pull-images</br></br>(Optional)</td>
+    <td>Acceptable values: true/false</br>Default value: true</br>Switch whether to pull the images from the registry before deployment to find out Dockerfile's path in order to add it to the annotations</td>
   </tr>
   <tr>
     <td>strategy </br></br>(Optional)</td>
