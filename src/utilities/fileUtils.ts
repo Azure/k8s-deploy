@@ -62,7 +62,7 @@ function getManifestFileName(kind: string, name: string) {
   return path.join(tempDirectory, path.basename(filePath));
 }
 
-export function searchFilesRec(
+export function getFilesFromDirectories(
   filePaths: string[]
 ): string[]{
 
