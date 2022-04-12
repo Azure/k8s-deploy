@@ -42,7 +42,7 @@ Following are the key capabilities of this action:
   </tr>
   <tr>
     <td>manifests </br></br>(Required)</td>
-    <td>Path to the manifest files to be used for deployment. These can also be directories containing manifest files, in which case, all manifest files in the referenced directory at every depth will be deployed. Files not ending in `.yml` or `.yaml` will be ignored.</td>
+    <td>Path to the manifest files to be used for deployment. These can also be directories containing manifest files, in which case, all manifest files in the referenced directory at every depth will be deployed. Files not ending in .yml or .yaml will be ignored.</td>
   </tr>  
   <tr>
     <td>namespace </br></br>(Optional)
