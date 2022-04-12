@@ -21,11 +21,15 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Building latest changes
+      - name: Install dependencies
         run: |
           rm -rf node_modules/
           npm install
-          npm run build
+
+      - name: Install ncc
+        run: npm i -g @vercel/ncc
+      - name: Build
+        run: ncc build src/run.ts -o lib
 
       - name: Set name of ns
         run: echo "::set-output name=name::$(echo `date +%Y%m%d%H%M%S`)"
