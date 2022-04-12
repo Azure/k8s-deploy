@@ -42,7 +42,7 @@ Following are the key capabilities of this action:
   </tr>
   <tr>
     <td>manifests </br></br>(Required)</td>
-    <td>Path to the manifest files to be used for deployment</td>
+    <td>Path to the manifest files to be used for deployment. These can also be directories containing manifest files, in which case, all manifest files in the referenced directory will be deployed.</td>
   </tr>  
   <tr>
     <td>namespace </br></br>(Optional)
@@ -109,8 +109,7 @@ Following are the key capabilities of this action:
   with:
     namespace: "myapp"
     manifests: |
-      deployment.yaml
-      service.yaml
+      dir/manifestsDirectory
     images: "contoso.azurecr.io/myapp:${{ event.run_id }}"
     imagepullsecrets: |
       image-pull-secret1
@@ -131,6 +130,7 @@ Following are the key capabilities of this action:
     manifests: |
       deployment.yaml
       service.yaml
+      dir/manifestsDirectory
     strategy: canary
     action: deploy
     percentage: 20
@@ -149,6 +149,7 @@ To promote/reject the canary created by the above snippet, the following YAML sn
     manifests: |
       deployment.yaml
       service.yaml
+      dir/manifestsDirectory
     strategy: canary
     action: promote # substitute reject if you want to reject
 ```
@@ -166,6 +167,7 @@ To promote/reject the canary created by the above snippet, the following YAML sn
     manifests: |
       deployment.yaml
       service.yaml
+      dir/manifestsDirectory
     strategy: canary
     action: deploy
     traffic-split-method: smi
@@ -186,6 +188,7 @@ To promote/reject the canary created by the above snippet, the following YAML sn
     manifests: |
       deployment.yaml
       service.yaml
+      dir/manifestsDirectory
     strategy: canary
     traffic-split-method: smi
     action: reject # substitute reject if you want to reject
