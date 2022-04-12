@@ -15,6 +15,10 @@ inputs:
   imagepullsecrets:
     description: "Name of a docker-registry secret that has already been set up within the cluster. Each of these secret names are added under imagePullSecrets field for the workloads found in the input manifest files"
     required: false
+  pull-images:
+    description: "Switch whether to pull the images from the registry before deployment to find out Dockerfile's path in order to add it to the annotations"
+    required: false
+    default: true
   strategy:
     description: "Deployment strategy to be used. Allowed values are none, canary and blue-green"
     required: false
@@ -51,6 +55,10 @@ inputs:
     description: "Github token"
     default: ${{ github.token }}
     required: true
+  annotate-namespace:
+    description: "Annotate the target namespace"
+    required: false
+    default: true
 
 branding:
   color: "green"
