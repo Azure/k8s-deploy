@@ -5,6 +5,7 @@ import { promote } from "./actions/promote";
 import { reject } from "./actions/reject";
 import { Action, parseAction } from "./types/action";
 import { parseDeploymentStrategy } from "./types/deploymentStrategy";
+import { getFilesFromDirectories } from "./utilities/fileUtils";
 
 export async function run() {
   // verify kubeconfig is set
@@ -23,7 +24,8 @@ export async function run() {
     .split(/[\n,;]+/) // split into each individual manifest
     .map((manifest) => manifest.trim()) // remove surrounding whitespace
     .filter((manifest) => manifest.length > 0); // remove any blanks
-
+  
+  const fullManifestFilePaths = getFilesFromDirectories(manifestFilePaths)
   // create kubectl
   const kubectlPath = await getKubectlPath();
   const namespace = core.getInput("namespace") || "default";
@@ -32,15 +34,15 @@ export async function run() {
   // run action
   switch (action) {
     case Action.DEPLOY: {
-      await deploy(kubectl, manifestFilePaths, strategy);
+      await deploy(kubectl, fullManifestFilePaths, strategy);
       break;
     }
     case Action.PROMOTE: {
-      await promote(kubectl, manifestFilePaths, strategy);
+      await promote(kubectl, fullManifestFilePaths, strategy);
       break;
     }
     case Action.REJECT: {
-      await reject(kubectl, manifestFilePaths, strategy);
+      await reject(kubectl, fullManifestFilePaths, strategy);
       break;
     }
     default: {
