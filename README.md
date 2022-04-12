@@ -42,7 +42,7 @@ Following are the key capabilities of this action:
   </tr>
   <tr>
     <td>manifests </br></br>(Required)</td>
-    <td>Path to the manifest files to be used for deployment</td>
+    <td>Path to the manifest files to be used for deployment. These can also be directories containing manifest files, in which case, all manifest files in the referenced directory at every depth will be deployed. Files not ending in .yml or .yaml will be ignored.</td>
   </tr>  
   <tr>
     <td>namespace </br></br>(Optional)
@@ -105,12 +105,11 @@ Following are the key capabilities of this action:
 ### Basic deployment (without any deployment strategy)
 
 ```yaml
-- uses: Azure/k8s-deploy@v1.4
+- uses: Azure/k8s-deploy@v3.1
   with:
     namespace: "myapp"
     manifests: |
-      deployment.yaml
-      service.yaml
+      dir/manifestsDirectory
     images: "contoso.azurecr.io/myapp:${{ event.run_id }}"
     imagepullsecrets: |
       image-pull-secret1
@@ -121,7 +120,7 @@ Following are the key capabilities of this action:
 ### Canary deployment without service mesh
 
 ```yaml
-- uses: Azure/k8s-deploy@v1.4
+- uses: Azure/k8s-deploy@v3.1
   with:
     namespace: "myapp"
     images: "contoso.azurecr.io/myapp:${{ event.run_id }}"
@@ -131,6 +130,7 @@ Following are the key capabilities of this action:
     manifests: |
       deployment.yaml
       service.yaml
+      dir/manifestsDirectory
     strategy: canary
     action: deploy
     percentage: 20
@@ -139,7 +139,7 @@ Following are the key capabilities of this action:
 To promote/reject the canary created by the above snippet, the following YAML snippet could be used:
 
 ```yaml
-- uses: Azure/k8s-deploy@v1.4
+- uses: Azure/k8s-deploy@v3.1
   with:
     namespace: "myapp"
     images: "contoso.azurecr.io/myapp:${{ event.run_id }}"
@@ -149,6 +149,7 @@ To promote/reject the canary created by the above snippet, the following YAML sn
     manifests: |
       deployment.yaml
       service.yaml
+      dir/manifestsDirectory
     strategy: canary
     action: promote # substitute reject if you want to reject
 ```
@@ -156,7 +157,7 @@ To promote/reject the canary created by the above snippet, the following YAML sn
 ### Canary deployment based on Service Mesh Interface
 
 ```yaml
-- uses: Azure/k8s-deploy@v1.4
+- uses: Azure/k8s-deploy@v3.1
   with:
     namespace: "myapp"
     images: "contoso.azurecr.io/myapp:${{ event.run_id }}"
@@ -166,6 +167,7 @@ To promote/reject the canary created by the above snippet, the following YAML sn
     manifests: |
       deployment.yaml
       service.yaml
+      dir/manifestsDirectory
     strategy: canary
     action: deploy
     traffic-split-method: smi
@@ -176,7 +178,7 @@ To promote/reject the canary created by the above snippet, the following YAML sn
 To promote/reject the canary created by the above snippet, the following YAML snippet could be used:
 
 ```yaml
-- uses: Azure/k8s-deploy@v1.4
+- uses: Azure/k8s-deploy@v3.1
   with:
     namespace: "myapp"
     images: "contoso.azurecr.io/myapp:${{ event.run_id }} "
@@ -186,6 +188,7 @@ To promote/reject the canary created by the above snippet, the following YAML sn
     manifests: |
       deployment.yaml
       service.yaml
+      dir/manifestsDirectory
     strategy: canary
     traffic-split-method: smi
     action: reject # substitute reject if you want to reject
@@ -194,7 +197,7 @@ To promote/reject the canary created by the above snippet, the following YAML sn
 ### Blue-Green deployment with different route methods
 
 ```yaml
-- uses: Azure/k8s-deploy@v1.4
+- uses: Azure/k8s-deploy@v3.1
   with:
     namespace: "myapp"
     images: "contoso.azurecr.io/myapp:${{ event.run_id }}"
@@ -214,7 +217,7 @@ To promote/reject the canary created by the above snippet, the following YAML sn
 To promote/reject the green workload created by the above snippet, the following YAML snippet could be used:
 
 ```yaml
-- uses: Azure/k8s-deploy@v1.4
+- uses: Azure/k8s-deploy@v3.1
   with:
     namespace: "myapp"
     images: "contoso.azurecr.io/myapp:${{ event.run_id }}"
@@ -224,7 +227,7 @@ To promote/reject the green workload created by the above snippet, the following
     manifests: |
       deployment.yaml
       service.yaml
-      ingress-yml
+      ingress.yml
     strategy: blue-green
     route-method: ingress # should be the same as the value when action was deploy
     action: promote # substitute reject if you want to reject
@@ -271,7 +274,7 @@ jobs:
           container-registry-password: ${{ secrets.REGISTRY_PASSWORD }}
           secret-name: demo-k8s-secret
 
-      - uses: Azure/k8s-deploy@v1.4
+      - uses: Azure/k8s-deploy@v3.1
         with:
           action: deploy
           manifests: |
@@ -317,7 +320,7 @@ jobs:
           container-registry-password: ${{ secrets.REGISTRY_PASSWORD }}
           secret-name: demo-k8s-secret
 
-      - uses: Azure/k8s-deploy@v1.4
+      - uses: Azure/k8s-deploy@v3.1
         with:
           action: deploy
           manifests: |
