@@ -5,7 +5,7 @@ import { promote } from "./actions/promote";
 import { reject } from "./actions/reject";
 import { Action, parseAction } from "./types/action";
 import { parseDeploymentStrategy } from "./types/deploymentStrategy";
-import { searchFilesRec } from "./utilities/fileUtils";
+import { getFilesFromDirectories } from "./utilities/fileUtils";
 
 export async function run() {
   // verify kubeconfig is set
@@ -25,7 +25,7 @@ export async function run() {
     .map((manifest) => manifest.trim()) // remove surrounding whitespace
     .filter((manifest) => manifest.length > 0); // remove any blanks
   
-  const fullManifestFilePaths = searchFilesRec(manifestFilePaths)
+  const fullManifestFilePaths = getFilesFromDirectories(manifestFilePaths)
   // create kubectl
   const kubectlPath = await getKubectlPath();
   const namespace = core.getInput("namespace") || "default";

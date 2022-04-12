@@ -1,5 +1,5 @@
 import {
-    searchFilesRec
+  getFilesFromDirectories
   } from "./fileUtils";
   
   import * as path from "path";
@@ -7,7 +7,7 @@ import {
   describe("File utils", () => {
     it("detects files in nested directories and ignores non-manifest files and empty dirs", () => {
       const testPath = path.join("test", "unit", "manifests")
-      const testSearch: string[] = searchFilesRec([testPath])
+      const testSearch: string[] = getFilesFromDirectories([testPath])
 
       const expectedManifests = 
         [
@@ -31,7 +31,7 @@ import {
         const badPath = path.join("test", "unit", "manifests", "nonexistent.yaml")
         const goodPath = path.join("test", "unit", "manifests", "manifest_test_dir")
 
-        expect(() => {searchFilesRec([badPath, goodPath])}).toThrowError()
+        expect(() => {getFilesFromDirectories([badPath, goodPath])}).toThrowError()
     });
 
     it("doesn't duplicate files when nested dir included", () => {
@@ -39,7 +39,7 @@ import {
         const fileAtOuter = path.join("test", "unit", "manifests", "test-service.yml")
         const innerPath = path.join("test", "unit", "manifests", "manifest_test_dir")
 
-        expect(searchFilesRec([outerPath, fileAtOuter, innerPath])).toHaveLength(5)
+        expect(getFilesFromDirectories([outerPath, fileAtOuter, innerPath])).toHaveLength(5)
     })
   });
 
