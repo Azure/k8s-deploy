@@ -6,6 +6,12 @@ import { reject } from "./actions/reject";
 import { Action, parseAction } from "./types/action";
 import { parseDeploymentStrategy } from "./types/deploymentStrategy";
 import { getFilesFromDirectories } from "./utilities/fileUtils";
+import { PrivateKubectl } from "./types/privatekubectl";
+
+
+function isPrivateCluster(){
+  return true;
+}
 
 export async function run() {
   // verify kubeconfig is set
@@ -29,7 +35,8 @@ export async function run() {
   // create kubectl
   const kubectlPath = await getKubectlPath();
   const namespace = core.getInput("namespace") || "default";
-  const kubectl = new Kubectl(kubectlPath, namespace, true);
+
+  const kubectl = isPrivateCluster() ? new PrivateKubectl(kubectlPath, namespace, true) : new Kubectl(kubectlPath, namespace, true);
 
   // run action
   switch (action) {

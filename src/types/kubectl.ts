@@ -10,9 +10,9 @@ export interface Resource {
 }
 
 export class Kubectl {
-  private readonly kubectlPath: string;
-  private readonly namespace: string;
-  private readonly ignoreSSLErrors: boolean;
+  protected readonly kubectlPath: string;
+  protected readonly namespace: string;
+  protected readonly ignoreSSLErrors: boolean;
 
   constructor(
     kubectlPath: string,
@@ -143,7 +143,7 @@ export class Kubectl {
     return this.execute(["delete", ...args]);
   }
 
-  private async execute(args: string[], silent: boolean = false) {
+  protected async execute(args: string[], silent: boolean = false) {
     if (this.ignoreSSLErrors) {
       args.push("--insecure-skip-tls-verify");
     }
