@@ -11,14 +11,34 @@ export class PrivateKubectl extends Kubectl{
       args.push("--insecure-skip-tls-verify");
     }
     args = args.concat(["--namespace", this.namespace]);
+    var argsAsString = args.toString();
 
-    core.debug(`Kubectl run with command: ${this.kubectlPath} ${args}`);
-   
+    // We need resources group, name, command and maybe file
+
+    if(this.containsFilenames(argsAsString)){
+      var yamlFileNames = this.parseYamlFiles(args.toString());
+      // add the individual filenames in the invoke --file flag
+      
+    
+    
+    }
+    
+    //core.debug(`Kubectl run with command: ${this.kubectlPath} ${args}`);
     return null //await  getExecOutput(super.kubectlPath, args, { silent });
+
+    /*
+      az aks command invoke \
+      --resource-group myResourceGroup \
+      --name myAKSCluster \
+      --command "kubectl apply -f deployment.yaml -n default" \
+      --file deployment.yaml
+    */
   }
 
 
-
+  private containsFilenames(str: string){
+    return str.includes("-f") && str.includes(".yaml");
+  }
   public parseYamlFiles(strToParse: string) {
     var result = Array();
 
