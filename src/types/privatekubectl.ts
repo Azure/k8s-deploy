@@ -19,14 +19,15 @@ export class PrivateKubectl extends Kubectl{
 
 
 
-  private parseYamlFiles(strToParse: string) {
+  public parseYamlFiles(strToParse: string) {
+    var result = Array();
+
     if(strToParse == null || strToParse.length == 0){
-      return "";
+      return result;
     }
-    
+
     var regex = new RegExp("([A-Za-z]*.yaml)", "g");
     var match = regex.exec(strToParse);
-    var result = Array();
     
     while (match != null) {
       match = regex.exec(strToParse);
