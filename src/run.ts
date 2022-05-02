@@ -32,9 +32,11 @@ export async function run() {
   // create kubectl
   const kubectlPath = await getKubectlPath();
   const namespace = core.getInput("namespace") || "default";
-  const isPrivateCluster = core.getInput("private-cluster").toLowerCase() === "true"
+  const isPrivateCluster = core.getInput("private-cluster").toLowerCase() === "true";
+  const resourceGroup = core.getInput("resource-group") || "";
+  const resourceName = core.getInput("name") || "";
 
-  const kubectl = isPrivateCluster ? new PrivateKubectl(kubectlPath, namespace, true) : new Kubectl(kubectlPath, namespace, true);
+  const kubectl = isPrivateCluster ? new PrivateKubectl(kubectlPath, namespace, true, resourceGroup, resourceName) : new Kubectl(kubectlPath, namespace, true);
 
   // run action
   switch (action) {

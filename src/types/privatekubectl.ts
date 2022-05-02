@@ -5,26 +5,29 @@ import * as core from "@actions/core";
 export class PrivateKubectl extends Kubectl{
   
 
-
   protected async execute(args: string[], silent: boolean = false) {
     if (this.ignoreSSLErrors) {
       args.push("--insecure-skip-tls-verify");
     }
+
+    var command = "az aks command invoke";
     args = args.concat(["--namespace", this.namespace]);
+    
     var argsAsString = args.toString();
 
-    // We need resources group, name, command and maybe file
+    
 
     if(this.containsFilenames(argsAsString)){
       var yamlFileNames = this.parseYamlFiles(args.toString());
-      // add the individual filenames in the invoke --file flag
-      
-    
-    
+      args = args.concat(["--name", this.name]);
+      args = args.concat(["--resource-group", this.resourceGroup]);
+      args = args.concat(["--command", argsAsString]);
+      args = args.concat(["--file", yamlFileNames.join(" ")]);
+      core.debug(`private cluster Kubectl run with invoke command: ${this.kubectlPath} ${command}`);
+      return await getExecOutput(command, args, { silent });
     }
     
-    //core.debug(`Kubectl run with command: ${this.kubectlPath} ${args}`);
-    return null //await  getExecOutput(super.kubectlPath, args, { silent });
+    return null // Still need to build out this case
 
     /*
       az aks command invoke \
@@ -37,8 +40,9 @@ export class PrivateKubectl extends Kubectl{
 
 
   private containsFilenames(str: string){
-    return str.includes("-f") && str.includes(".yaml");
+    return str.includes("-f ");
   }
+
   public parseYamlFiles(strToParse: string) {
     var result = Array();
 
@@ -46,18 +50,17 @@ export class PrivateKubectl extends Kubectl{
       return result;
     }
 
-    var regex = new RegExp("([A-Za-z]*.yaml)", "g");
-    var match = regex.exec(strToParse);
-    
-    while (match != null) {
-      match = regex.exec(strToParse);
+    var start = strToParse.indexOf("-f" ); + 3
 
-      if(match == null){
-        continue;
-      }
-      result.push(match[0].toString);
+    if(start == -1){
+      return result;
     }
-    return result;
+
+    var temp = strToParse.substring(start);
+    var end = temp.indexOf(" -");
+    
+    // End could be case where the -f flag was last, or -f is followed by some additonal flag and it's arguments
+    return temp.substring(3, end == -1 ? temp.length : end).trim().split("\\s");
   }
 }
 

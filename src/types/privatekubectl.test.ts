@@ -13,13 +13,20 @@ const path = "path";
 describe("Privatekubectl utilities", () => {
 
 
-  it("parses a string and extracts all of the .yaml filenames", async () => {
-    var testStr = "kubectl apply -f abc.yaml onetwothree.yaml ..--uyamlsdf.----"
+  it("parses a string and extracts all of the filenames", async () => {
+    var testStrA = "kubectl apply -f abc.yaml doraymi.json onetwothree.yaml -d some other stuff we don't care about ..--uyamlsdf.----"
+    var testStrB = "kubectl apply -f abc.yaml doraymi.json onetwothree.yaml"
+    var testStrC = "kubectl apply -f abc.yaml     doraymi.json  onetwothree.yaml   "
     var privatekubectl = new PrivateKubectl(kubectlPath, namespace);
     
-    var result = privatekubectl.parseYamlFiles(testStr);
-    var expectation = ["abc.yaml", "onetwothree.yaml"];
-    
-    expect(result).toEqual(expectation);
+    var resultA = privatekubectl.parseYamlFiles(testStrA);
+    var resultB = privatekubectl.parseYamlFiles(testStrB);
+    var resultC = privatekubectl.parseYamlFiles(testStrC);
+
+    var expectation = ["abc.yaml", "doraymi.json", "onetwothree.yaml"];
+
+    expect(resultA).toEqual(expectation);
+    expect(resultB).toEqual(expectation);
+    expect(resultC).toEqual(expectation);
   });
 })
