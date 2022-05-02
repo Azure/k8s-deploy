@@ -13,11 +13,15 @@ export class Kubectl {
   protected readonly kubectlPath: string;
   protected readonly namespace: string;
   protected readonly ignoreSSLErrors: boolean;
+  protected readonly resourceGroup: string;
+  protected readonly name: string;
 
   constructor(
     kubectlPath: string,
     namespace: string = "default",
-    ignoreSSLErrors: boolean = false
+    ignoreSSLErrors: boolean = false,
+    resourceGroup: string = "",
+    name: string = ""
   ) {
     this.kubectlPath = kubectlPath;
     this.ignoreSSLErrors = !!ignoreSSLErrors;
