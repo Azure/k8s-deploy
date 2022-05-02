@@ -32,17 +32,16 @@ export class PrivateKubectl extends Kubectl{
 
   public extractFiles(strToParse: string) {
     const result = [];
-    if (strToParse == null || strToParse.length == 0){
-      return result;
+    var start = strToParse.indexOf("-f" ); + 3
+
+    if(start == -1){
+    return result;
     }
-    // handle long hand
-    const start = strToParse.indexOf("-f" ) + 3;
-    if (start == -1){
-      return result;
-    }
-    const temp = strToParse.substring(start);
-    const end = temp.indexOf(" -");
+
+    var temp = strToParse.substring(start);
+    var end = temp.indexOf(" -");
+    
     // End could be case where the -f flag was last, or -f is followed by some additonal flag and it's arguments
-    return temp.substring(3, end == -1 ? temp.length : end).trim().split("\\s");
+    return temp.substring(3, end == -1 ? temp.length : end).trim().split(/[\s]+/);
   }
 }
