@@ -19,9 +19,9 @@ describe("Privatekubectl utilities", () => {
     var testStrC = "kubectl apply -f abc.yaml     doraymi.json  onetwothree.yaml   "
     var privatekubectl = new PrivateKubectl(kubectlPath, namespace);
     
-    var resultA = privatekubectl.parseYamlFiles(testStrA);
-    var resultB = privatekubectl.parseYamlFiles(testStrB);
-    var resultC = privatekubectl.parseYamlFiles(testStrC);
+    var resultA = privatekubectl.extractFiles(testStrA);
+    var resultB = privatekubectl.extractFiles(testStrB);
+    var resultC = privatekubectl.extractFiles(testStrC);
 
     var expectation = ["abc.yaml", "doraymi.json", "onetwothree.yaml"];
 
