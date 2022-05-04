@@ -27,18 +27,25 @@ export class PrivateKubectl extends Kubectl{
 
 
   private containsFilenames(str: string) {
-    return str.includes("-f ") || str.includes("filename");
+    return str.includes("-f ") || str.includes("filename ");
   }
 
   public extractFiles(strToParse: string) {
     const result = [];
-    var start = strToParse.indexOf("-f" ); + 3
+    var start = strToParse.indexOf("-filename"); 
+    var offset = 7;
 
     if(start == -1){
-    return result;
+      start = strToParse.indexOf("-f");
+      
+      if(start == -1){
+        return result;
+      }
+      offset = 0;
     }
 
-    var temp = strToParse.substring(start);
+    
+    var temp = strToParse.substring(start + offset);
     var end = temp.indexOf(" -");
     
     // End could be case where the -f flag was last, or -f is followed by some additonal flag and it's arguments
