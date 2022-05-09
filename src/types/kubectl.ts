@@ -26,6 +26,8 @@ export class Kubectl {
     this.kubectlPath = kubectlPath;
     this.ignoreSSLErrors = !!ignoreSSLErrors;
     this.namespace = namespace;
+    this.resourceGroup = resourceGroup;
+    this.name = name;
   }
 
   public async apply(
