@@ -16,7 +16,7 @@ describe("Privatekubectl utilities", () => {
   it("parses a string and extracts all of the filenames", async () => {
     var testStrA = "kubectl apply -f abc.yaml doraymi.json onetwothree.yaml -d some other stuff we don't care about ..--uyamlsdf.----"
     var testStrB = "kubectl apply -f abc.yaml doraymi.json onetwothree.yaml"
-    var testStrC = "kubectl apply -f abc.yaml     doraymi.json  onetwothree.yaml   "
+    var testStrC = "kubectl apply -f     abc.yaml     doraymi.json  onetwothree.yaml   "
     var testStrD = "kubectl apply -filename abc.yaml     doraymi.json  onetwothree.yaml   "
     var privatekubectl = new PrivateKubectl(kubectlPath, namespace);
     
