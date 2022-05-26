@@ -19,6 +19,7 @@ export class PrivateKubectl extends Kubectl{
     ]
     if(this.containsFilenames(kubectlCmd)) {
       const fileNames = this.extractFiles(kubectlCmd);
+      console.log("Filenames: " +  fileNames);
       privateClusterArgs.concat(["--file", fileNames.join(" ")]);
     }
   core.debug(`private cluster Kubectl run with invoke command: ${kubectlCmd}`);
@@ -31,6 +32,7 @@ export class PrivateKubectl extends Kubectl{
   }
 
   public extractFiles(strToParse: string) {
+    console.log("String to parse extractFiles: " + strToParse);
     const result = [];
     var start = strToParse.indexOf("-filename"); 
     var offset = 7;
