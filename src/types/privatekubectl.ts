@@ -10,7 +10,7 @@ export class PrivateKubectl extends Kubectl{
     }
 
     args = args.concat(["--namespace", this.namespace]);
-    args.unshift("kubectl")
+    args.unshift("/usr/local/bin/kubectl")
     const kubectlCmd = args.join(" ")
     const privateClusterArgs = ["aks", "command", "invoke", 
       "--resource-group", this.resourceGroup, 
