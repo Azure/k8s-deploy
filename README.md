@@ -114,7 +114,6 @@ Following are the key capabilities of this action:
     imagepullsecrets: |
       image-pull-secret1
       image-pull-secret2
-    kubectl-version: "latest"
 ```
 
 ### Canary deployment without service mesh
