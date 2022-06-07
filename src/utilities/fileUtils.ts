@@ -57,7 +57,7 @@ export function writeManifestToFile(
 }
 
 function getManifestFileName(kind: string, name: string) {
-  const filePath = `${kind}_${name}_ ${getCurrentTime().toString()}`;
+  const filePath = `${kind}_${name}_${getCurrentTime().toString()}`;
   const tempDirectory = getTempDirectory();
   return path.join(tempDirectory, path.basename(filePath));
 }
