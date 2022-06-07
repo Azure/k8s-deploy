@@ -15,8 +15,7 @@ export class PrivateKubectl extends Kubectl{
     const privateClusterArgs = ["aks", "command", "invoke", 
       "--resource-group", this.resourceGroup, 
       "--name", this.name,
-      "--v", "0",
-      "--command", "\"" + kubectlCmd + "\""
+      "--command", "\"" + kubectlCmd + " --v 0 \""
     ]
     if(this.containsFilenames(kubectlCmd)) {
       const fileNames = this.extractFiles(kubectlCmd);
