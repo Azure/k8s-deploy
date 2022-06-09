@@ -1,5 +1,14 @@
 import { DeploymentConfig } from "../types/deploymentConfig";
 
+const ANNOTATION_PREFIX = "actions.github.com/";
+
+export function prefixObjectKeys(obj: any, prefix: string): any {
+  return Object.keys(obj).reduce((newObj, key) => {
+    newObj[prefix + key] = obj[key];
+    return newObj;
+  }, {});
+}
+
 export function getWorkflowAnnotations(
   lastSuccessRunSha: string,
   workflowFilePath: string,
@@ -22,7 +31,8 @@ export function getWorkflowAnnotations(
     helmChartPaths: deploymentConfig.helmChartFilePaths,
     provider: "GitHub",
   };
-  return JSON.stringify(annotationObject);
+  const prefixedAnnotationObject = prefixObjectKeys(annotationObject, ANNOTATION_PREFIX);
+  return JSON.stringify(prefixedAnnotationObject);
 }
 
 export function getWorkflowAnnotationKeyLabel(
