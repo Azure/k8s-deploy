@@ -6,23 +6,23 @@ import * as core from "@actions/core";
 export class PrivateKubectl extends Kubectl{
   protected async execute(args: string[], silent: boolean = false) {
     if (this.ignoreSSLErrors) {
-      args.push("--insecure-skip-tls-verify");
+     // args.push("--insecure-skip-tls-verify");
     }
 
-    args = args.concat(["--namespace", this.namespace]);
+    //args = args.concat(["--namespace", this.namespace]);
     args.unshift("kubectl")
     const kubectlCmd = args.join(" ")
     const privateClusterArgs = ["aks", "command", "invoke", 
       "--resource-group", this.resourceGroup, 
       "--name", this.name,
-      "--command", "\"" + kubectlCmd + " --v 0\""
+      "--command", "\"" + kubectlCmd + "\""
     ]
     if(this.containsFilenames(kubectlCmd)) {
       const fileNames = this.extractFiles(kubectlCmd);
-      console.log("Filenames: " +  fileNames);
-      privateClusterArgs.push(...["--file", fileNames.join(" ").replace(",", " ")]);
+      console.log("filenames debug : " +  fileNames);
+      privateClusterArgs.push(...["--file", ...fileNames]);
     }
-    
+
   core.debug(`private cluster Kubectl run with invoke command: ${kubectlCmd}`);
   return await getExecOutput("az", privateClusterArgs, { silent });
   }
