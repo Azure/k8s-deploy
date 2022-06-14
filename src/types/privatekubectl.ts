@@ -20,7 +20,7 @@ export class PrivateKubectl extends Kubectl{
     if(this.containsFilenames(kubectlCmd)) {
       const fileNames = this.extractFiles(kubectlCmd);
       console.log("filenames debug : " +  fileNames);
-      var temp = fileNames.join(" ").replace(",", " ");
+      var temp = fileNames.join().replace(",", " ");
       privateClusterArgs.push(...["--file", temp]);
       console.log("Filenames AFTER PUSHING privateClusterArgs: " + temp);
     }
