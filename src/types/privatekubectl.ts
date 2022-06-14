@@ -19,18 +19,13 @@ export class PrivateKubectl extends Kubectl{
     ]
     if(this.containsFilenames(kubectlCmd)) {
       const fileNames = this.extractFiles(kubectlCmd);
-      console.log("filenames debug : " +  fileNames);
-      var temp = fileNames.join();
+      console.log("filenames: " +  fileNames);
+      
+      var spaceSeperatedFilenames = fileNames.join().replace(/,/g, " ");
+      console.log("spaceSeperatedFilenames: " + spaceSeperatedFilenames);
 
-
-      console.log("Printing TEMP after join. Expecting files seperated by commas: " + temp);
-      console.log("Printing TEMP after replace. Expecting files seperated by spaces: " + temp.replace(",", " "));
-
-
-
-
-      privateClusterArgs.push(...["--file", temp]);
-      console.log("Filenames AFTER PUSHING privateClusterArgs: " + temp);
+      privateClusterArgs.push(...["--file", spaceSeperatedFilenames]);
+      console.log("privateClusterArgs: " + privateClusterArgs);
     }
 
   core.debug(`private cluster Kubectl run with invoke command: ${kubectlCmd}`);
