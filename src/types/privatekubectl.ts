@@ -24,7 +24,7 @@ export class PrivateKubectl extends Kubectl{
      // console.log("spaceSeperatedFilenames: " + spaceSeperatedFilenames);
 
       privateClusterArgs.push(...["--file", "."]);
-      console.log("testing without modifying files and just using directory" + privateClusterArgs);
+      console.log("testing without modifying files and just using directory: " + privateClusterArgs);
     }
 
   core.debug(`private cluster Kubectl run with invoke command: ${kubectlCmd}`);
