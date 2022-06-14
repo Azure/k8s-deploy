@@ -15,17 +15,15 @@ export class PrivateKubectl extends Kubectl{
     const privateClusterArgs = ["aks", "command", "invoke", 
       "--resource-group", this.resourceGroup, 
       "--name", this.name,
-      "--command", "\"" + kubectlCmd + "\""
+      "--command", "\"" + kubectlCmd.replace(/,/g, " ") + "\""
     ]
     if(this.containsFilenames(kubectlCmd)) {
       const fileNames = this.extractFiles(kubectlCmd);
-      console.log("filenames: " +  fileNames);
       
       var spaceSeperatedFilenames = fileNames.join().replace(/,/g, " ");
       console.log("spaceSeperatedFilenames: " + spaceSeperatedFilenames);
 
       privateClusterArgs.push(...["--file", spaceSeperatedFilenames]);
-      console.log("privateClusterArgs: " + privateClusterArgs);
     }
 
   core.debug(`private cluster Kubectl run with invoke command: ${kubectlCmd}`);
@@ -38,7 +36,6 @@ export class PrivateKubectl extends Kubectl{
   }
 
   public extractFiles(strToParse: string) {
-    console.log("String to parse extractFiles: " + strToParse);
     const result = [];
     var start = strToParse.indexOf("-filename"); 
     var offset = 7;
