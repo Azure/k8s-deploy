@@ -15,15 +15,16 @@ export class PrivateKubectl extends Kubectl{
     const privateClusterArgs = ["aks", "command", "invoke", 
       "--resource-group", this.resourceGroup, 
       "--name", this.name,
-      "--command", "\"" + kubectlCmd.replace(/,/g, " ") + "\""
+      "--command", "\"" + kubectlCmd + "\""
     ]
     if(this.containsFilenames(kubectlCmd)) {
       const fileNames = this.extractFiles(kubectlCmd);
       
-      var spaceSeperatedFilenames = fileNames.join().replace(/,/g, " ");
-      console.log("spaceSeperatedFilenames: " + spaceSeperatedFilenames);
+      //var spaceSeperatedFilenames = fileNames.join().replace(/,/g, " ");
+     // console.log("spaceSeperatedFilenames: " + spaceSeperatedFilenames);
 
-      privateClusterArgs.push(...["--file", spaceSeperatedFilenames]);
+      privateClusterArgs.push(...["--file", "."]);
+      console.log("testing without modifying files and just using directory: " + privateClusterArgs);
     }
 
   core.debug(`private cluster Kubectl run with invoke command: ${kubectlCmd}`);
