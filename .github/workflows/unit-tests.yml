@@ -2,11 +2,11 @@ name: "Run unit tests."
 on: # rebuild any PRs and main branch changes
   pull_request:
     branches:
-      - master
+      - main
       - "releases/*"
   push:
     branches:
-      - master
+      - main
       - "releases/*"
 
 jobs:
