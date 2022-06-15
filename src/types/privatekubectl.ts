@@ -37,7 +37,7 @@ export class PrivateKubectl extends Kubectl{
   }
 
   public extractFiles(strToParse: string) {
-    const result = [];
+    var result = [];
     var start = strToParse.indexOf("-filename"); 
     var offset = 7;
 
@@ -55,6 +55,11 @@ export class PrivateKubectl extends Kubectl{
     var end = temp.indexOf(" -");
     
     // End could be case where the -f flag was last, or -f is followed by some additonal flag and it's arguments
-    return temp.substring(3, end == -1 ? temp.length : end).trim().split(/[\s]+/);
+    result = temp.substring(3, end == -1 ? temp.length : end).trim().split(/[\s]+/);
+
+    for(var index = 0; index < result.length; index++){
+      result[index] = result[index].substring(1);
+    }
+    return result;
   }
 }
