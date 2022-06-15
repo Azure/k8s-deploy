@@ -36,11 +36,37 @@ describe("Kubectl path", () => {
 });
 
 const kubectlPath = "kubectlPath";
-const namespace = "namespace";
+const testNamespace = "testNamespace";
+const defaultNamespace = "default";
 describe("Kubectl class", () => {
-  const kubectl = new Kubectl(kubectlPath, namespace);
 
-  describe("with a success exec return", () => {
+  describe("default namespace behavior", () => {
+    const kubectl = new Kubectl(kubectlPath, defaultNamespace);
+    const execReturn = { exitCode: 0, stdout: "Output", stderr: "" };
+
+    beforeEach(() => {
+      jest.spyOn(exec, "getExecOutput").mockImplementation(async () => {
+        return execReturn;
+      });
+    });
+
+    describe("omits default namespace from commands", () => {
+      it("executes a command without appending --namespace arg", async () => {
+        // no args
+        const command = "command";
+        expect(await kubectl.executeCommand(command)).toBe(execReturn);
+        expect(exec.getExecOutput).toBeCalledWith(
+          kubectlPath,
+          [command],
+          { silent: false }
+        );
+      });
+    });
+  });
+
+
+  describe("with a success exec return in testNamespace", () => {
+    const kubectl = new Kubectl(kubectlPath, testNamespace);
     const execReturn = { exitCode: 0, stdout: "Output", stderr: "" };
 
     beforeEach(() => {
@@ -55,7 +81,7 @@ describe("Kubectl class", () => {
       expect(result).toBe(execReturn);
       expect(exec.getExecOutput).toBeCalledWith(
         kubectlPath,
-        ["apply", "-f", configPaths, "--namespace", namespace],
+        ["apply", "-f", configPaths, "--namespace", testNamespace],
         { silent: false }
       );
     });
@@ -71,7 +97,7 @@ describe("Kubectl class", () => {
           "-f",
           configPaths[0] + "," + configPaths[1] + "," + configPaths[2],
           "--namespace",
-          namespace,
+          testNamespace,
         ],
         { silent: false }
       );
@@ -89,7 +115,7 @@ describe("Kubectl class", () => {
           configPaths[0] + "," + configPaths[1] + "," + configPaths[2],
           "--force",
           "--namespace",
-          namespace,
+          testNamespace,
         ],
         { silent: false }
       );
@@ -102,7 +128,7 @@ describe("Kubectl class", () => {
       expect(result).toBe(execReturn);
       expect(exec.getExecOutput).toBeCalledWith(
         kubectlPath,
-        ["describe", resourceType, resourceName, "--namespace", namespace],
+        ["describe", resourceType, resourceName, "--namespace", testNamespace],
         { silent: false }
       );
     });
@@ -114,7 +140,7 @@ describe("Kubectl class", () => {
       expect(result).toBe(execReturn);
       expect(exec.getExecOutput).toBeCalledWith(
         kubectlPath,
-        ["describe", resourceType, resourceName, "--namespace", namespace],
+        ["describe", resourceType, resourceName, "--namespace", testNamespace],
         { silent: true }
       );
     });
@@ -138,7 +164,7 @@ describe("Kubectl class", () => {
           annotation,
           "--overwrite",
           "--namespace",
-          namespace,
+          testNamespace,
         ],
         { silent: false }
       );
@@ -158,7 +184,7 @@ describe("Kubectl class", () => {
           annotation,
           "--overwrite",
           "--namespace",
-          namespace,
+          testNamespace,
         ],
         { silent: false }
       );
@@ -178,7 +204,7 @@ describe("Kubectl class", () => {
           annotation,
           "--overwrite",
           "--namespace",
-          namespace,
+          testNamespace,
         ],
         { silent: false }
       );
@@ -198,7 +224,7 @@ describe("Kubectl class", () => {
           ...labels,
           "--overwrite",
           "--namespace",
-          namespace,
+          testNamespace,
         ],
         { silent: false }
       );
@@ -218,7 +244,7 @@ describe("Kubectl class", () => {
           ...labels,
           "--overwrite",
           "--namespace",
-          namespace,
+          testNamespace,
         ],
         { silent: false }
       );
@@ -228,7 +254,7 @@ describe("Kubectl class", () => {
       expect(await kubectl.getAllPods()).toBe(execReturn);
       expect(exec.getExecOutput).toBeCalledWith(
         kubectlPath,
-        ["get", "pods", "-o", "json", "--namespace", namespace],
+        ["get", "pods", "-o", "json", "--namespace", testNamespace],
         { silent: true }
       );
     });
@@ -246,7 +272,7 @@ describe("Kubectl class", () => {
           "status",
           `${resourceType}/${name}`,
           "--namespace",
-          namespace,
+          testNamespace,
         ],
         { silent: false }
       );
@@ -264,7 +290,7 @@ describe("Kubectl class", () => {
           "-o",
           "json",
           "--namespace",
-          namespace,
+          testNamespace,
         ],
         { silent: false }
       );
@@ -276,7 +302,7 @@ describe("Kubectl class", () => {
       expect(await kubectl.executeCommand(command)).toBe(execReturn);
       expect(exec.getExecOutput).toBeCalledWith(
         kubectlPath,
-        [command, "--namespace", namespace],
+        [command, "--namespace", testNamespace],
         { silent: false }
       );
 
@@ -285,7 +311,7 @@ describe("Kubectl class", () => {
       expect(await kubectl.executeCommand(command, args)).toBe(execReturn);
       expect(exec.getExecOutput).toBeCalledWith(
         kubectlPath,
-        [command, args, "--namespace", namespace],
+        [command, args, "--namespace", testNamespace],
         { silent: false }
       );
     });
@@ -295,7 +321,7 @@ describe("Kubectl class", () => {
       expect(await kubectl.delete(arg)).toBe(execReturn);
       expect(exec.getExecOutput).toBeCalledWith(
         kubectlPath,
-        ["delete", arg, "--namespace", namespace],
+        ["delete", arg, "--namespace", testNamespace],
         { silent: false }
       );
     });
@@ -305,13 +331,15 @@ describe("Kubectl class", () => {
       expect(await kubectl.delete(args)).toBe(execReturn);
       expect(exec.getExecOutput).toBeCalledWith(
         kubectlPath,
-        ["delete", ...args, "--namespace", namespace],
+        ["delete", ...args, "--namespace", testNamespace],
         { silent: false }
       );
     });
   });
 
   it("gets new replica sets", async () => {
+    const kubectl = new Kubectl(kubectlPath, testNamespace);
+
     const newReplicaSetName = "newreplicaset";
     const name = "name";
     const describeReturn = {
