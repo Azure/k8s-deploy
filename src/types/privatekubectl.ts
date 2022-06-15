@@ -60,6 +60,7 @@ export class PrivateKubectl extends Kubectl{
     for(var index = 0; index < result.length; index++){
       result[index] = result[index].substring(1);
     }
+    
     return result;
   }
 }
