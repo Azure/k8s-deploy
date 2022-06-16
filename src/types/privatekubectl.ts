@@ -20,7 +20,7 @@ export class PrivateKubectl extends Kubectl{
     if(this.containsFilenames(kubectlCmd)) {
       const fileNames = this.extractFiles(kubectlCmd);
       
-      //var spaceSeperatedFilenames = fileNames.join().replace(/,/g, " ");
+       //var spaceSeperatedFilenames = fileNames.join().replace(/,/g, " ");
        console.log("Filenames should have no leading slashes: " + fileNames);
 
       privateClusterArgs.push(...["--file", "."]);
@@ -68,13 +68,15 @@ export class PrivateKubectl extends Kubectl{
     }
     
     for(var index = 0; index < arr.length; index++){
+      console.log("First char of " + arr[index] + " is : " + arr[index].charAt(0));
       // Skip if no leading slash
       if(arr[index].charAt(0) != "/"){
+        console.log("skipping because " + arr[index] + " has no leading slash");
         continue;
       }
       arr[index] = arr[index].substring(1);
     }
-
+    console.log("removed leading slashes: " + arr);
     return arr;
   }
 }
