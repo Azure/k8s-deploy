@@ -18,13 +18,14 @@ export class PrivateKubectl extends Kubectl{
       "--command", kubectlCmd 
     ]
     if(this.containsFilenames(kubectlCmd)) {
+      core.debug("Before call to extractFiles");
       const fileNames = this.extractFiles(kubectlCmd);
+      core.debug("After call to extractFiles");
       
        //var spaceSeperatedFilenames = fileNames.join().replace(/,/g, " ");
-       console.log("Filenames should have no leading slashes: " + fileNames);
+       core.debug("Filenames should have no leading slashes: " + fileNames);
 
       privateClusterArgs.push(...["--file", "."]);
-      console.log("testing without modifying files and just using directory: " + privateClusterArgs);
     }
 
   core.debug(`private cluster Kubectl run with invoke command: ${kubectlCmd}`);
@@ -37,12 +38,12 @@ export class PrivateKubectl extends Kubectl{
   }
 
   public extractFiles(strToParse: string) {
-    console.log("calling extractFiles...");
+    core.debug("Inside extractFiles...");
     var result = [];
     var start = strToParse.indexOf("-filename"); 
     var offset = 7;
 
-    console.log("before offset check");
+    core.debug("before offset check");
     if(start == -1){
       start = strToParse.indexOf("-f");
       
@@ -52,13 +53,13 @@ export class PrivateKubectl extends Kubectl{
       offset = 0;
     }
 
-    console.log("after offset check");    
+    core.debug("after offset check");    
     var temp = strToParse.substring(start + offset);
     var end = temp.indexOf(" -");
     
     // End could be case where the -f flag was last, or -f is followed by some additonal flag and it's arguments
     result = temp.substring(3, end == -1 ? temp.length : end).trim().split(/[\s]+/);
-    console.log("Before removingLeadingSlashes");
+    core.debug("Before removingLeadingSlashes");
     return this.removeLeadingSlashesFromFilenames(result);
   }
 
