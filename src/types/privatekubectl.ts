@@ -56,11 +56,25 @@ export class PrivateKubectl extends Kubectl{
     
     // End could be case where the -f flag was last, or -f is followed by some additonal flag and it's arguments
     result = temp.substring(3, end == -1 ? temp.length : end).trim().split(/[\s]+/);
+    return this.removeLeadingSlashesFromFilenames(result);
+  }
 
-    for(var index = 0; index < result.length; index++){
-      result[index] = result[index].substring(1);
+
+
+  private removeLeadingSlashesFromFilenames(arr: string[]){
+    if(arr == null || arr.length == 0){
+      console.log("Attempting to remove leading slashes, but the input was null or empty");
+      return arr;
     }
     
-    return result;
+    for(var index = 0; index < arr.length; index++){
+      // Skip if no leading slash
+      if(arr[index].charAt(0) != "/"){
+        continue;
+      }
+      arr[index] = arr[index].substring(1);
+    }
+
+    return arr;
   }
 }
