@@ -21,7 +21,7 @@ export class PrivateKubectl extends Kubectl{
       const fileNames = this.extractFiles(kubectlCmd);
       
       //var spaceSeperatedFilenames = fileNames.join().replace(/,/g, " ");
-     // console.log("spaceSeperatedFilenames: " + spaceSeperatedFilenames);
+       console.log("Filenames should have no leading slashes: " + fileNames);
 
       privateClusterArgs.push(...["--file", "."]);
       console.log("testing without modifying files and just using directory: " + privateClusterArgs);
