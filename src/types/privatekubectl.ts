@@ -10,20 +10,28 @@ export class PrivateKubectl extends Kubectl{
     }
 
     //args = args.concat(["--namespace", this.namespace]);
-    args.unshift("/k8stools/kubectl")
-    const kubectlCmd = args.join(" ")
+    args.unshift("/k8stools/kubectl");
+    const kubectlCmd = args.join(" ");
+
+/*
+Ok, so the kubectlmd needs to be altered in a such a way that the files do not have leading /'s. 
+The think is that its not the --file arg that needs it, it's the kubectl inside --command
+
+
+*/
+
     const privateClusterArgs = ["aks", "command", "invoke", 
       "--resource-group", this.resourceGroup, 
       "--name", this.name,
       "--command", kubectlCmd 
     ]
     if(this.containsFilenames(kubectlCmd)) {
-      core.debug("Before call to extractFiles");
+      core.debug("Before call to extractFiles:" + kubectlCmd);
       const fileNames = this.extractFiles(kubectlCmd);
       core.debug("After call to extractFiles");
       
-       //var spaceSeperatedFilenames = fileNames.join().replace(/,/g, " ");
-       core.debug("Filenames should have no leading slashes: " + fileNames);
+       var removedLeadingSlashes = fileNames.join().replace(/tmp,/g, "tmp");
+       core.debug("Filenames should have no leading slashes: " + removedLeadingSlashes);
 
       privateClusterArgs.push(...["--file", "."]);
     }
@@ -57,10 +65,13 @@ export class PrivateKubectl extends Kubectl{
     var temp = strToParse.substring(start + offset);
     var end = temp.indexOf(" -");
     
+    
     // End could be case where the -f flag was last, or -f is followed by some additonal flag and it's arguments
     result = temp.substring(3, end == -1 ? temp.length : end).trim().split(/[\s]+/);
-    core.debug("Before removingLeadingSlashes");
-    return this.removeLeadingSlashesFromFilenames(result);
+
+    var fullCommand = strToParse.substring(0, start) + "" +  temp.substring(3, end == -1 ? temp.length : end).trim().split(/[\s]+/);
+    core.debug("FULL COMMAND: " + fullCommand);
+    return result; //this.removeLeadingSlashesFromFilenames(result);
   }
 
 
