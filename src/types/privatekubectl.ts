@@ -69,8 +69,8 @@ The think is that its not the --file arg that needs it, it's the kubectl inside 
     // End could be case where the -f flag was last, or -f is followed by some additonal flag and it's arguments
     result = temp.substring(3, end == -1 ? temp.length : end).trim().split(/[\s]+/);
 
-    var fullCommand = strToParse.substring(0, start) + "" +  temp.substring(3, end == -1 ? temp.length : end).trim().split(/[\s]+/);
-    core.debug("FULL COMMAND: " + fullCommand);
+    var fullCommand = strToParse.substring(0, offset) + "" +  temp.substring(3, end == -1 ? temp.length : end).trim().split(/[\s]+/);
+    core.debug("FULL COMMAND: " + fullCommand.replace(/tmp,/g, "tmp"));
     return result; //this.removeLeadingSlashesFromFilenames(result);
   }
 
