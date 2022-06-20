@@ -93,6 +93,7 @@ function updateContainerImagesInManifestFiles(
     // write updated files
     core.debug("The current directory is: " + process.cwd());
     const tempDirectory = getTempDirectory();
+    core.debug("The temp directory is: " + tempDirectory);
     const fileName = path.join(tempDirectory, path.basename(filePath));
     fs.writeFileSync(path.join(fileName), contents);
     newFilePaths.push(fileName);
