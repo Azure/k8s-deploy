@@ -5,6 +5,7 @@ import * as core from "@actions/core";
 
 export class PrivateKubectl extends Kubectl{
   protected async execute(args: string[], silent: boolean = false) {
+    core.debug("executing for Private Cluster");
     args.unshift("/k8stools/kubectl");
     var kubectlCmd = args.join(" ");
     var addFileFlag = false;
