@@ -15,7 +15,6 @@ import {
 import { DeploymentStrategy } from "../types/deploymentStrategy";
 import { parseTrafficSplitMethod } from "../types/trafficSplitMethod";
 import { parseRouteStrategy } from "../types/routeStrategy";
-
 export async function deploy(
   kubectl: Kubectl,
   manifestFilePaths: string[],
@@ -24,9 +23,9 @@ export async function deploy(
   // update manifests
   const inputManifestFiles: string[] = updateManifestFiles(manifestFilePaths);
   core.debug("Input manifest files: " + inputManifestFiles);
-
   // deploy manifests
-  core.info("Deploying manifests");
+  core.startGroup("Deploying manifests");
+  core.info('\u001b[1mBold Deploying manifests');
   const trafficSplitMethod = parseTrafficSplitMethod(
     core.getInput("traffic-split-method", { required: true })
   );
@@ -36,10 +35,11 @@ export async function deploy(
     kubectl,
     trafficSplitMethod
   );
+  core.endGroup();
   core.debug("Deployed manifest files: " + deployedManifestFiles);
-
   // check manifest stability
-  core.info("Checking manifest stability");
+  core.startGroup("Checking manifest stability");
+  core.info('\u001b[1mBold Checking manifest stability');
   const resourceTypes: Resource[] = getResources(
     deployedManifestFiles,
     models.DEPLOYMENT_TYPES.concat([
@@ -47,15 +47,18 @@ export async function deploy(
     ])
   );
   await checkManifestStability(kubectl, resourceTypes);
-
-  if (deploymentStrategy == DeploymentStrategy.BLUE_GREEN) {
-    core.info("Routing blue green");
-    const routeStrategy = parseRouteStrategy(
-      core.getInput("route-method", { required: true })
-    );
-    await routeBlueGreen(kubectl, inputManifestFiles, routeStrategy);
+  core.endGroup();
+  
+  if (deploymentStrategy == DeploymentStrategy.BLUE_GREEN) {    
+    core.group("Routing Blue/Green", async () => {
+      core.info("\u001b[1mBold Routing blue green");
+      const routeStrategy = parseRouteStrategy(
+        core.getInput("route-method", { required: true })
+      );
+      await routeBlueGreen(kubectl, inputManifestFiles, routeStrategy);
+    });
   }
-
+  
   // print ingresses
   core.info("Printing ingresses");
   const ingressResources: Resource[] = getResources(deployedManifestFiles, [
@@ -67,8 +70,8 @@ export async function deploy(
       ingressResource.name
     );
   }
-
   // annotate resources
+  core.startGroup("Annotating resources")
   core.info("Annotating resources");
   let allPods;
   try {
