@@ -26,7 +26,7 @@ export class PrivateKubectl extends Kubectl{
     if(addFileFlag){
       var filenames = this.extractFiles(kubectlCmd);
       core.debug("FILENAMES without comma: " + filenames);
-      privateClusterArgs.push(...["--file", "."]);
+      privateClusterArgs.push(...["--file", filenames]);
     }
     
     core.debug(`private cluster Kubectl run with invoke command: ${kubectlCmd}`);
@@ -37,7 +37,6 @@ export class PrivateKubectl extends Kubectl{
 
   public extractFiles(strToParse: string) {
     console.log("String to parse extractFiles: " + strToParse);
-    const result = [];
     var start = strToParse.indexOf("-filename"); 
     var offset = 7;
 
@@ -45,7 +44,7 @@ export class PrivateKubectl extends Kubectl{
       start = strToParse.indexOf("-f");
       
       if(start == -1){
-        return result;
+        return "";
       }
       offset = 0;
     }
@@ -55,7 +54,7 @@ export class PrivateKubectl extends Kubectl{
     var end = temp.indexOf(" -");
     
     // End could be case where the -f flag was last, or -f is followed by some additonal flag and it's arguments
-    return temp.substring(3, end == -1 ? temp.length : end).trim().replace(/[\,/]/g ," ");
+    return temp.substring(3, end == -1 ? temp.length : end).trim().replace(/[\,]/g ," ");
   }
 
 
