@@ -114,6 +114,7 @@ function updateContainerImagesInManifestFiles(
           var stat = fs.statSync(file);
           if (stat && stat.isDirectory()) { 
               /* Recurse into a subdirectory */
+              core.debug("In a directory: " + file);
               results = results.concat(walk(file));
           } else { 
               /* Is a file */
