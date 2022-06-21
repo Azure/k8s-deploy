@@ -100,7 +100,7 @@ function updateContainerImagesInManifestFiles(
     
     fs.readdir(tempDirectory, (err, files) => {
       files.forEach(file => {
-        core.debug("TEMP File in temp directory: " + file);
+        core.debug("temp files in temp directory: " + file);
       });
     });
     
