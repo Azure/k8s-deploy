@@ -91,9 +91,7 @@ function updateContainerImagesInManifestFiles(
     });
 
     // write updated files
-    core.debug("The current directory is: " + process.cwd());
     const tempDirectory = getTempDirectory();
-    core.debug("The temp directory is: " + tempDirectory);
     const fileName = path.join(tempDirectory, path.basename(filePath));
     fs.writeFileSync(path.join(fileName), contents);
     newFilePaths.push(fileName);
@@ -104,28 +102,9 @@ function updateContainerImagesInManifestFiles(
         core.debug("temp files in temp directory: " + file);
       });
     });
+
 */
-
-    var walk = function(dir) {
-      var results = [];
-      var list = fs.readdirSync(dir);
-      list.forEach(function(file) {
-          file = dir + '/' + file;
-          var stat = fs.statSync(file);
-          if (stat && stat.isDirectory()) { 
-              /* Recurse into a subdirectory */
-              core.debug("In a directory: " + file);
-              results = results.concat(walk(file));
-          } else { 
-              /* Is a file */
-              core.debug(file);
-              results.push(file);
-          }
-      });
-      return results;
-  }
-
-  walk(process.cwd());
+    
     
   });
 
