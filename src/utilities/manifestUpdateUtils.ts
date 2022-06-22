@@ -94,7 +94,8 @@ function updateContainerImagesInManifestFiles(
     const tempDirectory = getTempDirectory();
     const fileName = path.join(tempDirectory, path.basename(filePath));
     fs.writeFileSync(path.join(fileName), contents);
-    newFilePaths.push(fileName);
+    //newFilePaths.push(fileName);
+    newFilePaths.push(filePath); //TEST>>>>>>>
     
     /*
     fs.readdir(tempDirectory, (err, files) => {
