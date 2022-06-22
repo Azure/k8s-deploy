@@ -24,7 +24,7 @@ export class PrivateKubectl extends Kubectl{
     ];
     
     if(addFileFlag){
-      var filenames = this.extractFilesnames(kubectlCmd).split("");
+      var filenames = this.extractFilesnames(kubectlCmd).split(" ");
       privateClusterArgs.push(...["--file", ...filenames]);
     }
     
