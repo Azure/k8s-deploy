@@ -24,6 +24,7 @@ export class GitHubClient {
     const octokit = new RetryOctokit({
       auth: this.token,
       request: { retries: RETRY_COUNT },
+      baseUrl: process.env["GITHUB_API_URL"] || "https://api.github.com",
     });
     const [owner, repo] = this.repository.split("/");
 
