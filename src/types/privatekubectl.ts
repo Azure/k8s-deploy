@@ -38,7 +38,7 @@ export class PrivateKubectl extends Kubectl{
 
 
   public extractFilesnames(strToParse: string) {
-    console.log("String to parse extractFiles: " + strToParse);
+    console.log("string to parse extractFiles: " + strToParse);
     var start = strToParse.indexOf("-filename"); 
     var offset = 7;
 
