@@ -1,5 +1,5 @@
 import { Kubectl } from "./kubectl";
-import { ExecOutput, getExecOutput } from "@actions/exec";
+import { ExecOptions, ExecOutput, getExecOutput } from "@actions/exec";
 import * as core from "@actions/core";
 import * as os from "os";
 
@@ -10,6 +10,7 @@ export class PrivateKubectl extends Kubectl{
     args.unshift("/k8stools/kubectl");
     var kubectlCmd = args.join(" ");
     var addFileFlag = false;
+    var eo = <ExecOptions>({ silent });
 
     if(this.containsFilenames(kubectlCmd)){
       core.debug("kubectl command contains filenames: " + kubectlCmd);
@@ -27,12 +28,14 @@ export class PrivateKubectl extends Kubectl{
     if(addFileFlag){
       var filenames = this.extractFilesnames(kubectlCmd); //.split(" ");
       const tempDirectory = process.env["runner.tempDirectory"] || os.tmpdir();
-     
-      privateClusterArgs.push(...["--file", tempDirectory]);
+      eo.cwd = tempDirectory;
+      privateClusterArgs.push(...["--file", "."]);
     }
     
+
     core.debug(`private cluster Kubectl run with invoke command: ${kubectlCmd}`);
-    return await getExecOutput("az", privateClusterArgs, { silent });
+    console.log("EO current working directory: " + eo.cwd);
+    return await getExecOutput("az", privateClusterArgs, eo);
   }
 
 
