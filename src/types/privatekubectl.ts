@@ -1,6 +1,7 @@
 import { Kubectl } from "./kubectl";
 import { ExecOutput, getExecOutput } from "@actions/exec";
 import * as core from "@actions/core";
+import * as os from "os";
 
 
 export class PrivateKubectl extends Kubectl{
@@ -25,7 +26,9 @@ export class PrivateKubectl extends Kubectl{
     
     if(addFileFlag){
       var filenames = this.extractFilesnames(kubectlCmd); //.split(" ");
-      privateClusterArgs.push(...["--file", "."]);
+      const tempDirectory = process.env["runner.tempDirectory"] || os.tmpdir();
+     
+      privateClusterArgs.push(...["--file", tempDirectory]);
     }
     
     core.debug(`private cluster Kubectl run with invoke command: ${kubectlCmd}`);
