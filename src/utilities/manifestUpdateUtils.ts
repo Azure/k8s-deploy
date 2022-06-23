@@ -95,7 +95,15 @@ function updateContainerImagesInManifestFiles(
     const fileName = path.join(tempDirectory, path.basename(filePath));
     fs.writeFileSync(path.join(fileName), contents);
     newFilePaths.push(fileName);
-  
+    core.debug("The temp file created is: " + fileName);
+    
+    fs.readdir(tempDirectory, (err, files) => {
+      files.forEach(file => {
+        core.debug("temp files in temp directory: " + file);
+      });
+    });
+
+
     
     
   });
