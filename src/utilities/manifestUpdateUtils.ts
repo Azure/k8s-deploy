@@ -93,7 +93,7 @@ function updateContainerImagesInManifestFiles(
     });
 
     var needSubdirectory = isPrivateCluster && (filePath.includes(".yaml") || filePath.includes(".yml"));
-    core.debug("Filepath###: " + filePath);
+    core.debug("Filepath### : " + filePath);
     // write updated files
     const tempDirectory =  needSubdirectory ? getTempDirectory() + "/manifests/" : getTempDirectory();
     core.debug("Need subdirectory: " + needSubdirectory + " Directory is: " + tempDirectory);
