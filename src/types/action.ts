@@ -1,7 +1,7 @@
 export enum Action {
-  DEPLOY = "deploy",
-  PROMOTE = "promote",
-  REJECT = "reject",
+   DEPLOY = 'deploy',
+   PROMOTE = 'promote',
+   REJECT = 'reject'
 }
 
 /**
@@ -10,8 +10,8 @@ export enum Action {
  * @returns The Action enum or undefined if it can't be parsed
  */
 export const parseAction = (str: string): Action | undefined =>
-  Action[
-    Object.keys(Action).filter(
-      (k) => Action[k].toString().toLowerCase() === str.toLowerCase()
-    )[0] as keyof typeof Action
-  ];
+   Action[
+      Object.keys(Action).filter(
+         (k) => Action[k].toString().toLowerCase() === str.toLowerCase()
+      )[0] as keyof typeof Action
+   ]
