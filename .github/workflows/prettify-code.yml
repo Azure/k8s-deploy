@@ -15,4 +15,4 @@ jobs:
          - name: Enforce Prettier
            uses: actionsx/prettier@v2
            with:
-              args: -- check .
+              args: --check .
