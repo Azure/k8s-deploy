@@ -92,7 +92,7 @@ function updateContainerImagesInManifestFiles(
         );
     });
 
-    var needSubdirectory = isPrivateCluster && filePath.includes(".yaml") || filePath.includes(".yml");
+    var needSubdirectory = isPrivateCluster && (filePath.includes(".yaml") || filePath.includes(".yml"));
     
     // write updated files
     const tempDirectory =  needSubdirectory ? getTempDirectory() + "/manifests/" : getTempDirectory();
