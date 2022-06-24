@@ -5,6 +5,19 @@ import * as os from "os";
 
 
 export class PrivateKubectl extends Kubectl{
+
+  superconstructor(
+    kubectlPath: string,
+    namespace: string = "default",
+    ignoreSSLErrors: boolean = false,
+    resourceGroup: string = "",
+    name: string = "",
+    isPrivateCluster = false
+  ) {
+    super.isPrivateCluster = true;
+  }
+
+
   protected async execute(args: string[], silent: boolean = false) {
     core.debug("executing for Private Cluster");
     args.unshift("/k8stools/kubectl");
