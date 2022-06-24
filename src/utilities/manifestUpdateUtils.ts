@@ -95,7 +95,7 @@ function updateContainerImagesInManifestFiles(
     var needSubdirectory = isPrivateCluster && filePath.includes(".yaml") || filePath.includes(".yml");
     
     // write updated files
-    const tempDirectory =  needSubdirectory ? getTempDirectory() + "manifests/" : getTempDirectory();
+    const tempDirectory =  needSubdirectory ? getTempDirectory() + "/manifests/" : getTempDirectory();
     core.debug("Need subdirectory: " + needSubdirectory + " Directory is: " + tempDirectory);
     const fileName = path.join(tempDirectory, path.basename(filePath));
     fs.writeFileSync(path.join(fileName), contents);
