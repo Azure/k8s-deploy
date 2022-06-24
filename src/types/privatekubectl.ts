@@ -5,6 +5,19 @@ import * as os from "os";
 
 
 export class PrivateKubectl extends Kubectl{
+
+  superconstructor(
+    kubectlPath: string,
+    namespace: string = "default",
+    ignoreSSLErrors: boolean = false,
+    resourceGroup: string = "",
+    name: string = "",
+    isPrivateCluster = false
+  ) {
+    super.isPrivateCluster = true;
+  }
+
+
   protected async execute(args: string[], silent: boolean = false) {
     core.debug("executing for Private Cluster");
     args.unshift("/k8stools/kubectl");
@@ -27,7 +40,7 @@ export class PrivateKubectl extends Kubectl{
     
     if(addFileFlag){
       var filenames = this.extractFilesnames(kubectlCmd); //.split(" ");
-      const tempDirectory = process.env["runner.tempDirectory"] || os.tmpdir();
+      const tempDirectory = process.env["runner.tempDirectory"] || os.tmpdir() + "/manifests/";
       eo.cwd = tempDirectory;
       privateClusterArgs.push(...["--file", "."]);
     }

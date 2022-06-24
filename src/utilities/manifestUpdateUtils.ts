@@ -21,7 +21,7 @@ import {
 } from "./manifestPullSecretUtils";
 import { Resource } from "../types/kubectl";
 
-export function updateManifestFiles(manifestFilePaths: string[]) {
+export function updateManifestFiles(manifestFilePaths: string[], isPrivateCluster = false) {
   if (manifestFilePaths?.length === 0) {
     throw new Error("Manifest files not provided");
   }
@@ -30,7 +30,8 @@ export function updateManifestFiles(manifestFilePaths: string[]) {
   const containers: string[] = core.getInput("images").split("\n");
   const manifestFiles = updateContainerImagesInManifestFiles(
     manifestFilePaths,
-    containers
+    containers,
+    isPrivateCluster
   );
 
   // update pull secrets
@@ -66,7 +67,8 @@ export function UnsetClusterSpecificDetails(resource: any) {
 
 function updateContainerImagesInManifestFiles(
   filePaths: string[],
-  containers: string[]
+  containers: string[],
+  isPrivateCluster = false
 ): string[] {
   if (filePaths?.length <= 0) return filePaths;
 
@@ -90,19 +92,23 @@ function updateContainerImagesInManifestFiles(
         );
     });
 
+    var needSubdirectory = isPrivateCluster && (filePath.includes(".yaml") || filePath.includes(".yml"));
+    
     // write updated files
-    const tempDirectory = getTempDirectory();
+    const tempDirectory =  needSubdirectory ? getTempDirectory() + "/manifests/" : getTempDirectory();
+    core.debug("Need subdirectory: " + needSubdirectory + " Directory is: " + tempDirectory);
     const fileName = path.join(tempDirectory, path.basename(filePath));
     fs.writeFileSync(path.join(fileName), contents);
     newFilePaths.push(fileName);
-    core.debug("The temp file created is: " + fileName);
+   
     
+    /*
     fs.readdir(tempDirectory, (err, files) => {
       files.forEach(file => {
         core.debug("temp files in temp directory: " + file);
       });
     });
-
+    */
 
     
     

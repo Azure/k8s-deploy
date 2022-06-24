@@ -15,19 +15,22 @@ export class Kubectl {
   protected readonly ignoreSSLErrors: boolean;
   protected readonly resourceGroup: string;
   protected readonly name: string;
+  protected isPrivateCluster: boolean;
 
   constructor(
     kubectlPath: string,
     namespace: string = "default",
     ignoreSSLErrors: boolean = false,
     resourceGroup: string = "",
-    name: string = ""
+    name: string = "",
+    isPrivateCluster: boolean = false
   ) {
     this.kubectlPath = kubectlPath;
     this.ignoreSSLErrors = !!ignoreSSLErrors;
     this.namespace = namespace;
     this.resourceGroup = resourceGroup;
     this.name = name;
+    this.isPrivateCluster = isPrivateCluster;
   }
 
   public async apply(
@@ -57,6 +60,10 @@ export class Kubectl {
     silent: boolean = false
   ): Promise<ExecOutput> {
     return await this.execute(["describe", resourceType, resourceName], silent);
+  }
+  
+  public isPrivate(){
+    return this.isPrivateCluster;
   }
 
   public async getNewReplicaSet(deployment: string) {
