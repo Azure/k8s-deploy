@@ -9,7 +9,7 @@ export class PrivateKubectl extends Kubectl{
   superconstructor(
     isPrivateCluster = true
   ) {
-    super.isPrivateCluster = true;
+    super.isPrivateCluster = isPrivateCluster;
   }
 
 
@@ -18,7 +18,9 @@ export class PrivateKubectl extends Kubectl{
   }
 
   protected async execute(args: string[], silent: boolean = false) {
-    core.debug("executing for Private Cluster? " + this.isPrivate());
+    super.isPrivateCluster = true;
+    core.debug("Executing for Private Cluster? Super:" + super.isPrivate());
+    core.debug("Executing for Private Cluster? This:" + this.isPrivate());
     args.unshift("/k8stools/kubectl");
     var kubectlCmd = args.join(" ");
     var addFileFlag = false;
