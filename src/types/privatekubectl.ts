@@ -9,7 +9,7 @@ export class PrivateKubectl extends Kubectl{
   superconstructor(
     isPrivateCluster = true
   ) {
-    super.isPrivateCluster = true;
+    super.isPrivateCluster = isPrivateCluster;
   }
 
 
