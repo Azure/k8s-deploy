@@ -59,30 +59,30 @@ export async function deploy(
   }
   
   // print ingresses
-  core.group("Printing ingresses", async () => {
-    const ingressResources: Resource[] = getResources(deployedManifestFiles, [
+  core.startGroup("Printing ingresses");
+  const ingressResources: Resource[] = getResources(deployedManifestFiles, [
+    KubernetesConstants.DiscoveryAndLoadBalancerResource.INGRESS,
+  ]);
+  for (const ingressResource of ingressResources) {
+    await kubectl.getResource(
       KubernetesConstants.DiscoveryAndLoadBalancerResource.INGRESS,
-    ]);
-    for (const ingressResource of ingressResources) {
-      await kubectl.getResource(
-        KubernetesConstants.DiscoveryAndLoadBalancerResource.INGRESS,
-        ingressResource.name
-      );
-    }
-  });
-  // annotate resources  
-  let allPods;
-  core.group("Annotating resources", async () => {
-    try {
-      allPods = JSON.parse((await kubectl.getAllPods()).stdout);
-    } catch (e) {
-      core.debug("Unable to parse pods: " + e);
-    }
-    await annotateAndLabelResources(
-      deployedManifestFiles,
-      kubectl,
-      resourceTypes,
-      allPods
+      ingressResource.name
     );
-  });
+  }
+  core.endGroup();
+  // annotate resources
+  core.startGroup("Annotating resources");  
+  let allPods;
+  try {
+    allPods = JSON.parse((await kubectl.getAllPods()).stdout);
+  } catch (e) {
+    core.debug("Unable to parse pods: " + e);
+  }
+  await annotateAndLabelResources(
+    deployedManifestFiles,
+    kubectl,
+    resourceTypes,
+    allPods
+  );
+  core.endGroup();
 }
