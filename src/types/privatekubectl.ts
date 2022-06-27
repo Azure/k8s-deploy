@@ -19,8 +19,8 @@ export class PrivateKubectl extends Kubectl{
 
   protected async execute(args: string[], silent: boolean = false) {
     super.isPrivateCluster = true;
-    core.debug("executing for Private Cluster? Super:" + super.isPrivate());
-    core.debug("executing for Private Cluster? This:" + this.isPrivate());
+    core.debug("Executing for Private Cluster? Super:" + super.isPrivate());
+    core.debug("Executing for Private Cluster? This:" + this.isPrivate());
     args.unshift("/k8stools/kubectl");
     var kubectlCmd = args.join(" ");
     var addFileFlag = false;
