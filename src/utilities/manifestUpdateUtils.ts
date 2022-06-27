@@ -22,6 +22,7 @@ import {
 import { Resource } from "../types/kubectl";
 
 export function updateManifestFiles(manifestFilePaths: string[], isPrivateCluster = false) {
+  core.debug("Update manifests isPrivateCluster INSIDE:" + isPrivateCluster);
   if (manifestFilePaths?.length === 0) {
     throw new Error("Manifest files not provided");
   }
