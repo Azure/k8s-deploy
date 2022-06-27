@@ -36,7 +36,7 @@ export async function deploy(
       kubectl,
       trafficSplitMethod
    )
-   core.endGroup();
+   core.endGroup()
    core.debug('Deployed manifest files: ' + deployedManifestFiles)
 
    // check manifest stability
@@ -48,7 +48,7 @@ export async function deploy(
       ])
    )
    await checkManifestStability(kubectl, resourceTypes)
-   core.endGroup();
+   core.endGroup()
 
    if (deploymentStrategy == DeploymentStrategy.BLUE_GREEN) {
       core.startGroup('Routing blue green')
@@ -56,7 +56,7 @@ export async function deploy(
          core.getInput('route-method', {required: true})
       )
       await routeBlueGreen(kubectl, inputManifestFiles, routeStrategy)
-      core.endGroup();
+      core.endGroup()
    }
 
    // print ingresses
@@ -70,7 +70,7 @@ export async function deploy(
          ingressResource.name
       )
    }
-   core.endGroup();
+   core.endGroup()
 
    // annotate resources
    core.startGroup('Annotating resources')
@@ -86,5 +86,5 @@ export async function deploy(
       resourceTypes,
       allPods
    )
-   core.endGroup();
+   core.endGroup()
 }
