@@ -64,8 +64,8 @@ Following are the key capabilities of this action:
   </tr>
   <tr>
     <td>strategy </br></br>(Optional)</td>
-    <td>Acceptable values: none/canary/blue-green. <br>
-    Deployment strategy to be used while applying manifest files on the cluster.<br>none - No deployment strategy is used when deploying.<br>canary - Canary deployment strategy is used when deploying to the cluster.<br>blue-green - Blue-Green deployment strategy is used when deploying to cluster.</td>
+    <td>Acceptable values: basic/canary/blue-green. <br>
+    Default value: basic<br>Deployment strategy to be used while applying manifest files on the cluster.<br>basic - Template is force applied to all pods when deploying to cluster.<br>canary - Canary deployment strategy is used when deploying to the cluster.<br>blue-green - Blue-Green deployment strategy is used when deploying to cluster.</td>
   </tr>
   <tr>
     <td>traffic-split-method </br></br>(Optional)</td>
