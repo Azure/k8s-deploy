@@ -63,6 +63,7 @@ export class Kubectl {
   }
   
   public isPrivate(){
+    core.debug("kubectl isPrivate() being called: the result is:" + this.isPrivateCluster);
     return this.isPrivateCluster;
   }
 
