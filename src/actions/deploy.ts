@@ -15,7 +15,6 @@ import {
 import { DeploymentStrategy } from "../types/deploymentStrategy";
 import { parseTrafficSplitMethod } from "../types/trafficSplitMethod";
 import { parseRouteStrategy } from "../types/routeStrategy";
-import { boldText } from "../utilities/loggerUtils";
 
 export async function deploy(
   kubectl: Kubectl,
@@ -28,7 +27,6 @@ export async function deploy(
   
   // deploy manifests
   core.startGroup("Deploying manifests");
-  core.info(boldText("Deploying manifests"));
   const trafficSplitMethod = parseTrafficSplitMethod(
     core.getInput("traffic-split-method", { required: true })
   );
@@ -42,7 +40,6 @@ export async function deploy(
   core.debug("Deployed manifest files: " + deployedManifestFiles);
   // check manifest stability
   core.startGroup("Checking manifest stability");
-  core.info(boldText("Checking manifest stability"));
   const resourceTypes: Resource[] = getResources(
     deployedManifestFiles,
     models.DEPLOYMENT_TYPES.concat([
@@ -54,7 +51,6 @@ export async function deploy(
   
   if (deploymentStrategy == DeploymentStrategy.BLUE_GREEN) {    
     core.group("Routing Blue/Green", async () => {
-      core.info(boldText("Routing blue green"));
       const routeStrategy = parseRouteStrategy(
         core.getInput("route-method", { required: true })
       );
@@ -63,20 +59,20 @@ export async function deploy(
   }
   
   // print ingresses
-  core.info("Printing ingresses");
-  const ingressResources: Resource[] = getResources(deployedManifestFiles, [
-    KubernetesConstants.DiscoveryAndLoadBalancerResource.INGRESS,
-  ]);
-  for (const ingressResource of ingressResources) {
-    await kubectl.getResource(
+  core.group("Printing ingresses", async () => {
+    const ingressResources: Resource[] = getResources(deployedManifestFiles, [
       KubernetesConstants.DiscoveryAndLoadBalancerResource.INGRESS,
-      ingressResource.name
-    );
-  }
+    ]);
+    for (const ingressResource of ingressResources) {
+      await kubectl.getResource(
+        KubernetesConstants.DiscoveryAndLoadBalancerResource.INGRESS,
+        ingressResource.name
+      );
+    }
+  });
   // annotate resources  
   let allPods;
   core.group("Annotating resources", async () => {
-    core.info(boldText("Annotating resources"));
     try {
       allPods = JSON.parse((await kubectl.getAllPods()).stdout);
     } catch (e) {
