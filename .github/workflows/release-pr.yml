@@ -1,14 +1,14 @@
 name: Create release PR
 
 on:
-  workflow_dispatch:
-    inputs:
-      release:
-        description: "Define release version (ex: v1, v2, v3)"
-        required: true
+   workflow_dispatch:
+      inputs:
+         release:
+            description: 'Define release version (ex: v1, v2, v3)'
+            required: true
 
 jobs:
-  release-pr:
-    uses: OliverMKing/javascript-release-workflow/.github/workflows/release-pr.yml@main
-    with:
-      release: ${{ github.event.inputs.release }}
+   release-pr:
+      uses: OliverMKing/javascript-release-workflow/.github/workflows/release-pr.yml@main
+      with:
+         release: ${{ github.event.inputs.release }}
