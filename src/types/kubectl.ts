@@ -31,7 +31,7 @@ export class Kubectl {
     this.resourceGroup = resourceGroup;
     this.name = name;
     this.isPrivateCluster = isPrivateCluster;
-    core.debug("Instance of Kubectl create!");
+    core.debug("Instance of Kubectl create! isPrivateCluster var: " + this.isPrivateCluster);
   }
 
   public async apply(
