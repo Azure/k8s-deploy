@@ -70,10 +70,7 @@ export async function deployManifests(
          return newFilePaths
       }
 
-      case undefined: {
-         core.warning('Deployment strategy is not recognized.')
-      }
-      default: {
+      case DeploymentStrategy.BASIC: {
          const trafficSplitMethod = parseTrafficSplitMethod(
             core.getInput('traffic-split-method', {required: true})
          )
@@ -93,6 +90,10 @@ export async function deployManifests(
          }
 
          return files
+      }
+
+      default: {
+         throw new Error('Deployment strategy is not recognized.')
       }
    }
 }

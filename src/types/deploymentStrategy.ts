@@ -1,4 +1,5 @@
 export enum DeploymentStrategy {
+   BASIC = 'basic',
    CANARY = 'canary',
    BLUE_GREEN = 'blue-green'
 }
