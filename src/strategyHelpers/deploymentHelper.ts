@@ -93,7 +93,7 @@ export async function deployManifests(
       }
 
       default: {
-         core.warning('Deployment strategy is not recognized.')
+         throw new Error('Deployment strategy is not recognized.')
       }
    }
 }
