@@ -113,6 +113,7 @@ function updateContainerImagesInManifestFiles(
           console.debug("after create dir: " + newSubDir + " Does it exist: " + fs.existsSync(newSubDir));
           core.debug("inside async write file");
           fs.writeFileSync(filepatharg, content);
+          core.debug("wrote " + filepatharg + " correctly");
         }catch(e){
           core.debug("write file failed in the catch block" + e);
         }
