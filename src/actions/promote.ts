@@ -65,26 +65,30 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
 
       // In case of SMI traffic split strategy when deployment is promoted, first we will redirect traffic to
       // canary deployment, then update stable deployment and then redirect traffic to stable deployment
-      core.info('Redirecting traffic to canary deployment')
+      core.startGroup('Redirecting traffic to canary deployment')
       await SMICanaryDeploymentHelper.redirectTrafficToCanaryDeployment(
          kubectl,
          manifests
       )
+      core.endGroup()
 
-      core.info('Deploying input manifests with SMI canary strategy')
+      core.startGroup('Deploying input manifests with SMI canary strategy')
       await deploy.deploy(kubectl, manifests, DeploymentStrategy.CANARY)
+      core.endGroup()
 
-      core.info('Redirecting traffic to stable deployment')
+      core.startGroup('Redirecting traffic to stable deployment')
       await SMICanaryDeploymentHelper.redirectTrafficToStableDeployment(
          kubectl,
          manifests
       )
+      core.endGroup()
    } else {
-      core.info('Deploying input manifests')
+      core.startGroup('Deploying input manifests')
       await deploy.deploy(kubectl, manifests, DeploymentStrategy.CANARY)
+      core.endGroup()
    }
 
-   core.info('Deleting canary and baseline workloads')
+   core.startGroup('Deleting canary and baseline workloads')
    try {
       await canaryDeploymentHelper.deleteCanaryDeployment(
          kubectl,
@@ -97,6 +101,7 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
             ex
       )
    }
+   core.endGroup()
 }
 
 async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
@@ -109,7 +114,7 @@ async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
       core.getInput('route-method', {required: true})
    )
 
-   core.info('Deleting old deployment and making new one')
+   core.startGroup('Deleting old deployment and making new one')
    let result
    if (routeStrategy == RouteStrategy.INGRESS) {
       result = await promoteBlueGreenIngress(kubectl, manifestObjects)
@@ -118,9 +123,10 @@ async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
    } else {
       result = await promoteBlueGreenService(kubectl, manifestObjects)
    }
+   core.endGroup()
 
    // checking stability of newly created deployments
-   core.info('Checking manifest stability')
+   core.startGroup('Checking manifest stability')
    const deployedManifestFiles = result.newFilePaths
    const resources: Resource[] = getResources(
       deployedManifestFiles,
@@ -129,8 +135,9 @@ async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
       ])
    )
    await KubernetesManifestUtility.checkManifestStability(kubectl, resources)
+   core.endGroup()
 
-   core.info(
+   core.startGroup(
       'Routing to new deployments and deleting old workloads and services'
    )
    if (routeStrategy == RouteStrategy.INGRESS) {
@@ -170,4 +177,5 @@ async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
          manifestObjects.deploymentEntityList
       )
    }
+   core.endGroup()
 }
