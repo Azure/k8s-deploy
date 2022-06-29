@@ -106,7 +106,10 @@ function updateContainerImagesInManifestFiles(
       const writeFile = async (filepatharg, content, newSubDir) => {
         try{
           console.debug("trying to create dir: " + newSubDir);
-          await fs.mkdirSync(newSubDir);
+
+          if(!fs.existsSync(newSubDir)){
+            await fs.mkdirSync(newSubDir);
+          }
           console.debug("after create dir: " + newSubDir + " Does it exist: " + fs.existsSync(newSubDir));
           core.debug("inside async write file");
           fs.writeFileSync(filepatharg, content);
