@@ -1,5 +1,6 @@
 import * as core from "@actions/core";
 import * as fs from "fs";
+import * as mkdirp from "mkdirp";
 import * as yaml from "js-yaml";
 import * as path from "path";
 import * as fileHelper from "./fileUtils";
@@ -100,10 +101,30 @@ function updateContainerImagesInManifestFiles(
     const tempDirectory =  needSubdirectory ? getTempDirectory() + "/manifests/" : getTempDirectory();
     core.debug("Debug. Need subdirectory: " + needSubdirectory + " The directory is: " + tempDirectory);
     const fileName = path.join(tempDirectory, path.basename(filePath));
-    fs.writeFileSync(path.join(fileName), contents);
+
+    if(needSubdirectory){
+      const writeFile = async (path, content) => {
+        await mkdirp(path);
+        core.debug("inside async write file");
+        fs.writeFileSync(path.join(fileName), content);
+      }
+      writeFile(path.join(fileName), contents);
+    }else{
+
+      fs.writeFileSync(path.join(fileName), contents);
+      core.debug("After write : " + filePath);
+    }
+
+    
     newFilePaths.push(fileName);
    
     
+
+    
+
+
+
+
     /*
     fs.readdir(tempDirectory, (err, files) => {
       files.forEach(file => {
