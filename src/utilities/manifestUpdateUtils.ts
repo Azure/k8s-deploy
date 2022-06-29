@@ -103,9 +103,9 @@ function updateContainerImagesInManifestFiles(
     const fileName = path.join(tempDirectory, path.basename(filePath));
 
     if(needSubdirectory){
-      const writeFile = async (filepatharg, content) => {
+      const writeFile = async (filepatharg, content, newSubDir) => {
         try{
-          await mkdirp(path);
+          await mkdirp(newSubDir);
           core.debug("inside async write file");
           fs.writeFileSync(filepatharg, content);
         }catch(e){
@@ -114,7 +114,7 @@ function updateContainerImagesInManifestFiles(
 
         
       }
-      writeFile(path.join(fileName), contents);
+      writeFile(path.join(fileName), contents, tempDirectory);
     }else{
 
       fs.writeFileSync(path.join(fileName), contents);
