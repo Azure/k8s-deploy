@@ -5,6 +5,7 @@ describe('Deployment strategy type', () => {
       const vals = <any>Object.values(DeploymentStrategy)
       expect(vals.includes('canary')).toBe(true)
       expect(vals.includes('blue-green')).toBe(true)
+      expect(vals.includes('basic')).toBe(true)
    })
 
    test('it can parse valid values from a string', () => {

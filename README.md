@@ -43,7 +43,15 @@ Following are the key capabilities of this action:
   <tr>
     <td>manifests </br></br>(Required)</td>
     <td>Path to the manifest files to be used for deployment. These can also be directories containing manifest files, in which case, all manifest files in the referenced directory at every depth will be deployed. Files not ending in .yml or .yaml will be ignored.</td>
-  </tr>  
+  </tr>
+    <tr>
+    <td>strategy </br></br>(Required)</td>
+    <td>Acceptable values: basic/canary/blue-green. <br>
+    Default value: basic
+    <br>Deployment strategy to be used while applying manifest files on the cluster.
+    <br>basic - Template is force applied to all pods when deploying to cluster. NOTE: Can only be used with action == deploy
+    <br>canary - Canary deployment strategy is used when deploying to the cluster.<br>blue-green - Blue-Green deployment strategy is used when deploying to cluster.</td>
+  </tr>
   <tr>
     <td>namespace </br></br>(Optional)
     <td>Namespace within the cluster to deploy to.</td>
@@ -61,11 +69,6 @@ Following are the key capabilities of this action:
   <tr>
     <td>pull-images</br></br>(Optional)</td>
     <td>Acceptable values: true/false</br>Default value: true</br>Switch whether to pull the images from the registry before deployment to find out Dockerfile's path in order to add it to the annotations</td>
-  </tr>
-  <tr>
-    <td>strategy </br></br>(Optional)</td>
-    <td>Acceptable values: none/canary/blue-green. <br>
-    Deployment strategy to be used while applying manifest files on the cluster.<br>none - No deployment strategy is used when deploying.<br>canary - Canary deployment strategy is used when deploying to the cluster.<br>blue-green - Blue-Green deployment strategy is used when deploying to cluster.</td>
   </tr>
   <tr>
     <td>traffic-split-method </br></br>(Optional)</td>
