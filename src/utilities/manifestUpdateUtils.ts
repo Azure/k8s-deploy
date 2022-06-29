@@ -107,7 +107,7 @@ function updateContainerImagesInManifestFiles(
         try{
           console.debug("trying to create dir: " + newSubDir);
           await mkdirp(newSubDir);
-          console.debug("after create dir: " + newSubDir);
+          console.debug("after create dir: " + newSubDir + " Does it exist: " + fs.existsSync(newSubDir));
           core.debug("inside async write file");
           fs.writeFileSync(filepatharg, content);
         }catch(e){
