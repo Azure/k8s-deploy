@@ -2,6 +2,8 @@ import { Kubectl } from "./kubectl";
 import { ExecOptions, ExecOutput, getExecOutput } from "@actions/exec";
 import * as core from "@actions/core";
 import * as os from "os";
+import * as fs from "fs";
+
 
 
 export class PrivateKubectl extends Kubectl{
@@ -45,11 +47,24 @@ export class PrivateKubectl extends Kubectl{
       eo.cwd = tempDirectory;
       core.debug("EO current working directory:" + eo.cwd + " the temp dir is: " + tempDirectory);
       privateClusterArgs.push(...["--file", "."]);
+
+      fs.readdir(tempDirectory, (err, files) => {
+        files.forEach(file => {
+          core.debug("temp files in temp directory: " + file);
+        });
+      });
+
     }
     
 
     core.debug(`private cluster Kubectl run with invoke command: ${kubectlCmd}`);
     core.debug("EO as it goes into getExec " + eo.cwd);
+// PRINT OUT THE FILE SYSTEM HERE TO SEE WTF IS IN HERE.
+
+
+
+    
+    
 
     return await getExecOutput("az", privateClusterArgs, eo);
   }
