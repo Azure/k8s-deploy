@@ -43,13 +43,14 @@ export class PrivateKubectl extends Kubectl{
       var filenames = this.extractFilesnames(kubectlCmd); //.split(" ");
       const tempDirectory = process.env["runner.tempDirectory"] || os.tmpdir() + "/manifests";
       eo.cwd = tempDirectory;
-      core.debug("EO current working directory:" + eo.cwd);
+      core.debug("EO current working directory:" + eo.cwd + " the temp dir is: " + tempDirectory);
       privateClusterArgs.push(...["--file", "."]);
     }
     
 
     core.debug(`private cluster Kubectl run with invoke command: ${kubectlCmd}`);
-    console.log("EO current working directory: " + eo.cwd);
+    core.debug("EO as it goes into getExec " + eo.cwd);
+
     return await getExecOutput("az", privateClusterArgs, eo);
   }
 

@@ -35,7 +35,7 @@ export function updateManifestFiles(manifestFilePaths: string[], isPrivateCluste
     containers,
     isPrivateCluster
   );
-
+console.log("result of updateContainerImages: " + manifestFiles);
   // update pull secrets
   const imagePullSecrets: string[] = core
     .getInput("imagepullsecrets")
