@@ -23,7 +23,6 @@ export async function deploy(
 ) {
   // update manifests
   core.debug("Input manifest files BEFORE: " + manifestFilePaths);
-  core.debug("isPrivate result before calling updateManifestsFiles:" + kubectl.isPrivate());
   const inputManifestFiles: string[] = updateManifestFiles(manifestFilePaths, kubectl.isPrivate());
   core.debug("Input manifest files AFTER: " + inputManifestFiles);
 
