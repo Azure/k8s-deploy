@@ -154,7 +154,7 @@ function updateContainerImagesInManifestFiles(
     
     
   });
-
+  core.debug("New file paths returned:L " + newFilePaths);
   return newFilePaths;
 }
 
