@@ -43,7 +43,7 @@ export class PrivateKubectl extends Kubectl{
     
     if(addFileFlag){
       var filenames = this.extractFilesnames(kubectlCmd); //.split(" ");
-      const tempDirectory = process.env["runner.tempDirectory"] || os.tmpdir() + "/manifests";
+      const tempDirectory = process.env["runner.tempDirectory"] || os.tmpdir(); //+ "/manifests";
       eo.cwd = tempDirectory;
       core.debug("EO current working directory:" + eo.cwd + " the temp dir is: " + tempDirectory);
       privateClusterArgs.push(...["--file", "."]);
@@ -71,8 +71,8 @@ export class PrivateKubectl extends Kubectl{
 
 
     
+    process.chdir('/tmp');
     
-
     return await getExecOutput("az", privateClusterArgs, eo);
   }
 
