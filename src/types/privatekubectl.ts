@@ -50,9 +50,16 @@ export class PrivateKubectl extends Kubectl{
 
       fs.readdir(tempDirectory, (err, files) => {
         files.forEach(file => {
-          core.debug("temp files in temp directory: " + file);
+          core.debug("temp files in directory:" + tempDirectory + " temp directory: " + file);
         });
       });
+
+      fs.readdir("/tmp", (err, files) => {
+        files.forEach(file => {
+          core.debug("temp files in directory:" + "/tmp "+ " temp directory: " + file);
+        });
+      });
+
 
     }
     
