@@ -44,6 +44,19 @@ export class PrivateKubectl extends Kubectl{
     if(addFileFlag){
       var filenames = this.extractFilesnames(kubectlCmd); //.split(" ");
       const tempDirectory = process.env["runner.tempDirectory"] || os.tmpdir() + "/manifests";
+
+
+      if(!fs.existsSync(tempDirectory)){
+        try{
+          fs.mkdirSync(tempDirectory, { recursive: true });
+
+        }catch(e){
+          core.debug("could not create the directory: " + tempDirectory + ": " + e);
+
+        }
+      }
+
+
       eo.cwd = tempDirectory;
       core.debug("EO current working directory:" + eo.cwd + " the temp dir is: " + tempDirectory);
       privateClusterArgs.push(...["--file", "."]);
