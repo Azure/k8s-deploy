@@ -107,7 +107,7 @@ export class PrivateKubectl extends Kubectl{
         });
       });
 
-      core.debug("Sanity check::: It says the file does not exist. Using fs.existsSync  to see if /tmp/manifests/Deployment_azure-vote-back_1657041106643 exists. If true, the should be able to rename: " +  fs.existsSync("/tmp/Deployment_azure-vote-back_1657041106643"));
+      core.debug("Sanity check:: It says the file does not exist. Using fs.existsSync  to see if /tmp/manifests/Deployment_azure-vote-back_1657041106643 exists. If true, the should be able to rename: " +  fs.existsSync("/tmp/Deployment_azure-vote-back_1657041106643"));
 
 
 
