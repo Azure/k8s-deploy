@@ -58,7 +58,7 @@ export class PrivateKubectl extends Kubectl{
 
 
       eo.cwd = tempDirectory;
-      core.debug("EO current working directory:" + eo.cwd + " the temp dir is: " + tempDirectory);
+      core.debug("EO current working directory:" + eo.cwd + " the tmp dir is: " + tempDirectory);
       privateClusterArgs.push(...["--file", "."]);
 
       /*
@@ -75,7 +75,7 @@ export class PrivateKubectl extends Kubectl{
 
       fs.readdir("/tmp", (err, files) => {
         files.forEach(file => {
-          core.debug("files in /temp directory: " + file);
+          core.debug("files in /tmp directory: " + file);
         });
       });
 
@@ -87,13 +87,26 @@ export class PrivateKubectl extends Kubectl{
       });
 
 
-      core.debug("going to try to move the files from /tmp to the /tmp/manifest dir");
+      core.debug("going to try to move the files from /tmp to the /tmp/manifests dir");
       fs.readdir("/tmp", (err, files) => {
         files.forEach(file => {
-          
-            fs.rename("/tmp/" + file, "/tmp/manifest/" + file , function (err) {
+          if(!fs.existsSync("/tmp/manifests")){
+            try{
+              fs.mkdirSync("/tmp/manifests", { recursive: true });
+    
+            }catch(e){
+              core.debug("could not create the directory: " + "/tmp/manifests" + ": " + e);
+    
+            }
+          }
+
+            core.debug("does /tmp/manifests existes" + fs.existsSync("/tmp/manifests"));
+            fs.rename("/tmp/" + file, "/tmp/manifests/" + file , function (err) {
               if (err) {
-                core.debug("could not rename " + "/tmp/" + file + " to  " + "/tmp/manifest/" + file + " ERROR: " + err);
+                core.debug("could not rename " + "/tmp/" + file + " to  " + "/tmp/manifests/" + file + " ERROR: " + err);
+              
+              
+              
               }else{
                 core.debug('Successfully renamed - AKA moved!');
               }
