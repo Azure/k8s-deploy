@@ -42,9 +42,9 @@ export class PrivateKubectl extends Kubectl{
     ];
     
     if(addFileFlag){
-      var filenames = this.extractFilesnames(kubectlCmd); //.split(" ");
+      var filenames = this.extractFilesnames(kubectlCmd).split(" ");
       const tempDirectory = process.env["runner.tempDirectory"] || os.tmpdir() + "/manifests";
-
+      core.debug("the filenames: " + filenames);
 
       if(!fs.existsSync(tempDirectory)){
         try{
@@ -101,17 +101,25 @@ export class PrivateKubectl extends Kubectl{
           }
 
             core.debug("does /tmp/manifests existes" + fs.existsSync("/tmp/manifests"));
-            fs.rename("/tmp/" + file, "/tmp/manifests/" + file , function (err) {
-              if (err) {
-                core.debug("could not rename " + "/tmp/" + file + " to  " + "/tmp/manifests/" + file + " ERROR: " + err);
-              
-              
-              
-              }else{
-                core.debug('Successfully renamed - AKA moved!');
-              }
-             
-            })
+
+            // check if file exists in list and only move if it does
+
+            if(filenames.includes(file)){
+
+              fs.rename("/tmp/" + file, "/tmp/manifests/" + file , function (err) {
+                if (err) {
+                  core.debug("could not rename " + "/tmp/" + file + " to  " + "/tmp/manifests/" + file + " ERROR: " + err);
+                
+                
+                
+                }else{
+                  core.debug('Successfully renamed - AKA moved!');
+                }
+               
+              })
+
+            }
+           
 
         
 
