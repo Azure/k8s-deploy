@@ -48,17 +48,31 @@ export class PrivateKubectl extends Kubectl{
       core.debug("EO current working directory:" + eo.cwd + " the temp dir is: " + tempDirectory);
       privateClusterArgs.push(...["--file", "."]);
 
+      /*
       fs.readdir(tempDirectory, (err, files) => {
         files.forEach(file => {
           core.debug("temp files in directory:" + tempDirectory + " temp directory: " + file);
         });
       });
-
+*/
       fs.readdir("/tmp", (err, files) => {
         files.forEach(file => {
           core.debug("temp files in directory:" + "/tmp "+ " temp directory: " + file);
+        
+          fs.rename(file, file.replace(/[tmp]/g ,"tmp/manifest"), function (err) {
+            if (err) throw err
+            core.debug('Successfully renamed - AKA moved!');
+          })
+        
         });
       });
+
+
+
+      
+
+      // Maybe try to move the files at this point to tmp/manifests or something.
+
 
 
     }
@@ -71,7 +85,7 @@ export class PrivateKubectl extends Kubectl{
 
 
     
-    process.chdir('/tmp');
+    process.chdir('/tmp/manifests');
     
     return await getExecOutput("az", privateClusterArgs, eo);
   }
