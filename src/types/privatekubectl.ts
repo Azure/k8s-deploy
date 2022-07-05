@@ -103,12 +103,13 @@ export class PrivateKubectl extends Kubectl{
             core.debug("does /tmp/manifests existes" + fs.existsSync("/tmp/manifests"));
 
             // check if file exists in list and only move if it does
-          core.debug("does filename array contain file: " + file + " ?: " + filenames.indexOf(file));
-            if(filenames.indexOf(file) != -1){
-              core.debug("inside rename fucnt and trying to rename: " + file);
-              fs.rename("/tmp/" + file, "/tmp/manifests/" + file , function (err) {
+         // core.debug("does filename array contain file: " + file + " ?: " + filenames.indexOf(file));
+         core.debug("filenames type: " + typeof(filenames));
+            for(var index = 0; index < filenames.length; index++){
+              core.debug("ELEMENT: " + filenames[index] + " at index " + index);
+              fs.rename("/tmp/" + filenames[index], "/tmp/manifests/" + filenames[index] , function (err) {
                 if (err) {
-                  core.debug("could not rename " + "/tmp/" + file + " to  " + "/tmp/manifests/" + file + " ERROR: " + err);
+                  core.debug("could not rename " + "/tmp/" + filenames[index] + " to  " + "/tmp/manifests/" + filenames[index] + " ERROR: " + err);
                 
                 
                 
