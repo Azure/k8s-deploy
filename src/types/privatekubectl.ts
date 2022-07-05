@@ -105,7 +105,7 @@ export class PrivateKubectl extends Kubectl{
             // check if file exists in list and only move if it does
           core.debug("does filename array contain file: " + file + " ?: " + filenames.includes(file));
             if(filenames.includes(file)){
-              core.debug("inside rename fucnt");
+              core.debug("inside rename fucnt and trying to rename: " + file);
               fs.rename("/tmp/" + file, "/tmp/manifests/" + file , function (err) {
                 if (err) {
                   core.debug("could not rename " + "/tmp/" + file + " to  " + "/tmp/manifests/" + file + " ERROR: " + err);
