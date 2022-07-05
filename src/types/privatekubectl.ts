@@ -59,15 +59,27 @@ export class PrivateKubectl extends Kubectl{
         files.forEach(file => {
           core.debug("temp files in directory:" + "/tmp "+ " temp directory: " + file);
         
-          fs.rename(file, file.replace(/[tmp]/g ,"tmp/manifest"), function (err) {
-            if (err) throw err
-            core.debug('Successfully renamed - AKA moved!');
-          })
+          
+            fs.rename("/tmp/" + file, "/tmp/manifest/" + file , function (err) {
+              if (err) {
+                core.debug("could not rename " + file + " for some reason: " + err);
+              }
+              core.debug('Successfully renamed - AKA moved!');
+            })
+
+        
+
+        
         
         });
       });
 
 
+      fs.readdir(tempDirectory, (err, files) => {
+        files.forEach(file => {
+          core.debug("temp files in directory:" + tempDirectory + " temp directory: " + file);
+        });
+      });
 
       
 
