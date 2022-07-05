@@ -105,19 +105,19 @@ function updateContainerImagesInManifestFiles(
     if(needSubdirectory){
       const writeFile = async (filepatharg, content, newSubDir) => {
         try{
-          console.debug("trying to create dir: " + newSubDir);
+          //console.debug("trying to create dir: " + newSubDir);
 
           if(!fs.existsSync(newSubDir)){
             try{
               fs.mkdirSync(newSubDir, { recursive: true });
 
             }catch(e){
-              core.debug("could not create the directory: " + newSubDir + ": " + e);
+             // core.debug("could not create the directory: " + newSubDir + ": " + e);
 
             }
           }
           console.debug("after create dir: " + newSubDir + " Does it exist: " + fs.existsSync(newSubDir));
-          core.debug("inside async write file");
+         // core.debug("inside async write file");
           fs.writeFileSync(filepatharg, content);
           core.debug("wrote " + filepatharg + " correctly");
         }catch(e){
