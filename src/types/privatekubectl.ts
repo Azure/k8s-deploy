@@ -61,7 +61,9 @@ export class PrivateKubectl extends Kubectl{
         
           
             fs.rename("/tmp/" + file, "/tmp/manifest/" + file , function (err) {
-              if (err) throw err
+              if (err) {
+                core.debug("could not rename " + file + " for some reason: " + err);
+              }
               core.debug('Successfully renamed - AKA moved!');
             })
 
