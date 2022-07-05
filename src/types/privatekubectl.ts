@@ -93,9 +93,11 @@ export class PrivateKubectl extends Kubectl{
           
             fs.rename("/tmp/" + file, "/tmp/manifest/" + file , function (err) {
               if (err) {
-                core.debug("could not rename " + file + " for some reason: " + err);
+                core.debug("could not rename " + "/tmp/" + file + " to  " + "/tmp/manifest/" + file + " ERROR: " + err);
+              }else{
+                core.debug('Successfully renamed - AKA moved!');
               }
-              core.debug('Successfully renamed - AKA moved!');
+             
             })
 
         
@@ -105,8 +107,24 @@ export class PrivateKubectl extends Kubectl{
         });
       });
 
+      core.debug("Sanity check::: It says the file does not exist. Using fs.existsSync  to see if /tmp/manifests/Deployment_azure-vote-back_1657041106643 exists. If true, the should be able to rename: " +  fs.existsSync("/tmp/Deployment_azure-vote-back_1657041106643"));
 
-     
+
+
+      core.debug("printing the files in /tmp/manifests to see whats in there AFTER");
+      fs.readdir("/tmp/manifests", (err, files) => {
+        files.forEach(file => {
+          core.debug("files in /tmp/manifests directory: " + file);
+        });
+      });
+
+      core.debug("printing the files in actual CWD to see whats in there ");
+      fs.readdir(process.cwd(), (err, files) => {
+        files.forEach(file => {
+          core.debug("files in /tmp/manifests directory: " + file);
+        });
+      });
+      
       
 
       // Maybe try to move the files at this point to tmp/manifests or something.
@@ -123,7 +141,7 @@ export class PrivateKubectl extends Kubectl{
 
 
     
-    process.chdir('/tmp/manifests');
+    //process.chdir('/tmp/manifests');
     
     return await getExecOutput("az", privateClusterArgs, eo);
   }
