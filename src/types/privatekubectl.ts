@@ -60,7 +60,7 @@ export class PrivateKubectl extends Kubectl{
           core.debug("temp files in directory:" + "/tmp "+ " temp directory: " + file);
         
           
-            fs.rename("/tmp/" + file, "/tmp/manifest" + file , function (err) {
+            fs.rename("/tmp/" + file, "/tmp/manifest/" + file , function (err) {
               if (err) throw err
               core.debug('Successfully renamed - AKA moved!');
             })
