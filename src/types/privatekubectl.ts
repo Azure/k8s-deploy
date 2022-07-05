@@ -68,10 +68,28 @@ export class PrivateKubectl extends Kubectl{
         });
       });
 */
+      core.debug("### current directory is :" + process.cwd());
+      core.debug("does /tmp/manifests already exists? :" + fs.existsSync("/tmp/manifests"));
+
+      core.debug("printing the files in /tmp" + " to prove they exists!!!");
+
       fs.readdir("/tmp", (err, files) => {
         files.forEach(file => {
-          core.debug("temp files in directory:" + "/tmp "+ " temp directory: " + file);
-        
+          core.debug("files in /temp directory: " + file);
+        });
+      });
+
+      core.debug("printing the files in /tmp/manifests to see whats in there before");
+      fs.readdir("/tmp/manifests", (err, files) => {
+        files.forEach(file => {
+          core.debug("files in /tmp/manifests directory: " + file);
+        });
+      });
+
+
+      core.debug("going to try to move the files from /tmp to the /tmp/manifest dir");
+      fs.readdir("/tmp", (err, files) => {
+        files.forEach(file => {
           
             fs.rename("/tmp/" + file, "/tmp/manifest/" + file , function (err) {
               if (err) {
@@ -88,12 +106,7 @@ export class PrivateKubectl extends Kubectl{
       });
 
 
-      fs.readdir(tempDirectory, (err, files) => {
-        files.forEach(file => {
-          core.debug("temp files in directory:" + tempDirectory + " temp directory: " + file);
-        });
-      });
-
+     
       
 
       // Maybe try to move the files at this point to tmp/manifests or something.
