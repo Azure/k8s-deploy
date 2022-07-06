@@ -23,7 +23,8 @@ import {parseRouteStrategy, RouteStrategy} from '../types/routeStrategy'
 import {ExecOutput} from '@actions/exec'
 import {
    getWorkflowAnnotationKeyLabel,
-   getWorkflowAnnotations
+   getWorkflowAnnotations,
+   cleanLabel
 } from '../utilities/workflowAnnotationUtils'
 import {
    annotateChildPods,
@@ -214,10 +215,10 @@ async function labelResources(
    label: string
 ) {
    const labels = [
-      `workflowFriendlyName=${normalizeWorkflowStrLabel(
-         process.env.GITHUB_WORKFLOW
+      `workflowFriendlyName=${cleanLabel(
+         normalizeWorkflowStrLabel(process.env.GITHUB_WORKFLOW)
       )}`,
-      `workflow=${label}`
+      `workflow=${cleanLabel(label)}`
    ]
 
    checkForErrors([await kubectl.labelFiles(files, labels)], true)
