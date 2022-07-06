@@ -20,9 +20,8 @@ export class PrivateKubectl extends Kubectl{
   }
 
   protected async execute(args: string[], silent: boolean = false) {
-    super.isPrivateCluster = true;
-    core.debug("Executing for Private Cluster? Super:" + super.isPrivate());
-    core.debug("Executing for Private Cluster? This:" + this.isPrivate());
+    super.isPrivateCluster = true; // This can probably be deleted
+    
     args.unshift("/k8stools/kubectl");
     var kubectlCmd = args.join(" ");
     var addFileFlag = false;
@@ -44,129 +43,38 @@ export class PrivateKubectl extends Kubectl{
     if(addFileFlag){
       var filenames = this.extractFilesnames(kubectlCmd).split(" ");
       const tempDirectory = process.env["runner.tempDirectory"] || os.tmpdir() + "/manifests";
-      core.debug("the filenames: " + filenames);
-
-      if(!fs.existsSync(tempDirectory)){
-        try{
-          fs.mkdirSync(tempDirectory, { recursive: true });
-
-        }catch(e){
-          core.debug("could not create the directory: " + tempDirectory + ": " + e);
-
-        }
-      }
-
-
       eo.cwd = tempDirectory;
-      core.debug("EO current working directory:" + eo.cwd + " the tmp dir is: " + tempDirectory);
+      core.debug("ExecOptions current working directory: " + eo.cwd);
       privateClusterArgs.push(...["--file", "."]);
 
-      /*
-      fs.readdir(tempDirectory, (err, files) => {
-        files.forEach(file => {
-          core.debug("temp files in directory:" + tempDirectory + " temp directory: " + file);
-        });
-      });
-*/
-      core.debug("### current directory is :" + process.cwd());
-      core.debug("does /tmp/manifests already exists? :" + fs.existsSync("/tmp/manifests"));
 
-      core.debug("printing the files in /tmp" + " to prove they exists!!!");
+      //fs.readdir("/tmp", (err, files) => {
+      //  files.forEach(file => {
+            var filenamesArr = filenames[0].split(",");
+            for(var index = 0; index < filenamesArr.length; index++){
+              var file = filenamesArr[index];
+              
+              if(file == null || file == undefined){
+                continue;
+              }
 
-      fs.readdir("/tmp", (err, files) => {
-        files.forEach(file => {
-          core.debug("files in /tmp directory: " + file);
-        });
-      });
-
-      core.debug("printing the files in /tmp/manifests to see whats in there before");
-      fs.readdir("/tmp/manifests", (err, files) => {
-        files.forEach(file => {
-          core.debug("files in /tmp/manifests directory: " + file);
-        });
-      });
-
-
-      core.debug("going to try to move the files from /tmp to the /tmp/manifests dir");
-      fs.readdir("/tmp", (err, files) => {
-        files.forEach(file => {
-          if(!fs.existsSync("/tmp/manifests")){
-            try{
-              fs.mkdirSync("/tmp/manifests", { recursive: true });
-    
-            }catch(e){
-              core.debug("could not create the directory: " + "/tmp/manifests" + ": " + e);
-    
-            }
+              this.moveFileToTempManifestDir(file);
           }
-
-            core.debug("does /tmp/manifests existes" + fs.existsSync("/tmp/manifests"));
-
-            // check if file exists in list and only move if it does
-         // core.debug("does filename array contain file: " + file + " ?: " + filenames.indexOf(file));
-       
-          //  for(var index = 0; index < filenames.length; index++){
-              var filenamesArr = filenames[0].split(",");
-              core.debug("filenamesArr: " + filenamesArr);
-              for(var index = 0; index < filenamesArr.length; index++){
-              fs.rename("/tmp/" + filenamesArr[index], "/tmp/manifests/" + filenamesArr[index] , function (err) {
-                if (err) {
-                  core.debug("could not rename " + "/tmp/" + filenamesArr[index] + " to  " + "/tmp/manifests/" + filenamesArr[index] + " ERROR: " + err);
-                
-                
-                
-                }else{
-                  core.debug('Successfully renamed - AKA moved!');
-                }
-               
-              })
-
-           }
            
 
         
 
         
         
-        });
-      });
+      //  });
+     // });
 
-      core.debug("Sanity check:: It says the file does not exist. Using fs.existsSync  to see if /tmp/manifests/Deployment_azure-vote-back_1657041106643 exists. If true, the should be able to rename: " +  fs.existsSync("/tmp/Deployment_azure-vote-back_1657041106643"));
-
-
-
-      core.debug("printing the files in /tmp/manifests to see whats in there AFTER");
-      fs.readdir("/tmp/manifests", (err, files) => {
-        files.forEach(file => {
-          core.debug("files in /tmp/manifests directory: " + file);
-        });
-      });
-
-      core.debug("printing the files in actual CWD to see whats in there ");
-      fs.readdir(process.cwd(), (err, files) => {
-        files.forEach(file => {
-          core.debug("files in /tmp/manifests directory: " + file);
-        });
-      });
-      
-      
-
-      // Maybe try to move the files at this point to tmp/manifests or something.
-
-
-
+     
     }
     
 
     core.debug(`private cluster Kubectl run with invoke command: ${kubectlCmd}`);
     core.debug("EO as it goes into getExec " + eo.cwd);
-// PRINT OUT THE FILE SYSTEM HERE TO SEE WTF IS IN HERE.
-
-
-
-    
-    //process.chdir('/tmp/manifests');
-    
     return await getExecOutput("az", privateClusterArgs, eo);
   }
 
@@ -197,6 +105,32 @@ export class PrivateKubectl extends Kubectl{
 
   private containsFilenames(str: string) {
     return str.includes("-f ") || str.includes("filename ");
+  }
+
+  private createTempManifestsDirectory(){
+    if(!fs.existsSync("/tmp/manifests")){
+      try{
+        fs.mkdirSync("/tmp/manifests", { recursive: true });
+
+      }catch(e){
+        core.debug("could not create the directory: " + "/tmp/manifests" + ": " + e);
+
+      }
+    }
+  }
+
+  private moveFileToTempManifestDir(file: string){
+    this.createTempManifestsDirectory();
+
+    fs.rename("/tmp/" + file, "/tmp/manifests/" + file , function (err) {
+      if (err) {
+        core.debug("could not rename " + "/tmp/" + file + " to  " + "/tmp/manifests/" + file + " ERROR: " + err);
+      
+      }else{
+        core.debug("Successfully moved file '" + file + "' from /tmp to /tmp/manifest directory");
+      }
+      
+    })
   }
 
 }
