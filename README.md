@@ -150,8 +150,7 @@ To promote/reject the canary created by the above snippet, the following YAML sn
       service.yaml
       dir/manifestsDirectory
     strategy: canary
-    action: promote # substitute 
-    want to reject
+    action: promote # substitute reject if you want to reject
 ```
 
 ### Canary deployment based on Service Mesh Interface
