@@ -110,7 +110,7 @@ export class PrivateKubectl extends Kubectl{
         core.debug("/tmp/" + file + " does not exist, and therefore cannot be moved to the manifest directory");
         return;
       }
-      ///fs.copyFileSync
+  
       fs.copyFile("/tmp/" + file, "/tmp/manifests/" + file , function (err) {
         if (err) {
           core.debug("Could not rename " + "/tmp/" + file + " to  " + "/tmp/manifests/" + file + " ERROR: " + err);
