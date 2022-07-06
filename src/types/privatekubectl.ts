@@ -8,15 +8,9 @@ import * as fs from "fs";
 
 export class PrivateKubectl extends Kubectl{
 
-  superconstructor(
-    isPrivateCluster = true
-  ) {
-    super.isPrivateCluster = isPrivateCluster;
-  }
-
 
   public isPrivate(): boolean {
-      return this.isPrivateCluster;
+      return true;
   }
 
   protected async execute(args: string[], silent: boolean = false) {
