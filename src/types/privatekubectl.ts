@@ -20,8 +20,6 @@ export class PrivateKubectl extends Kubectl{
   }
 
   protected async execute(args: string[], silent: boolean = false) {
-    super.isPrivateCluster = true; // This can probably be deleted
-    
     args.unshift("/k8stools/kubectl");
     var kubectlCmd = args.join(" ");
     var addFileFlag = false;
@@ -47,37 +45,22 @@ export class PrivateKubectl extends Kubectl{
       core.debug("ExecOptions current working directory: " + eo.cwd);
       privateClusterArgs.push(...["--file", "."]);
 
-
-      //fs.readdir("/tmp", (err, files) => {
-      //  files.forEach(file => {
-            var filenamesArr = filenames[0].split(",");
-            for(var index = 0; index < filenamesArr.length; index++){
-              var file = filenamesArr[index];
-              
-              if(file == null || file == undefined){
-                continue;
-              }
-
-              this.moveFileToTempManifestDir(file);
-          }
-           
-
+      var filenamesArr = filenames[0].split(",");
+      for(var index = 0; index < filenamesArr.length; index++){
+        var file = filenamesArr[index];
         
-
-        
-        
-      //  });
-     // });
-
-     
+        if(file == null || file == undefined){
+          continue;
+        }
+      
+        this.moveFileToTempManifestDir(file);
+      }
     }
     
-
     core.debug(`private cluster Kubectl run with invoke command: ${kubectlCmd}`);
     core.debug("EO as it goes into getExec " + eo.cwd);
     return await getExecOutput("az", privateClusterArgs, eo);
   }
-
 
 
   public extractFilesnames(strToParse: string) {
@@ -99,7 +82,7 @@ export class PrivateKubectl extends Kubectl{
     var end = temp.indexOf(" -");
     
     //End could be case where the -f flag was last, or -f is followed by some additonal flag and it's arguments
-    return temp.substring(3, end == -1 ? temp.length : end).trim(); //.replace(/[\,]/g ," ");
+    return temp.substring(3, end == -1 ? temp.length : end).trim();
   }
 
 
@@ -122,15 +105,23 @@ export class PrivateKubectl extends Kubectl{
   private moveFileToTempManifestDir(file: string){
     this.createTempManifestsDirectory();
 
-    fs.rename("/tmp/" + file, "/tmp/manifests/" + file , function (err) {
-      if (err) {
-        core.debug("could not rename " + "/tmp/" + file + " to  " + "/tmp/manifests/" + file + " ERROR: " + err);
-      
-      }else{
-        core.debug("Successfully moved file '" + file + "' from /tmp to /tmp/manifest directory");
+    try {
+      if (!fs.existsSync("/tmp/" + file)) {
+        core.debug("/tmp/" + file + " does not exist, and therefore cannot be moved to the manifest directory");
+        return;
       }
+
+      fs.rename("/tmp/" + file, "/tmp/manifests/" + file , function (err) {
+        if (err) {
+          core.debug("Could not rename " + "/tmp/" + file + " to  " + "/tmp/manifests/" + file + " ERROR: " + err);
+          return;
+        }
+        core.debug("Successfully moved file '" + file + "' from /tmp to /tmp/manifest directory");
+      })
       
-    })
+    } catch(err) {
+      core.debug(err);
+    }
   }
 
 }
