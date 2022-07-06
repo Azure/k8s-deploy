@@ -1,9 +1,9 @@
 import * as core from "@actions/core";
 import * as fs from "fs";
-import * as mkdirp from "mkdirp";
 import * as yaml from "js-yaml";
 import * as path from "path";
 import * as fileHelper from "./fileUtils";
+import * as os from "os";
 import { getTempDirectory } from "./fileUtils";
 import {
   InputObjectKindNotDefinedError,
@@ -94,67 +94,16 @@ function updateContainerImagesInManifestFiles(
         );
     });
 
-    var needSubdirectory = isPrivateCluster && (filePath.includes(".yaml") || filePath.includes(".yml"));
-    core.debug("Is private cluster: " + isPrivateCluster);
-    core.debug("Filepath### : " + filePath);
     // write updated files
-    const tempDirectory =  needSubdirectory ? getTempDirectory() + "/manifests/" : getTempDirectory();
-    core.debug("Debug. Need subdirectory: " + needSubdirectory + " The directory is: " + tempDirectory);
+    const tempDirectory = process.env["runner.tempDirectory"] || os.tmpdir();
     const fileName = path.join(tempDirectory, path.basename(filePath));
 
-    if(needSubdirectory){
-      const writeFile = async (filepatharg, content, newSubDir) => {
-        try{
-          //console.debug("trying to create dir: " + newSubDir);
-
-          if(!fs.existsSync(newSubDir)){
-            try{
-              fs.mkdirSync(newSubDir, { recursive: true });
-
-            }catch(e){
-             // core.debug("could not create the directory: " + newSubDir + ": " + e);
-
-            }
-          }
-          console.debug("after create dir: " + newSubDir + " Does it exist: " + fs.existsSync(newSubDir));
-         // core.debug("inside async write file");
-          fs.writeFileSync(filepatharg, content);
-          core.debug("wrote " + filepatharg + " correctly");
-        }catch(e){
-          core.debug("write file failed in the catch block" + e);
-        }
-
-        
-      }
-      writeFile(path.join(fileName), contents, tempDirectory);
-    }else{
-
-      fs.writeFileSync(path.join(fileName), contents);
-      core.debug("After write : " + filePath);
-    }
-
-    
+    fs.writeFileSync(path.join(fileName), contents);
+    core.debug("After write : " + filePath);
+  
     newFilePaths.push(fileName);
-   
-    
-
-    
-
-
-
-
-    /*
-    fs.readdir(tempDirectory, (err, files) => {
-      files.forEach(file => {
-        core.debug("temp files in temp directory: " + file);
-      });
-    });
-    */
-
-    
-    
   });
-  core.debug("New file paths returned:L " + newFilePaths);
+
   return newFilePaths;
 }
 
