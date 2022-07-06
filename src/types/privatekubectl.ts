@@ -104,12 +104,14 @@ export class PrivateKubectl extends Kubectl{
 
             // check if file exists in list and only move if it does
          // core.debug("does filename array contain file: " + file + " ?: " + filenames.indexOf(file));
-         core.debug("filenames type: " + typeof(filenames));
-            for(var index = 0; index < filenames.length; index++){
-              core.debug("ELEMENT: " + filenames[index] + " at index " + index);
-              fs.rename("/tmp/" + filenames[index], "/tmp/manifests/" + filenames[index] , function (err) {
+       
+          //  for(var index = 0; index < filenames.length; index++){
+              var filenamesArr = filenames[0].split(",");
+              core.debug("filenamesArr: " + filenamesArr);
+              for(var index = 0; index < filenamesArr.length; index++){
+              fs.rename("/tmp/" + filenamesArr[index], "/tmp/manifests/" + filenamesArr[index] , function (err) {
                 if (err) {
-                  core.debug("could not rename " + "/tmp/" + filenames[index] + " to  " + "/tmp/manifests/" + filenames[index] + " ERROR: " + err);
+                  core.debug("could not rename " + "/tmp/" + filenamesArr[index] + " to  " + "/tmp/manifests/" + filenamesArr[index] + " ERROR: " + err);
                 
                 
                 
@@ -119,7 +121,7 @@ export class PrivateKubectl extends Kubectl{
                
               })
 
-            }
+           }
            
 
         
