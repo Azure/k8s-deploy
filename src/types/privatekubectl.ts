@@ -20,8 +20,6 @@ export class PrivateKubectl extends Kubectl{
   }
 
   protected async execute(args: string[], silent: boolean = false) {
-    super.isPrivateCluster = true; // This can probably be deleted
-    
     args.unshift("/k8stools/kubectl");
     var kubectlCmd = args.join(" ");
     var addFileFlag = false;
@@ -55,7 +53,11 @@ export class PrivateKubectl extends Kubectl{
           continue;
         }
 
-        this.moveFileToTempManifestDir(file);
+        try{
+          this.moveFileToTempManifestDir(file);
+        }catch(e){
+          core.debug("Could not move file to temp/manifests dir: " + e);
+        }
       }
     }
     
