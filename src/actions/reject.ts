@@ -36,24 +36,26 @@ async function rejectCanary(kubectl: Kubectl, manifests: string[]) {
       core.getInput('traffic-split-method', {required: true})
    )
    if (trafficSplitMethod == TrafficSplitMethod.SMI) {
-      core.info('Rejecting deployment with SMI canary strategy')
+      core.startGroup('Rejecting deployment with SMI canary strategy')
       includeServices = true
       await SMICanaryDeploymentHelper.redirectTrafficToStableDeployment(
          kubectl,
          manifests
       )
+      core.endGroup()
    }
 
-   core.info('Deleting baseline and canary workloads')
+   core.startGroup('Deleting baseline and canary workloads')
    await canaryDeploymentHelper.deleteCanaryDeployment(
       kubectl,
       manifests,
       includeServices
    )
+   core.endGroup()
 }
 
 async function rejectBlueGreen(kubectl: Kubectl, manifests: string[]) {
-   core.info('Rejecting deployment with blue green strategy')
+   core.startGroup('Rejecting deployment with blue green strategy')
 
    const routeStrategy = parseRouteStrategy(
       core.getInput('route-method', {required: true})
@@ -65,4 +67,5 @@ async function rejectBlueGreen(kubectl: Kubectl, manifests: string[]) {
    } else {
       await rejectBlueGreenService(kubectl, manifests)
    }
+   core.endGroup()
 }
