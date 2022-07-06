@@ -52,12 +52,8 @@ export class PrivateKubectl extends Kubectl{
         if(file == null || file == undefined){
           continue;
         }
-
-        try{
-          this.moveFileToTempManifestDir(file);
-        }catch(e){
-          core.debug("Could not move file to temp/manifests dir: " + e);
-        }
+      
+        this.moveFileToTempManifestDir(file);
       }
     }
     
@@ -86,7 +82,7 @@ export class PrivateKubectl extends Kubectl{
     var end = temp.indexOf(" -");
     
     //End could be case where the -f flag was last, or -f is followed by some additonal flag and it's arguments
-    return temp.substring(3, end == -1 ? temp.length : end).trim(); //.replace(/[\,]/g ," ");
+    return temp.substring(3, end == -1 ? temp.length : end).trim();
   }
 
 
@@ -109,15 +105,23 @@ export class PrivateKubectl extends Kubectl{
   private moveFileToTempManifestDir(file: string){
     this.createTempManifestsDirectory();
 
-    fs.rename("/tmp/" + file, "/tmp/manifests/" + file , function (err) {
-      if (err) {
-        core.debug("could not rename " + "/tmp/" + file + " to  " + "/tmp/manifests/" + file + " ERROR: " + err);
-      
-      }else{
-        core.debug("Successfully moved file '" + file + "' from /tmp to /tmp/manifest directory");
+    try {
+      if (!fs.existsSync("/tmp/" + file)) {
+        core.debug("/tmp/" + file + " does not exist, and therefore cannot be moved to the manifest directory");
+        return;
       }
+
+      fs.rename("/tmp/" + file, "/tmp/manifests/" + file , function (err) {
+        if (err) {
+          core.debug("Could not rename " + "/tmp/" + file + " to  " + "/tmp/manifests/" + file + " ERROR: " + err);
+          return;
+        }
+        core.debug("Successfully moved file '" + file + "' from /tmp to /tmp/manifest directory");
+      })
       
-    })
+    } catch(err) {
+      core.debug(err);
+    }
   }
 
 }
