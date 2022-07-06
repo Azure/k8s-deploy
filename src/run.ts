@@ -36,9 +36,9 @@ export async function run() {
   const resourceGroup = core.getInput("resource-group") || "";
   const resourceName = core.getInput("name") || "";
 
-  const kubectl = isPrivateCluster ? new PrivateKubectl(kubectlPath, namespace, true, resourceGroup, resourceName, true) : new Kubectl(kubectlPath, namespace, true);
+  const kubectl = isPrivateCluster ? new PrivateKubectl(kubectlPath, namespace, true, resourceGroup, resourceName) : new Kubectl(kubectlPath, namespace, true);
 
-
+  core.debug("Is cluster private: " + kubectl.isPrivate());
   // run action
   switch (action) {
     case Action.DEPLOY: {
