@@ -23,7 +23,8 @@ import {parseRouteStrategy, RouteStrategy} from '../types/routeStrategy'
 import {ExecOutput} from '@actions/exec'
 import {
    getWorkflowAnnotationKeyLabel,
-   getWorkflowAnnotations
+   getWorkflowAnnotations,
+   cleanLabel
 } from '../utilities/workflowAnnotationUtils'
 import {
    annotateChildPods,
@@ -70,10 +71,7 @@ export async function deployManifests(
          return newFilePaths
       }
 
-      case undefined: {
-         core.warning('Deployment strategy is not recognized.')
-      }
-      default: {
+      case DeploymentStrategy.BASIC: {
          const trafficSplitMethod = parseTrafficSplitMethod(
             core.getInput('traffic-split-method', {required: true})
          )
@@ -93,6 +91,10 @@ export async function deployManifests(
          }
 
          return files
+      }
+
+      default: {
+         throw new Error('Deployment strategy is not recognized.')
       }
    }
 }
@@ -213,10 +215,10 @@ async function labelResources(
    label: string
 ) {
    const labels = [
-      `workflowFriendlyName=${normalizeWorkflowStrLabel(
-         process.env.GITHUB_WORKFLOW
+      `workflowFriendlyName=${cleanLabel(
+         normalizeWorkflowStrLabel(process.env.GITHUB_WORKFLOW)
       )}`,
-      `workflow=${label}`
+      `workflow=${cleanLabel(label)}`
    ]
 
    checkForErrors([await kubectl.labelFiles(files, labels)], true)
