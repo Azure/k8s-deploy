@@ -38,6 +38,7 @@ export async function run() {
 
   const kubectl = isPrivateCluster ? new PrivateKubectl(kubectlPath, namespace, true, resourceGroup, resourceName) : new Kubectl(kubectlPath, namespace, true);
 
+  core.debug("Is cluster private: " + kubectl.isPrivate());
   // run action
   switch (action) {
     case Action.DEPLOY: {
