@@ -1,28 +1,41 @@
 {
-  "name": "k8s-deploy-action",
-  "version": "0.0.0",
-  "author": "Deepak Sattiraju",
+  "name": "@actions/exec",
+  "version": "1.1.1",
+  "description": "Actions exec lib",
+  "keywords": [
+    "github",
+    "actions",
+    "exec"
+  ],
+  "homepage": "https://github.com/actions/toolkit/tree/main/packages/exec",
   "license": "MIT",
+  "main": "lib/exec.js",
+  "types": "lib/exec.d.ts",
+  "directories": {
+    "lib": "lib",
+    "test": "__tests__"
+  },
+  "files": [
+    "lib",
+    "!.DS_Store"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/actions/toolkit.git",
+    "directory": "packages/exec"
+  },
   "scripts": {
-    "build": "tsc --outDir ./lib --rootDir ./src",
-    "test": "jest"
+    "audit-moderate": "npm install && npm audit --json --audit-level=moderate > audit.json",
+    "test": "echo \"Error: run tests from root\" && exit 1",
+    "tsc": "tsc"
+  },
+  "bugs": {
+    "url": "https://github.com/actions/toolkit/issues"
   },
   "dependencies": {
-    "@actions/core": "^1.2.6",
-    "@actions/exec": "^1.0.0",
-    "@actions/io": "^1.0.0",
-    "@actions/tool-cache": "1.1.2",
-    "@octokit/core": "^3.5.1",
-    "@octokit/plugin-retry": "^3.0.9",
-    "@types/minipass": "^3.1.2",
-    "js-yaml": "3.13.1"
-  },
-  "devDependencies": {
-    "@types/jest": "^26.0.0",
-    "@types/js-yaml": "^3.12.7",
-    "@types/node": "^12.20.41",
-    "jest": "^26.0.0",
-    "ts-jest": "^26.0.0",
-    "typescript": "3.9.5"
+    "@actions/io": "^1.0.1"
   }
 }
