@@ -52,11 +52,19 @@ export class PrivateKubectl extends Kubectl{
     }
     
     core.debug(`private cluster Kubectl run with invoke command: ${kubectlCmd}`);
+<<<<<<< HEAD
+=======
+    core.debug("EO as it goes into getExec " + eo.cwd);
+>>>>>>> 6e1e45376ef2f91a10a96eae0f0fe4d2afb77772
     return await getExecOutput("az", privateClusterArgs, eo);
   }
 
 
   public extractFilesnames(strToParse: string) {
+<<<<<<< HEAD
+=======
+    console.log("string to parse extractFiles: " + strToParse);
+>>>>>>> 6e1e45376ef2f91a10a96eae0f0fe4d2afb77772
     var start = strToParse.indexOf("-filename"); 
     var offset = 7;
 
