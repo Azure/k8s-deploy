@@ -169,7 +169,7 @@ export class Kubectl {
       return this.execute(['delete', ...args])
    }
 
-   private async execute(args: string[], silent: boolean = false) {
+   protected async execute(args: string[], silent: boolean = false) {
       if (this.ignoreSSLErrors) {
          args.push('--insecure-skip-tls-verify')
       }
