@@ -26,7 +26,7 @@ export async function run() {
       .map((manifest) => manifest.trim()) // remove surrounding whitespace
       .filter((manifest) => manifest.length > 0) // remove any blanks
 
-   const fullManifestFilePaths = getFilesFromDirectories(manifestFilePaths)
+  const fullManifestFilePaths = getFilesFromDirectories(manifestFilePaths)
   const kubectlPath = await getKubectlPath();
   const namespace = core.getInput("namespace") || "default";
   const isPrivateCluster = core.getInput("private-cluster").toLowerCase() === "true";
