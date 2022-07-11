@@ -21,16 +21,9 @@ export async function deploy(
    manifestFilePaths: string[],
    deploymentStrategy: DeploymentStrategy
 ) {
-<<<<<<< HEAD
-  // update manifests
-  core.debug("Input manifest files BEFORE: " + manifestFilePaths);
-  const inputManifestFiles: string[] = updateManifestFiles(manifestFilePaths, kubectl.isPrivate());
-  core.debug("Input manifest files AFTER: " + inputManifestFiles);
-=======
    // update manifests
    const inputManifestFiles: string[] = updateManifestFiles(manifestFilePaths)
    core.debug('Input manifest files: ' + inputManifestFiles)
->>>>>>> 19d66d6bdbb01e3a9b51e26f908dc8e5e4c63706
 
    // deploy manifests
    core.startGroup('Deploying manifests')
