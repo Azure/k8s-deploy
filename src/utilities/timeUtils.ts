@@ -1,7 +1,7 @@
 export function sleep(timeout: number) {
-  return new Promise((resolve) => setTimeout(resolve, timeout));
+   return new Promise((resolve) => setTimeout(resolve, timeout))
 }
 
 export function getCurrentTime(): number {
-  return new Date().getTime();
+   return new Date().getTime()
 }

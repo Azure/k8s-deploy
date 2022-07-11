@@ -1,6 +1,7 @@
 export enum DeploymentStrategy {
-  CANARY = "canary",
-  BLUE_GREEN = "blue-green",
+   BASIC = 'basic',
+   CANARY = 'canary',
+   BLUE_GREEN = 'blue-green'
 }
 
 /**
@@ -9,11 +10,11 @@ export enum DeploymentStrategy {
  * @returns The DeploymentStrategy enum or undefined if it can't be parsed
  */
 export const parseDeploymentStrategy = (
-  str: string
+   str: string
 ): DeploymentStrategy | undefined =>
-  DeploymentStrategy[
-    Object.keys(DeploymentStrategy).filter(
-      (k) =>
-        DeploymentStrategy[k].toString().toLowerCase() === str.toLowerCase()
-    )[0] as keyof typeof DeploymentStrategy
-  ];
+   DeploymentStrategy[
+      Object.keys(DeploymentStrategy).filter(
+         (k) =>
+            DeploymentStrategy[k].toString().toLowerCase() === str.toLowerCase()
+      )[0] as keyof typeof DeploymentStrategy
+   ]
