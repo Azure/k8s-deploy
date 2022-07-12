@@ -22,14 +22,11 @@ export async function deploy(
    deploymentStrategy: DeploymentStrategy
 ) {
    // update manifests
-   core.debug('Input manifest files BEFORE: ' + manifestFilePaths)
-   const inputManifestFiles: string[] = updateManifestFiles(
-      manifestFilePaths
-   )
-   core.debug('Input manifest files AFTER: ' + inputManifestFiles)
+   const inputManifestFiles: string[] = updateManifestFiles(manifestFilePaths)
+   core.debug('Input manifest files: ' + inputManifestFiles)
 
    // deploy manifests
-   core.info('Deploying manifests')
+   core.startGroup('Deploying manifests')
    const trafficSplitMethod = parseTrafficSplitMethod(
       core.getInput('traffic-split-method', {required: true})
    )
@@ -39,10 +36,11 @@ export async function deploy(
       kubectl,
       trafficSplitMethod
    )
+   core.endGroup()
    core.debug('Deployed manifest files: ' + deployedManifestFiles)
 
    // check manifest stability
-   core.info('Checking manifest stability')
+   core.startGroup('Checking manifest stability')
    const resourceTypes: Resource[] = getResources(
       deployedManifestFiles,
       models.DEPLOYMENT_TYPES.concat([
@@ -50,17 +48,19 @@ export async function deploy(
       ])
    )
    await checkManifestStability(kubectl, resourceTypes)
+   core.endGroup()
 
    if (deploymentStrategy == DeploymentStrategy.BLUE_GREEN) {
-      core.info('Routing blue green')
+      core.startGroup('Routing blue green')
       const routeStrategy = parseRouteStrategy(
          core.getInput('route-method', {required: true})
       )
       await routeBlueGreen(kubectl, inputManifestFiles, routeStrategy)
+      core.endGroup()
    }
 
    // print ingresses
-   core.info('Printing ingresses')
+   core.startGroup('Printing ingresses')
    const ingressResources: Resource[] = getResources(deployedManifestFiles, [
       KubernetesConstants.DiscoveryAndLoadBalancerResource.INGRESS
    ])
@@ -70,9 +70,10 @@ export async function deploy(
          ingressResource.name
       )
    }
+   core.endGroup()
 
    // annotate resources
-   core.info('Annotating resources')
+   core.startGroup('Annotating resources')
    let allPods
    try {
       allPods = JSON.parse((await kubectl.getAllPods()).stdout)
@@ -85,4 +86,5 @@ export async function deploy(
       resourceTypes,
       allPods
    )
+   core.endGroup()
 }
