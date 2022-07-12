@@ -43,7 +43,7 @@ export class PrivateKubectl extends Kubectl{
       for(let index = 0; index < filenamesArr.length; index++){
         var file = filenamesArr[index];
         
-        if(file == null || file == undefined){
+        if(!file){
           continue;
         }
       
