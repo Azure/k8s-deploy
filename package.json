@@ -1,28 +1,29 @@
 {
-  "name": "k8s-deploy-action",
-  "version": "0.0.0",
-  "author": "Deepak Sattiraju",
-  "license": "MIT",
-  "scripts": {
-    "build": "tsc --outDir ./lib --rootDir ./src",
-    "test": "jest"
-  },
-  "dependencies": {
-    "@actions/core": "^1.2.6",
-    "@actions/exec": "^1.0.0",
-    "@actions/io": "^1.0.0",
-    "@actions/tool-cache": "1.1.2",
-    "@octokit/core": "^3.5.1",
-    "@octokit/plugin-retry": "^3.0.9",
-    "@types/minipass": "^3.1.2",
-    "js-yaml": "3.13.1"
-  },
-  "devDependencies": {
-    "@types/jest": "^26.0.0",
-    "@types/js-yaml": "^3.12.7",
-    "@types/node": "^12.20.41",
-    "jest": "^26.0.0",
-    "ts-jest": "^26.0.0",
-    "typescript": "3.9.5"
-  }
+   "name": "k8s-deploy-action",
+   "version": "0.0.0",
+   "author": "Deepak Sattiraju",
+   "license": "MIT",
+   "scripts": {
+      "build": "tsc --outDir ./lib --rootDir ./src",
+      "test": "jest"
+   },
+   "dependencies": {
+      "@actions/core": "^1.2.6",
+      "@actions/exec": "^1.0.0",
+      "@actions/io": "^1.0.0",
+      "@actions/tool-cache": "1.1.2",
+      "@octokit/core": "^3.5.1",
+      "@octokit/plugin-retry": "^3.0.9",
+      "@types/minipass": "^3.1.2",
+      "js-yaml": "3.13.1"
+   },
+   "devDependencies": {
+      "@types/jest": "^26.0.0",
+      "@types/js-yaml": "^3.12.7",
+      "@types/node": "^12.20.41",
+      "jest": "^26.0.0",
+      "prettier": "^2.7.1",
+      "ts-jest": "^26.0.0",
+      "typescript": "3.9.5"
+   }
 }

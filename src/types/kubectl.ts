@@ -10,33 +10,32 @@ export interface Resource {
 }
 
 export class Kubectl {
-  protected readonly kubectlPath: string;
-  protected readonly namespace: string;
-  protected readonly ignoreSSLErrors: boolean;
-  protected readonly resourceGroup: string;
-  protected readonly name: string;
-  protected isPrivateCluster: boolean;
-
+   protected readonly kubectlPath: string
+   protected readonly namespace: string
+   protected readonly ignoreSSLErrors: boolean
+   protected readonly resourceGroup: string
+   protected readonly name: string
+   protected isPrivateCluster: boolean
 
    constructor(
       kubectlPath: string,
-      namespace: string = "default",
+      namespace: string = 'default',
       ignoreSSLErrors: boolean = false,
-      resourceGroup: string = "",
-      name: string = "",
+      resourceGroup: string = '',
+      name: string = '',
       isPrivateCluster: boolean = false
    ) {
-      this.kubectlPath = kubectlPath;
-      this.ignoreSSLErrors = !!ignoreSSLErrors;
-      this.namespace = namespace;
-      this.resourceGroup = resourceGroup;
-      this.name = name;
-      this.isPrivateCluster = isPrivateCluster;
+      this.kubectlPath = kubectlPath
+      this.ignoreSSLErrors = !!ignoreSSLErrors
+      this.namespace = namespace
+      this.resourceGroup = resourceGroup
+      this.name = name
+      this.isPrivateCluster = isPrivateCluster
    }
 
-   public isPrivate(){
-    return this.isPrivateCluster;
-  }
+   public isPrivate() {
+      return this.isPrivateCluster
+   }
 
    public async apply(
       configurationPaths: string | string[],
