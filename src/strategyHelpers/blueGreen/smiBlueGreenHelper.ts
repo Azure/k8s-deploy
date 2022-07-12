@@ -127,7 +127,8 @@ let trafficSplitAPIVersion = ''
 async function createTrafficSplitObject(
    kubectl: Kubectl,
    name: string,
-   nextLabel: string
+   nextLabel: string,
+   annotations: {[key: string]: string} = {}
 ): Promise<any> {
    // cache traffic split api version
    if (!trafficSplitAPIVersion)
@@ -145,7 +146,8 @@ async function createTrafficSplitObject(
       apiVersion: trafficSplitAPIVersion,
       kind: 'TrafficSplit',
       metadata: {
-         name: getBlueGreenResourceName(name, TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX)
+         name: getBlueGreenResourceName(name, TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX),
+         annotations: annotations
       },
       spec: {
          service: name,
