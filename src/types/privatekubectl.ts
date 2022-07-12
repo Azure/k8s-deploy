@@ -15,9 +15,9 @@ export class PrivateKubectl extends Kubectl{
 
   protected async execute(args: string[], silent: boolean = false) {
     args.unshift("/k8stools/kubectl");
-    var kubectlCmd = args.join(" ");
-    var addFileFlag = false;
-    var eo = <ExecOptions>({ silent });
+    let kubectlCmd = args.join(" ");
+    let addFileFlag = false;
+    let eo = <ExecOptions>({ silent });
 
     if(this.containsFilenames(kubectlCmd)){
       core.debug("kubectl command contains filenames: " + kubectlCmd);
@@ -33,14 +33,14 @@ export class PrivateKubectl extends Kubectl{
     ];
     
     if(addFileFlag){
-      var filenames = this.extractFilesnames(kubectlCmd).split(" ");
+      const filenames = this.extractFilesnames(kubectlCmd).split(" ");
       const tempDirectory = process.env["runner.tempDirectory"] || os.tmpdir() + "/manifests";
       eo.cwd = tempDirectory;
       core.debug("ExecOptions current working directory: " + eo.cwd);
       privateClusterArgs.push(...["--file", "."]);
 
-      var filenamesArr = filenames[0].split(",");
-      for(var index = 0; index < filenamesArr.length; index++){
+      let filenamesArr = filenames[0].split(",");
+      for(let index = 0; index < filenamesArr.length; index++){
         var file = filenamesArr[index];
         
         if(file == null || file == undefined){
