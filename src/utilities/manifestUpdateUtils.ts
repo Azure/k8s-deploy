@@ -3,6 +3,7 @@ import * as fs from 'fs'
 import * as yaml from 'js-yaml'
 import * as path from 'path'
 import * as fileHelper from './fileUtils'
+import * as os from 'os'
 import {getTempDirectory} from './fileUtils'
 import {
    InputObjectKindNotDefinedError,
@@ -21,7 +22,11 @@ import {
 } from './manifestPullSecretUtils'
 import {Resource} from '../types/kubectl'
 
-export function updateManifestFiles(manifestFilePaths: string[]) {
+export function updateManifestFiles(
+   manifestFilePaths: string[],
+   isPrivateCluster = false
+) {
+   core.debug('Update manifests isPrivateCluster INSIDE:' + isPrivateCluster)
    if (manifestFilePaths?.length === 0) {
       throw new Error('Manifest files not provided')
    }
@@ -30,9 +35,10 @@ export function updateManifestFiles(manifestFilePaths: string[]) {
    const containers: string[] = core.getInput('images').split('\n')
    const manifestFiles = updateContainerImagesInManifestFiles(
       manifestFilePaths,
-      containers
+      containers,
+      isPrivateCluster
    )
-
+   console.log('result of updateContainerImages: ' + manifestFiles)
    // update pull secrets
    const imagePullSecrets: string[] = core
       .getInput('imagepullsecrets')
@@ -66,7 +72,8 @@ export function UnsetClusterSpecificDetails(resource: any) {
 
 function updateContainerImagesInManifestFiles(
    filePaths: string[],
-   containers: string[]
+   containers: string[],
+   isPrivateCluster = false
 ): string[] {
    if (filePaths?.length <= 0) return filePaths
 
@@ -91,9 +98,12 @@ function updateContainerImagesInManifestFiles(
       })
 
       // write updated files
-      const tempDirectory = getTempDirectory()
+      const tempDirectory = process.env['runner.tempDirectory'] || os.tmpdir()
       const fileName = path.join(tempDirectory, path.basename(filePath))
+
       fs.writeFileSync(path.join(fileName), contents)
+      core.debug('After write : ' + filePath)
+
       newFilePaths.push(fileName)
    })
 
@@ -102,12 +112,10 @@ function updateContainerImagesInManifestFiles(
 
 /*
   Example:
-
   Input of
     currentString: `image: "example/example-image"`
     imageName: `example/example-image`
     imageNameWithNewTag: `example/example-image:identifiertag`
-
   would return
     `image: "example/example-image:identifiertag"`
 */
