@@ -94,7 +94,7 @@ function updateContainerImagesInManifestFiles(
       const tempDirectory = getTempDirectory()
       const fileName = path.join(tempDirectory, path.basename(filePath))
       fs.writeFileSync(path.join(fileName), contents)
-      core.debug('Before pushing newFilePaths: ' + fileName)
+      core.debug('Before pushing newFilePaths: ' + fileName);
       newFilePaths.push(fileName)
    })
 
