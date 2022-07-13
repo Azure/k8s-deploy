@@ -3,7 +3,6 @@ import * as fs from 'fs'
 import * as yaml from 'js-yaml'
 import * as path from 'path'
 import * as fileHelper from './fileUtils'
-import * as os from 'os'
 import {getTempDirectory} from './fileUtils'
 import {
    InputObjectKindNotDefinedError,
@@ -22,11 +21,7 @@ import {
 } from './manifestPullSecretUtils'
 import {Resource} from '../types/kubectl'
 
-export function updateManifestFiles(
-   manifestFilePaths: string[],
-   isPrivateCluster = false
-) {
-   core.debug('Update manifests isPrivateCluster INSIDE:' + isPrivateCluster)
+export function updateManifestFiles(manifestFilePaths: string[]) {
    if (manifestFilePaths?.length === 0) {
       throw new Error('Manifest files not provided')
    }
@@ -35,10 +30,9 @@ export function updateManifestFiles(
    const containers: string[] = core.getInput('images').split('\n')
    const manifestFiles = updateContainerImagesInManifestFiles(
       manifestFilePaths,
-      containers,
-      isPrivateCluster
+      containers
    )
-   console.log('result of updateContainerImages: ' + manifestFiles)
+
    // update pull secrets
    const imagePullSecrets: string[] = core
       .getInput('imagepullsecrets')
@@ -72,8 +66,7 @@ export function UnsetClusterSpecificDetails(resource: any) {
 
 function updateContainerImagesInManifestFiles(
    filePaths: string[],
-   containers: string[],
-   isPrivateCluster = false
+   containers: string[]
 ): string[] {
    if (filePaths?.length <= 0) return filePaths
 
@@ -98,12 +91,10 @@ function updateContainerImagesInManifestFiles(
       })
 
       // write updated files
-      const tempDirectory = process.env['runner.tempDirectory'] || os.tmpdir()
+      const tempDirectory = getTempDirectory()
       const fileName = path.join(tempDirectory, path.basename(filePath))
-
       fs.writeFileSync(path.join(fileName), contents)
-      core.debug('After write : ' + filePath)
-
+      core.debug("Before pushing newFilePaths: " + fileName);
       newFilePaths.push(fileName)
    })
 
@@ -112,10 +103,12 @@ function updateContainerImagesInManifestFiles(
 
 /*
   Example:
+
   Input of
     currentString: `image: "example/example-image"`
     imageName: `example/example-image`
     imageNameWithNewTag: `example/example-image:identifiertag`
+
   would return
     `image: "example/example-image:identifiertag"`
 */
