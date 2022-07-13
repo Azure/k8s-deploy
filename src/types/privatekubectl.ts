@@ -52,7 +52,7 @@ export class PrivateKubectl extends Kubectl {
             if (!file) {
                continue
             }
-
+            core.debug("Attempting to move file: " + file);
             this.moveFileToTempManifestDir(file)
          }
       }
@@ -135,7 +135,7 @@ export class PrivateKubectl extends Kubectl {
             )
          })
       } catch (err) {
-         core.debug(err)
+         core.debug("Error while attetmpting to copy file: '" + file + "' " + err)
       }
    }
 }
