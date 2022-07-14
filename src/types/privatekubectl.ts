@@ -10,7 +10,7 @@ export class PrivateKubectl extends Kubectl {
    }
 
    protected async execute(args: string[], silent: boolean = false) {
-      args.unshift('/k8stools/kubectl')
+      args.unshift('kubectl')
       let kubectlCmd = args.join(' ')
       let addFileFlag = false
       let eo = <ExecOptions>{silent}
