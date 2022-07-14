@@ -17,6 +17,7 @@ export class PrivateKubectl extends Kubectl {
 
       if (this.containsFilenames(kubectlCmd)) {
          core.debug('kubectl command contains filenames: ' + kubectlCmd)
+         //kubectlcmd has filenames with a space between generated seq of number and underscore. This needs to be removed
          kubectlCmd = kubectlCmd
             .replace(/[\/][t][m][p][\/]/g, '')
             .replace(/[_][' ']/g, '')
