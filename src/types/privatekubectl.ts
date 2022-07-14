@@ -40,6 +40,9 @@ export class PrivateKubectl extends Kubectl {
       ]
 
       if (addFileFlag) {
+         core.debug("current dir:" + process.cwd);
+         this.whatsInThisDir("/tmp");
+         this.whatsInThisDir(process.cwd);
          const filenames = this.extractFilesnames(kubectlCmd).split(' ')
          const tempDirectory =
             process.env['runner.tempDirectory'] || os.tmpdir() + '/manifests'
@@ -64,6 +67,14 @@ export class PrivateKubectl extends Kubectl {
       )
       core.debug('EO as it goes into getExec ' + eo.cwd)
       return await getExecOutput('az', privateClusterArgs, eo)
+   }
+
+   private whatsInThisDir(dir){
+    fs.readdir(dir, (err, files) => {
+      files.forEach(file => {
+        core.debug("files in dir ' " + dir + " ': " + file);
+      });
+    });
    }
 
    public extractFilesnames(strToParse: string) {
