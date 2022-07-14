@@ -18,9 +18,7 @@ export class PrivateKubectl extends Kubectl {
       if (this.containsFilenames(kubectlCmd)) {
          core.debug('kubectl command contains filenames: ' + kubectlCmd)
          //kubectlcmd has filenames with a space between generated seq of number and underscore. This needs to be removed
-         kubectlCmd = kubectlCmd
-            .replace(/[\/][t][m][p][\/]/g, '')
-            .replace(/[_][' ']/g, '_')
+         kubectlCmd = kubectlCmd.replace(/[\/][t][m][p][\/]/g, '')
          core.debug(
             'Filenames when invoking for private clusters: ' + kubectlCmd
          )
@@ -40,9 +38,6 @@ export class PrivateKubectl extends Kubectl {
       ]
 
       if (addFileFlag) {
-         core.debug("current dir:" + process.cwd);
-         this.whatsInThisDir("/tmp");
-         this.whatsInThisDir(process.cwd);
          const filenames = this.extractFilesnames(kubectlCmd).split(' ')
          const tempDirectory =
             process.env['runner.tempDirectory'] || os.tmpdir() + '/manifests'
@@ -69,12 +64,12 @@ export class PrivateKubectl extends Kubectl {
       return await getExecOutput('az', privateClusterArgs, eo)
    }
 
-   private whatsInThisDir(dir){
-    fs.readdir(dir, (err, files) => {
-      files.forEach(file => {
-        core.debug("files in dir ' " + dir + " ': " + file);
-      });
-    });
+   private whatsInThisDir(dir) {
+      fs.readdir(dir, (err, files) => {
+         files.forEach((file) => {
+            core.debug("files in dir ' " + dir + " ': " + file)
+         })
+      })
    }
 
    public extractFilesnames(strToParse: string) {
