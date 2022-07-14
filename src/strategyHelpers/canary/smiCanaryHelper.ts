@@ -288,7 +288,8 @@ async function getTrafficSplitObject(
    name: string,
    stableWeight: number,
    baselineWeight: number,
-   canaryWeight: number
+   canaryWeight: number, 
+   annotations: {[key: string]: string} = {}
 ): Promise<string> {
    // cached version
    if (!trafficSplitAPIVersion) {
@@ -301,7 +302,8 @@ async function getTrafficSplitObject(
       apiVersion: trafficSplitAPIVersion,
       kind: 'TrafficSplit',
       metadata: {
-         name: getTrafficSplitResourceName(name)
+         name: getTrafficSplitResourceName(name),
+         annotations: annotations
       },
       spec: {
          backends: [
