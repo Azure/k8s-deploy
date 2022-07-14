@@ -17,7 +17,7 @@ export class PrivateKubectl extends Kubectl {
 
       if (this.containsFilenames(kubectlCmd)) {
          core.debug('kubectl command contains filenames: ' + kubectlCmd)
-         kubectlCmd = kubectlCmd.replace(/[\/][t][m][p][\/]/g, '')
+         kubectlCmd = kubectlCmd.replace(/[\/][t][m][p][\/]/g, '').replace(' ','');
          core.debug(
             'Removing leading slashes for filenames when invoking for private clusters: ' +
                kubectlCmd
