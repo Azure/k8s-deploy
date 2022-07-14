@@ -18,6 +18,7 @@ export async function run() {
    const action: Action | undefined = parseAction(
       core.getInput('action', {required: true})
    )
+   const annotations: {[key: string]: string} = {}
    const strategy = parseDeploymentStrategy(core.getInput('strategy'))
    const manifestsInput = core.getInput('manifests', {required: true})
    const manifestFilePaths = manifestsInput
@@ -38,11 +39,11 @@ export async function run() {
          break
       }
       case Action.PROMOTE: {
-         await promote(kubectl, fullManifestFilePaths, strategy)
+         await promote(kubectl, fullManifestFilePaths, strategy, annotations)
          break
       }
       case Action.REJECT: {
-         await reject(kubectl, fullManifestFilePaths, strategy)
+         await reject(kubectl, fullManifestFilePaths, strategy, annotations)
          break
       }
       default: {

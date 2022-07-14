@@ -68,7 +68,8 @@ export async function promoteBlueGreenSMI(kubectl: Kubectl, manifestObjects) {
 
 export async function rejectBlueGreenSMI(
    kubectl: Kubectl,
-   filePaths: string[]
+   filePaths: string[],
+   annotations: {[key: string]: string} = {}
 ) {
    // get all kubernetes objects defined in manifest files
    const manifestObjects: BlueGreenManifests = getManifestObjects(filePaths)
@@ -77,7 +78,8 @@ export async function rejectBlueGreenSMI(
    await routeBlueGreenSMI(
       kubectl,
       NONE_LABEL_VALUE,
-      manifestObjects.serviceEntityList
+      manifestObjects.serviceEntityList,
+      annotations
    )
 
    // delete rejected new bluegreen deployments
@@ -196,14 +198,16 @@ export function getSMIServiceResource(
 export async function routeBlueGreenSMI(
    kubectl: Kubectl,
    nextLabel: string,
-   serviceEntityList: any[]
+   serviceEntityList: any[],
+   annotations: {[key: string]: string} = {}
 ) {
    for (const serviceObject of serviceEntityList) {
       // route trafficsplit to given label
       await createTrafficSplitObject(
          kubectl,
          serviceObject.metadata.name,
-         nextLabel
+         nextLabel,
+         annotations
       )
    }
 }

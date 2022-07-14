@@ -40,14 +40,15 @@ import {parseRouteStrategy, RouteStrategy} from '../types/routeStrategy'
 export async function promote(
    kubectl: Kubectl,
    manifests: string[],
-   deploymentStrategy: DeploymentStrategy
+   deploymentStrategy: DeploymentStrategy,
+   annotations: {[key: string]: string} = {}
 ) {
    switch (deploymentStrategy) {
       case DeploymentStrategy.CANARY:
          await promoteCanary(kubectl, manifests)
          break
       case DeploymentStrategy.BLUE_GREEN:
-         await promoteBlueGreen(kubectl, manifests)
+         await promoteBlueGreen(kubectl, manifests, annotations)
          break
       default:
          throw Error('Invalid promote deployment strategy')
@@ -104,7 +105,11 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
    core.endGroup()
 }
 
-async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
+async function promoteBlueGreen(
+   kubectl: Kubectl,
+   manifests: string[],
+   annotations: {[key: string]: string} = {}
+) {
    // update container images and pull secrets
    const inputManifestFiles: string[] = updateManifestFiles(manifests)
    const manifestObjects: BlueGreenManifests =
@@ -157,7 +162,8 @@ async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
       await routeBlueGreenSMI(
          kubectl,
          NONE_LABEL_VALUE,
-         manifestObjects.serviceEntityList
+         manifestObjects.serviceEntityList,
+         annotations
       )
       await deleteWorkloadsWithLabel(
          kubectl,
