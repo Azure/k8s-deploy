@@ -64,14 +64,6 @@ export class PrivateKubectl extends Kubectl {
       return await getExecOutput('az', privateClusterArgs, eo)
    }
 
-   private whatsInThisDir(dir) {
-      fs.readdir(dir, (err, files) => {
-         files.forEach((file) => {
-            core.debug("files in dir ' " + dir + " ': " + file)
-         })
-      })
-   }
-
    public extractFilesnames(strToParse: string) {
       console.log('string to parse extractFiles: ' + strToParse)
       var start = strToParse.indexOf('-filename')
