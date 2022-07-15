@@ -298,7 +298,6 @@ function updateImagePullSecretsInManifestFiles(
 
    const newObjectsList = []
    filePaths.forEach((filePath: string) => {
-      core.debug('filePath before safeload: ' + filePath)
       const fileContents = fs.readFileSync(filePath).toString()
       yaml.safeLoadAll(fileContents, (inputObject: any) => {
          if (inputObject?.kind) {
@@ -306,7 +305,6 @@ function updateImagePullSecretsInManifestFiles(
             if (isWorkloadEntity(kind)) {
                updateImagePullSecrets(inputObject, imagePullSecrets)
             }
-            core.debug('inputObject after safeload: ' + inputObject)
             newObjectsList.push(inputObject)
          }
       })
