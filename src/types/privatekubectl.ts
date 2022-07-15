@@ -17,7 +17,7 @@ export class PrivateKubectl extends Kubectl {
 
       if (this.containsFilenames(kubectlCmd)) {
          core.debug('kubectl command contains filenames: ' + kubectlCmd)
-         //kubectlcmd has filenames with a space between generated seq of number and underscore. This needs to be removed
+         // For private clusters, files will not be in the tmp directory
          kubectlCmd = kubectlCmd.replace(/[\/][t][m][p][\/]/g, '')
          core.debug(
             'Filenames when invoking for private clusters: ' + kubectlCmd
