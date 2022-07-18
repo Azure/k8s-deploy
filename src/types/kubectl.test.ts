@@ -289,12 +289,13 @@ describe('Kubectl class', () => {
       it('gets resource', async () => {
          const resourceType = 'type'
          const name = 'name'
-         expect(await kubectl.getResource(resourceType, name)).toBe(execReturn)
+         const annotations: {[key: string] : string} = {}
+         expect(await kubectl.getResource(resourceType, name, annotations)).toBe(execReturn)
          expect(exec.getExecOutput).toBeCalledWith(
             kubectlPath,
             [
                'get',
-               `${resourceType}/${name}`,
+               `${resourceType}/${name}/${annotations}`,
                '-o',
                'json',
                '--namespace',

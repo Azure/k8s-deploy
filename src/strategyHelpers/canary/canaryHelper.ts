@@ -77,9 +77,10 @@ export function getNewCanaryResource(
 export async function fetchResource(
    kubectl: Kubectl,
    kind: string,
-   name: string
+   name: string,
+   annotations: {[key: string] : string} = {}
 ) {
-   const result = await kubectl.getResource(kind, name)
+   const result = await kubectl.getResource(kind, name, annotations)
 
    if (!result || result?.stderr) {
       return null

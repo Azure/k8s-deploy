@@ -74,7 +74,7 @@ export async function rejectBlueGreenSMI(
    // get all kubernetes objects defined in manifest files
    const manifestObjects: BlueGreenManifests = getManifestObjects(filePaths)
 
-   // route trafficsplit to stable deploymetns
+   // route trafficsplit to stable deployments
    await routeBlueGreenSMI(
       kubectl,
       NONE_LABEL_VALUE,
