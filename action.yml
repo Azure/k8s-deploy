@@ -66,11 +66,10 @@ inputs:
    resource-group:
       description: 'Name of resource group - Only required if using private cluster'
       required: false
-      
+
    name:
       description: 'Resource group name - Only required if using private cluster'
       required: false
-      
 
 branding:
    color: 'green'

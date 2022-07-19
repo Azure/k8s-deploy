@@ -22,7 +22,7 @@ export class Kubectl {
       namespace: string = 'default',
       ignoreSSLErrors: boolean = false,
       resourceGroup: string = '',
-      name: string = '',
+      name: string = ''
    ) {
       this.kubectlPath = kubectlPath
       this.ignoreSSLErrors = !!ignoreSSLErrors

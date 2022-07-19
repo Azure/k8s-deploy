@@ -5,7 +5,6 @@ import * as os from 'os'
 import * as fs from 'fs'
 
 export class PrivateKubectl extends Kubectl {
-   
    protected async execute(args: string[], silent: boolean = false) {
       args.unshift('kubectl')
       let kubectlCmd = args.join(' ')
@@ -13,12 +12,8 @@ export class PrivateKubectl extends Kubectl {
       let eo = <ExecOptions>{silent}
 
       if (this.containsFilenames(kubectlCmd)) {
-         core.debug('kubectl command contains filenames: ' + kubectlCmd)
          // For private clusters, files will not be in the tmp directory
          kubectlCmd = kubectlCmd.replace(/[\/][t][m][p][\/]/g, '')
-         core.debug(
-            'Filenames when invoking for private clusters: ' + kubectlCmd
-         )
          addFileFlag = true
       }
 
@@ -44,12 +39,11 @@ export class PrivateKubectl extends Kubectl {
 
          let filenamesArr = filenames[0].split(',')
          for (let index = 0; index < filenamesArr.length; index++) {
-            var file = filenamesArr[index]
+            const file = filenamesArr[index]
 
             if (!file) {
                continue
             }
-            core.debug('Attempting to move file: ' + file)
             this.moveFileToTempManifestDir(file)
          }
       }
@@ -57,14 +51,12 @@ export class PrivateKubectl extends Kubectl {
       core.debug(
          `private cluster Kubectl run with invoke command: ${kubectlCmd}`
       )
-      core.debug('EO as it goes into getExec ' + eo.cwd)
       return await getExecOutput('az', privateClusterArgs, eo)
    }
 
    public extractFilesnames(strToParse: string) {
-      console.log('string to parse extractFiles: ' + strToParse)
-      var start = strToParse.indexOf('-filename')
-      var offset = 7
+      let start = strToParse.indexOf('-filename')
+      let offset = 7
 
       if (start == -1) {
          start = strToParse.indexOf('-f')
@@ -101,40 +93,33 @@ export class PrivateKubectl extends Kubectl {
    private moveFileToTempManifestDir(file: string) {
       this.createTempManifestsDirectory()
 
-      try {
-         if (!fs.existsSync('/tmp/' + file)) {
+      if (!fs.existsSync('/tmp/' + file)) {
+         core.debug(
+            '/tmp/' +
+               file +
+               ' does not exist, and therefore cannot be moved to the manifest directory'
+         )
+      }
+
+      fs.copyFile('/tmp/' + file, '/tmp/manifests/' + file, function (err) {
+         if (err) {
             core.debug(
-               '/tmp/' +
+               'Could not rename ' +
+                  '/tmp/' +
                   file +
-                  ' does not exist, and therefore cannot be moved to the manifest directory'
+                  ' to  ' +
+                  '/tmp/manifests/' +
+                  file +
+                  ' ERROR: ' +
+                  err
             )
             return
          }
-
-         fs.copyFile('/tmp/' + file, '/tmp/manifests/' + file, function (err) {
-            if (err) {
-               core.debug(
-                  'Could not rename ' +
-                     '/tmp/' +
-                     file +
-                     ' to  ' +
-                     '/tmp/manifests/' +
-                     file +
-                     ' ERROR: ' +
-                     err
-               )
-               return
-            }
-            core.debug(
-               "Successfully moved file '" +
-                  file +
-                  "' from /tmp to /tmp/manifest directory"
-            )
-         })
-      } catch (err) {
          core.debug(
-            "Error while attetmpting to copy file: '" + file + "' " + err
+            "Successfully moved file '" +
+               file +
+               "' from /tmp to /tmp/manifest directory"
          )
-      }
+      })
    }
 }
