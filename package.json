@@ -4,8 +4,10 @@
    "author": "Deepak Sattiraju",
    "license": "MIT",
    "scripts": {
-      "build": "tsc --outDir ./lib --rootDir ./src",
-      "test": "jest"
+      "build": "ncc build src/run.ts -o lib",
+      "test": "jest",
+      "format": "prettier --write .",
+      "format-check": "prettier --check ."
    },
    "dependencies": {
       "@actions/core": "^1.2.6",
