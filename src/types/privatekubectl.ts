@@ -5,10 +5,7 @@ import * as os from 'os'
 import * as fs from 'fs'
 
 export class PrivateKubectl extends Kubectl {
-   public isPrivate(): boolean {
-      return true
-   }
-
+   
    protected async execute(args: string[], silent: boolean = false) {
       args.unshift('kubectl')
       let kubectlCmd = args.join(' ')

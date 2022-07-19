@@ -44,8 +44,6 @@ export async function run() {
         )
       : new Kubectl(kubectlPath, namespace, true)
 
-   core.debug('Is cluster private: ' + kubectl.isPrivate())
-
    // run action
    switch (action) {
       case Action.DEPLOY: {
