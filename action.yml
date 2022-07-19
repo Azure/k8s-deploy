@@ -66,14 +66,14 @@ inputs:
    resource-group:
       description: 'Name of resource group - Only required if using private cluster'
       required: false
-      default: ''
+      
    name:
       description: 'Resource group name - Only required if using private cluster'
       required: false
-      default: ''
+      
 
 branding:
    color: 'green'
 runs:
-   using: 'node12'
+   using: 'node16'
    main: 'lib/index.js'
