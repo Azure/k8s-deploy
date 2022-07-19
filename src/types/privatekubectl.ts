@@ -91,7 +91,6 @@ export class PrivateKubectl extends Kubectl {
 
    private moveFileToTempManifestDir(file: string) {
       this.createTempManifestsDirectory()
-
       if (!fs.existsSync('/tmp/' + file)) {
          core.debug(
             '/tmp/' +
