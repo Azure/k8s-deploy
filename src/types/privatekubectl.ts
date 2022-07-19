@@ -67,8 +67,8 @@ export class PrivateKubectl extends Kubectl {
          offset = 0
       }
 
-      var temp = strToParse.substring(start + offset)
-      var end = temp.indexOf(' -')
+      let temp = strToParse.substring(start + offset)
+      let end = temp.indexOf(' -')
 
       //End could be case where the -f flag was last, or -f is followed by some additonal flag and it's arguments
       return temp.substring(3, end == -1 ? temp.length : end).trim()
