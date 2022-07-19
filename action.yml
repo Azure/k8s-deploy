@@ -35,6 +35,10 @@ inputs:
       description: 'Traffic split method to be used. Allowed values are pod and smi'
       required: false
       default: 'pod'
+   traffic-split-annotations:
+      description: 'Traffic split annotations in the form of key/value pair can be used'
+      required: false
+      default: 0
    baseline-and-canary-replicas:
       description: 'Baseline and canary replicas count. Valid value between 0 to 100 (inclusive)'
       required: false

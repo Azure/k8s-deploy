@@ -290,7 +290,7 @@ async function getTrafficSplitObject(
    name: string,
    stableWeight: number,
    baselineWeight: number,
-   canaryWeight: number, 
+   canaryWeight: number,
    annotations: {[key: string]: string} = {}
 ): Promise<string> {
    // cached version

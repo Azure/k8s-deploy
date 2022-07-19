@@ -136,7 +136,7 @@ export class Kubectl {
    public async getResource(
       resourceType: string,
       name: string,
-      annotations: {[key: string] : string} = {}
+      annotations: {[key: string]: string} = {}
    ): Promise<ExecOutput> {
       return await this.execute([
          'get',

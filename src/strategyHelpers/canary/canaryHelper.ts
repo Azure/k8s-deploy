@@ -78,7 +78,7 @@ export async function fetchResource(
    kubectl: Kubectl,
    kind: string,
    name: string,
-   annotations: {[key: string] : string} = {}
+   annotations: {[key: string]: string} = {}
 ) {
    const result = await kubectl.getResource(kind, name, annotations)
 
