@@ -34,7 +34,6 @@ export class PrivateKubectl extends Kubectl {
          const tempDirectory =
             process.env['runner.tempDirectory'] || os.tmpdir() + '/manifests'
          eo.cwd = tempDirectory
-         core.debug('ExecOptions current working directory: ' + eo.cwd)
          privateClusterArgs.push(...['--file', '.'])
 
          let filenamesArr = filenames[0].split(',')
