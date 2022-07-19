@@ -78,14 +78,9 @@ export class PrivateKubectl extends Kubectl {
    }
 
    private createTempManifestsDirectory() {
+      const manifestsDir = '/tmp/manifests';
       if (!fs.existsSync('/tmp/manifests')) {
-         try {
-            fs.mkdirSync('/tmp/manifests', {recursive: true})
-         } catch (e) {
-            core.debug(
-               'could not create the directory: ' + '/tmp/manifests' + ': ' + e
-            )
-         }
+          fs.mkdirSync('/tmp/manifests', {recursive: true})
       }
    }
 
