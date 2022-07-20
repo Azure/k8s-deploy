@@ -25,14 +25,12 @@ export async function deploySMICanary(filePaths: string[], kubectl: Kubectl) {
       yaml.safeLoadAll(fileContents, (inputObject) => {
          const name = inputObject.metadata.name
          const kind = inputObject.kind
-         const annotations = inputObject.metadata.annotations
 
          if (isDeploymentEntity(kind)) {
             const stableObject = canaryDeploymentHelper.fetchResource(
                kubectl,
                kind,
-               name,
-               annotations
+               name
             )
 
             if (!stableObject) {
