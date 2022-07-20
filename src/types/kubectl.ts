@@ -135,12 +135,11 @@ export class Kubectl {
 
    public async getResource(
       resourceType: string,
-      name: string,
-      annotations: {[key: string]: string} = {}
+      name: string
    ): Promise<ExecOutput> {
       return await this.execute([
          'get',
-         `${resourceType}/${name}/${annotations}`,
+         `${resourceType}/${name}`,
          '-o',
          'json'
       ])

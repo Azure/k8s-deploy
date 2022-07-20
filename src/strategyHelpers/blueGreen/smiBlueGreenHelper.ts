@@ -23,7 +23,8 @@ const MAX_VAL = 100
 
 export async function deployBlueGreenSMI(
    kubectl: Kubectl,
-   filePaths: string[]
+   filePaths: string[],
+   annotations: {[key: string]: string} = {}
 ) {
    // get all kubernetes objects defined in manifest files
    const manifestObjects: BlueGreenManifests = getManifestObjects(filePaths)
@@ -37,7 +38,7 @@ export async function deployBlueGreenSMI(
    await kubectl.apply(manifestFiles)
 
    // make extraservices and trafficsplit
-   await setupSMI(kubectl, manifestObjects.serviceEntityList)
+   await setupSMI(kubectl, manifestObjects.serviceEntityList, annotations)
 
    // create new deloyments
    return await createWorkloadsWithLabel(
@@ -93,7 +94,11 @@ export async function rejectBlueGreenSMI(
    await cleanupSMI(kubectl, manifestObjects.serviceEntityList)
 }
 
-export async function setupSMI(kubectl: Kubectl, serviceEntityList: any[]) {
+export async function setupSMI(
+   kubectl: Kubectl,
+   serviceEntityList: any[],
+   annotaions: {[key: string]: string} = {}
+) {
    const newObjectsList = []
    const trafficObjectList = []
 
@@ -119,7 +124,8 @@ export async function setupSMI(kubectl: Kubectl, serviceEntityList: any[]) {
       createTrafficSplitObject(
          kubectl,
          inputObject.metadata.name,
-         NONE_LABEL_VALUE
+         NONE_LABEL_VALUE,
+         annotaions
       )
    })
 }
