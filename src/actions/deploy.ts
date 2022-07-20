@@ -57,7 +57,7 @@ export async function deploy(
       const routeStrategy = parseRouteStrategy(
          core.getInput('route-method', {required: true})
       )
-      await routeBlueGreen(kubectl, inputManifestFiles, routeStrategy) //----
+      await routeBlueGreen(kubectl, inputManifestFiles, routeStrategy)
       core.endGroup()
    }
 
