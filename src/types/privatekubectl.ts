@@ -15,10 +15,10 @@ export class PrivateKubectl extends Kubectl {
       if (this.containsFilenames(kubectlCmd)) {
          // For private clusters, files will not be in the tmp directory
          //kubectlCmd = kubectlCmd.replace(/[\/][t][m][p][\/]/g, '')
-         core.debug("kubectlcmd BEFORE: " + kubectlCmd);
+         core.debug('kubectlcmd BEFORE: ' + kubectlCmd)
          // Instead of regex we want to use path.basename to remove the directories...
-         kubectlCmd = this.replaceFilnamesWithBasenames(kubectlCmd);
-         core.debug("kubectlcmd AFTER: " + kubectlCmd);
+         kubectlCmd = this.replaceFilnamesWithBasenames(kubectlCmd)
+         core.debug('kubectlcmd AFTER: ' + kubectlCmd)
          addFileFlag = true
       }
 
@@ -36,7 +36,7 @@ export class PrivateKubectl extends Kubectl {
 
       if (addFileFlag) {
          const filenames = this.extractFilesnames(kubectlCmd).split(' ')
-        
+
          // Find the range from start of files to end of files
          const tempDirectory =
             process.env['runner.tempDirectory'] || os.tmpdir() + '/manifests'
@@ -60,18 +60,17 @@ export class PrivateKubectl extends Kubectl {
       return await getExecOutput('az', privateClusterArgs, eo)
    }
 
-   private replaceFilnamesWithBasenames(kubectlCmd: string){
-    let filenames = this.extractFilesnames(kubectlCmd).split(' ');
-    let filenamesArr = filenames[0].split(',');
-    
-    
-    for(let index = 0; index < filenamesArr.length; index++){
-      filenamesArr[index] = path.basename(filenamesArr[index]);
-    }
+   private replaceFilnamesWithBasenames(kubectlCmd: string) {
+      let filenames = this.extractFilesnames(kubectlCmd).split(' ')
+      let filenamesArr = filenames[0].split(',')
 
-    let baseFilenames = filenames.join();
+      for (let index = 0; index < filenamesArr.length; index++) {
+         filenamesArr[index] = path.basename(filenamesArr[index])
+      }
 
-    let start = kubectlCmd.indexOf('-filename')
+      let baseFilenames = filenames.join()
+
+      let start = kubectlCmd.indexOf('-filename')
       let offset = 7
 
       if (start == -1) {
@@ -83,20 +82,14 @@ export class PrivateKubectl extends Kubectl {
          offset = 0
       }
 
-      let startOfCommand = kubectlCmd.substring(0, start);
-      let endOfCommand = kubectlCmd.substring(offset);
+      let startOfCommand = kubectlCmd.substring(0, start)
+      let endOfCommand = kubectlCmd.substring(offset)
 
-      let result =  startOfCommand + baseFilenames + endOfCommand;
-      core.debug("TEST: replaceFIlenamesWithgbasenames: " + result );
-      return result;
+      let result = startOfCommand + baseFilenames + endOfCommand
+      core.debug('TEST: replaceFIlenamesWithgbasenames: ' + result)
+      return result
 
-    // Replace the range of chars between start of filenames and end of it inside of kubectlCmd and return kubectlCmd
-
-
-
-    
-    
-
+      // Replace the range of chars between start of filenames and end of it inside of kubectlCmd and return kubectlCmd
    }
 
    public extractFilesnames(strToParse: string) {
