@@ -68,7 +68,7 @@ export class PrivateKubectl extends Kubectl {
          filenamesArr[index] = path.basename(filenamesArr[index])
       }
 
-      let baseFilenames = filenames.join()
+      let baseFilenames = filenamesArr.join()
 
       let start = kubectlCmd.indexOf('-filename')
       let offset = 7
