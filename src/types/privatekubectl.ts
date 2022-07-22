@@ -86,7 +86,7 @@ export class PrivateKubectl extends Kubectl {
       let endOfCommand = kubectlCmd.substring(offset)
 
       let result = startOfCommand + baseFilenames + endOfCommand
-      core.debug('TEST: replaceFIlenamesWithgbasenames: ' + result)
+      core.debug('TEST: replaceFIlenamesWithgbasenames: ' + baseFilenames)
       return result
 
       // Replace the range of chars between start of filenames and end of it inside of kubectlCmd and return kubectlCmd
