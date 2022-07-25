@@ -24,12 +24,13 @@ export async function deployBlueGreenIngress(
    const manifestObjects: BlueGreenManifests = getManifestObjects(filePaths)
 
    // create deployments with green label value
-   const workloadDeployment = await createWorkloadsWithLabel(
+   const result = createWorkloadsWithLabel(
       kubectl,
       manifestObjects.deploymentEntityList,
       GREEN_LABEL_VALUE
    )
 
+   // create new services and other objects
    let newObjectsList = []
    manifestObjects.serviceEntityList.forEach((inputObject) => {
       const newBlueGreenObject = getNewBlueGreenObject(
@@ -41,16 +42,13 @@ export async function deployBlueGreenIngress(
    newObjectsList = newObjectsList
       .concat(manifestObjects.otherObjects)
       .concat(manifestObjects.unroutedServiceEntityList)
+   
+   core.debug('new objects after processing services and other objects: \n' + newObjectsList)
 
    const manifestFiles = fileHelper.writeObjectsToFile(newObjectsList)
    await kubectl.apply(manifestFiles)
 
-   core.debug(
-      'new objects after processing services and other objects: \n' +
-         JSON.stringify(newObjectsList)
-   )
-
-   return {workloadDeployment, newObjectsList}
+   return result
 }
 
 export async function promoteBlueGreenIngress(
@@ -58,13 +56,14 @@ export async function promoteBlueGreenIngress(
    manifestObjects
 ) {
    //checking if anything to promote
-   const {areValid, invalidIngresses} = validateIngresses(
-      kubectl,
-      manifestObjects.ingressEntityList,
-      manifestObjects.serviceNameMap
-   )
-   if (!areValid) {
-      throw 'Ingresses are not in promote state' + invalidIngresses.toString()
+   if (
+      !validateIngressesState(
+         kubectl,
+         manifestObjects.ingressEntityList,
+         manifestObjects.serviceNameMap
+      )
+   ) {
+      throw 'Ingress not in promote state'
    }
 
    // create stable deployments with new configuration
@@ -141,18 +140,18 @@ export async function routeBlueGreenIngress(
       })
    }
 
+   core.debug('New objects: ' + JSON.stringify(newObjectsList))
    const manifestFiles = fileHelper.writeObjectsToFile(newObjectsList)
    await kubectl.apply(manifestFiles)
    return newObjectsList
 }
 
-export function validateIngresses(
+export function validateIngressesState(
    kubectl: Kubectl,
    ingressEntityList: any[],
    serviceNameMap: Map<string, string>
-): {areValid: boolean; invalidIngresses: string[]} {
-   let areValid: boolean = true
-   const invalidIngresses = []
+): boolean {
+   let areIngressesTargetingNewServices: boolean = true
    ingressEntityList.forEach(async (inputObject) => {
       if (isIngressRouted(inputObject, serviceNameMap)) {
          //querying existing ingress
@@ -162,19 +161,21 @@ export function validateIngresses(
             inputObject.metadata.name
          )
 
-         let isValid =
-            !!existingIngress &&
-            existingIngress?.metadata?.labels[BLUE_GREEN_VERSION_LABEL] ===
-               GREEN_LABEL_VALUE
-         if (!isValid) {
-            invalidIngresses.push(inputObject.metadata.name)
+         if (!!existingIngress) {
+            const currentLabel: string =
+               existingIngress?.metadata?.labels[BLUE_GREEN_VERSION_LABEL]
+
+            // if not green label, then wrong configuration
+            if (currentLabel != GREEN_LABEL_VALUE)
+               areIngressesTargetingNewServices = false
+         } else {
+            // no ingress at all, so nothing to promote
+            areIngressesTargetingNewServices = false
          }
-         // to be valid, ingress should exist and should be green
-         areValid = areValid && isValid
       }
    })
 
-   return {areValid, invalidIngresses}
+   return areIngressesTargetingNewServices
 }
 
 export function isIngressRouted(
@@ -184,11 +185,10 @@ export function isIngressRouted(
    let isIngressRouted: boolean = false
    // check if ingress targets a service in the given manifests
    JSON.parse(JSON.stringify(ingressObject), (key, value) => {
-      isIngressRouted =
-         isIngressRouted || (key === 'service' && value.hasOwnProperty('name'))
-      isIngressRouted =
-         isIngressRouted || (key === 'serviceName' && serviceNameMap.has(value))
 
+      isIngressRouted = isIngressRouted || (key === 'service' && value.hasOwnProperty('name'))
+      isIngressRouted = isIngressRouted || (key === 'serviceName' && serviceNameMap.has(value))
+      
       return value
    })
 
@@ -209,7 +209,7 @@ export function getUpdatedBlueGreenIngress(
    addBlueGreenLabelsAndAnnotations(newObject, type)
 
    // update ingress labels
-   if (inputObject.apiVersion === 'networking.k8s.io/v1beta1') {
+   if(inputObject.apiVersion === "networking.k8s.io/v1beta1"){
       return updateIngressBackendBetaV1(newObject, serviceNameMap)
    }
    return updateIngressBackend(newObject, serviceNameMap)
@@ -239,14 +239,11 @@ export function updateIngressBackend(
    serviceNameMap: Map<string, string>
 ): any {
    inputObject = JSON.parse(JSON.stringify(inputObject), (key, value) => {
-      if (
-         key.toLowerCase() === BACKEND &&
-         serviceNameMap.has(value?.service?.name)
-      ) {
+      if (key.toLowerCase() === BACKEND && serviceNameMap.has(value.service.name)) {
          value.service.name = serviceNameMap.get(value.service.name)
       }
       return value
    })
-
+   
    return inputObject
 }

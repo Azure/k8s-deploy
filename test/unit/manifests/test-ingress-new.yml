@@ -44,7 +44,7 @@ spec:
            paths:
               - path: /testpath
                 backend:
-                   service:
-                      name: nginx-service
-                      port:
-                         number: 80
+                  service:
+                     name: nginx-service
+                     port:
+                        number: 80
