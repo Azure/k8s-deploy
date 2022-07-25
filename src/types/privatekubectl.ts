@@ -89,7 +89,7 @@ export class PrivateKubectl extends Kubectl {
 
       let result = startOfCommand + baseFilenames + endOfCommand
       core.debug('TEST: testResut: ' + testResult)
-      
+
       return result
 
       // Replace the range of chars between start of filenames and end of it inside of kubectlCmd and return kubectlCmd
