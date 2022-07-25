@@ -61,7 +61,7 @@ export async function deployManifests(
 
          const {result, newFilePaths} = await Promise.resolve(
             (routeStrategy == RouteStrategy.INGRESS &&
-               deployBlueGreenIngress(kubectl, files)) ||
+               deployBlueGreenIngress(kubectl, files)[0]) ||
                (routeStrategy == RouteStrategy.SMI &&
                   deployBlueGreenSMI(kubectl, files)) ||
                deployBlueGreenService(kubectl, files)
