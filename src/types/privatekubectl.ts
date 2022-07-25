@@ -71,28 +71,10 @@ export class PrivateKubectl extends Kubectl {
 
       let baseFilenames = filenamesArr.join()
 
-      let start = kubectlCmd.indexOf('-filename')
-      let offset = 7
-
-      if (start == -1) {
-         start = kubectlCmd.indexOf('-f')
-
-         if (start == -1) {
-            return ''
-         }
-         offset = 0
-      }
-
-      let testResult = kubectlCmd.replace(exFilenames, baseFilenames)
-      let startOfCommand = kubectlCmd.substring(0, start + offset)
-      let endOfCommand = kubectlCmd.substring(start + offset)
-
-      let result = startOfCommand + baseFilenames + endOfCommand
-      core.debug('TEST: testResut: ' + testResult)
-
+      
+      let result = kubectlCmd.replace(exFilenames, baseFilenames)
       return result
 
-      // Replace the range of chars between start of filenames and end of it inside of kubectlCmd and return kubectlCmd
    }
 
    public extractFilesnames(strToParse: string) {
