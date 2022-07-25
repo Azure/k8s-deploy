@@ -40,7 +40,8 @@ export interface BlueGreenManifests {
 export async function routeBlueGreen(
    kubectl: Kubectl,
    inputManifestFiles: string[],
-   routeStrategy: RouteStrategy
+   routeStrategy: RouteStrategy,
+   annotations: {[key: string]: string} = {}
 ) {
    // sleep for buffer time
    const bufferTime: number = parseInt(
@@ -74,7 +75,8 @@ export async function routeBlueGreen(
       await routeBlueGreenSMI(
          kubectl,
          GREEN_LABEL_VALUE,
-         manifestObjects.serviceEntityList
+         manifestObjects.serviceEntityList,
+         annotations
       )
    } else {
       await routeBlueGreenService(
