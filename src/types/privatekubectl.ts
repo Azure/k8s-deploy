@@ -71,10 +71,8 @@ export class PrivateKubectl extends Kubectl {
 
       let baseFilenames = filenamesArr.join()
 
-      
       let result = kubectlCmd.replace(exFilenames, baseFilenames)
       return result
-
    }
 
    public extractFilesnames(strToParse: string) {
