@@ -97,7 +97,7 @@ export async function rejectBlueGreenSMI(
 export async function setupSMI(
    kubectl: Kubectl,
    serviceEntityList: any[],
-   annotaions: {[key: string]: string} = {}
+   annotations: {[key: string]: string} = {}
 ) {
    const newObjectsList = []
    const trafficObjectList = []
@@ -125,7 +125,7 @@ export async function setupSMI(
          kubectl,
          inputObject.metadata.name,
          NONE_LABEL_VALUE,
-         annotaions
+         annotations
       )
    })
 }

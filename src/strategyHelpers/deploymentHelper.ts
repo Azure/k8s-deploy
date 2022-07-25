@@ -42,7 +42,7 @@ export async function deployManifests(
    deploymentStrategy: DeploymentStrategy,
    kubectl: Kubectl,
    trafficSplitMethod: TrafficSplitMethod,
-   annotaions: {[key: string]: string} = {}
+   annotations: {[key: string]: string} = {}
 ): Promise<string[]> {
    switch (deploymentStrategy) {
       case DeploymentStrategy.CANARY: {
@@ -64,7 +64,7 @@ export async function deployManifests(
             (routeStrategy == RouteStrategy.INGRESS &&
                deployBlueGreenIngress(kubectl, files)) ||
                (routeStrategy == RouteStrategy.SMI &&
-                  deployBlueGreenSMI(kubectl, files, annotaions)) ||
+                  deployBlueGreenSMI(kubectl, files, annotations)) ||
                deployBlueGreenService(kubectl, files)
          )
 
