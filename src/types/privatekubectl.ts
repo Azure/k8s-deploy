@@ -61,7 +61,8 @@ export class PrivateKubectl extends Kubectl {
    }
 
    private replaceFilnamesWithBasenames(kubectlCmd: string) {
-      let filenames = this.extractFilesnames(kubectlCmd).split(' ')
+      let exFilenames = this.extractFilesnames(kubectlCmd)
+      let filenames = exFilenames.split(' ')
       let filenamesArr = filenames[0].split(',')
 
       for (let index = 0; index < filenamesArr.length; index++) {
@@ -82,13 +83,13 @@ export class PrivateKubectl extends Kubectl {
          offset = 0
       }
 
+      let testResult = kubectlCmd.replace(exFilenames, baseFilenames)
       let startOfCommand = kubectlCmd.substring(0, start + offset)
       let endOfCommand = kubectlCmd.substring(start + offset)
 
       let result = startOfCommand + baseFilenames + endOfCommand
-      core.debug('TEST: startOfCommand: ' + startOfCommand)
-      core.debug('TEST: baseFilenames: ' + baseFilenames)
-      core.debug('TEST: endOfCommand: ' + endOfCommand)
+      core.debug('TEST: testResut: ' + testResult)
+      
       return result
 
       // Replace the range of chars between start of filenames and end of it inside of kubectlCmd and return kubectlCmd
