@@ -36,7 +36,7 @@ inputs:
       required: false
       default: 'pod'
    traffic-split-annotations:
-      description: 'Traffic split annotations in the form of key/value pair can be used'
+      description: 'Annotations in the form of key/value pair to be added to TrafficSplit. Relevant only if deployement strategy is blue-green or canary'
       required: false
    baseline-and-canary-replicas:
       description: 'Baseline and canary replicas count. Valid value between 0 to 100 (inclusive)'
