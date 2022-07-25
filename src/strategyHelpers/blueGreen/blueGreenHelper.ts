@@ -235,9 +235,6 @@ export async function createWorkloadsWithLabel(
    deploymentObjectList.forEach((inputObject) => {
       // creating deployment with label
       const newBlueGreenObject = getNewBlueGreenObject(inputObject, nextLabel)
-      core.debug(
-         'New blue-green object is: ' + JSON.stringify(newBlueGreenObject)
-      )
       newObjectsList.push(newBlueGreenObject)
    })
 
@@ -278,7 +275,7 @@ export function addBlueGreenLabelsAndAnnotations(
    updateObjectLabels(inputObject, newLabels, false)
    updateSelectorLabels(inputObject, newLabels, false)
 
-   // updating spec labels if it is a service
+   // updating spec labels if it is not a service
    if (!isServiceEntity(inputObject.kind)) {
       updateSpecLabels(inputObject, newLabels, false)
    }

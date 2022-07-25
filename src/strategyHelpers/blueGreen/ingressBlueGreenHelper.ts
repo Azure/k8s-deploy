@@ -14,7 +14,7 @@ import {
 } from './blueGreenHelper'
 import * as core from '@actions/core'
 
-const BACKEND = 'BACKEND'
+const BACKEND = 'backend'
 
 export async function deployBlueGreenIngress(
    kubectl: Kubectl,
@@ -42,6 +42,8 @@ export async function deployBlueGreenIngress(
    newObjectsList = newObjectsList
       .concat(manifestObjects.otherObjects)
       .concat(manifestObjects.unroutedServiceEntityList)
+   
+   core.debug('new objects after processing services and other objects: \n' + newObjectsList)
 
    const manifestFiles = fileHelper.writeObjectsToFile(newObjectsList)
    await kubectl.apply(manifestFiles)
@@ -141,6 +143,7 @@ export async function routeBlueGreenIngress(
    core.debug('New objects: ' + JSON.stringify(newObjectsList))
    const manifestFiles = fileHelper.writeObjectsToFile(newObjectsList)
    await kubectl.apply(manifestFiles)
+   return newObjectsList
 }
 
 export function validateIngressesState(
@@ -175,17 +178,17 @@ export function validateIngressesState(
    return areIngressesTargetingNewServices
 }
 
-function isIngressRouted(
+export function isIngressRouted(
    ingressObject: any,
    serviceNameMap: Map<string, string>
 ): boolean {
    let isIngressRouted: boolean = false
    // check if ingress targets a service in the given manifests
    JSON.parse(JSON.stringify(ingressObject), (key, value) => {
-      if (key === 'serviceName' && serviceNameMap.has(value)) {
-         isIngressRouted = true
-      }
 
+      isIngressRouted = isIngressRouted || (key === 'service' && value.hasOwnProperty('name'))
+      isIngressRouted = isIngressRouted || (key === 'serviceName' && serviceNameMap.has(value))
+      
       return value
    })
 
@@ -206,15 +209,18 @@ export function getUpdatedBlueGreenIngress(
    addBlueGreenLabelsAndAnnotations(newObject, type)
 
    // update ingress labels
+   if(inputObject.apiVersion === "networking.k8s.io/v1beta1"){
+      return updateIngressBackendBetaV1(newObject, serviceNameMap)
+   }
    return updateIngressBackend(newObject, serviceNameMap)
 }
 
-export function updateIngressBackend(
+export function updateIngressBackendBetaV1(
    inputObject: any,
    serviceNameMap: Map<string, string>
 ): any {
    inputObject = JSON.parse(JSON.stringify(inputObject), (key, value) => {
-      if (key.toUpperCase() === BACKEND) {
+      if (key.toLowerCase() === BACKEND) {
          const {serviceName} = value
          if (serviceNameMap.has(serviceName)) {
             // update service name with corresponding bluegreen name only if service is provied in given manifests
@@ -225,5 +231,19 @@ export function updateIngressBackend(
       return value
    })
 
+   return inputObject
+}
+
+export function updateIngressBackend(
+   inputObject: any,
+   serviceNameMap: Map<string, string>
+): any {
+   inputObject = JSON.parse(JSON.stringify(inputObject), (key, value) => {
+      if (key.toLowerCase() === BACKEND && serviceNameMap.has(value.service.name)) {
+         value.service.name = serviceNameMap.get(value.service.name)
+      }
+      return value
+   })
+   
    return inputObject
 }
