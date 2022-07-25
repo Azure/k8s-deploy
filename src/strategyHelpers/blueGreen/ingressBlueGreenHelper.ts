@@ -43,12 +43,12 @@ export async function deployBlueGreenIngress(
       .concat(manifestObjects.otherObjects)
       .concat(manifestObjects.unroutedServiceEntityList)
    
-   core.debug('new objects after processing services and other objects: \n' + newObjectsList)
-
    const manifestFiles = fileHelper.writeObjectsToFile(newObjectsList)
    await kubectl.apply(manifestFiles)
 
-   return result
+   core.debug('new objects after processing services and other objects: \n' + JSON.stringify(newObjectsList))
+
+   return {result, newObjectsList}
 }
 
 export async function promoteBlueGreenIngress(
@@ -140,7 +140,6 @@ export async function routeBlueGreenIngress(
       })
    }
 
-   core.debug('New objects: ' + JSON.stringify(newObjectsList))
    const manifestFiles = fileHelper.writeObjectsToFile(newObjectsList)
    await kubectl.apply(manifestFiles)
    return newObjectsList
@@ -244,6 +243,6 @@ export function updateIngressBackend(
       }
       return value
    })
-   
+
    return inputObject
 }
