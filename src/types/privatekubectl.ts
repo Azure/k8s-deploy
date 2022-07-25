@@ -82,8 +82,8 @@ export class PrivateKubectl extends Kubectl {
          offset = 0
       }
 
-      let startOfCommand = kubectlCmd.substring(0, start)
-      let endOfCommand = kubectlCmd.substring(offset)
+      let startOfCommand = kubectlCmd.substring(0, start + offset)
+      let endOfCommand = kubectlCmd.substring(start + offset)
 
       let result = startOfCommand + baseFilenames + endOfCommand
       core.debug('TEST: startOfCommand: ' + startOfCommand)
