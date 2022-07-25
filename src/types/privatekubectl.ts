@@ -14,11 +14,7 @@ export class PrivateKubectl extends Kubectl {
 
       if (this.containsFilenames(kubectlCmd)) {
          // For private clusters, files will not be in the tmp directory
-         //kubectlCmd = kubectlCmd.replace(/[\/][t][m][p][\/]/g, '')
-         core.debug('kubectlcmd BEFORE: ' + kubectlCmd)
-         // Instead of regex we want to use path.basename to remove the directories...
          kubectlCmd = this.replaceFilnamesWithBasenames(kubectlCmd)
-         core.debug('kubectlcmd AFTER: ' + kubectlCmd)
          addFileFlag = true
       }
 
