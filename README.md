@@ -144,8 +144,6 @@ Following are the key capabilities of this action:
       manifests/azure-vote-frontend-service.yaml
     images: |
       ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.CONTAINER_NAME }}:${{ github.sha }}
-    imagepullsecrets: |
-      ${{ env.IMAGE_PULL_SECRET_NAME }}
 ```
 
 ### Canary deployment without service mesh
