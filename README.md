@@ -148,7 +148,6 @@ Following are the key capabilities of this action:
       ${{ env.IMAGE_PULL_SECRET_NAME }}
 ```
 
-
 ### Canary deployment without service mesh
 
 ```yaml
