@@ -24,12 +24,12 @@ export async function deployBlueGreenIngress(
    const manifestObjects: BlueGreenManifests = getManifestObjects(filePaths)
 
    // create deployments with green label value
-   const result = createWorkloadsWithLabel(
+   const result = await createWorkloadsWithLabel(
       kubectl,
       manifestObjects.deploymentEntityList,
       GREEN_LABEL_VALUE
    )
-
+   // refactor - wrap services deployment into its own function
    // create new services and other objects
    let newObjectsList = []
    manifestObjects.serviceEntityList.forEach((inputObject) => {
@@ -56,14 +56,13 @@ export async function promoteBlueGreenIngress(
    manifestObjects
 ) {
    //checking if anything to promote
-   if (
-      !validateIngressesState(
-         kubectl,
-         manifestObjects.ingressEntityList,
-         manifestObjects.serviceNameMap
-      )
-   ) {
-      throw 'Ingress not in promote state'
+   var {areValid, invalidIngresses} = validateIngresses(
+      kubectl,
+      manifestObjects.ingressEntityList,
+      manifestObjects.serviceNameMap
+   )
+   if (!areValid) {
+      throw 'Ingresses are not in promote state' + invalidIngresses.toString()
    }
 
    // create stable deployments with new configuration
@@ -73,6 +72,8 @@ export async function promoteBlueGreenIngress(
       NONE_LABEL_VALUE
    )
 
+   // refactor - separate function call to maintain some logical pattern - have deployments happen in some extenral call rather than right here, just like
+   // is done for deployments
    // create stable services with new configuration
    const newObjectsList = []
    manifestObjects.serviceEntityList.forEach((inputObject) => {
@@ -121,11 +122,13 @@ export async function routeBlueGreenIngress(
 ) {
    let newObjectsList = []
 
+   // refactor - should have a separate function to to deploy ingresses when we don't want to update them
    if (!nextLabel) {
       newObjectsList = ingressEntityList.filter((ingress) =>
          isIngressRouted(ingress, serviceNameMap)
       )
    } else {
+      // refactor - confusing pattern - just have one function handle processing AND deployment, something like deployBlueGreenIngresses
       ingressEntityList.forEach((inputObject) => {
          if (isIngressRouted(inputObject, serviceNameMap)) {
             const newBlueGreenIngressObject = getUpdatedBlueGreenIngress(
@@ -145,12 +148,13 @@ export async function routeBlueGreenIngress(
    return newObjectsList
 }
 
-export function validateIngressesState(
+export function validateIngresses(
    kubectl: Kubectl,
    ingressEntityList: any[],
    serviceNameMap: Map<string, string>
-): boolean {
-   let areIngressesTargetingNewServices: boolean = true
+): {areValid: boolean, invalidIngresses: string[]} {
+   let areValid: boolean = true
+   const invalidIngresses = []
    ingressEntityList.forEach(async (inputObject) => {
       if (isIngressRouted(inputObject, serviceNameMap)) {
          //querying existing ingress
@@ -160,21 +164,17 @@ export function validateIngressesState(
             inputObject.metadata.name
          )
 
-         if (!!existingIngress) {
-            const currentLabel: string =
-               existingIngress?.metadata?.labels[BLUE_GREEN_VERSION_LABEL]
-
-            // if not green label, then wrong configuration
-            if (currentLabel != GREEN_LABEL_VALUE)
-               areIngressesTargetingNewServices = false
-         } else {
-            // no ingress at all, so nothing to promote
-            areIngressesTargetingNewServices = false
+         var isValid = !!existingIngress && existingIngress?.metadata?.labels[BLUE_GREEN_VERSION_LABEL] === GREEN_LABEL_VALUE 
+         if (!isValid){
+            invalidIngresses.push(inputObject.metadata.name)
          }
+         // to be valid, ingress should exist and should be green
+         areValid = areValid && isValid
+
       }
    })
 
-   return areIngressesTargetingNewServices
+   return {areValid, invalidIngresses}
 }
 
 export function isIngressRouted(

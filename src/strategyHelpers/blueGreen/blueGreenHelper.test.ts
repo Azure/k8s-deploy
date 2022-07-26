@@ -1,4 +1,5 @@
-import {createWorkloadsWithLabel, getManifestObjects, getNewBlueGreenObject, GREEN_LABEL_VALUE, isServiceRouted} from './blueGreenHelper'
+import {createWorkloadsWithLabel, deleteWorkloadsAndServicesWithLabel, getManifestObjects, getNewBlueGreenObject, GREEN_LABEL_VALUE, isServiceRouted, NONE_LABEL_VALUE} from './blueGreenHelper'
+import * as bgHelper from './blueGreenHelper'
 import { Kubectl } from '../../types/kubectl'
 import * as fileHelper from '../../utilities/fileUtils'
 
@@ -54,5 +55,26 @@ describe('bluegreenhelper functions', () => {
         expect(isServiceRouted(testObjects.serviceEntityList[0], testObjects.deploymentEntityList)).toBe(true)
         testObjects.serviceEntityList[0].spec.selector.app = 'fakeapp'
         expect(isServiceRouted(testObjects.serviceEntityList[0], testObjects.deploymentEntityList)).toBe(false)
+    })
+
+    test('correctly deletes services and workloads according to label', () => {
+        const kubectl = new Kubectl('')
+        jest.spyOn(bgHelper, 'deleteObjects').mockReturnValue({} as Promise<void>)
+
+        var objectsToDelete = deleteWorkloadsAndServicesWithLabel(kubectl, NONE_LABEL_VALUE, testObjects.deploymentEntityList, testObjects.serviceEntityList)
+        objectsToDelete.then((value) => {
+            expect(value).toHaveLength(2)
+            expect(value).toContainEqual;({name: 'nginx-service', kind: 'Service'})
+            expect(value).toContainEqual({name: 'nginx-deployment', kind: 'Deployment'})
+        })
+
+        objectsToDelete = deleteWorkloadsAndServicesWithLabel(kubectl, GREEN_LABEL_VALUE, testObjects.deploymentEntityList, testObjects.serviceEntityList)
+        objectsToDelete.then((value) => {
+            expect(value).toHaveLength(2)
+            expect(value).toContainEqual({name: 'nginx-service-green', kind: 'Service'})
+            expect(value).toContainEqual({name: 'nginx-deployment-green', kind: 'Deployment'})
+        })
+        
+        
     })
 })
