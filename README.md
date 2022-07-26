@@ -129,7 +129,7 @@ Following are the key capabilities of this action:
 ### Private cluster deployment
 
 ```yaml
-- uses: Azure/k8s-deploy@v4.3
+- uses: Azure/k8s-deploy@v4
   with:
     resource-group: yourResourceGroup
     name: yourClusterName
@@ -143,7 +143,7 @@ Following are the key capabilities of this action:
       manifests/azure-vote-frontend-deployment.yaml
       manifests/azure-vote-frontend-service.yaml
     images: |
-      ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.CONTAINER_NAME }}:${{ github.sha }}
+      registry.azurecr.io/containername
 ```
 
 ### Canary deployment without service mesh
