@@ -19,7 +19,8 @@ import {parseRouteStrategy} from '../types/routeStrategy'
 export async function deploy(
    kubectl: Kubectl,
    manifestFilePaths: string[],
-   deploymentStrategy: DeploymentStrategy
+   deploymentStrategy: DeploymentStrategy,
+   annotations: {[key: string]: string} = {}
 ) {
    // update manifests
    const inputManifestFiles: string[] = updateManifestFiles(manifestFilePaths)
@@ -34,7 +35,8 @@ export async function deploy(
       inputManifestFiles,
       deploymentStrategy,
       kubectl,
-      trafficSplitMethod
+      trafficSplitMethod,
+      annotations
    )
    core.endGroup()
    core.debug('Deployed manifest files: ' + deployedManifestFiles)
