@@ -13,7 +13,7 @@ export class PrivateKubectl extends Kubectl {
       let eo = <ExecOptions>{silent}
 
       if (this.containsFilenames(kubectlCmd)) {
-         // For private clusters, files will not be in the tmp directory
+         // For private clusters, files will referenced solely by their basename
          kubectlCmd = this.replaceFilnamesWithBasenames(kubectlCmd)
          addFileFlag = true
       }
@@ -33,7 +33,6 @@ export class PrivateKubectl extends Kubectl {
       if (addFileFlag) {
          const filenames = this.extractFilesnames(kubectlCmd).split(' ')
 
-         // Find the range from start of files to end of files
          const tempDirectory =
             process.env['runner.tempDirectory'] || os.tmpdir() + '/manifests'
          eo.cwd = tempDirectory

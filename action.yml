@@ -20,9 +20,9 @@ inputs:
       required: false
       default: true
    strategy:
-      description: 'Deployment strategy to be used. Allowed values are none, canary and blue-green'
-      required: false
-      default: 'none'
+      description: 'Deployment strategy to be used. Allowed values are basic, canary and blue-green'
+      required: true
+      default: 'basic'
    route-method:
       description: 'Route based on service, ingress or SMI for blue-green strategy'
       required: false
