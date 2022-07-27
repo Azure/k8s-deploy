@@ -59,16 +59,17 @@ export async function deployManifests(
             core.getInput('route-method', {required: true})
          )
 
-         const {result, newFilePaths} = await Promise.resolve(
+         const {result, newObjectsList} = await Promise.resolve(
             (routeStrategy == RouteStrategy.INGRESS &&
-               deployBlueGreenIngress(kubectl, files)[0]) || // refactor: why does this need a [0]
+               (deployBlueGreenIngress(kubectl, files))) ||
                (routeStrategy == RouteStrategy.SMI &&
                   deployBlueGreenSMI(kubectl, files)) ||
                deployBlueGreenService(kubectl, files)
          )
 
-         checkForErrors([result])
-         return newFilePaths
+
+         checkForErrors([result.result])
+         return result.newFilePaths
       }
 
       case DeploymentStrategy.BASIC: {

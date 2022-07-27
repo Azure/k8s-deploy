@@ -48,7 +48,7 @@ export async function deployBlueGreenIngress(
 
    core.debug('new objects after processing services and other objects: \n' + JSON.stringify(newObjectsList))
 
-   return {result, newObjectsList}
+   return {result: result, newObjectsList: newObjectsList}
 }
 
 export async function promoteBlueGreenIngress(
