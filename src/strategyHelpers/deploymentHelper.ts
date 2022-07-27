@@ -143,7 +143,7 @@ export async function annotateAndLabelResources(
    const workflowFilePath = await getWorkflowFilePath(githubToken)
 
    const deploymentConfig = await getDeploymentConfig()
-   const annotationKeyLabel = getWorkflowAnnotationKeyLabel(workflowFilePath)
+   const annotationKeyLabel = getWorkflowAnnotationKeyLabel()
 
    await annotateResources(
       files,
