@@ -9,8 +9,6 @@ import {
    KubernetesWorkload
 } from '../../types/kubernetesTypes'
 import * as fileHelper from '../../utilities/fileUtils'
-import {routeBlueGreenService} from './serviceBlueGreenHelper'
-import {routeBlueGreenIngress} from './ingressBlueGreenHelper'
 import {routeBlueGreenSMI} from './smiBlueGreenHelper'
 import {
    UnsetClusterSpecificDetails,
@@ -19,7 +17,6 @@ import {
 } from '../../utilities/manifestUpdateUtils'
 import {updateSpecLabels} from '../../utilities/manifestSpecLabelUtils'
 import {checkForErrors} from '../../utilities/kubectlUtils'
-import {sleep} from '../../utilities/timeUtils'
 import {RouteStrategy} from '../../types/routeStrategy'
 
 export const GREEN_LABEL_VALUE = 'green'
@@ -35,54 +32,6 @@ export interface BlueGreenManifests {
    deploymentEntityList: any[]
    ingressEntityList: any[]
    otherObjects: any[]
-}
-
-export async function routeBlueGreen(
-   kubectl: Kubectl,
-   inputManifestFiles: string[],
-   routeStrategy: RouteStrategy
-) {
-   // sleep for buffer time
-   const bufferTime: number = parseInt(
-      core.getInput('version-switch-buffer') || '0'
-   )
-   if (bufferTime < 0 || bufferTime > 300)
-      throw Error('Version switch buffer must be between 0 and 300 (inclusive)')
-   const startSleepDate = new Date()
-   core.info(
-      `Starting buffer time of ${bufferTime} minute(s) at ${startSleepDate.toISOString()}`
-   )
-   await sleep(bufferTime * 1000 * 60)
-   const endSleepDate = new Date()
-   core.info(
-      `Stopping buffer time of ${bufferTime} minute(s) at ${endSleepDate.toISOString()}`
-   )
-
-   const manifestObjects: BlueGreenManifests =
-      getManifestObjects(inputManifestFiles)
-   core.debug('Manifest objects: ' + JSON.stringify(manifestObjects))
-
-   // route to new deployments
-   if (routeStrategy == RouteStrategy.INGRESS) {
-      await routeBlueGreenIngress(
-         kubectl,
-         GREEN_LABEL_VALUE,
-         manifestObjects.serviceNameMap,
-         manifestObjects.ingressEntityList
-      )
-   } else if (routeStrategy == RouteStrategy.SMI) {
-      await routeBlueGreenSMI(
-         kubectl,
-         GREEN_LABEL_VALUE,
-         manifestObjects.serviceEntityList
-      )
-   } else {
-      await routeBlueGreenService(
-         kubectl,
-         GREEN_LABEL_VALUE,
-         manifestObjects.serviceEntityList
-      )
-   }
 }
 
 export async function deleteWorkloadsWithLabel(
@@ -357,3 +306,14 @@ export async function fetchResource(
       }
    }
 }
+
+export async function deployObjects(kubectl: Kubectl, objectsList: any[]){
+   const manifestFiles = fileHelper.writeObjectsToFile(objectsList)
+   await kubectl.apply(manifestFiles)
+   const result = await kubectl.apply(manifestFiles)
+   return result
+}
+
+
+
+

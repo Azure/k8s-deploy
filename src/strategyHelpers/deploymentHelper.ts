@@ -10,8 +10,7 @@ import {Kubectl, Resource} from '../types/kubectl'
 import {deployPodCanary} from './canary/podCanaryHelper'
 import {deploySMICanary} from './canary/smiCanaryHelper'
 import {DeploymentConfig} from '../types/deploymentConfig'
-import {deployBlueGreenService} from './blueGreen/serviceBlueGreenHelper'
-import {deployBlueGreenIngress} from './blueGreen/ingressBlueGreenHelper'
+import {deployBlueGreen, deployBlueGreenIngress, deployBlueGreenService} from './blueGreen/deploy'
 import {deployBlueGreenSMI} from './blueGreen/smiBlueGreenHelper'
 import {DeploymentStrategy} from '../types/deploymentStrategy'
 import * as core from '@actions/core'
@@ -19,7 +18,7 @@ import {
    parseTrafficSplitMethod,
    TrafficSplitMethod
 } from '../types/trafficSplitMethod'
-import {parseRouteStrategy, RouteStrategy} from '../types/routeStrategy'
+import {parseRouteStrategy} from '../types/routeStrategy'
 import {ExecOutput} from '@actions/exec'
 import {
    getWorkflowAnnotationKeyLabel,
@@ -58,17 +57,10 @@ export async function deployManifests(
          const routeStrategy = parseRouteStrategy(
             core.getInput('route-method', {required: true})
          )
+         const depResult = await deployBlueGreen(kubectl, files, routeStrategy)
 
-         const {result, newFilePaths} = await Promise.resolve(
-            (routeStrategy == RouteStrategy.INGRESS &&
-               deployBlueGreenIngress(kubectl, files)[0]) || // refactor: why does this need a [0]
-               (routeStrategy == RouteStrategy.SMI &&
-                  deployBlueGreenSMI(kubectl, files)) ||
-               deployBlueGreenService(kubectl, files)
-         )
-
-         checkForErrors([result])
-         return newFilePaths
+         checkForErrors([depResult.result])
+         return depResult.newFilePaths
       }
 
       case DeploymentStrategy.BASIC: {

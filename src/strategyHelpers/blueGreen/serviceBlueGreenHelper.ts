@@ -12,31 +12,6 @@ import {
    NONE_LABEL_VALUE
 } from './blueGreenHelper'
 
-export async function deployBlueGreenService(
-   kubectl: Kubectl,
-   filePaths: string[]
-) {
-   const manifestObjects: BlueGreenManifests = getManifestObjects(filePaths)
-
-   // create deployments with green label value
-   const result = await createWorkloadsWithLabel(
-      kubectl,
-      manifestObjects.deploymentEntityList,
-      GREEN_LABEL_VALUE
-   )
-
-   // refactor - see common logic with how this is handled with ingress method as well - 
-   // create other non deployment and non service entities
-   const newObjectsList = manifestObjects.otherObjects
-      .concat(manifestObjects.ingressEntityList)
-      .concat(manifestObjects.unroutedServiceEntityList)
-   const manifestFiles = fileHelper.writeObjectsToFile(newObjectsList)
-   
-   await kubectl.apply(manifestFiles)
-
-   // returning deployment details to check for rollout stability
-   return {result, newObjectsList}
-}
 
 export async function promoteBlueGreenService(
    kubectl: Kubectl,
@@ -57,49 +32,9 @@ export async function promoteBlueGreenService(
    )
 }
 
-export async function rejectBlueGreenService(
-   kubectl: Kubectl,
-   filePaths: string[]
-) {
-   // get all kubernetes objects defined in manifest files
-   const manifestObjects: BlueGreenManifests = getManifestObjects(filePaths)
-
-   // route to stable objects
-   await routeBlueGreenService(
-      kubectl,
-      NONE_LABEL_VALUE,
-      manifestObjects.serviceEntityList
-   )
-
-   // delete new deployments with green suffix
-   await deleteWorkloadsWithLabel(
-      kubectl,
-      GREEN_LABEL_VALUE,
-      manifestObjects.deploymentEntityList
-   )
-}
-// refactor - move service deployment to where deployments are deployed
-export async function routeBlueGreenService(
-   kubectl: Kubectl,
-   nextLabel: string,
-   serviceEntityList: any[]
-) {
-   const newObjectsList = []
-   serviceEntityList.forEach((serviceObject) => {
-      const newBlueGreenServiceObject = getUpdatedBlueGreenService(
-         serviceObject,
-         nextLabel
-      )
-      newObjectsList.push(newBlueGreenServiceObject)
-   })
-
-   // configures the services
-   const manifestFiles = fileHelper.writeObjectsToFile(newObjectsList)
-   await kubectl.apply(manifestFiles)
-}
 
 // add green labels to configure existing service
-function getUpdatedBlueGreenService(
+export function getUpdatedBlueGreenService(
    inputObject: any,
    labelValue: string
 ): object {
