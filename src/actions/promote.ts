@@ -18,12 +18,17 @@ import {
 } from '../strategyHelpers/blueGreen/blueGreenHelper'
 import {
    promoteBlueGreenService,
-   routeBlueGreenService
+   
 } from '../strategyHelpers/blueGreen/serviceBlueGreenHelper'
 import {
-   promoteBlueGreenIngress,
-   routeBlueGreenIngress
-} from '../strategyHelpers/blueGreen/ingressBlueGreenHelper'
+   promoteBlueGreenIngress
+} from '../strategyHelpers/blueGreen/promote'
+
+import{
+   routeBlueGreenService,
+   routeBlueGreenIngressUnchanged
+} from '../strategyHelpers/blueGreen/route'
+
 import {
    cleanupSMI,
    promoteBlueGreenSMI,
@@ -146,12 +151,8 @@ async function promoteBlueGreen(
       'Routing to new deployments and deleting old workloads and services'
    )
    if (routeStrategy == RouteStrategy.INGRESS) {
-      await routeBlueGreenIngress(
-         kubectl,
-         null,
-         manifestObjects.serviceNameMap,
-         manifestObjects.ingressEntityList
-      )
+      await routeBlueGreenIngressUnchanged(kubectl, manifestObjects.serviceNameMap, manifestObjects.ingressEntityList)
+
       await deleteWorkloadsAndServicesWithLabel(
          kubectl,
          GREEN_LABEL_VALUE,

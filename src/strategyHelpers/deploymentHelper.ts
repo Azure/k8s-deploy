@@ -10,8 +10,7 @@ import {Kubectl, Resource} from '../types/kubectl'
 import {deployPodCanary} from './canary/podCanaryHelper'
 import {deploySMICanary} from './canary/smiCanaryHelper'
 import {DeploymentConfig} from '../types/deploymentConfig'
-import {deployBlueGreenService} from './blueGreen/serviceBlueGreenHelper'
-import {deployBlueGreenIngress} from './blueGreen/ingressBlueGreenHelper'
+import {deployBlueGreen, deployBlueGreenIngress, deployBlueGreenService} from './blueGreen/deploy'
 import {deployBlueGreenSMI} from './blueGreen/smiBlueGreenHelper'
 import {DeploymentStrategy} from '../types/deploymentStrategy'
 import * as core from '@actions/core'
@@ -19,7 +18,7 @@ import {
    parseTrafficSplitMethod,
    TrafficSplitMethod
 } from '../types/trafficSplitMethod'
-import {parseRouteStrategy, RouteStrategy} from '../types/routeStrategy'
+import {parseRouteStrategy} from '../types/routeStrategy'
 import {ExecOutput} from '@actions/exec'
 import {
    getWorkflowAnnotationKeyLabel,
@@ -41,8 +40,7 @@ export async function deployManifests(
    files: string[],
    deploymentStrategy: DeploymentStrategy,
    kubectl: Kubectl,
-   trafficSplitMethod: TrafficSplitMethod,
-   annotations: {[key: string]: string} = {}
+   trafficSplitMethod: TrafficSplitMethod
 ): Promise<string[]> {
    switch (deploymentStrategy) {
       case DeploymentStrategy.CANARY: {
@@ -59,17 +57,10 @@ export async function deployManifests(
          const routeStrategy = parseRouteStrategy(
             core.getInput('route-method', {required: true})
          )
+         const depResult = await deployBlueGreen(kubectl, files, routeStrategy)
 
-         const {workloadDeployment, newObjectsList} = await Promise.resolve(
-            (routeStrategy == RouteStrategy.INGRESS &&
-               deployBlueGreenIngress(kubectl, files)[0]) || // refactor: why does this need a [0]
-               (routeStrategy == RouteStrategy.SMI &&
-                  deployBlueGreenSMI(kubectl, files, annotations)) ||
-               deployBlueGreenService(kubectl, files)
-         )
-
-         checkForErrors([workloadDeployment.result])
-         return workloadDeployment.newFilePaths
+         checkForErrors([depResult.result])
+         return depResult.newFilePaths
       }
 
       case DeploymentStrategy.BASIC: {
@@ -143,7 +134,7 @@ export async function annotateAndLabelResources(
    const workflowFilePath = await getWorkflowFilePath(githubToken)
 
    const deploymentConfig = await getDeploymentConfig()
-   const annotationKeyLabel = getWorkflowAnnotationKeyLabel()
+   const annotationKeyLabel = getWorkflowAnnotationKeyLabel(workflowFilePath)
 
    await annotateResources(
       files,

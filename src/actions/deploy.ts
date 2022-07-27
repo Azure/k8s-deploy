@@ -6,7 +6,6 @@ import {
    getResources,
    updateManifestFiles
 } from '../utilities/manifestUpdateUtils'
-import {routeBlueGreen} from '../strategyHelpers/blueGreen/blueGreenHelper'
 import {
    annotateAndLabelResources,
    checkManifestStability,
@@ -51,15 +50,6 @@ export async function deploy(
    )
    await checkManifestStability(kubectl, resourceTypes)
    core.endGroup()
-
-   if (deploymentStrategy == DeploymentStrategy.BLUE_GREEN) {
-      core.startGroup('Routing blue green')
-      const routeStrategy = parseRouteStrategy(
-         core.getInput('route-method', {required: true})
-      )
-      await routeBlueGreen(kubectl, inputManifestFiles, routeStrategy)
-      core.endGroup()
-   }
 
    // print ingresses
    core.startGroup('Printing ingresses')
