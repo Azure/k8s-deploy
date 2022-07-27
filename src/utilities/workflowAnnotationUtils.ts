@@ -1,6 +1,6 @@
 import {DeploymentConfig} from '../types/deploymentConfig'
 
-const ANNOTATION_PREFIX = 'actions.github.com/'
+const ANNOTATION_PREFIX = 'actions.github.com'
 
 export function getWorkflowAnnotations(
    lastSuccessRunSha: string,
