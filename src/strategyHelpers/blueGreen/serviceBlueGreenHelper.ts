@@ -25,8 +25,6 @@ export async function deployBlueGreenService(
       GREEN_LABEL_VALUE
    )
 
-   // refactor - see common logic with how this is handled with ingress method as well - 
-   // create other non deployment and non service entities
    const newObjectsList = manifestObjects.otherObjects
       .concat(manifestObjects.ingressEntityList)
       .concat(manifestObjects.unroutedServiceEntityList)
@@ -78,7 +76,6 @@ export async function rejectBlueGreenService(
       manifestObjects.deploymentEntityList
    )
 }
-// refactor - move service deployment to where deployments are deployed
 export async function routeBlueGreenService(
    kubectl: Kubectl,
    nextLabel: string,

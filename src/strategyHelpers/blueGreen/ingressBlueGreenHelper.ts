@@ -29,8 +29,7 @@ export async function deployBlueGreenIngress(
       manifestObjects.deploymentEntityList,
       GREEN_LABEL_VALUE
    )
-   // refactor - wrap services deployment into its own function
-   // create new services and other objects
+
    let newObjectsList = []
    manifestObjects.serviceEntityList.forEach((inputObject) => {
       const newBlueGreenObject = getNewBlueGreenObject(
@@ -48,7 +47,7 @@ export async function deployBlueGreenIngress(
 
    core.debug('new objects after processing services and other objects: \n' + JSON.stringify(newObjectsList))
 
-   return {result: result, newObjectsList: newObjectsList}
+   return {result, newObjectsList}
 }
 
 export async function promoteBlueGreenIngress(
@@ -72,8 +71,6 @@ export async function promoteBlueGreenIngress(
       NONE_LABEL_VALUE
    )
 
-   // refactor - separate function call to maintain some logical pattern - have deployments happen in some extenral call rather than right here, just like
-   // is done for deployments
    // create stable services with new configuration
    const newObjectsList = []
    manifestObjects.serviceEntityList.forEach((inputObject) => {
@@ -122,13 +119,11 @@ export async function routeBlueGreenIngress(
 ) {
    let newObjectsList = []
 
-   // refactor - should have a separate function to to deploy ingresses when we don't want to update them
    if (!nextLabel) {
       newObjectsList = ingressEntityList.filter((ingress) =>
          isIngressRouted(ingress, serviceNameMap)
       )
    } else {
-      // refactor - confusing pattern - just have one function handle processing AND deployment, something like deployBlueGreenIngresses
       ingressEntityList.forEach((inputObject) => {
          if (isIngressRouted(inputObject, serviceNameMap)) {
             const newBlueGreenIngressObject = getUpdatedBlueGreenIngress(
