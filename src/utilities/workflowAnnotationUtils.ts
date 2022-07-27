@@ -27,14 +27,8 @@ export function getWorkflowAnnotations(
    return JSON.stringify(annotationObject)
 }
 
-export function getWorkflowAnnotationKeyLabel(
-   workflowFilePath: string
-): string {
-   const hashKey = require('crypto')
-      .createHash('MD5')
-      .update(`${ANNOTATION_PREFIX}/${workflowFilePath}`)
-      .digest('hex')
-   return `githubWorkflow_${hashKey}`
+export function getWorkflowAnnotationKeyLabel(): string {
+   return `${ANNOTATION_PREFIX}/k8s-deploy`
 }
 
 /**
