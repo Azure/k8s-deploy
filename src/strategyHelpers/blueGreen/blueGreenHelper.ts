@@ -161,9 +161,8 @@ export function isServiceRouted(
 ): boolean {
    let shouldBeRouted: boolean = false
    const serviceSelector: any = getServiceSelector(serviceObject)
-   if (serviceSelector) {
-      if (
-         deploymentEntityList.some((depObject) => {
+
+   return serviceSelector && deploymentEntityList.some((depObject) => {
             // finding if there is a deployment in the given manifests the service targets
             const matchLabels: any = getDeploymentMatchLabels(depObject)
             return (
@@ -171,12 +170,6 @@ export function isServiceRouted(
                isServiceSelectorSubsetOfMatchLabel(serviceSelector, matchLabels)
             )
          })
-      ) {
-         shouldBeRouted = true
-      }
-   }
-
-   return shouldBeRouted
 }
 
 export async function createWorkloadsWithLabel(
