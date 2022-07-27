@@ -131,19 +131,19 @@ Following are the key capabilities of this action:
 ```yaml
 - uses: Azure/k8s-deploy@v4
   with:
-    resource-group: yourResourceGroup
-    name: yourClusterName
-    action: deploy
-    strategy: basic
-    
-    private-cluster: true
-    manifests: |
-      manifests/azure-vote-backend-deployment.yaml
-      manifests/azure-vote-backend-service.yaml
-      manifests/azure-vote-frontend-deployment.yaml
-      manifests/azure-vote-frontend-service.yaml
-    images: |
-      registry.azurecr.io/containername
+     resource-group: yourResourceGroup
+     name: yourClusterName
+     action: deploy
+     strategy: basic
+
+     private-cluster: true
+     manifests: |
+        manifests/azure-vote-backend-deployment.yaml
+        manifests/azure-vote-backend-service.yaml
+        manifests/azure-vote-frontend-deployment.yaml
+        manifests/azure-vote-frontend-service.yaml
+     images: |
+        registry.azurecr.io/containername
 ```
 
 ### Canary deployment without service mesh
