@@ -1,5 +1,7 @@
 import {getManifestObjects, GREEN_LABEL_VALUE} from './blueGreenHelper'
-import {deployBlueGreenIngress, getUpdatedBlueGreenIngress, isIngressRouted, routeBlueGreenIngress} from './ingressBlueGreenHelper'
+import {getUpdatedBlueGreenIngress, isIngressRouted} from './ingressBlueGreenHelper'
+import {deployBlueGreenIngress} from './deploy'
+import { routeBlueGreenIngress } from './route'
 import { Kubectl } from '../../types/kubectl'
 import * as fileHelper from '../../utilities/fileUtils'
 
@@ -35,7 +37,7 @@ describe("ingress blue green helpers", () => {
 
     test("correctly prepares blue/green ingresses for deployment", () => {
         const kc = new Kubectl("")
-        var generatedObjects = routeBlueGreenIngress(kc, GREEN_LABEL_VALUE, testObjects.serviceNameMap, testObjects.ingressEntityList)
+        var generatedObjects = routeBlueGreenIngress(kc, testObjects.serviceNameMap, testObjects.ingressEntityList)
         generatedObjects.then((value) => {
             expect(value).toHaveLength(1) 
             //@ts-ignore
