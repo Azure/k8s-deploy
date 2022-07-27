@@ -1,6 +1,4 @@
-import {
-   cleanLabel,
-} from '../utilities/workflowAnnotationUtils'
+import {cleanLabel} from '../utilities/workflowAnnotationUtils'
 
 describe('WorkflowAnnotationUtils', () => {
    describe('cleanLabel', () => {
