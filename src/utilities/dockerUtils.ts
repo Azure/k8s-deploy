@@ -3,7 +3,6 @@ import {DeploymentConfig} from '../types/deploymentConfig'
 import * as core from '@actions/core'
 import {DockerExec} from '../types/docker'
 import {getNormalizedPath} from './githubUtils'
-import {parse} from 'path'
 
 export async function getDeploymentConfig(): Promise<DeploymentConfig> {
    let helmChartPaths: string[] =
@@ -25,9 +24,6 @@ export async function getDeploymentConfig(): Promise<DeploymentConfig> {
    }
 
    const imageNames = core.getInput('images').split('\n') || []
-   if (imageNames.length == 1 && imageNames[0] == '') {
-      imageNames[0] = '[]'
-   }
    const imageDockerfilePathMap: {[id: string]: string} = {}
 
    const pullImages = !(core.getInput('pull-images').toLowerCase() === 'false')

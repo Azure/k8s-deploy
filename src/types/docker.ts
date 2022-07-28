@@ -8,7 +8,6 @@ export class DockerExec {
    }
 
    public async pull(image: string, args: string[], silent?: boolean) {
-      image = image.trim()
       const result = await this.execute(['pull', image, ...args], silent)
       if (result.stderr != '' || result.exitCode != 0) {
          throw new Error(`docker images pull failed: ${result.stderr}`)
