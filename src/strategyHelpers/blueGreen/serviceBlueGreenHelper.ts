@@ -30,7 +30,7 @@ export async function deployBlueGreenService(
       .concat(manifestObjects.unroutedServiceEntityList)
    const manifestFiles = fileHelper.writeObjectsToFile(newObjectsList)
 
-   if (manifestFiles.length > 0)await kubectl.apply(manifestFiles)
+   if (manifestFiles.length > 0) await kubectl.apply(manifestFiles)
 
    // returning deployment details to check for rollout stability
    return {workloadDeployment, newObjectsList}
