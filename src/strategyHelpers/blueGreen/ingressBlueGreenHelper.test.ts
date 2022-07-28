@@ -8,13 +8,14 @@ import {
 import {Kubectl} from '../../types/kubectl'
 import * as fileHelper from '../../utilities/fileUtils'
 
-var testObjects
-var betaFilepath = ['test/unit/manifests/test-ingress.yml']
-var ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
 
 jest.mock('../../types/kubectl')
 
 describe('ingress blue green helpers', () => {
+    let testObjects
+    const betaFilepath = ['test/unit/manifests/test-ingress.yml']
+    const ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
+
    beforeEach(() => {
       //@ts-ignore
       Kubectl.mockClear()
@@ -63,7 +64,7 @@ describe('ingress blue green helpers', () => {
 
    test('correctly prepares blue/green ingresses for deployment', () => {
       const kc = new Kubectl('')
-      var generatedObjects = routeBlueGreenIngress(
+      const generatedObjects = routeBlueGreenIngress(
          kc,
          GREEN_LABEL_VALUE,
          testObjects.serviceNameMap,

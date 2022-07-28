@@ -19,7 +19,7 @@ export async function deployBlueGreenService(
    const manifestObjects: BlueGreenManifests = getManifestObjects(filePaths)
 
    // create deployments with green label value
-   const result = await createWorkloadsWithLabel(
+   const workloadDeployment = await createWorkloadsWithLabel(
       kubectl,
       manifestObjects.deploymentEntityList,
       GREEN_LABEL_VALUE
@@ -30,10 +30,10 @@ export async function deployBlueGreenService(
       .concat(manifestObjects.unroutedServiceEntityList)
    const manifestFiles = fileHelper.writeObjectsToFile(newObjectsList)
 
-   await kubectl.apply(manifestFiles)
+   if (manifestFiles.length > 0)await kubectl.apply(manifestFiles)
 
    // returning deployment details to check for rollout stability
-   return {result, newObjectsList}
+   return {workloadDeployment, newObjectsList}
 }
 
 export async function promoteBlueGreenService(

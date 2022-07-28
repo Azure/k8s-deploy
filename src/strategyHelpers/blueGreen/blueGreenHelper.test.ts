@@ -91,7 +91,7 @@ describe('bluegreenhelper functions', () => {
       const kubectl = new Kubectl('')
       jest.spyOn(bgHelper, 'deleteObjects').mockReturnValue({} as Promise<void>)
 
-      var objectsToDelete = deleteWorkloadsAndServicesWithLabel(
+      let objectsToDelete = deleteWorkloadsAndServicesWithLabel(
          kubectl,
          NONE_LABEL_VALUE,
          testObjects.deploymentEntityList,

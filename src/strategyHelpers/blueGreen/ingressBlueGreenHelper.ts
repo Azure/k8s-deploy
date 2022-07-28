@@ -24,7 +24,7 @@ export async function deployBlueGreenIngress(
    const manifestObjects: BlueGreenManifests = getManifestObjects(filePaths)
 
    // create deployments with green label value
-   const result = await createWorkloadsWithLabel(
+   const workloadDeployment = await createWorkloadsWithLabel(
       kubectl,
       manifestObjects.deploymentEntityList,
       GREEN_LABEL_VALUE
@@ -50,7 +50,7 @@ export async function deployBlueGreenIngress(
          JSON.stringify(newObjectsList)
    )
 
-   return {result, newObjectsList}
+   return {workloadDeployment, newObjectsList}
 }
 
 export async function promoteBlueGreenIngress(
@@ -58,7 +58,7 @@ export async function promoteBlueGreenIngress(
    manifestObjects
 ) {
    //checking if anything to promote
-   var {areValid, invalidIngresses} = validateIngresses(
+   const {areValid, invalidIngresses} = validateIngresses(
       kubectl,
       manifestObjects.ingressEntityList,
       manifestObjects.serviceNameMap
@@ -162,7 +162,7 @@ export function validateIngresses(
             inputObject.metadata.name
          )
 
-         var isValid =
+         let isValid =
             !!existingIngress &&
             existingIngress?.metadata?.labels[BLUE_GREEN_VERSION_LABEL] ===
                GREEN_LABEL_VALUE
