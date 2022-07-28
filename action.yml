@@ -62,6 +62,16 @@ inputs:
       description: 'Annotate the target namespace'
       required: false
       default: true
+   private-cluster:
+      description: 'True if cluster is AKS private cluster'
+      required: false
+      default: false
+   resource-group:
+      description: 'Name of resource group - Only required if using private cluster'
+      required: false
+   name:
+      description: 'Resource group name - Only required if using private cluster'
+      required: false
 
 branding:
    color: 'green'

@@ -97,6 +97,10 @@ Following are the key capabilities of this action:
     <td>Acceptable values: 1-300.</br>Default value: 0.</br>Waits for the given input in minutes before routing traffic to '-green' workloads.</td>
   </tr>
   <tr>
+    <td>private-cluster </br></br>(Optional and relevant only using K8's deploy for a cluster with private cluster enabled)</td>
+    <td>Acceptable values: true, false</br>Default value: false.</td>
+  </tr>
+  <tr>
     <td>force </br></br>(Optional)</td>
     <td>Deploy when a previous deployment already exists. If true then '--force' argument is added to the apply command. Using '--force' argument is not recommended in production.</td>
   </tr>
@@ -120,6 +124,26 @@ Following are the key capabilities of this action:
      imagepullsecrets: |
         image-pull-secret1
         image-pull-secret2
+```
+
+### Private cluster deployment
+
+```yaml
+- uses: Azure/k8s-deploy@v4
+  with:
+     resource-group: yourResourceGroup
+     name: yourClusterName
+     action: deploy
+     strategy: basic
+
+     private-cluster: true
+     manifests: |
+        manifests/azure-vote-backend-deployment.yaml
+        manifests/azure-vote-backend-service.yaml
+        manifests/azure-vote-frontend-deployment.yaml
+        manifests/azure-vote-frontend-service.yaml
+     images: |
+        registry.azurecr.io/containername
 ```
 
 ### Canary deployment without service mesh

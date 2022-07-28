@@ -6,6 +6,7 @@ import {reject} from './actions/reject'
 import {Action, parseAction} from './types/action'
 import {parseDeploymentStrategy} from './types/deploymentStrategy'
 import {getFilesFromDirectories} from './utilities/fileUtils'
+import {PrivateKubectl} from './types/privatekubectl'
 import {parseAnnotations} from './types/annotations'
 
 export async function run() {
@@ -30,10 +31,22 @@ export async function run() {
       .filter((manifest) => manifest.length > 0) // remove any blanks
 
    const fullManifestFilePaths = getFilesFromDirectories(manifestFilePaths)
-   // create kubectl
    const kubectlPath = await getKubectlPath()
    const namespace = core.getInput('namespace') || 'default'
-   const kubectl = new Kubectl(kubectlPath, namespace, true)
+   const isPrivateCluster =
+      core.getInput('private-cluster').toLowerCase() === 'true'
+   const resourceGroup = core.getInput('resource-group') || ''
+   const resourceName = core.getInput('name') || ''
+
+   const kubectl = isPrivateCluster
+      ? new PrivateKubectl(
+           kubectlPath,
+           namespace,
+           true,
+           resourceGroup,
+           resourceName
+        )
+      : new Kubectl(kubectlPath, namespace, true)
 
    // run action
    switch (action) {
