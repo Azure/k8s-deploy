@@ -29,7 +29,7 @@ export async function deployBlueGreenService(
       .concat(manifestObjects.ingressEntityList)
       .concat(manifestObjects.unroutedServiceEntityList)
    const manifestFiles = fileHelper.writeObjectsToFile(newObjectsList)
-   
+
    await kubectl.apply(manifestFiles)
 
    // returning deployment details to check for rollout stability
