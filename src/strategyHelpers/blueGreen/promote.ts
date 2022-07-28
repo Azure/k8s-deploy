@@ -4,8 +4,7 @@ import {
    addBlueGreenLabelsAndAnnotations,
    BLUE_GREEN_VERSION_LABEL,
    BlueGreenManifests,
-   createWorkloadsWithLabel,
-   deleteWorkloadsAndServicesWithLabel,
+   deployWithLabel,
    fetchResource,
    getManifestObjects,
    getNewBlueGreenObject,
@@ -14,9 +13,11 @@ import {
 } from './blueGreenHelper'
 
 import {isIngressRouted} from './ingressBlueGreenHelper'
+import {validateServicesState} from './serviceBlueGreenHelper'
 
 import * as core from '@actions/core'
 
+// refactor - gonna need to add tests to ensure correct set of objects are being passed in through here
 export async function promoteBlueGreenIngress(
     kubectl: Kubectl,
     manifestObjects
@@ -32,27 +33,15 @@ export async function promoteBlueGreenIngress(
     }
  
     // create stable deployments with new configuration
-    const result = createWorkloadsWithLabel(
+    const result = deployWithLabel(
        kubectl,
-       manifestObjects.deploymentEntityList,
+       manifestObjects.deploymentEntityList.concat(manifestObjects.serviceEntityList),
        NONE_LABEL_VALUE
     )
  
     // refactor - separate function call to maintain some logical pattern - have deployments happen in some extenral call rather than right here, just like
     // is done for deployments
     // create stable services with new configuration
-    const newObjectsList = []
-    manifestObjects.serviceEntityList.forEach((inputObject) => {
-       const newBlueGreenObject = getNewBlueGreenObject(
-          inputObject,
-          NONE_LABEL_VALUE
-       )
-       newObjectsList.push(newBlueGreenObject)
-    })
- 
-    const manifestFiles = fileHelper.writeObjectsToFile(newObjectsList)
-    await kubectl.apply(manifestFiles)
- 
     return result
  }
 
@@ -84,3 +73,22 @@ export async function promoteBlueGreenIngress(
  
     return {areValid, invalidIngresses}
  }
+
+ export async function promoteBlueGreenService(
+   kubectl: Kubectl,
+   manifestObjects
+) {
+   // checking if services are in the right state ie. targeting green deployments
+   if (
+      !(await validateServicesState(kubectl, manifestObjects.serviceEntityList))
+   ) {
+      throw 'Not inP promote state'
+   }
+
+   // creating stable deployments with new configurations
+   return await deployWithLabel(
+      kubectl,
+      manifestObjects.deploymentEntityList,
+      NONE_LABEL_VALUE
+   )
+}

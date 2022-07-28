@@ -1,4 +1,4 @@
-import {createWorkloadsWithLabel, deleteWorkloadsAndServicesWithLabel, getManifestObjects, getNewBlueGreenObject, GREEN_LABEL_VALUE, isServiceRouted, NONE_LABEL_VALUE} from './blueGreenHelper'
+import {deployWithLabel, deleteWorkloadsAndServicesWithLabel, getManifestObjects, getNewBlueGreenObject, GREEN_LABEL_VALUE, isServiceRouted, NONE_LABEL_VALUE} from './blueGreenHelper'
 import * as bgHelper from './blueGreenHelper'
 import { Kubectl } from '../../types/kubectl'
 import * as fileHelper from '../../utilities/fileUtils'
@@ -44,7 +44,7 @@ describe('bluegreenhelper functions', () => {
     test('correctly makes labeled workloads', () => {
         const kubectl = new Kubectl('')
         expect(Kubectl).toBeCalledTimes(1)
-        const cwlResult = createWorkloadsWithLabel(kubectl, testObjects.deploymentEntityList, GREEN_LABEL_VALUE)
+        const cwlResult = deployWithLabel(kubectl, testObjects.deploymentEntityList, GREEN_LABEL_VALUE)
         cwlResult.then((value) => {
             //@ts-ignore
             expect(value.newFilePaths[0]).toBe('')
@@ -61,14 +61,7 @@ describe('bluegreenhelper functions', () => {
         const kubectl = new Kubectl('')
         jest.spyOn(bgHelper, 'deleteObjects').mockReturnValue({} as Promise<void>)
 
-        var objectsToDelete = deleteWorkloadsAndServicesWithLabel(kubectl, NONE_LABEL_VALUE, testObjects.deploymentEntityList, testObjects.serviceEntityList)
-        objectsToDelete.then((value) => {
-            expect(value).toHaveLength(2)
-            expect(value).toContainEqual;({name: 'nginx-service', kind: 'Service'})
-            expect(value).toContainEqual({name: 'nginx-deployment', kind: 'Deployment'})
-        })
-
-        objectsToDelete = deleteWorkloadsAndServicesWithLabel(kubectl, GREEN_LABEL_VALUE, testObjects.deploymentEntityList, testObjects.serviceEntityList)
+        const objectsToDelete = deleteWorkloadsAndServicesWithLabel(kubectl, GREEN_LABEL_VALUE, testObjects.deploymentEntityList, testObjects.serviceEntityList)
         objectsToDelete.then((value) => {
             expect(value).toHaveLength(2)
             expect(value).toContainEqual({name: 'nginx-service-green', kind: 'Service'})
