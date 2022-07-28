@@ -241,7 +241,7 @@ export function updateIngressBackend(
    inputObject = JSON.parse(JSON.stringify(inputObject), (key, value) => {
       if (
          key.toLowerCase() === BACKEND &&
-         serviceNameMap.has(value.service.name)
+         serviceNameMap.has(value?.service?.name)
       ) {
          value.service.name = serviceNameMap.get(value.service.name)
       }
