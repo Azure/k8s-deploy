@@ -5,8 +5,6 @@ import {
    addBlueGreenLabelsAndAnnotations,
    BLUE_GREEN_VERSION_LABEL,
    BlueGreenManifests,
-   createWorkloadsWithLabel,
-   deleteWorkloadsAndServicesWithLabel,
    fetchResource,
    getManifestObjects,
    getNewBlueGreenObject,

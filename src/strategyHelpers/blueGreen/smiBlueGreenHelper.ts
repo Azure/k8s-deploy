@@ -3,9 +3,10 @@ import * as kubectlUtils from '../../utilities/trafficSplitUtils'
 import * as fileHelper from '../../utilities/fileUtils'
 import {
    BlueGreenManifests,
-   createWorkloadsWithLabel,
+   deployWithLabel,
    deleteObjects,
    deleteWorkloadsWithLabel,
+   deployObjects,
    fetchResource,
    getBlueGreenResourceName,
    getManifestObjects,
@@ -33,18 +34,20 @@ export async function deployBlueGreenSMI(
       .concat(manifestObjects.serviceEntityList)
       .concat(manifestObjects.ingressEntityList)
       .concat(manifestObjects.unroutedServiceEntityList)
-   const manifestFiles = fileHelper.writeObjectsToFile(newObjectsList)
-   await kubectl.apply(manifestFiles)
+   
+   deployObjects(kubectl, newObjectsList)
 
    // make extraservices and trafficsplit
    await setupSMI(kubectl, manifestObjects.serviceEntityList)
 
    // create new deloyments
-   return await createWorkloadsWithLabel(
+   const workloadDeployment = await deployWithLabel(
       kubectl,
       manifestObjects.deploymentEntityList,
       GREEN_LABEL_VALUE
    )
+
+   return {workloadDeployment, newObjectsList}
 }
 
 export async function promoteBlueGreenSMI(kubectl: Kubectl, manifestObjects) {
@@ -59,7 +62,7 @@ export async function promoteBlueGreenSMI(kubectl: Kubectl, manifestObjects) {
    }
 
    // create stable deployments with new configuration
-   return await createWorkloadsWithLabel(
+   return await deployWithLabel(
       kubectl,
       manifestObjects.deploymentEntityList,
       NONE_LABEL_VALUE
@@ -109,8 +112,7 @@ export async function setupSMI(kubectl: Kubectl, serviceEntityList: any[]) {
    })
 
    // create services
-   const manifestFiles = fileHelper.writeObjectsToFile(newObjectsList)
-   await kubectl.apply(manifestFiles)
+   deployObjects(kubectl, newObjectsList)
 
    // route to stable service
    trafficObjectList.forEach((inputObject) => {

@@ -57,10 +57,10 @@ export async function deployManifests(
          const routeStrategy = parseRouteStrategy(
             core.getInput('route-method', {required: true})
          )
-         const depResult = await deployBlueGreen(kubectl, files, routeStrategy)
+         const {workloadDeployment} = await deployBlueGreen(kubectl, files, routeStrategy)
 
-         checkForErrors([depResult.result])
-         return depResult.newFilePaths
+         checkForErrors([workloadDeployment.result])
+         return workloadDeployment.newFilePaths
       }
 
       case DeploymentStrategy.BASIC: {

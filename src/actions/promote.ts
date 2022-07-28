@@ -19,7 +19,7 @@ import {
 import {
    promoteBlueGreenService,
    
-} from '../strategyHelpers/blueGreen/serviceBlueGreenHelper'
+} from '../strategyHelpers/blueGreen/promote'
 import {
    promoteBlueGreenIngress
 } from '../strategyHelpers/blueGreen/promote'

@@ -2,15 +2,6 @@ import {Kubectl} from '../../types/kubectl'
 import * as fileHelper from '../../utilities/fileUtils'
 import {
    addBlueGreenLabelsAndAnnotations,
-   BLUE_GREEN_VERSION_LABEL,
-   BlueGreenManifests,
-   createWorkloadsWithLabel,
-   deleteWorkloadsAndServicesWithLabel,
-   fetchResource,
-   getManifestObjects,
-   getNewBlueGreenObject,
-   GREEN_LABEL_VALUE,
-   NONE_LABEL_VALUE
 } from './blueGreenHelper'
 import * as core from '@actions/core'
 

@@ -76,11 +76,7 @@ export async function deleteWorkloadsAndServicesWithLabel(
       const name = inputObject.metadata.name
       const kind = inputObject.kind
 
-      if (deleteLabel === NONE_LABEL_VALUE) {
-         // delete stable objects
-         const resourceToDelete = {name, kind}
-         resourcesToDelete.push(resourceToDelete)
-      } else {
+      if (deleteLabel === GREEN_LABEL_VALUE) {
          // delete green labels
          const resourceToDelete = {
             name: getBlueGreenResourceName(name, GREEN_SUFFIX),
@@ -103,7 +99,7 @@ export async function deleteObjects(kubectl: Kubectl, deleteList: any[]) {
          const result = await kubectl.delete([delObject.kind, delObject.name])
          checkForErrors([result])
       } catch (ex) {
-         // Ignore failures of delete if it doesn't exist
+         core.debug("failed to delete object " + delObject?.metadata?.name)
       }
    }
 }
@@ -172,7 +168,7 @@ export function isServiceRouted(
          })
 }
 
-export async function createWorkloadsWithLabel(
+export async function deployWithLabel(
    kubectl: Kubectl,
    deploymentObjectList: any[],
    nextLabel: string
@@ -184,12 +180,12 @@ export async function createWorkloadsWithLabel(
       newObjectsList.push(newBlueGreenObject)
    })
 
-   const manifestFiles = fileHelper.writeObjectsToFile(newObjectsList)
-   const result = await kubectl.apply(manifestFiles)
+   const {result, manifestFiles} = await deployObjects(kubectl, newObjectsList)
 
-   return {result: result, newFilePaths: manifestFiles}
+   return {result, manifestFiles}
 }
 
+// refactor - may want to look at this?
 export function getNewBlueGreenObject(
    inputObject: any,
    labelValue: string
@@ -302,9 +298,9 @@ export async function fetchResource(
 
 export async function deployObjects(kubectl: Kubectl, objectsList: any[]){
    const manifestFiles = fileHelper.writeObjectsToFile(objectsList)
-   await kubectl.apply(manifestFiles)
    const result = await kubectl.apply(manifestFiles)
-   return result
+
+   return {result, manifestFiles}
 }
 
 

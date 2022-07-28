@@ -4,7 +4,7 @@ import {
    addBlueGreenLabelsAndAnnotations,
    BLUE_GREEN_VERSION_LABEL,
    BlueGreenManifests,
-   createWorkloadsWithLabel,
+   deployWithLabel,
    deleteWorkloadsWithLabel,
    fetchResource,
    getManifestObjects,
@@ -12,25 +12,6 @@ import {
    NONE_LABEL_VALUE
 } from './blueGreenHelper'
 
-
-export async function promoteBlueGreenService(
-   kubectl: Kubectl,
-   manifestObjects
-) {
-   // checking if services are in the right state ie. targeting green deployments
-   if (
-      !(await validateServicesState(kubectl, manifestObjects.serviceEntityList))
-   ) {
-      throw 'Not inP promote state'
-   }
-
-   // creating stable deployments with new configurations
-   return await createWorkloadsWithLabel(
-      kubectl,
-      manifestObjects.deploymentEntityList,
-      NONE_LABEL_VALUE
-   )
-}
 
 
 // add green labels to configure existing service

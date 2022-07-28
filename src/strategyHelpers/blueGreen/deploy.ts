@@ -5,8 +5,7 @@ import {
    addBlueGreenLabelsAndAnnotations,
    BLUE_GREEN_VERSION_LABEL,
    BlueGreenManifests,
-   createWorkloadsWithLabel,
-   deleteWorkloadsAndServicesWithLabel,
+   deployWithLabel,
    fetchResource,
    getManifestObjects,
    getNewBlueGreenObject,
@@ -30,9 +29,9 @@ export async function deployBlueGreen(
     routeStrategy: RouteStrategy
 ){
 
-    const {result, newFilePaths} = await Promise.resolve(
+    const {workloadDeployment, newObjectsList} = await Promise.resolve(
         (routeStrategy == RouteStrategy.INGRESS &&
-           deployBlueGreenIngress(kubectl, files)[0]) || // refactor: why does this need a [0]
+           deployBlueGreenIngress(kubectl, files)) || 
            (routeStrategy == RouteStrategy.SMI &&
               deployBlueGreenSMI(kubectl, files)) ||
            deployBlueGreenService(kubectl, files)
@@ -42,9 +41,10 @@ export async function deployBlueGreen(
      await routeBlueGreenForDeploy(kubectl, files, routeStrategy)
      core.endGroup()
 
-     return {result, newFilePaths}
+     return {workloadDeployment, newObjectsList}
 }
 
+// refactor - ensure correct objects are getting returned here - do we want to add deployments and services as well to objects? see tests
 export async function deployBlueGreenIngress(
     kubectl: Kubectl,
     filePaths: string[]
@@ -53,30 +53,20 @@ export async function deployBlueGreenIngress(
     const manifestObjects: BlueGreenManifests = getManifestObjects(filePaths)
  
     // create deployments with green label value
-    const result = await createWorkloadsWithLabel(
+    const workloadDeployment = await deployWithLabel(
        kubectl,
-       manifestObjects.deploymentEntityList,
+       manifestObjects.deploymentEntityList.concat(manifestObjects.serviceEntityList),
        GREEN_LABEL_VALUE
     )
-    // refactor - wrap services deployment into its own function
-    // create new services and other objects
-    let newObjectsList = []
-    manifestObjects.serviceEntityList.forEach((inputObject) => {
-       const newBlueGreenObject = getNewBlueGreenObject(
-          inputObject,
-          GREEN_LABEL_VALUE
-       )
-       newObjectsList.push(newBlueGreenObject)
-    })
-    newObjectsList = newObjectsList
-       .concat(manifestObjects.otherObjects)
+
+    const newObjectsList = manifestObjects.otherObjects
        .concat(manifestObjects.unroutedServiceEntityList)
     
     deployObjects(kubectl, newObjectsList)
  
     core.debug('new objects after processing services and other objects: \n' + JSON.stringify(newObjectsList))
 
-    return {result, newObjectsList}
+    return {workloadDeployment, newObjectsList}
  }
 
 
@@ -88,25 +78,22 @@ export async function deployBlueGreenIngress(
     const manifestObjects: BlueGreenManifests = getManifestObjects(filePaths)
  
     // create deployments with green label value
-    const result = await createWorkloadsWithLabel(
+    const workloadDeployment = await deployWithLabel(
        kubectl,
        manifestObjects.deploymentEntityList,
        GREEN_LABEL_VALUE
     )
  
-    // refactor - see common logic with how this is handled with ingress method as well - 
     // create other non deployment and non service entities
     const newObjectsList = manifestObjects.otherObjects
        .concat(manifestObjects.ingressEntityList)
        .concat(manifestObjects.unroutedServiceEntityList)
-    const manifestFiles = fileHelper.writeObjectsToFile(newObjectsList)
-    
-    await kubectl.apply(manifestFiles)
- 
-    // returning deployment details to check for rollout stability
-    return {result, newObjectsList}
 
-    // now route!
+    
+    deployObjects(kubectl, newObjectsList) 
+    // returning deployment details to check for rollout stability
+    // refactor - make this a "deploymentResult" type?
+    return {workloadDeployment, newObjectsList}
  }
  
 
