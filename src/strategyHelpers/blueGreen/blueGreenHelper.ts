@@ -147,8 +147,6 @@ export async function deleteWorkloadsAndServicesWithLabel(
    return resourcesToDelete
 }
 
-// refactor - condense two functions above into one, or consolidate logic into one and have the other just call that
-
 export async function deleteObjects(kubectl: Kubectl, deleteList: any[]) {
    // delete services and deployments
    for (const delObject of deleteList) {
