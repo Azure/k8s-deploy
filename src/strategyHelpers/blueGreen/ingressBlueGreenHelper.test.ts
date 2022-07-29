@@ -49,7 +49,7 @@ describe("ingress blue green helpers", () => {
         const result = deployBlueGreenIngress(kc, ingressFilepath)
 
         result.then((value) => {
-            const nol = value.newObjectsList
+            const nol = value.objects
             //@ts-ignore
             expect(nol[0].metadata.name).toBe('nginx-service-green')
         })

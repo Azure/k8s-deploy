@@ -26,15 +26,13 @@ describe('bluegreenhelper functions', () => {
 
     test('correctly makes new blue green object', () => {
         const modifiedDeployment = getNewBlueGreenObject(testObjects.deploymentEntityList[0], GREEN_LABEL_VALUE)
-        //@ts-ignore
+        
         expect(modifiedDeployment.metadata.name).toBe('nginx-deployment-green')
-        //@ts-ignore
         expect(modifiedDeployment.metadata.labels['k8s.deploy.color']).toBe('green')
 
         const modifiedSvc = getNewBlueGreenObject(testObjects.serviceEntityList[0], GREEN_LABEL_VALUE)
-        //@ts-ignore
+
         expect(modifiedSvc.metadata.name).toBe('nginx-service-green')
-        //@ts-ignore
         expect(modifiedSvc.metadata.labels['k8s.deploy.color']).toBe('green')
 
 
@@ -46,8 +44,7 @@ describe('bluegreenhelper functions', () => {
         expect(Kubectl).toBeCalledTimes(1)
         const cwlResult = deployWithLabel(kubectl, testObjects.deploymentEntityList, GREEN_LABEL_VALUE)
         cwlResult.then((value) => {
-            //@ts-ignore
-            expect(value.newFilePaths[0]).toBe('')
+            expect(value.manifestFiles[0]).toBe('')
         })
     })
 
