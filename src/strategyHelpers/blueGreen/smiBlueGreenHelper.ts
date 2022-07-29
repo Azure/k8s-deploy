@@ -41,11 +41,13 @@ export async function deployBlueGreenSMI(
    await setupSMI(kubectl, manifestObjects.serviceEntityList, annotations)
 
    // create new deloyments
-   return await createWorkloadsWithLabel(
+   const workloadDeployment = await createWorkloadsWithLabel(
       kubectl,
       manifestObjects.deploymentEntityList,
       GREEN_LABEL_VALUE
    )
+
+   return {workloadDeployment, newObjectsList}
 }
 
 export async function promoteBlueGreenSMI(kubectl: Kubectl, manifestObjects) {

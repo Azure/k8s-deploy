@@ -12,11 +12,12 @@ describe('File utils', () => {
          'test/unit/manifests/manifest_test_dir/another_layer/deep-service.yaml',
          'test/unit/manifests/manifest_test_dir/nested-test-service.yaml',
          'test/unit/manifests/test-ingress.yml',
+         'test/unit/manifests/test-ingress-new.yml',
          'test/unit/manifests/test-service.yml'
       ]
 
       // is there a more efficient way to test equality w random order?
-      expect(testSearch).toHaveLength(5)
+      expect(testSearch).toHaveLength(6)
       expectedManifests.forEach((fileName) => {
          expect(testSearch).toContain(fileName)
       })
@@ -53,7 +54,7 @@ describe('File utils', () => {
 
       expect(
          getFilesFromDirectories([outerPath, fileAtOuter, innerPath])
-      ).toHaveLength(5)
+      ).toHaveLength(6)
    })
 })
 
