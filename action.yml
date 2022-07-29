@@ -35,6 +35,9 @@ inputs:
       description: 'Traffic split method to be used. Allowed values are pod and smi'
       required: false
       default: 'pod'
+   traffic-split-annotations:
+      description: 'Annotations in the form of key/value pair to be added to TrafficSplit. Relevant only if deployement strategy is blue-green or canary'
+      required: false
    baseline-and-canary-replicas:
       description: 'Baseline and canary replicas count. Valid value between 0 to 100 (inclusive)'
       required: false
@@ -59,6 +62,16 @@ inputs:
       description: 'Annotate the target namespace'
       required: false
       default: true
+   private-cluster:
+      description: 'True if cluster is AKS private cluster'
+      required: false
+      default: false
+   resource-group:
+      description: 'Name of resource group - Only required if using private cluster'
+      required: false
+   name:
+      description: 'Resource group name - Only required if using private cluster'
+      required: false
 
 branding:
    color: 'green'

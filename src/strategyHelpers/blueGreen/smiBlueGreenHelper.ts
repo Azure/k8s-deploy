@@ -23,7 +23,8 @@ const MAX_VAL = 100
 
 export async function deployBlueGreenSMI(
    kubectl: Kubectl,
-   filePaths: string[]
+   filePaths: string[],
+   annotations: {[key: string]: string} = {}
 ) {
    // get all kubernetes objects defined in manifest files
    const manifestObjects: BlueGreenManifests = getManifestObjects(filePaths)
@@ -37,7 +38,7 @@ export async function deployBlueGreenSMI(
    await kubectl.apply(manifestFiles)
 
    // make extraservices and trafficsplit
-   await setupSMI(kubectl, manifestObjects.serviceEntityList)
+   await setupSMI(kubectl, manifestObjects.serviceEntityList, annotations)
 
    // create new deloyments
    const workloadDeployment = await createWorkloadsWithLabel(
@@ -70,16 +71,18 @@ export async function promoteBlueGreenSMI(kubectl: Kubectl, manifestObjects) {
 
 export async function rejectBlueGreenSMI(
    kubectl: Kubectl,
-   filePaths: string[]
+   filePaths: string[],
+   annotations: {[key: string]: string} = {}
 ) {
    // get all kubernetes objects defined in manifest files
    const manifestObjects: BlueGreenManifests = getManifestObjects(filePaths)
 
-   // route trafficsplit to stable deploymetns
+   // route trafficsplit to stable deployments
    await routeBlueGreenSMI(
       kubectl,
       NONE_LABEL_VALUE,
-      manifestObjects.serviceEntityList
+      manifestObjects.serviceEntityList,
+      annotations
    )
 
    // delete rejected new bluegreen deployments
@@ -93,7 +96,11 @@ export async function rejectBlueGreenSMI(
    await cleanupSMI(kubectl, manifestObjects.serviceEntityList)
 }
 
-export async function setupSMI(kubectl: Kubectl, serviceEntityList: any[]) {
+export async function setupSMI(
+   kubectl: Kubectl,
+   serviceEntityList: any[],
+   annotations: {[key: string]: string} = {}
+) {
    const newObjectsList = []
    const trafficObjectList = []
 
@@ -119,7 +126,8 @@ export async function setupSMI(kubectl: Kubectl, serviceEntityList: any[]) {
       createTrafficSplitObject(
          kubectl,
          inputObject.metadata.name,
-         NONE_LABEL_VALUE
+         NONE_LABEL_VALUE,
+         annotations
       )
    })
 }
@@ -129,7 +137,8 @@ let trafficSplitAPIVersion = ''
 async function createTrafficSplitObject(
    kubectl: Kubectl,
    name: string,
-   nextLabel: string
+   nextLabel: string,
+   annotations: {[key: string]: string} = {}
 ): Promise<any> {
    // cache traffic split api version
    if (!trafficSplitAPIVersion)
@@ -147,7 +156,8 @@ async function createTrafficSplitObject(
       apiVersion: trafficSplitAPIVersion,
       kind: 'TrafficSplit',
       metadata: {
-         name: getBlueGreenResourceName(name, TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX)
+         name: getBlueGreenResourceName(name, TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX),
+         annotations: annotations
       },
       spec: {
          service: name,
@@ -196,14 +206,16 @@ export function getSMIServiceResource(
 export async function routeBlueGreenSMI(
    kubectl: Kubectl,
    nextLabel: string,
-   serviceEntityList: any[]
+   serviceEntityList: any[],
+   annotations: {[key: string]: string} = {}
 ) {
    for (const serviceObject of serviceEntityList) {
       // route trafficsplit to given label
       await createTrafficSplitObject(
          kubectl,
          serviceObject.metadata.name,
-         nextLabel
+         nextLabel,
+         annotations
       )
    }
 }

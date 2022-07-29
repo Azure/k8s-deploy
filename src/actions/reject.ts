@@ -15,14 +15,15 @@ import {parseRouteStrategy, RouteStrategy} from '../types/routeStrategy'
 export async function reject(
    kubectl: Kubectl,
    manifests: string[],
-   deploymentStrategy: DeploymentStrategy
+   deploymentStrategy: DeploymentStrategy,
+   annotations: {[key: string]: string} = {}
 ) {
    switch (deploymentStrategy) {
       case DeploymentStrategy.CANARY:
          await rejectCanary(kubectl, manifests)
          break
       case DeploymentStrategy.BLUE_GREEN:
-         await rejectBlueGreen(kubectl, manifests)
+         await rejectBlueGreen(kubectl, manifests, annotations)
          break
       default:
          throw 'Invalid delete deployment strategy'
@@ -54,7 +55,11 @@ async function rejectCanary(kubectl: Kubectl, manifests: string[]) {
    core.endGroup()
 }
 
-async function rejectBlueGreen(kubectl: Kubectl, manifests: string[]) {
+async function rejectBlueGreen(
+   kubectl: Kubectl,
+   manifests: string[],
+   annotations: {[key: string]: string} = {}
+) {
    core.startGroup('Rejecting deployment with blue green strategy')
 
    const routeStrategy = parseRouteStrategy(
@@ -63,7 +68,7 @@ async function rejectBlueGreen(kubectl: Kubectl, manifests: string[]) {
    if (routeStrategy == RouteStrategy.INGRESS) {
       await rejectBlueGreenIngress(kubectl, manifests)
    } else if (routeStrategy == RouteStrategy.SMI) {
-      await rejectBlueGreenSMI(kubectl, manifests)
+      await rejectBlueGreenSMI(kubectl, manifests, annotations)
    } else {
       await rejectBlueGreenService(kubectl, manifests)
    }

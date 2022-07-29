@@ -1,13 +1,6 @@
 import {DeploymentConfig} from '../types/deploymentConfig'
 
-const ANNOTATION_PREFIX = 'actions.github.com/'
-
-export function prefixObjectKeys(obj: any, prefix: string): any {
-   return Object.keys(obj).reduce((newObj, key) => {
-      newObj[prefix + key] = obj[key]
-      return newObj
-   }, {})
-}
+const ANNOTATION_PREFIX = 'actions.github.com'
 
 export function getWorkflowAnnotations(
    lastSuccessRunSha: string,
@@ -31,21 +24,11 @@ export function getWorkflowAnnotations(
       helmChartPaths: deploymentConfig.helmChartFilePaths,
       provider: 'GitHub'
    }
-   const prefixedAnnotationObject = prefixObjectKeys(
-      annotationObject,
-      ANNOTATION_PREFIX
-   )
-   return JSON.stringify(prefixedAnnotationObject)
+   return JSON.stringify(annotationObject)
 }
 
-export function getWorkflowAnnotationKeyLabel(
-   workflowFilePath: string
-): string {
-   const hashKey = require('crypto')
-      .createHash('MD5')
-      .update(`${process.env.GITHUB_REPOSITORY}/${workflowFilePath}`)
-      .digest('hex')
-   return `githubWorkflow_${hashKey}`
+export function getWorkflowAnnotationKeyLabel(): string {
+   return `${ANNOTATION_PREFIX}/k8s-deploy`
 }
 
 /**
