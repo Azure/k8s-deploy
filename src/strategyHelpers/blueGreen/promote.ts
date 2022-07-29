@@ -42,8 +42,6 @@ export async function promoteBlueGreenIngress(
        NONE_LABEL_VALUE
     )
  
-    // refactor - separate function call to maintain some logical pattern - have deployments happen in some extenral call rather than right here, just like
-    // is done for deployments
     // create stable services with new configuration
     return result
  }
