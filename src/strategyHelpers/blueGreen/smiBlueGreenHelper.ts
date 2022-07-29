@@ -22,34 +22,6 @@ const TRAFFIC_SPLIT_OBJECT = 'TrafficSplit'
 const MIN_VAL = 0
 const MAX_VAL = 100
 
-export async function deployBlueGreenSMI(
-   kubectl: Kubectl,
-   filePaths: string[]
-) {
-   // get all kubernetes objects defined in manifest files
-   const manifestObjects: BlueGreenManifests = getManifestObjects(filePaths)
-
-   // create services and other objects
-   const newObjectsList = manifestObjects.otherObjects
-      .concat(manifestObjects.serviceEntityList)
-      .concat(manifestObjects.ingressEntityList)
-      .concat(manifestObjects.unroutedServiceEntityList)
-   
-   deployObjects(kubectl, newObjectsList)
-
-   // make extraservices and trafficsplit
-   await setupSMI(kubectl, manifestObjects.serviceEntityList)
-
-   // create new deloyments
-   const workloadDeployment = await deployWithLabel(
-      kubectl,
-      manifestObjects.deploymentEntityList,
-      GREEN_LABEL_VALUE
-   )
-
-   return {workloadDeployment, newObjectsList}
-}
-
 export async function promoteBlueGreenSMI(kubectl: Kubectl, manifestObjects) {
    // checking if there is something to promote
    if (

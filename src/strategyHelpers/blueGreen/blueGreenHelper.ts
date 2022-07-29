@@ -17,7 +17,8 @@ import {
 } from '../../utilities/manifestUpdateUtils'
 import {updateSpecLabels} from '../../utilities/manifestSpecLabelUtils'
 import {checkForErrors} from '../../utilities/kubectlUtils'
-import {RouteStrategy} from '../../types/routeStrategy'
+import { DeployResult } from '../../types/deployResult'
+import { K8sObject } from '../../types/k8sObject'
 
 export const GREEN_LABEL_VALUE = 'green'
 export const NONE_LABEL_VALUE = 'None'
@@ -26,12 +27,12 @@ export const GREEN_SUFFIX = '-green'
 export const STABLE_SUFFIX = '-stable'
 
 export interface BlueGreenManifests {
-   serviceEntityList: any[]
+   serviceEntityList: K8sObject[]
    serviceNameMap: Map<string, string>
-   unroutedServiceEntityList: any[]
-   deploymentEntityList: any[]
-   ingressEntityList: any[]
-   otherObjects: any[]
+   unroutedServiceEntityList: K8sObject[]
+   deploymentEntityList: K8sObject[]
+   ingressEntityList: K8sObject[]
+   otherObjects: K8sObject[]
 }
 
 export async function deleteWorkloadsWithLabel(
@@ -106,11 +107,11 @@ export async function deleteObjects(kubectl: Kubectl, deleteList: any[]) {
 
 // other common functions
 export function getManifestObjects(filePaths: string[]): BlueGreenManifests {
-   const deploymentEntityList = []
-   const routedServiceEntityList = []
-   const unroutedServiceEntityList = []
-   const ingressEntityList = []
-   const otherEntitiesList = []
+   const deploymentEntityList: K8sObject[] = []
+   const routedServiceEntityList: K8sObject[] = []
+   const unroutedServiceEntityList: K8sObject[] = []
+   const ingressEntityList: K8sObject[] = []
+   const otherEntitiesList: K8sObject[] = []
    const serviceNameMap = new Map<string, string>()
 
    filePaths.forEach((filePath: string) => {
@@ -172,7 +173,7 @@ export async function deployWithLabel(
    kubectl: Kubectl,
    deploymentObjectList: any[],
    nextLabel: string
-) {
+): Promise<DeployResult> {
    const newObjectsList = []
    deploymentObjectList.forEach((inputObject) => {
       // creating deployment with label
@@ -180,16 +181,14 @@ export async function deployWithLabel(
       newObjectsList.push(newBlueGreenObject)
    })
 
-   const {result, manifestFiles} = await deployObjects(kubectl, newObjectsList)
-
-   return {result, manifestFiles}
+   return await deployObjects(kubectl, newObjectsList)
 }
 
 // refactor - may want to look at this?
 export function getNewBlueGreenObject(
    inputObject: any,
    labelValue: string
-): object {
+): K8sObject {
    const newObject = JSON.parse(JSON.stringify(inputObject))
 
    // Updating name only if label is green label is given
@@ -296,7 +295,7 @@ export async function fetchResource(
    }
 }
 
-export async function deployObjects(kubectl: Kubectl, objectsList: any[]){
+export async function deployObjects(kubectl: Kubectl, objectsList: any[]): Promise<DeployResult> {
    const manifestFiles = fileHelper.writeObjectsToFile(objectsList)
    const result = await kubectl.apply(manifestFiles)
 
