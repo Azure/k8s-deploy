@@ -5,7 +5,7 @@ import {
    BlueGreenManifests,
    deployWithLabel,
    deleteObjects,
-   deleteWorkloadsWithLabel,
+   deleteGreenObjects,
    deployObjects,
    fetchResource,
    getBlueGreenResourceName,
@@ -56,9 +56,8 @@ export async function rejectBlueGreenSMI(
    )
 
    // delete rejected new bluegreen deployments
-   await deleteWorkloadsWithLabel(
+   await deleteGreenObjects(
       kubectl,
-      GREEN_LABEL_VALUE,
       manifestObjects.deploymentEntityList
    )
 

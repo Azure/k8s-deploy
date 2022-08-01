@@ -4,8 +4,7 @@ import {
    addBlueGreenLabelsAndAnnotations,
    BLUE_GREEN_VERSION_LABEL,
    BlueGreenManifests,
-   createWorkloadsWithLabel,
-   deleteWorkloadsAndServicesWithLabel,
+   deleteGreenObjects,
    fetchResource,
    getManifestObjects,
    getNewBlueGreenObject,
@@ -19,7 +18,6 @@ import {
     routeBlueGreenService
 } from './route'
 
-import { deleteWorkloadsWithLabel } from './blueGreenHelper'
 
 export async function rejectBlueGreenIngress(
     kubectl: Kubectl,
@@ -32,11 +30,9 @@ export async function rejectBlueGreenIngress(
     await routeBlueGreenIngressUnchanged(kubectl, manifestObjects.serviceNameMap, manifestObjects.ingressEntityList)
  
     // delete green services and deployments
-    await deleteWorkloadsAndServicesWithLabel(
+    await deleteGreenObjects(
        kubectl,
-       GREEN_LABEL_VALUE,
-       manifestObjects.deploymentEntityList,
-       manifestObjects.serviceEntityList
+       manifestObjects.deploymentEntityList.concat(manifestObjects.serviceEntityList)
     )
  }
 
@@ -55,9 +51,8 @@ export async function rejectBlueGreenIngress(
     )
  
     // delete new deployments with green suffix
-    await deleteWorkloadsWithLabel(
+    await deleteGreenObjects(
        kubectl,
-       GREEN_LABEL_VALUE,
        manifestObjects.deploymentEntityList
     )
  }

@@ -17,7 +17,6 @@ import {validateServicesState} from './serviceBlueGreenHelper'
 
 import * as core from '@actions/core'
 
-// refactor - gonna need to add tests to ensure correct set of objects are being passed in through here
 export async function promoteBlueGreenIngress(
     kubectl: Kubectl,
     manifestObjects
@@ -32,9 +31,6 @@ export async function promoteBlueGreenIngress(
        throw 'Ingresses are not in promote state' + invalidIngresses.toString()
     }
     
-    // refactor - NEED TO FIX THIS!!! ALSO NEED TO MAKE SURE THAT TAKING OUT NONE_LABEL DIDN'T ACTUALLY BREAK ANYTHING - 
-    // UNDER CURRENT RELEASE, PROMOTE STRATEGY GIVES OBJECTS A "NONE" COLOR... IS THAT STILL GONNA HAPPEN? I THINK WE
-    // NEED TO KEEP THAT!!
     // create stable deployments with new configuration
     const result = deployWithLabel(
        kubectl,

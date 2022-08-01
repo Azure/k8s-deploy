@@ -10,8 +10,7 @@ import * as models from '../types/kubernetesTypes'
 import * as KubernetesManifestUtility from '../utilities/manifestStabilityUtils'
 import {
    BlueGreenManifests,
-   deleteWorkloadsAndServicesWithLabel,
-   deleteWorkloadsWithLabel,
+   deleteGreenObjects,
    getManifestObjects,
    GREEN_LABEL_VALUE,
    NONE_LABEL_VALUE
@@ -153,11 +152,9 @@ async function promoteBlueGreen(
    if (routeStrategy == RouteStrategy.INGRESS) {
       await routeBlueGreenIngressUnchanged(kubectl, manifestObjects.serviceNameMap, manifestObjects.ingressEntityList)
 
-      await deleteWorkloadsAndServicesWithLabel(
+      await deleteGreenObjects(
          kubectl,
-         GREEN_LABEL_VALUE,
-         manifestObjects.deploymentEntityList,
-         manifestObjects.serviceEntityList
+         manifestObjects.deploymentEntityList.concat(manifestObjects.serviceEntityList)
       )
    } else if (routeStrategy == RouteStrategy.SMI) {
       await routeBlueGreenSMI(
@@ -166,9 +163,8 @@ async function promoteBlueGreen(
          manifestObjects.serviceEntityList,
          annotations
       )
-      await deleteWorkloadsWithLabel(
+      await deleteGreenObjects(
          kubectl,
-         GREEN_LABEL_VALUE,
          manifestObjects.deploymentEntityList
       )
       await cleanupSMI(kubectl, manifestObjects.serviceEntityList)
@@ -178,9 +174,8 @@ async function promoteBlueGreen(
          NONE_LABEL_VALUE,
          manifestObjects.serviceEntityList
       )
-      await deleteWorkloadsWithLabel(
+      await deleteGreenWorkload(
          kubectl,
-         GREEN_LABEL_VALUE,
          manifestObjects.deploymentEntityList
       )
    }

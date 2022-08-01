@@ -35,63 +35,27 @@ export interface BlueGreenManifests {
    otherObjects: K8sObject[]
 }
 
-export async function deleteWorkloadsWithLabel(
+export async function deleteGreenObjects(
    kubectl: Kubectl,
-   deleteLabel: string,
-   deploymentEntityList: any[]
-) {
+   toDeleteList: any[]
+): Promise<K8sObject[]> {
    const resourcesToDelete = []
-   deploymentEntityList.forEach((inputObject) => {
+   toDeleteList.forEach((inputObject) => {
       const name = inputObject.metadata.name
       const kind = inputObject.kind
 
-      if (deleteLabel === NONE_LABEL_VALUE) {
-         // delete stable deployments
-         const resourceToDelete = {name, kind}
-         resourcesToDelete.push(resourceToDelete)
-      } else {
-         // delete new green deployments
-         const resourceToDelete = {
-            name: getBlueGreenResourceName(name, GREEN_SUFFIX),
-            kind: kind
-         }
-         resourcesToDelete.push(resourceToDelete)
+      // delete new green deployments
+      const resourceToDelete = {
+         name: getBlueGreenResourceName(name, GREEN_SUFFIX),
+         kind: kind
       }
+      resourcesToDelete.push(resourceToDelete)
    })
 
    await deleteObjects(kubectl, resourcesToDelete)
    return resourcesToDelete
 }
 
-export async function deleteWorkloadsAndServicesWithLabel(
-   kubectl: Kubectl,
-   deleteLabel: string,
-   deploymentEntityList: any[],
-   serviceEntityList: any[]
-) {
-   // need to delete services and deployments
-   const deletionEntitiesList = deploymentEntityList.concat(serviceEntityList)
-   const resourcesToDelete = []
-
-   deletionEntitiesList.forEach((inputObject) => {
-      const name = inputObject.metadata.name
-      const kind = inputObject.kind
-
-      if (deleteLabel === GREEN_LABEL_VALUE) {
-         // delete green labels
-         const resourceToDelete = {
-            name: getBlueGreenResourceName(name, GREEN_SUFFIX),
-            kind: kind
-         }
-         resourcesToDelete.push(resourceToDelete)
-      }
-   })
-
-   await deleteObjects(kubectl, resourcesToDelete)
-   return resourcesToDelete
-}
-
-// refactor - condense two functions above into one, or consolidate logic into one and have the other just call that
 
 export async function deleteObjects(kubectl: Kubectl, deleteList: any[]) {
    // delete services and deployments
@@ -184,7 +148,6 @@ export async function deployWithLabel(
    return await deployObjects(kubectl, newObjectsList)
 }
 
-// refactor - may want to look at this?
 export function getNewBlueGreenObject(
    inputObject: any,
    labelValue: string
