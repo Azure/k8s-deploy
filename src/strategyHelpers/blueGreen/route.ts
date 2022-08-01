@@ -1,23 +1,17 @@
 import {Kubectl} from '../../types/kubectl'
+import {sleep} from '../../utilities/timeUtils'
 import {RouteStrategy} from '../../types/routeStrategy'
-import * as fileHelper from '../../utilities/fileUtils'
 import {
-   addBlueGreenLabelsAndAnnotations,
-   BLUE_GREEN_VERSION_LABEL,
+   BlueGreenDeployment,
    BlueGreenManifests,
-   fetchResource,
    getManifestObjects,
-   getNewBlueGreenObject,
    GREEN_LABEL_VALUE,
-   NONE_LABEL_VALUE,
    deployObjects
 } from './blueGreenHelper'
 
 import {getUpdatedBlueGreenIngress, isIngressRouted} from './ingressBlueGreenHelper'
 import {getUpdatedBlueGreenService} from './serviceBlueGreenHelper'
 import {routeBlueGreenSMI} from './smiBlueGreenHelper'
-import {sleep} from '../../utilities/timeUtils'
-
 
 import * as core from '@actions/core'
 
@@ -72,7 +66,7 @@ export async function routeBlueGreenForDeploy(
     kubectl: Kubectl,
     serviceNameMap: Map<string, string>,
     ingressEntityList: any[]
- ) {
+ ): Promise<BlueGreenDeployment> {
     let newObjectsList = []
  
     ingressEntityList.forEach((inputObject) => {
@@ -88,7 +82,9 @@ export async function routeBlueGreenForDeploy(
         }
     })
 
-    deployObjects(kubectl, newObjectsList)
+    let deployResult = await deployObjects(kubectl, newObjectsList)
+
+    return {deployResult, objects: newObjectsList}
  }
 
  export async function routeBlueGreenIngressUnchanged(kubectl: Kubectl, serviceNameMap: Map<string, string>, ingressEntityList: any[]){

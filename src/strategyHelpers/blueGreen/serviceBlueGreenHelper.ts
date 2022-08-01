@@ -1,12 +1,8 @@
 import {Kubectl} from '../../types/kubectl'
-import * as fileHelper from '../../utilities/fileUtils'
 import {
    addBlueGreenLabelsAndAnnotations,
    BLUE_GREEN_VERSION_LABEL,
-   BlueGreenManifests,
-   deployWithLabel,
    fetchResource,
-   getManifestObjects,
    GREEN_LABEL_VALUE,
 } from './blueGreenHelper'
 

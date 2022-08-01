@@ -14,7 +14,8 @@ import {
    GREEN_LABEL_VALUE,
    GREEN_SUFFIX,
    NONE_LABEL_VALUE,
-   STABLE_SUFFIX
+   STABLE_SUFFIX,
+   BlueGreenDeployment
 } from './blueGreenHelper'
 
 const TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX = '-trafficsplit'
@@ -22,7 +23,7 @@ const TRAFFIC_SPLIT_OBJECT = 'TrafficSplit'
 const MIN_VAL = 0
 const MAX_VAL = 100
 
-export async function promoteBlueGreenSMI(kubectl: Kubectl, manifestObjects) {
+export async function promoteBlueGreenSMI(kubectl: Kubectl, manifestObjects): Promise<BlueGreenDeployment> {
    // checking if there is something to promote
    if (
       !(await validateTrafficSplitsState(

@@ -1,53 +1,40 @@
+import * as core from '@actions/core'
+
+import {DeployResult} from '../../types/deployResult'
+import {K8sObject} from '../../types/k8sObject'
 import {Kubectl} from '../../types/kubectl'
-import * as fileHelper from '../../utilities/fileUtils'
 import {RouteStrategy} from '../../types/routeStrategy'
+
 import {
-   addBlueGreenLabelsAndAnnotations,
-   BLUE_GREEN_VERSION_LABEL,
+   BlueGreenDeployment,
    BlueGreenManifests,
    deployWithLabel,
-   fetchResource,
    getManifestObjects,
-   getNewBlueGreenObject,
    GREEN_LABEL_VALUE,
    deployObjects
 } from './blueGreenHelper'
-
-import {getUpdatedBlueGreenIngress, isIngressRouted} from './ingressBlueGreenHelper'
-import {getUpdatedBlueGreenService} from './serviceBlueGreenHelper'
 import {setupSMI} from './smiBlueGreenHelper'
 
-
-
-import * as core from '@actions/core'
-import { routeBlueGreenForDeploy } from './route'
-import { DeployResult } from '../../types/deployResult'
-import { K8sObject } from '../../types/k8sObject'
-
-interface BlueGreenDeployment{
-   deployResult: DeployResult,
-   objects: K8sObject[]
-}
+import {routeBlueGreenForDeploy} from './route'
 
 export async function deployBlueGreen(
-    kubectl: Kubectl,
-    files: string[],
-    routeStrategy: RouteStrategy
-): Promise<BlueGreenDeployment>{
+   kubectl: Kubectl,
+   files: string[],
+   routeStrategy: RouteStrategy
+): Promise<BlueGreenDeployment> {
+   const {deployResult, objects} = await Promise.resolve(
+      (routeStrategy == RouteStrategy.INGRESS &&
+         deployBlueGreenIngress(kubectl, files)) ||
+         (routeStrategy == RouteStrategy.SMI &&
+            deployBlueGreenSMI(kubectl, files)) ||
+         deployBlueGreenService(kubectl, files)
+   )
 
-    const {deployResult, objects} = await Promise.resolve(
-        (routeStrategy == RouteStrategy.INGRESS &&
-           deployBlueGreenIngress(kubectl, files)) || 
-           (routeStrategy == RouteStrategy.SMI &&
-              deployBlueGreenSMI(kubectl, files)) ||
-           deployBlueGreenService(kubectl, files)
-     )
-        
-     core.startGroup('Routing blue green')
-     await routeBlueGreenForDeploy(kubectl, files, routeStrategy)
-     core.endGroup()
+   core.startGroup('Routing blue green')
+   await routeBlueGreenForDeploy(kubectl, files, routeStrategy)
+   core.endGroup()
 
-     return {deployResult, objects}
+   return {deployResult, objects}
 }
 
 export async function deployBlueGreenSMI(
@@ -62,72 +49,72 @@ export async function deployBlueGreenSMI(
       .concat(manifestObjects.serviceEntityList)
       .concat(manifestObjects.ingressEntityList)
       .concat(manifestObjects.unroutedServiceEntityList)
-   
-   deployObjects(kubectl, newObjectsList)
+
+   await deployObjects(kubectl, newObjectsList)
 
    // make extraservices and trafficsplit
    await setupSMI(kubectl, manifestObjects.serviceEntityList)
 
    // create new deloyments
-   const workloadDeployment = await deployWithLabel(
+   const blueGreenDeployment: BlueGreenDeployment = await deployWithLabel(
       kubectl,
       manifestObjects.deploymentEntityList,
       GREEN_LABEL_VALUE
    )
 
-   return {deployResult: workloadDeployment, objects: newObjectsList}
+   return {deployResult: blueGreenDeployment.deployResult, objects: blueGreenDeployment.objects.concat(newObjectsList)}
 }
 
-// refactor - ensure correct objects are getting returned here - do we want to add deployments and services as well to objects? see tests
 export async function deployBlueGreenIngress(
-    kubectl: Kubectl,
-    filePaths: string[]
- ): Promise<BlueGreenDeployment> {
-    // get all kubernetes objects defined in manifest files
-    const manifestObjects: BlueGreenManifests = getManifestObjects(filePaths)
- 
-    // create deployments with green label value
-    const workloadDeployment: DeployResult = await deployWithLabel(
-       kubectl,
-       manifestObjects.deploymentEntityList.concat(manifestObjects.serviceEntityList),
-       GREEN_LABEL_VALUE
-    )
+   kubectl: Kubectl,
+   filePaths: string[]
+): Promise<BlueGreenDeployment> {
+   // get all kubernetes objects defined in manifest files
+   const manifestObjects: BlueGreenManifests = getManifestObjects(filePaths)
 
-    const newObjectsList = manifestObjects.otherObjects
-       .concat(manifestObjects.unroutedServiceEntityList)
-    
-    deployObjects(kubectl, newObjectsList)
- 
-    core.debug('new objects after processing services and other objects: \n' + JSON.stringify(newObjectsList))
+   // create deployments with green label value
+   let servicesAndDeployments = manifestObjects.deploymentEntityList.concat(
+      manifestObjects.serviceEntityList
+   )
+   const workloadDeployment: BlueGreenDeployment = await deployWithLabel(
+      kubectl,
+      servicesAndDeployments,
+      GREEN_LABEL_VALUE
+   )
 
-    return {deployResult: workloadDeployment, objects: newObjectsList}
- }
+   const otherObjects = manifestObjects.otherObjects.concat(
+      manifestObjects.unroutedServiceEntityList
+   )
 
+   deployObjects(kubectl, otherObjects)
 
+   core.debug(
+      'new objects after processing services and other objects: \n' +
+         JSON.stringify(servicesAndDeployments)
+   )
 
- export async function deployBlueGreenService(
-    kubectl: Kubectl,
-    filePaths: string[]
- ): Promise<BlueGreenDeployment> {
-    const manifestObjects: BlueGreenManifests = getManifestObjects(filePaths)
- 
-    // create deployments with green label value
-    const workloadDeployment = await deployWithLabel(
-       kubectl,
-       manifestObjects.deploymentEntityList,
-       GREEN_LABEL_VALUE
-    )
- 
-    // create other non deployment and non service entities
-    const newObjectsList = manifestObjects.otherObjects
-       .concat(manifestObjects.ingressEntityList)
-       .concat(manifestObjects.unroutedServiceEntityList)
+   return {deployResult: workloadDeployment.deployResult, objects: workloadDeployment.objects.concat(otherObjects)}
+}
 
-    
-    deployObjects(kubectl, newObjectsList) 
-    // returning deployment details to check for rollout stability
-    // refactor - make this a "deploymentResult" type?
-    return {deployResult: workloadDeployment, objects: newObjectsList}
- }
- 
+export async function deployBlueGreenService(
+   kubectl: Kubectl,
+   filePaths: string[]
+): Promise<BlueGreenDeployment> {
+   const manifestObjects: BlueGreenManifests = getManifestObjects(filePaths)
 
+   // create deployments with green label value
+   const blueGreenDeployment: BlueGreenDeployment = await deployWithLabel(
+      kubectl,
+      manifestObjects.deploymentEntityList,
+      GREEN_LABEL_VALUE
+   )
+
+   // create other non deployment and non service entities
+   const newObjectsList = manifestObjects.otherObjects
+      .concat(manifestObjects.ingressEntityList)
+      .concat(manifestObjects.unroutedServiceEntityList)
+
+   deployObjects(kubectl, newObjectsList)
+   // returning deployment details to check for rollout stability
+   return {deployResult: blueGreenDeployment.deployResult, objects: blueGreenDeployment.objects.concat(newObjectsList)}
+}

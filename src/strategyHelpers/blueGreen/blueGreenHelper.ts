@@ -1,6 +1,9 @@
 import * as core from '@actions/core'
 import * as fs from 'fs'
 import * as yaml from 'js-yaml'
+
+import { DeployResult } from '../../types/deployResult'
+import { K8sObject } from '../../types/k8sObject'
 import {Kubectl} from '../../types/kubectl'
 import {
    isDeploymentEntity,
@@ -9,22 +12,25 @@ import {
    KubernetesWorkload
 } from '../../types/kubernetesTypes'
 import * as fileHelper from '../../utilities/fileUtils'
-import {routeBlueGreenSMI} from './smiBlueGreenHelper'
+import {updateSpecLabels} from '../../utilities/manifestSpecLabelUtils'
+import {checkForErrors} from '../../utilities/kubectlUtils'
 import {
    UnsetClusterSpecificDetails,
    updateObjectLabels,
    updateSelectorLabels
 } from '../../utilities/manifestUpdateUtils'
-import {updateSpecLabels} from '../../utilities/manifestSpecLabelUtils'
-import {checkForErrors} from '../../utilities/kubectlUtils'
-import { DeployResult } from '../../types/deployResult'
-import { K8sObject } from '../../types/k8sObject'
+
 
 export const GREEN_LABEL_VALUE = 'green'
 export const NONE_LABEL_VALUE = 'None'
 export const BLUE_GREEN_VERSION_LABEL = 'k8s.deploy.color'
 export const GREEN_SUFFIX = '-green'
 export const STABLE_SUFFIX = '-stable'
+
+export interface BlueGreenDeployment{
+   deployResult: DeployResult,
+   objects: K8sObject[]
+}
 
 export interface BlueGreenManifests {
    serviceEntityList: K8sObject[]
@@ -137,15 +143,16 @@ export async function deployWithLabel(
    kubectl: Kubectl,
    deploymentObjectList: any[],
    nextLabel: string
-): Promise<DeployResult> {
+): Promise<BlueGreenDeployment> {
    const newObjectsList = []
    deploymentObjectList.forEach((inputObject) => {
       // creating deployment with label
       const newBlueGreenObject = getNewBlueGreenObject(inputObject, nextLabel)
       newObjectsList.push(newBlueGreenObject)
    })
-
-   return await deployObjects(kubectl, newObjectsList)
+   core.debug("objects deployed with label are " + JSON.stringify(newObjectsList))
+   let deployResult = await deployObjects(kubectl, newObjectsList)
+   return {deployResult, objects: newObjectsList}
 }
 
 export function getNewBlueGreenObject(
