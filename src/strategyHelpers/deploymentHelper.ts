@@ -11,7 +11,7 @@ import {deployPodCanary} from './canary/podCanaryHelper'
 import {deploySMICanary} from './canary/smiCanaryHelper'
 import {DeploymentConfig} from '../types/deploymentConfig'
 import {deployBlueGreen, deployBlueGreenIngress, deployBlueGreenService} from './blueGreen/deploy'
-import {deployBlueGreenSMI} from './blueGreen/smiBlueGreenHelper'
+import {deployBlueGreenSMI} from './blueGreen/deploy'
 import {DeploymentStrategy} from '../types/deploymentStrategy'
 import * as core from '@actions/core'
 import {
@@ -57,10 +57,10 @@ export async function deployManifests(
          const routeStrategy = parseRouteStrategy(
             core.getInput('route-method', {required: true})
          )
-         const {workloadDeployment} = await deployBlueGreen(kubectl, files, routeStrategy)
+         const {deployResult} = await deployBlueGreen(kubectl, files, routeStrategy)
 
-         checkForErrors([workloadDeployment.result])
-         return workloadDeployment.newFilePaths
+         checkForErrors([deployResult.result])
+         return deployResult.manifestFiles
       }
 
       case DeploymentStrategy.BASIC: {
