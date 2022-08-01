@@ -5,11 +5,9 @@ import {
    BLUE_GREEN_VERSION_LABEL,
    BlueGreenManifests,
    deployWithLabel,
-   deleteWorkloadsWithLabel,
    fetchResource,
    getManifestObjects,
    GREEN_LABEL_VALUE,
-   NONE_LABEL_VALUE
 } from './blueGreenHelper'
 
 

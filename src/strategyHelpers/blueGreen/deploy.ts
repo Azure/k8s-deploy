@@ -10,7 +10,6 @@ import {
    getManifestObjects,
    getNewBlueGreenObject,
    GREEN_LABEL_VALUE,
-   NONE_LABEL_VALUE,
    deployObjects
 } from './blueGreenHelper'
 
