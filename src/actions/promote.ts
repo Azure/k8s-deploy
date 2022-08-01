@@ -9,6 +9,7 @@ import {
 import * as models from '../types/kubernetesTypes'
 import * as KubernetesManifestUtility from '../utilities/manifestStabilityUtils'
 import {
+   BlueGreenDeployment,
    BlueGreenManifests,
    deleteGreenObjects,
    getManifestObjects,
@@ -124,7 +125,7 @@ async function promoteBlueGreen(
    )
 
    core.startGroup('Deleting old deployment and making new one')
-   let result
+   let result: BlueGreenDeployment
    if (routeStrategy == RouteStrategy.INGRESS) {
       result = await promoteBlueGreenIngress(kubectl, manifestObjects)
    } else if (routeStrategy == RouteStrategy.SMI) {
@@ -136,7 +137,7 @@ async function promoteBlueGreen(
 
    // checking stability of newly created deployments
    core.startGroup('Checking manifest stability')
-   const deployedManifestFiles = result.newFilePaths
+   const deployedManifestFiles = result.deployResult.manifestFiles
    const resources: Resource[] = getResources(
       deployedManifestFiles,
       models.DEPLOYMENT_TYPES.concat([
@@ -174,7 +175,7 @@ async function promoteBlueGreen(
          NONE_LABEL_VALUE,
          manifestObjects.serviceEntityList
       )
-      await deleteGreenWorkload(
+      await deleteGreenObjects(
          kubectl,
          manifestObjects.deploymentEntityList
       )

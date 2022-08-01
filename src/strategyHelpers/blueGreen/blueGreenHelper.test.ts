@@ -1,10 +1,10 @@
-import {deployWithLabel, deleteWorkloadsAndServicesWithLabel, getManifestObjects, getNewBlueGreenObject, GREEN_LABEL_VALUE, isServiceRouted, NONE_LABEL_VALUE} from './blueGreenHelper'
+import {deployWithLabel, deleteGreenObjects, getManifestObjects, getNewBlueGreenObject, GREEN_LABEL_VALUE, isServiceRouted, NONE_LABEL_VALUE} from './blueGreenHelper'
 import * as bgHelper from './blueGreenHelper'
 import { Kubectl } from '../../types/kubectl'
 import * as fileHelper from '../../utilities/fileUtils'
 
 jest.mock('../../types/kubectl')
-var testObjects
+let testObjects
 
 describe('bluegreenhelper functions', () => {
     beforeEach(() => {
@@ -42,9 +42,9 @@ describe('bluegreenhelper functions', () => {
     test('correctly makes labeled workloads', () => {
         const kubectl = new Kubectl('')
         expect(Kubectl).toBeCalledTimes(1)
-        const cwlResult = deployWithLabel(kubectl, testObjects.deploymentEntityList, GREEN_LABEL_VALUE)
+        const cwlResult: Promise<bgHelper.BlueGreenDeployment> = deployWithLabel(kubectl, testObjects.deploymentEntityList, GREEN_LABEL_VALUE)
         cwlResult.then((value) => {
-            expect(value.manifestFiles[0]).toBe('')
+            expect(value.deployResult.manifestFiles[0]).toBe('')
         })
     })
 
@@ -58,7 +58,7 @@ describe('bluegreenhelper functions', () => {
         const kubectl = new Kubectl('')
         jest.spyOn(bgHelper, 'deleteObjects').mockReturnValue({} as Promise<void>)
 
-        const objectsToDelete = deleteWorkloadsAndServicesWithLabel(kubectl, GREEN_LABEL_VALUE, testObjects.deploymentEntityList, testObjects.serviceEntityList)
+        const objectsToDelete = deleteGreenObjects(kubectl, testObjects.deploymentEntityList.concat(testObjects.serviceEntityList))
         objectsToDelete.then((value) => {
             expect(value).toHaveLength(2)
             expect(value).toContainEqual({name: 'nginx-service-green', kind: 'Service'})

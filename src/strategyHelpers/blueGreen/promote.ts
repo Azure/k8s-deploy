@@ -1,13 +1,9 @@
 import {Kubectl} from '../../types/kubectl'
-import * as fileHelper from '../../utilities/fileUtils'
 import {
-   addBlueGreenLabelsAndAnnotations,
+   BlueGreenDeployment,
    BLUE_GREEN_VERSION_LABEL,
-   BlueGreenManifests,
    deployWithLabel,
    fetchResource,
-   getManifestObjects,
-   getNewBlueGreenObject,
    GREEN_LABEL_VALUE,
    NONE_LABEL_VALUE
 } from './blueGreenHelper'
@@ -15,14 +11,12 @@ import {
 import {isIngressRouted} from './ingressBlueGreenHelper'
 import {validateServicesState} from './serviceBlueGreenHelper'
 
-import * as core from '@actions/core'
-
 export async function promoteBlueGreenIngress(
     kubectl: Kubectl,
     manifestObjects
- ) {
+ ): Promise<BlueGreenDeployment> {
     //checking if anything to promote
-    var {areValid, invalidIngresses} = validateIngresses(
+    let {areValid, invalidIngresses} = validateIngresses(
        kubectl,
        manifestObjects.ingressEntityList,
        manifestObjects.serviceNameMap
@@ -58,7 +52,7 @@ export async function promoteBlueGreenIngress(
              inputObject.metadata.name
           )
  
-          var isValid = !!existingIngress && existingIngress?.metadata?.labels[BLUE_GREEN_VERSION_LABEL] === GREEN_LABEL_VALUE 
+          let isValid = !!existingIngress && existingIngress?.metadata?.labels[BLUE_GREEN_VERSION_LABEL] === GREEN_LABEL_VALUE 
           if (!isValid){
              invalidIngresses.push(inputObject.metadata.name)
           }
@@ -74,7 +68,7 @@ export async function promoteBlueGreenIngress(
  export async function promoteBlueGreenService(
    kubectl: Kubectl,
    manifestObjects
-) {
+): Promise<BlueGreenDeployment> {
    // checking if services are in the right state ie. targeting green deployments
    if (
       !(await validateServicesState(kubectl, manifestObjects.serviceEntityList))

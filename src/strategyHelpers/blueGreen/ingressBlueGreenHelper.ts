@@ -1,9 +1,7 @@
-import {Kubectl} from '../../types/kubectl'
-import * as fileHelper from '../../utilities/fileUtils'
+import { K8sIngress, K8sObject } from '../../types/k8sObject'
 import {
    addBlueGreenLabelsAndAnnotations,
 } from './blueGreenHelper'
-import * as core from '@actions/core'
 
 const BACKEND = 'backend'
 
@@ -12,7 +10,7 @@ export function getUpdatedBlueGreenIngress(
    inputObject: any,
    serviceNameMap: Map<string, string>,
    type: string
-): object {
+): K8sIngress {
    if (!type) {
       return inputObject
    }
