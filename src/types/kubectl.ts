@@ -10,18 +10,25 @@ export interface Resource {
 }
 
 export class Kubectl {
-   private readonly kubectlPath: string
-   private readonly namespace: string
-   private readonly ignoreSSLErrors: boolean
+   protected readonly kubectlPath: string
+   protected readonly namespace: string
+   protected readonly ignoreSSLErrors: boolean
+   protected readonly resourceGroup: string
+   protected readonly name: string
+   protected isPrivateCluster: boolean
 
    constructor(
       kubectlPath: string,
       namespace: string = 'default',
-      ignoreSSLErrors: boolean = false
+      ignoreSSLErrors: boolean = false,
+      resourceGroup: string = '',
+      name: string = ''
    ) {
       this.kubectlPath = kubectlPath
       this.ignoreSSLErrors = !!ignoreSSLErrors
       this.namespace = namespace
+      this.resourceGroup = resourceGroup
+      this.name = name
    }
 
    public async apply(
@@ -155,7 +162,7 @@ export class Kubectl {
       return this.execute(['delete', ...args])
    }
 
-   private async execute(args: string[], silent: boolean = false) {
+   protected async execute(args: string[], silent: boolean = false) {
       if (this.ignoreSSLErrors) {
          args.push('--insecure-skip-tls-verify')
       }

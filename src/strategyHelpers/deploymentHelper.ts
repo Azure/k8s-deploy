@@ -41,7 +41,8 @@ export async function deployManifests(
    files: string[],
    deploymentStrategy: DeploymentStrategy,
    kubectl: Kubectl,
-   trafficSplitMethod: TrafficSplitMethod
+   trafficSplitMethod: TrafficSplitMethod,
+   annotations: {[key: string]: string} = {}
 ): Promise<string[]> {
    switch (deploymentStrategy) {
       case DeploymentStrategy.CANARY: {
@@ -59,16 +60,16 @@ export async function deployManifests(
             core.getInput('route-method', {required: true})
          )
 
-         const {result, newFilePaths} = await Promise.resolve(
+         const {workloadDeployment, newObjectsList} = await Promise.resolve(
             (routeStrategy == RouteStrategy.INGRESS &&
                deployBlueGreenIngress(kubectl, files)) ||
                (routeStrategy == RouteStrategy.SMI &&
-                  deployBlueGreenSMI(kubectl, files)) ||
+                  deployBlueGreenSMI(kubectl, files, annotations)) ||
                deployBlueGreenService(kubectl, files)
          )
 
-         checkForErrors([result])
-         return newFilePaths
+         checkForErrors([workloadDeployment.result])
+         return workloadDeployment.newFilePaths
       }
 
       case DeploymentStrategy.BASIC: {
@@ -142,7 +143,7 @@ export async function annotateAndLabelResources(
    const workflowFilePath = await getWorkflowFilePath(githubToken)
 
    const deploymentConfig = await getDeploymentConfig()
-   const annotationKeyLabel = getWorkflowAnnotationKeyLabel(workflowFilePath)
+   const annotationKeyLabel = getWorkflowAnnotationKeyLabel()
 
    await annotateResources(
       files,

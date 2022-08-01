@@ -40,7 +40,8 @@ export interface BlueGreenManifests {
 export async function routeBlueGreen(
    kubectl: Kubectl,
    inputManifestFiles: string[],
-   routeStrategy: RouteStrategy
+   routeStrategy: RouteStrategy,
+   annotations: {[key: string]: string} = {}
 ) {
    // sleep for buffer time
    const bufferTime: number = parseInt(
@@ -74,7 +75,8 @@ export async function routeBlueGreen(
       await routeBlueGreenSMI(
          kubectl,
          GREEN_LABEL_VALUE,
-         manifestObjects.serviceEntityList
+         manifestObjects.serviceEntityList,
+         annotations
       )
    } else {
       await routeBlueGreenService(
@@ -110,6 +112,7 @@ export async function deleteWorkloadsWithLabel(
    })
 
    await deleteObjects(kubectl, resourcesToDelete)
+   return resourcesToDelete
 }
 
 export async function deleteWorkloadsAndServicesWithLabel(
@@ -141,6 +144,7 @@ export async function deleteWorkloadsAndServicesWithLabel(
    })
 
    await deleteObjects(kubectl, resourcesToDelete)
+   return resourcesToDelete
 }
 
 export async function deleteObjects(kubectl: Kubectl, deleteList: any[]) {
@@ -235,9 +239,6 @@ export async function createWorkloadsWithLabel(
    deploymentObjectList.forEach((inputObject) => {
       // creating deployment with label
       const newBlueGreenObject = getNewBlueGreenObject(inputObject, nextLabel)
-      core.debug(
-         'New blue-green object is: ' + JSON.stringify(newBlueGreenObject)
-      )
       newObjectsList.push(newBlueGreenObject)
    })
 
@@ -278,7 +279,7 @@ export function addBlueGreenLabelsAndAnnotations(
    updateObjectLabels(inputObject, newLabels, false)
    updateSelectorLabels(inputObject, newLabels, false)
 
-   // updating spec labels if it is a service
+   // updating spec labels if it is not a service
    if (!isServiceEntity(inputObject.kind)) {
       updateSpecLabels(inputObject, newLabels, false)
    }

@@ -2,6 +2,10 @@
 
 const escapeStringRegexp = require('escape-string-regexp');
 
+const cwd = typeof process === 'object' && process && typeof process.cwd === 'function'
+  ? process.cwd()
+  : '.'
+
 const natives = [].concat(
   require('module').builtinModules,
   'bootstrap_node',
@@ -26,7 +30,7 @@ class StackUtils {
     }
 
     if ('cwd' in opts === false) {
-      opts.cwd = process.cwd()
+      opts.cwd = cwd
     }
 
     this._cwd = opts.cwd.replace(/\\/g, '/');
