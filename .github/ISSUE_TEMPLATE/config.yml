@@ -1,0 +1,6 @@
+blank_issues_enabled: false
+contact_links:
+   - name: GitHub Action "aks-set-context" Support
+     url: https://github.com/Azure/aks-set-context
+     security: https://github.com/Azure/aks-set-context/blob/main/SECURITY.md
+     about: Please ask and answer questions here.

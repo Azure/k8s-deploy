@@ -1,0 +1,13 @@
+name: Feature Request
+description: File a Feature Request form, we will respond to this thread with any questions.
+title: 'Feature Request: '
+labels: ['Feature']
+assignees: '@Azure/aks-atlanta'
+body:
+   - type: input
+     id: feature request
+     attributes:
+        label: feature request
+        description: also tell us the example functionality and links to relevant docs
+     validations:
+        required: true
