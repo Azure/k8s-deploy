@@ -30,6 +30,11 @@ describe("ingress blue green helpers", () => {
         const updatedIng = getUpdatedBlueGreenIngress(testObjects.ingressEntityList[0], testObjects.serviceNameMap, GREEN_LABEL_VALUE)
         expect(updatedIng.metadata.labels['k8s.deploy.color']).toBe('green')
         expect(updatedIng.spec.rules[0].http.paths[0].backend.service.name).toBe('nginx-service-green')
+        
+        let oldIngObjects = getManifestObjects(betaFilepath)
+        const oldIng = getUpdatedBlueGreenIngress(oldIngObjects.ingressEntityList[0], oldIngObjects.serviceNameMap, GREEN_LABEL_VALUE)
+        expect(updatedIng.metadata.labels['k8s.deploy.color']).toBe('green')
+        expect(updatedIng.spec.rules[0].http.paths[0].backend.service.name).toBe('nginx-service-green')
     })
 })
 

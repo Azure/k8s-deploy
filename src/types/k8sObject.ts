@@ -6,6 +6,11 @@ export interface K8sObject{
     kind: string
 }
 
+export interface K8sDeleteObject{
+    name: string
+    kind: string
+}
+
 export interface K8sIngress extends K8sObject{
     spec:{
         rules: [

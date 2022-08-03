@@ -34,16 +34,8 @@ export async function validateServicesState(
          serviceObject.metadata.name
       )
 
-      if (!!existingService) {
-         const currentLabel: string = getServiceSpecLabel(existingService)
-         if (currentLabel != GREEN_LABEL_VALUE) {
-            // service should be targeting deployments with green label
-            areServicesGreen = false
-         }
-      } else {
-         // service targeting deployment doesn't exist
-         areServicesGreen = false
-      }
+      let isServiceGreen = !!existingService && getServiceSpecLabel(existingService) == GREEN_LABEL_VALUE
+      areServicesGreen = areServicesGreen && isServiceGreen
    }
 
    return areServicesGreen

@@ -1,3 +1,5 @@
+import * as core from '@actions/core'
+
 import {Kubectl} from '../../types/kubectl'
 import {
    BlueGreenDeployment,
@@ -8,25 +10,26 @@ import {
    NONE_LABEL_VALUE
 } from './blueGreenHelper'
 
-import {isIngressRouted} from './ingressBlueGreenHelper'
-import {validateServicesState} from './serviceBlueGreenHelper'
+import {validateIngresses} from './ingressBlueGreenHelper'
+import { validateServicesState } from './serviceBlueGreenHelper'
 
 export async function promoteBlueGreenIngress(
     kubectl: Kubectl,
     manifestObjects
  ): Promise<BlueGreenDeployment> {
     //checking if anything to promote
-    let {areValid, invalidIngresses} = validateIngresses(
+    let {areValid, invalidIngresses} = await validateIngresses(
        kubectl,
        manifestObjects.ingressEntityList,
        manifestObjects.serviceNameMap
     )
     if (!areValid) {
-       throw 'Ingresses are not in promote state' + invalidIngresses.toString()
+      core.debug('are valid was false')
+      throw new Error('Ingresses are not in promote state: ' + invalidIngresses.toString())
     }
     
     // create stable deployments with new configuration
-    const result = deployWithLabel(
+    const result: BlueGreenDeployment = await deployWithLabel(
        kubectl,
        manifestObjects.deploymentEntityList.concat(manifestObjects.serviceEntityList),
        NONE_LABEL_VALUE
@@ -34,35 +37,6 @@ export async function promoteBlueGreenIngress(
  
     // create stable services with new configuration
     return result
- }
-
- export function validateIngresses(
-    kubectl: Kubectl,
-    ingressEntityList: any[],
-    serviceNameMap: Map<string, string>
- ): {areValid: boolean, invalidIngresses: string[]} {
-    let areValid: boolean = true
-    const invalidIngresses = []
-    ingressEntityList.forEach(async (inputObject) => {
-       if (isIngressRouted(inputObject, serviceNameMap)) {
-          //querying existing ingress
-          const existingIngress = await fetchResource(
-             kubectl,
-             inputObject.kind,
-             inputObject.metadata.name
-          )
- 
-          let isValid = !!existingIngress && existingIngress?.metadata?.labels[BLUE_GREEN_VERSION_LABEL] === GREEN_LABEL_VALUE 
-          if (!isValid){
-             invalidIngresses.push(inputObject.metadata.name)
-          }
-          // to be valid, ingress should exist and should be green
-          areValid = areValid && isValid
- 
-       }
-    })
- 
-    return {areValid, invalidIngresses}
  }
 
  export async function promoteBlueGreenService(
@@ -73,7 +47,7 @@ export async function promoteBlueGreenIngress(
    if (
       !(await validateServicesState(kubectl, manifestObjects.serviceEntityList))
    ) {
-      throw 'Not inP promote state'
+      throw new Error('Found services not in promote state')
    }
 
    // creating stable deployments with new configurations
@@ -83,3 +57,4 @@ export async function promoteBlueGreenIngress(
       NONE_LABEL_VALUE
    )
 }
+
