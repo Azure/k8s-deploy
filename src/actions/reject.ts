@@ -2,9 +2,9 @@ import * as core from '@actions/core'
 import * as canaryDeploymentHelper from '../strategyHelpers/canary/canaryHelper'
 import * as SMICanaryDeploymentHelper from '../strategyHelpers/canary/smiCanaryHelper'
 import {Kubectl} from '../types/kubectl'
-import {rejectBlueGreenService} from '../strategyHelpers/blueGreen/serviceBlueGreenHelper'
-import {rejectBlueGreenIngress} from '../strategyHelpers/blueGreen/ingressBlueGreenHelper'
+import {rejectBlueGreenIngress, rejectBlueGreenService} from '../strategyHelpers/blueGreen/reject'
 import {rejectBlueGreenSMI} from '../strategyHelpers/blueGreen/smiBlueGreenHelper'
+import { getManifestObjects, BlueGreenManifests } from '../strategyHelpers/blueGreen/blueGreenHelper'
 import {DeploymentStrategy} from '../types/deploymentStrategy'
 import {
    parseTrafficSplitMethod,
@@ -56,6 +56,8 @@ async function rejectCanary(kubectl: Kubectl, manifests: string[]) {
 
 async function rejectBlueGreen(kubectl: Kubectl, manifests: string[]) {
    core.startGroup('Rejecting deployment with blue green strategy')
+
+   const manifestObjects: BlueGreenManifests = getManifestObjects(manifests)
 
    const routeStrategy = parseRouteStrategy(
       core.getInput('route-method', {required: true})

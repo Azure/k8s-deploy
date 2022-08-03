@@ -17,6 +17,7 @@ import {
    STABLE_SUFFIX,
    BlueGreenDeployment
 } from './blueGreenHelper'
+import { K8sDeleteObject } from '../../types/k8sObject'
 
 const TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX = '-trafficsplit'
 const TRAFFIC_SPLIT_OBJECT = 'TrafficSplit'
@@ -44,11 +45,8 @@ export async function promoteBlueGreenSMI(kubectl: Kubectl, manifestObjects): Pr
 
 export async function rejectBlueGreenSMI(
    kubectl: Kubectl,
-   filePaths: string[]
+   manifestObjects: BlueGreenManifests
 ) {
-   // get all kubernetes objects defined in manifest files
-   const manifestObjects: BlueGreenManifests = getManifestObjects(filePaths)
-
    // route trafficsplit to stable deploymetns
    await routeBlueGreenSMI(
       kubectl,
@@ -218,7 +216,7 @@ export async function validateTrafficSplitsState(
 }
 
 export async function cleanupSMI(kubectl: Kubectl, serviceEntityList: any[]) {
-   const deleteList = []
+   const deleteList: K8sDeleteObject[] = []
 
    serviceEntityList.forEach((serviceObject) => {
       deleteList.push({

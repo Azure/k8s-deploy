@@ -3,7 +3,7 @@ import * as fs from 'fs'
 import * as yaml from 'js-yaml'
 
 import { DeployResult } from '../../types/deployResult'
-import { K8sObject } from '../../types/k8sObject'
+import { K8sObject, K8sDeleteObject } from '../../types/k8sObject'
 import {Kubectl} from '../../types/kubectl'
 import {
    isDeploymentEntity,
@@ -44,8 +44,8 @@ export interface BlueGreenManifests {
 export async function deleteGreenObjects(
    kubectl: Kubectl,
    toDeleteList: any[]
-): Promise<K8sObject[]> {
-   const resourcesToDelete = []
+): Promise<K8sDeleteObject[]> {
+   const resourcesToDelete: K8sDeleteObject[] = []
    toDeleteList.forEach((inputObject) => {
       const name = inputObject.metadata.name
       const kind = inputObject.kind
@@ -63,14 +63,14 @@ export async function deleteGreenObjects(
 }
 
 
-export async function deleteObjects(kubectl: Kubectl, deleteList: any[]) {
+export async function deleteObjects(kubectl: Kubectl, deleteList: K8sDeleteObject[]) {
    // delete services and deployments
    for (const delObject of deleteList) {
       try {
          const result = await kubectl.delete([delObject.kind, delObject.name])
          checkForErrors([result])
       } catch (ex) {
-         core.debug("failed to delete object " + delObject?.metadata?.name)
+         core.debug("failed to delete object " + delObject.name)
       }
    }
 }

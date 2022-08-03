@@ -9,7 +9,10 @@ import {
    deployObjects
 } from './blueGreenHelper'
 
-import {getUpdatedBlueGreenIngress, isIngressRouted} from './ingressBlueGreenHelper'
+import {
+   getUpdatedBlueGreenIngress,
+   isIngressRouted
+} from './ingressBlueGreenHelper'
 import {getUpdatedBlueGreenService} from './serviceBlueGreenHelper'
 import {routeBlueGreenSMI} from './smiBlueGreenHelper'
 
@@ -62,55 +65,59 @@ export async function routeBlueGreenForDeploy(
    }
 }
 
- export async function routeBlueGreenIngress(
-    kubectl: Kubectl,
-    serviceNameMap: Map<string, string>,
-    ingressEntityList: any[]
- ): Promise<BlueGreenDeployment> {
-    let newObjectsList = []
- 
-    ingressEntityList.forEach((inputObject) => {
-        if (isIngressRouted(inputObject, serviceNameMap)) {
-            const newBlueGreenIngressObject = getUpdatedBlueGreenIngress(
+export async function routeBlueGreenIngress(
+   kubectl: Kubectl,
+   serviceNameMap: Map<string, string>,
+   ingressEntityList: any[]
+): Promise<BlueGreenDeployment> {
+   let newObjectsList = []
+
+   ingressEntityList.forEach((inputObject) => {
+      if (isIngressRouted(inputObject, serviceNameMap)) {
+         const newBlueGreenIngressObject = getUpdatedBlueGreenIngress(
             inputObject,
             serviceNameMap,
             GREEN_LABEL_VALUE
-            )
-            newObjectsList.push(newBlueGreenIngressObject)
-        } else {
-            newObjectsList.push(inputObject)
-        }
-    })
+         )
+         newObjectsList.push(newBlueGreenIngressObject)
+      } else {
+         newObjectsList.push(inputObject)
+      }
+   })
 
-    let deployResult = await deployObjects(kubectl, newObjectsList)
+   let deployResult = await deployObjects(kubectl, newObjectsList)
 
-    return {deployResult, objects: newObjectsList}
- }
+   return {deployResult, objects: newObjectsList}
+}
 
- export async function routeBlueGreenIngressUnchanged(kubectl: Kubectl, serviceNameMap: Map<string, string>, ingressEntityList: any[]){
+export async function routeBlueGreenIngressUnchanged(
+   kubectl: Kubectl,
+   serviceNameMap: Map<string, string>,
+   ingressEntityList: any[]
+): Promise<BlueGreenDeployment> {
+   const objects = ingressEntityList.filter((ingress) =>
+      isIngressRouted(ingress, serviceNameMap)
+   )
 
-    const newObjectsList = ingressEntityList.filter((ingress) =>
-        isIngressRouted(ingress, serviceNameMap)
-    )
-
-    deployObjects(kubectl, newObjectsList)
-
- }
+   let deployResult = await deployObjects(kubectl, objects)
+   return {deployResult, objects}
+}
 
 export async function routeBlueGreenService(
-    kubectl: Kubectl,
-    nextLabel: string,
-    serviceEntityList: any[]
- ) {
-    const newObjectsList = []
-    serviceEntityList.forEach((serviceObject) => {
-       const newBlueGreenServiceObject = getUpdatedBlueGreenService(
-          serviceObject,
-          nextLabel
-       )
-       newObjectsList.push(newBlueGreenServiceObject)
-    })
- 
-    deployObjects(kubectl, newObjectsList)
- }
+   kubectl: Kubectl,
+   nextLabel: string,
+   serviceEntityList: any[]
+): Promise<BlueGreenDeployment> {
+   const objects = []
+   serviceEntityList.forEach((serviceObject) => {
+      const newBlueGreenServiceObject = getUpdatedBlueGreenService(
+         serviceObject,
+         nextLabel
+      )
+      objects.push(newBlueGreenServiceObject)
+   })
 
+   let deployResult = await deployObjects(kubectl, objects)
+
+   return {deployResult, objects}
+}
