@@ -13,6 +13,14 @@ body:
      validations:
         required: true
    - type: input
+     id: runner
+     attributes:
+        label: runner
+        description: what runner are you using?
+        placeholder: mention the runner info (self-hosted, operating system)
+     validations:
+        required: true
+   - type: input
      id: logs
      attributes:
         label: relevant log output
