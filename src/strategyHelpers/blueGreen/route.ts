@@ -22,7 +22,7 @@ export async function routeBlueGreenForDeploy(
    kubectl: Kubectl,
    inputManifestFiles: string[],
    routeStrategy: RouteStrategy
-) {
+): Promise<any> {
    // sleep for buffer time
    const bufferTime: number = parseInt(
       core.getInput('version-switch-buffer') || '0'
@@ -45,19 +45,19 @@ export async function routeBlueGreenForDeploy(
 
    // route to new deployments
    if (routeStrategy == RouteStrategy.INGRESS) {
-      await routeBlueGreenIngress(
+      return await routeBlueGreenIngress(
          kubectl,
          manifestObjects.serviceNameMap,
          manifestObjects.ingressEntityList
       )
    } else if (routeStrategy == RouteStrategy.SMI) {
-      await routeBlueGreenSMI(
+      return await routeBlueGreenSMI(
          kubectl,
          GREEN_LABEL_VALUE,
          manifestObjects.serviceEntityList
       )
    } else {
-      await routeBlueGreenService(
+      return await routeBlueGreenService(
          kubectl,
          GREEN_LABEL_VALUE,
          manifestObjects.serviceEntityList

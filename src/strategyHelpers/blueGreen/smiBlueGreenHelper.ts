@@ -18,6 +18,7 @@ import {
    BlueGreenDeployment
 } from './blueGreenHelper'
 import { K8sDeleteObject } from '../../types/k8sObject'
+import { ExecOutput } from '@actions/exec'
 
 const TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX = '-trafficsplit'
 const TRAFFIC_SPLIT_OBJECT = 'TrafficSplit'
@@ -100,7 +101,7 @@ async function createTrafficSplitObject(
    kubectl: Kubectl,
    name: string,
    nextLabel: string
-): Promise<any> {
+): Promise<ExecOutput> {
    // cache traffic split api version
    if (!trafficSplitAPIVersion)
       trafficSplitAPIVersion = await kubectlUtils.getTrafficSplitAPIVersion(
@@ -141,7 +142,7 @@ async function createTrafficSplitObject(
       getBlueGreenResourceName(name, TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX)
    )
 
-   await kubectl.apply(trafficSplitManifestFile)
+   return await kubectl.apply(trafficSplitManifestFile)
 }
 
 export function getSMIServiceResource(

@@ -28,6 +28,7 @@ describe("ingress blue green helpers", () => {
 
     test("it should correctly update ingresses", () => {
         const updatedIng = getUpdatedBlueGreenIngress(testObjects.ingressEntityList[0], testObjects.serviceNameMap, GREEN_LABEL_VALUE)
+        expect(updatedIng.metadata.name).toBe('nginx-ingress')
         expect(updatedIng.metadata.labels['k8s.deploy.color']).toBe('green')
         expect(updatedIng.spec.rules[0].http.paths[0].backend.service.name).toBe('nginx-service-green')
         
