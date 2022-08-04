@@ -63,11 +63,11 @@ async function rejectBlueGreen(kubectl: Kubectl, manifests: string[]) {
       core.getInput('route-method', {required: true})
    )
    if (routeStrategy == RouteStrategy.INGRESS) {
-      await rejectBlueGreenIngress(kubectl, manifests)
+      await rejectBlueGreenIngress(kubectl, manifestObjects)
    } else if (routeStrategy == RouteStrategy.SMI) {
-      await rejectBlueGreenSMI(kubectl, manifests)
+      await rejectBlueGreenSMI(kubectl, manifestObjects)
    } else {
-      await rejectBlueGreenService(kubectl, manifests)
+      await rejectBlueGreenService(kubectl, manifestObjects)
    }
    core.endGroup()
 }

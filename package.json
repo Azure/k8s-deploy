@@ -6,6 +6,7 @@
    "scripts": {
       "build": "ncc build src/run.ts -o lib",
       "test": "jest",
+      "coverage": "jest --coverage=true",
       "format": "prettier --write .",
       "format-check": "prettier --check ."
    },
