@@ -4,6 +4,7 @@ export interface K8sObject{
         labels: Map<string, string>
     }
     kind: string
+    spec: any
 }
 
 export interface K8sDeleteObject{
@@ -28,3 +29,18 @@ export interface K8sIngress extends K8sObject{
     }
 
 }
+
+export interface TrafficSplitObject extends K8sObject{
+    apiVersion: string,
+    spec: {
+        service: string,
+        backends: TrafficSplitBackend[]
+    }
+}
+
+export interface TrafficSplitBackend{
+    service: string,
+    weight: number
+}
+
+

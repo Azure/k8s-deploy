@@ -17,13 +17,14 @@ import {
    STABLE_SUFFIX,
    BlueGreenDeployment
 } from './blueGreenHelper'
-import { K8sDeleteObject } from '../../types/k8sObject'
+import { K8sDeleteObject, TrafficSplitObject } from '../../types/k8sObject'
 import { ExecOutput } from '@actions/exec'
+import { DeployResult } from '../../types/deployResult'
 
 const TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX = '-trafficsplit'
 const TRAFFIC_SPLIT_OBJECT = 'TrafficSplit'
-const MIN_VAL = 0
-const MAX_VAL = 100
+export const MIN_VAL = 0
+export const MAX_VAL = 100
 
 export async function promoteBlueGreenSMI(kubectl: Kubectl, manifestObjects): Promise<BlueGreenDeployment> {
    // checking if there is something to promote
@@ -65,7 +66,7 @@ export async function rejectBlueGreenSMI(
    await cleanupSMI(kubectl, manifestObjects.serviceEntityList)
 }
 
-export async function setupSMI(kubectl: Kubectl, serviceEntityList: any[]) {
+export async function setupSMI(kubectl: Kubectl, serviceEntityList: any[]): Promise<BlueGreenDeployment> {
    const newObjectsList = []
    const trafficObjectList = []
 
@@ -83,25 +84,29 @@ export async function setupSMI(kubectl: Kubectl, serviceEntityList: any[]) {
    })
 
    // create services
-   deployObjects(kubectl, newObjectsList)
+   let servicesDeploymentResult: DeployResult = await deployObjects(kubectl, newObjectsList)
 
+   let tsObjects: TrafficSplitObject[] = []
    // route to stable service
-   trafficObjectList.forEach((inputObject) => {
-      createTrafficSplitObject(
+   for(let svc of trafficObjectList){
+      const tso = await createTrafficSplitObject(
          kubectl,
-         inputObject.metadata.name,
+         svc.metadata.name,
          NONE_LABEL_VALUE
       )
-   })
+      tsObjects.push(tso)
+   }
+
+   return {objects: newObjectsList.concat(tsObjects), deployResult: servicesDeploymentResult}
 }
 
 let trafficSplitAPIVersion = ''
 
-async function createTrafficSplitObject(
+export async function createTrafficSplitObject(
    kubectl: Kubectl,
    name: string,
    nextLabel: string
-): Promise<ExecOutput> {
+): Promise<TrafficSplitObject> {
    // cache traffic split api version
    if (!trafficSplitAPIVersion)
       trafficSplitAPIVersion = await kubectlUtils.getTrafficSplitAPIVersion(
@@ -114,11 +119,12 @@ async function createTrafficSplitObject(
    const greenWeight: number =
       nextLabel === GREEN_LABEL_VALUE ? MAX_VAL : MIN_VAL
 
-   const trafficSplitObject = JSON.stringify({
+   const trafficSplitObject: TrafficSplitObject = {
       apiVersion: trafficSplitAPIVersion,
-      kind: 'TrafficSplit',
+      kind: TRAFFIC_SPLIT_OBJECT,
       metadata: {
-         name: getBlueGreenResourceName(name, TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX)
+         name: getBlueGreenResourceName(name, TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX),
+         labels: new Map<string, string>()
       },
       spec: {
          service: name,
@@ -133,16 +139,18 @@ async function createTrafficSplitObject(
             }
          ]
       }
-   })
+   }
+
+   const tsoString = JSON.stringify(trafficSplitObject)
 
    // create traffic split object
    const trafficSplitManifestFile = fileHelper.writeManifestToFile(
-      trafficSplitObject,
+      tsoString,
       TRAFFIC_SPLIT_OBJECT,
       getBlueGreenResourceName(name, TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX)
    )
-
-   return await kubectl.apply(trafficSplitManifestFile)
+   await kubectl.apply(trafficSplitManifestFile)
+   return trafficSplitObject
 }
 
 export function getSMIServiceResource(
