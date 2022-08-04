@@ -5,9 +5,9 @@ labels: ['Feature']
 assignees: '@Azure/aks-atlanta'
 body:
    - type: input
-     id: feature request
+     id: Feature request
      attributes:
-        label: feature request
-        description: also tell us the example functionality and links to relevant docs
+        label: Feature request
+        description: Provide example functionality and links to relevant docs
      validations:
         required: true

@@ -5,24 +5,24 @@ labels: ['bug', 'triage']
 assignees: '@Azure/aks-atlanta'
 body:
    - type: input
-     id: what-happened
+     id: What-happened
      attributes:
-        label: what happened?
-        description: also tell us what did you expect to happen?
-        placeholder: tell us what you see!
+        label: What happened?
+        description: Tell us what did you expect to happen?
+        placeholder: Tell us what you see!
      validations:
         required: true
    - type: input
-     id: runner
+     id: Runner
      attributes:
-        label: runner
-        description: what runner are you using?
-        placeholder: mention the runner info (self-hosted, operating system)
+        label: Runner
+        description: What runner are you using?
+        placeholder: Mention the runner info (self-hosted, operating system)
      validations:
         required: true
    - type: input
-     id: logs
+     id: Logs
      attributes:
-        label: relevant log output
-        description: run in debug mode for the most verbose logs. Please feel free to attach a screenshot of the logs
+        label: Relevant log output
+        description: Run in debug mode for the most verbose logs. Please feel free to attach a screenshot of the logs
         render: shell
