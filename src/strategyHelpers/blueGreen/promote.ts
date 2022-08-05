@@ -12,6 +12,7 @@ import {
 
 import {validateIngresses} from './ingressBlueGreenHelper'
 import { validateServicesState } from './serviceBlueGreenHelper'
+import { validateTrafficSplitsState } from './smiBlueGreenHelper'
 
 export async function promoteBlueGreenIngress(
     kubectl: Kubectl,
@@ -51,6 +52,25 @@ export async function promoteBlueGreenIngress(
    }
 
    // creating stable deployments with new configurations
+   return await deployWithLabel(
+      kubectl,
+      manifestObjects.deploymentEntityList,
+      NONE_LABEL_VALUE
+   )
+}
+
+export async function promoteBlueGreenSMI(kubectl: Kubectl, manifestObjects): Promise<BlueGreenDeployment> {
+   // checking if there is something to promote
+   if (
+      !(await validateTrafficSplitsState(
+         kubectl,
+         manifestObjects.serviceEntityList
+      ))
+   ) {
+      throw Error('Not in promote state SMI')
+   }
+
+   // create stable deployments with new configuration
    return await deployWithLabel(
       kubectl,
       manifestObjects.deploymentEntityList,

@@ -14,15 +14,16 @@ import {
    isIngressRouted
 } from './ingressBlueGreenHelper'
 import {getUpdatedBlueGreenService} from './serviceBlueGreenHelper'
-import {routeBlueGreenSMI} from './smiBlueGreenHelper'
+import {createTrafficSplitObject} from './smiBlueGreenHelper'
 
 import * as core from '@actions/core'
+import { K8sObject, TrafficSplitObject } from '../../types/k8sObject'
 
 export async function routeBlueGreenForDeploy(
    kubectl: Kubectl,
    inputManifestFiles: string[],
    routeStrategy: RouteStrategy
-): Promise<any> {
+): Promise<BlueGreenDeployment> {
    // sleep for buffer time
    const bufferTime: number = parseInt(
       core.getInput('version-switch-buffer') || '0'
@@ -81,6 +82,7 @@ export async function routeBlueGreenIngress(
          )
          newObjectsList.push(newBlueGreenIngressObject)
       } else {
+         core.debug('unrouted ingress detected ' + inputObject.metadata.name)
          newObjectsList.push(inputObject)
       }
    })
@@ -120,4 +122,25 @@ export async function routeBlueGreenService(
    let deployResult = await deployObjects(kubectl, objects)
 
    return {deployResult, objects}
+}
+
+export async function routeBlueGreenSMI(
+   kubectl: Kubectl,
+   nextLabel: string,
+   serviceEntityList: any[]
+): Promise<BlueGreenDeployment> {
+   
+   const tsObjects: TrafficSplitObject[] = []
+   for (const serviceObject of serviceEntityList) {
+      // route trafficsplit to given label
+      tsObjects.push(await createTrafficSplitObject(
+         kubectl,
+         serviceObject.metadata.name,
+         nextLabel)
+      )
+   }
+
+   const deployResult = await deployObjects(kubectl, tsObjects)
+
+   return {deployResult, objects: tsObjects}
 }

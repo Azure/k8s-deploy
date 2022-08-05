@@ -1,6 +1,8 @@
-import {K8sIngress} from '../../types/k8sObject'
+import * as core from '@actions/core'
+import {K8sIngress, TrafficSplitObject} from '../../types/k8sObject'
 import {Kubectl} from '../../types/kubectl'
 import * as fileHelper from '../../utilities/fileUtils'
+import * as TSutils from '../../utilities/trafficSplitUtils'
 import {RouteStrategy} from '../../types/routeStrategy'
 
 import {
@@ -16,6 +18,7 @@ jest.mock('../../types/kubectl')
 let testObjects: BlueGreenManifests
 let betaFilepath = ['test/unit/manifests/test-ingress.yml']
 let ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
+const kc = new Kubectl('')
 
 describe('route function tests', () => {
    beforeEach(() => {
@@ -29,25 +32,31 @@ describe('route function tests', () => {
    })
 
    test('correctly prepares blue/green ingresses for deployment', () => {
-      const kc = new Kubectl('')
-      let generatedObjects: Promise<BlueGreenDeployment> =
+    const unroutedIngCopy: K8sIngress = JSON.parse(JSON.stringify(testObjects.ingressEntityList[0]))
+    unroutedIngCopy.metadata.name = "nginx-ingress-unrouted"
+    unroutedIngCopy.spec.rules[0].http.paths[0].backend.service.name = 'fake-service'
+    testObjects.ingressEntityList.push(unroutedIngCopy)
+    let generatedObjects: Promise<BlueGreenDeployment> =
          routeBlueGreenIngress(
             kc,
             testObjects.serviceNameMap,
             testObjects.ingressEntityList
          )
       generatedObjects.then((value) => {
-         expect(value.objects).toHaveLength(1)
+         expect(value.objects).toHaveLength(2)
          expect(value.objects[0].metadata.name).toBe('nginx-ingress')
          expect(
             (value.objects[0] as K8sIngress).spec.rules[0].http.paths[0].backend
                .service.name
          ).toBe('nginx-service-green')
+
+         expect(value.objects[1].metadata.name).toBe("nginx-ingress-unrouted")
+         // unrouted services shouldn't get their service name changed
+         expect((value.objects[1] as K8sIngress).spec.rules[0].http.paths[0].backend.service.name).toBe('fake-service')
       })
    })
 
    test('correctly prepares blue/green services for deployment', () => {
-      const kc = new Kubectl('')
       let generatedObjects: Promise<BlueGreenDeployment> =
          routeBlueGreenService(
             kc,
@@ -64,29 +73,39 @@ describe('route function tests', () => {
       })
    })
 
-   test('correctly identifies route pattern and acts accordingly', () => {
-    const kubectl = new Kubectl('')
+   test('correctly identifies route pattern and acts accordingly', async () => {
+    jest.spyOn(TSutils, 'getTrafficSplitAPIVersion').mockImplementation(() => Promise.resolve("v1alpha3"))
 
-    const ingressResult = routeBlueGreenForDeploy(
-       kubectl,
+
+    const ingressResult = await routeBlueGreenForDeploy(
+       kc,
        ingressFilepath,
        RouteStrategy.INGRESS
     )
-    ingressResult.then((result) => {
-       expect(result.objects.length).toBe(1)
-       expect(result.objects[0].metadata.name).toBe('nginx-ingress')
-    })
 
-    const serviceResult = routeBlueGreenForDeploy(
-       kubectl,
+    expect(ingressResult.objects.length).toBe(1)
+    expect(ingressResult.objects[0].metadata.name).toBe('nginx-ingress')
+    
+
+    const serviceResult = await routeBlueGreenForDeploy(
+       kc,
        ingressFilepath,
        RouteStrategy.SERVICE
     )
-    serviceResult.then((result) => {
-       expect(result.objects.length).toBe(1)
-       expect(result.objects[0].metadata.name).toBe('nginx-service')
-    })
-    // COME BACK TO THIS - WHY IS COVERAGE INACCURATE?
-    // routeBlueGreenForDeploy(kubectl, ingressFilepath, RouteStrategy.SMI)
+
+    expect(serviceResult.objects.length).toBe(1)
+    expect(serviceResult.objects[0].metadata.name).toBe('nginx-service')
+    
+
+    const smiResult = await routeBlueGreenForDeploy(kc, ingressFilepath, RouteStrategy.SMI)
+
+    expect(smiResult.objects).toHaveLength(1)
+    expect(smiResult.objects[0].metadata.name).toBe('nginx-service-trafficsplit')
+    expect((smiResult.objects as TrafficSplitObject[])[0].spec.backends).toHaveLength(2)
+ })
+ test('routeBlueGreenForDeploy throws error with invalid bounds', async () => {
+    jest.spyOn(core, 'getInput').mockImplementation(() => '500')
+    await expect(routeBlueGreenForDeploy(kc, ingressFilepath, RouteStrategy.SMI)).rejects.toThrowError()
+
  })
 })
