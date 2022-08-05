@@ -67,7 +67,7 @@ export function isIngressRouted(
    // check if ingress targets a service in the given manifests
    JSON.parse(JSON.stringify(ingressObject), (key, value) => {
 
-      isIngressRouted = isIngressRouted || (key === 'service' && value.hasOwnProperty('name'))
+      isIngressRouted = isIngressRouted || (key === 'service' && value.hasOwnProperty('name') && serviceNameMap.has(value.name))
       isIngressRouted = isIngressRouted || (key === 'serviceName' && serviceNameMap.has(value))
       
       return value

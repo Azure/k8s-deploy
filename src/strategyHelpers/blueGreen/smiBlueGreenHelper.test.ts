@@ -13,7 +13,9 @@ import {
    NONE_LABEL_VALUE
 } from './blueGreenHelper'
 
-import { createTrafficSplitObject, MAX_VAL, MIN_VAL, setupSMI } from './smiBlueGreenHelper'
+import { cleanupSMI, createTrafficSplitObject, getGreenSMIServiceResource, getStableSMIServiceResource, MAX_VAL, MIN_VAL, setupSMI, TRAFFIC_SPLIT_OBJECT, TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX, validateTrafficSplitsState
+} from './smiBlueGreenHelper'
+import * as bgHelper from './blueGreenHelper'
 
 jest.mock('../../types/kubectl')
 let testObjects: BlueGreenManifests
@@ -77,9 +79,9 @@ describe('SMI Helper tests', () => {
    })
 
    test('createTrafficSplitObject tests', async () => {
-        const noneResult: TrafficSplitObject = await createTrafficSplitObject(kc, testObjects.serviceEntityList[0].metadata.name, NONE_LABEL_VALUE)
-        expect(noneResult.metadata.name).toBe('nginx-service-trafficsplit')
-        for(let be of noneResult.spec.backends){
+        const noneTsObject: TrafficSplitObject = await createTrafficSplitObject(kc, testObjects.serviceEntityList[0].metadata.name, NONE_LABEL_VALUE)
+        expect(noneTsObject.metadata.name).toBe('nginx-service-trafficsplit')
+        for(let be of noneTsObject.spec.backends){
             if(be.service === "nginx-service-stable"){
                 expect(be.weight).toBe(MAX_VAL)
             }
@@ -88,11 +90,9 @@ describe('SMI Helper tests', () => {
             }
         }
         
-        const greenResult: TrafficSplitObject = await createTrafficSplitObject(kc, testObjects.serviceEntityList[0].metadata.name, GREEN_LABEL_VALUE)
-        core.debug('ts obj is ' + JSON.stringify(greenResult))
-
-        expect(greenResult.metadata.name).toBe('nginx-service-trafficsplit')
-        for(let be of greenResult.spec.backends){
+        const greenTsObject: TrafficSplitObject = await createTrafficSplitObject(kc, testObjects.serviceEntityList[0].metadata.name, GREEN_LABEL_VALUE)
+        expect(greenTsObject.metadata.name).toBe('nginx-service-trafficsplit')
+        for(let be of greenTsObject.spec.backends){
             if(be.service === "nginx-service-stable"){
                 expect(be.weight).toBe(MIN_VAL)
             }
@@ -102,11 +102,67 @@ describe('SMI Helper tests', () => {
         }
    })
 
-
-
    test('getSMIServiceResource test', () => {
+    const stableResult = getStableSMIServiceResource(testObjects.serviceEntityList[0])
+    const greenResult = getGreenSMIServiceResource(testObjects.serviceEntityList[0])
+
+    expect(stableResult.metadata.name).toBe('nginx-service-stable')
+    expect(stableResult.metadata.labels[BLUE_GREEN_VERSION_LABEL]).toBe(NONE_LABEL_VALUE)
+
+    expect(greenResult.metadata.name).toBe('nginx-service-green')
+    expect(greenResult.metadata.labels[BLUE_GREEN_VERSION_LABEL]).toBe(GREEN_LABEL_VALUE)
 
    })
 
-   test('validateTrafficSplitsState', () => {})
+   test('validateTrafficSplitsState', async () => {
+
+    let mockTsObject: TrafficSplitObject = {
+        apiVersion: "v1alpha3",
+        kind: TRAFFIC_SPLIT_OBJECT,
+        metadata: {
+           name: 'nginx-service-trafficsplit',
+           labels: new Map<string, string>()
+        },
+        spec: {
+           service: 'nginx-service',
+           backends: [
+              {
+                 service: 'nginx-service-stable',
+                 weight: MIN_VAL
+              },
+              {
+                 service: 'nginx-service-green',
+                 weight: MAX_VAL
+              }
+           ]
+        }
+     }
+
+    jest.spyOn(bgHelper, "fetchResource").mockImplementation(() => Promise.resolve(mockTsObject))
+    
+    let valResult = await validateTrafficSplitsState(kc, testObjects.serviceEntityList)
+
+    expect(valResult).toBe(true)
+
+    mockTsObject.spec.backends[0].weight = MAX_VAL
+
+    valResult = await validateTrafficSplitsState(kc, testObjects.serviceEntityList)
+    expect(valResult).toBe(false)
+
+    jest.spyOn(bgHelper, "fetchResource").mockImplementation(() => Promise.resolve())
+    valResult = await validateTrafficSplitsState(kc, testObjects.serviceEntityList)
+    expect(valResult).toBe(false)
+   })
+
+
+   test('cleanupSMI test', async () => {
+        const deleteObjects = await cleanupSMI(kc, testObjects.serviceEntityList)
+        expect(deleteObjects).toHaveLength(3)
+        expect(deleteObjects[0].name).toBe('nginx-service-trafficsplit')
+        expect(deleteObjects[1].name).toBe('nginx-service-green')
+        expect(deleteObjects[1].kind).toBe('Service')
+        expect(deleteObjects[2].name).toBe('nginx-service-stable')
+        expect(deleteObjects[2].kind).toBe('Service')
+
+   })
 })

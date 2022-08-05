@@ -34,7 +34,6 @@ export async function deployBlueGreen(
    core.startGroup('Routing blue green')
    await routeBlueGreenForDeploy(kubectl, files, routeStrategy)
    core.endGroup()
-   
    core.debug("objects deployed for " + routeStrategy + ": "  + JSON.stringify(blueGreenDeployment.objects))
    return blueGreenDeployment
 }

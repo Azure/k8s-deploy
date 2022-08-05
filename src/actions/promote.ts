@@ -16,23 +16,19 @@ import {
    GREEN_LABEL_VALUE,
    NONE_LABEL_VALUE
 } from '../strategyHelpers/blueGreen/blueGreenHelper'
+
 import {
-   promoteBlueGreenService,
-   
-} from '../strategyHelpers/blueGreen/promote'
-import {
-   promoteBlueGreenIngress
+   promoteBlueGreenIngress, promoteBlueGreenService, promoteBlueGreenSMI,
 } from '../strategyHelpers/blueGreen/promote'
 
 import{
    routeBlueGreenService,
-   routeBlueGreenIngressUnchanged
+   routeBlueGreenIngressUnchanged,
+   routeBlueGreenSMI,
 } from '../strategyHelpers/blueGreen/route'
 
 import {
    cleanupSMI,
-   promoteBlueGreenSMI,
-   routeBlueGreenSMI
 } from '../strategyHelpers/blueGreen/smiBlueGreenHelper'
 import {Kubectl, Resource} from '../types/kubectl'
 import {DeploymentStrategy} from '../types/deploymentStrategy'
