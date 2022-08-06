@@ -25,7 +25,7 @@ export async function getDeploymentConfig(): Promise<DeploymentConfig> {
 
    let imageNames = core.getInput('images').split('\n') || []
    imageNames.forEach((element) => {
-      if (element == ' ' || '') {
+      if (element === null || '/^s+$/') {
          imageNames.pop()
       }
    })
