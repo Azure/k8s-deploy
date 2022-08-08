@@ -7,6 +7,12 @@ export interface K8sObject{
     spec: any
 }
 
+export interface K8sServiceObject extends K8sObject{
+    spec: {
+        selector: Map<string, string>
+    }
+}
+
 export interface K8sDeleteObject{
     name: string
     kind: string

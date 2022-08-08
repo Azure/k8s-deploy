@@ -58,6 +58,9 @@ export async function setupSMI(kubectl: Kubectl, serviceEntityList: any[]): Prom
       tsObjects.push(tsObject as TrafficSplitObject)
    }
 
+   let tsObjectsDeploymentResult = await deployObjects(kubectl, tsObjects)
+
+
    return {objects: newObjectsList.concat(tsObjects), deployResult: servicesDeploymentResult}
 }
 
@@ -141,9 +144,9 @@ export async function validateTrafficSplitsState(
          TRAFFIC_SPLIT_OBJECT,
          getBlueGreenResourceName(name, TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX)
       )
-
+      core.debug('ts object extracted was ' + JSON.stringify(trafficSplitObject))
       if (!trafficSplitObject) {
-         core.debug("no traffic split exits for " + name)
+         core.debug('no traffic split exits for ' + name)
          trafficSplitsInRightState = false
          continue
       }

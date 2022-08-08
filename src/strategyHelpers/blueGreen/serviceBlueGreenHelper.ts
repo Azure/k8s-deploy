@@ -1,3 +1,5 @@
+import * as core from '@actions/core'
+import { K8sObject, K8sServiceObject } from '../../types/k8sObject'
 import {Kubectl} from '../../types/kubectl'
 import {
    addBlueGreenLabelsAndAnnotations,
@@ -12,7 +14,7 @@ import {
 export function getUpdatedBlueGreenService(
    inputObject: any,
    labelValue: string
-): object {
+): K8sServiceObject {
    const newObject = JSON.parse(JSON.stringify(inputObject))
 
    // Adding labels and annotations.
@@ -34,17 +36,14 @@ export async function validateServicesState(
          serviceObject.metadata.name
       )
 
-      let isServiceGreen = !!existingService && getServiceSpecLabel(existingService) == GREEN_LABEL_VALUE
+      let isServiceGreen = !!existingService && getServiceSpecLabel(existingService as K8sServiceObject) == GREEN_LABEL_VALUE
       areServicesGreen = areServicesGreen && isServiceGreen
    }
 
    return areServicesGreen
 }
 
-export function getServiceSpecLabel(inputObject: any): string {
-   if (inputObject?.spec?.selector[BLUE_GREEN_VERSION_LABEL]) {
-      return inputObject.spec.selector[BLUE_GREEN_VERSION_LABEL]
-   }
-
-   return ''
+export function getServiceSpecLabel(inputObject: K8sServiceObject): string {
+   core.debug('svc getting read is ' + JSON.stringify(inputObject))
+   return inputObject.spec.selector[BLUE_GREEN_VERSION_LABEL]
 }

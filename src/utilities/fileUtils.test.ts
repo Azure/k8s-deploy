@@ -17,7 +17,7 @@ describe('File utils', () => {
       ]
 
       // is there a more efficient way to test equality w random order?
-      expect(testSearch).toHaveLength(6)
+      expect(testSearch).toHaveLength(7)
       expectedManifests.forEach((fileName) => {
          expect(testSearch).toContain(fileName)
       })
@@ -54,6 +54,6 @@ describe('File utils', () => {
 
       expect(
          getFilesFromDirectories([outerPath, fileAtOuter, innerPath])
-      ).toHaveLength(6)
+      ).toHaveLength(7)
    })
 })

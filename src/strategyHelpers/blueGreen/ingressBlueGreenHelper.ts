@@ -96,7 +96,7 @@ export async function validateIngresses(
 
         let isValid = !!existingIngress && existingIngress?.metadata?.labels[BLUE_GREEN_VERSION_LABEL] === GREEN_LABEL_VALUE 
         if (!isValid){
-          core.debug('Invalid ingress detected ' + inputObject.metadata.name)
+          core.debug('Invalid ingress detected ' + JSON.stringify(inputObject))
            invalidIngresses.push(inputObject.metadata.name)
         }
         // to be valid, ingress should exist and should be green
