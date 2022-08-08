@@ -74,7 +74,7 @@ describe('route function tests', () => {
    })
 
    test('correctly identifies route pattern and acts accordingly', async () => {
-    jest.spyOn(TSutils, 'getTrafficSplitAPIVersion').mockImplementation(() => Promise.resolve("v1alpha3"))
+    jest.spyOn(TSutils, 'getTrafficSplitAPIVersion').mockImplementation(() => Promise.resolve('v1alpha3'))
 
 
     const ingressResult = await routeBlueGreenForDeploy(

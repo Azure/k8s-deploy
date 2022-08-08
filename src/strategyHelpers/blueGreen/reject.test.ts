@@ -70,7 +70,7 @@ describe('reject tests', () => {
    test('reject blue/green SMI', async () => {
     jest.spyOn(TSutils, 'getTrafficSplitAPIVersion').mockImplementation(() => Promise.resolve("v1alpha3"))
     let rejectResult = await rejectBlueGreenSMI(kubectl, testObjects)
-    expect(rejectResult.deleteResult).toHaveLength(3)
+    expect(rejectResult.deleteResult).toHaveLength(4)
 
    })
 })

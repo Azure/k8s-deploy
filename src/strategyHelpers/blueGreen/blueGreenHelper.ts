@@ -245,14 +245,14 @@ export async function fetchResource(
    kubectl: Kubectl,
    kind: string,
    name: string
-) {
+): Promise<K8sObject> {
    const result = await kubectl.getResource(kind, name)
    if (result == null || !!result.stderr) {
       return null
    }
 
    if (!!result.stdout) {
-      const resource = JSON.parse(result.stdout)
+      const resource = (JSON.parse(result.stdout) as K8sObject)
 
       try {
          UnsetClusterSpecificDetails(resource)
