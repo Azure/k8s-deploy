@@ -1,5 +1,5 @@
 import * as core from '@actions/core'
-import {TrafficSplitBackend, TrafficSplitObject} from '../../types/k8sObject'
+import {TrafficSplitObject} from '../../types/k8sObject'
 import {Kubectl} from '../../types/kubectl'
 import * as fileHelper from '../../utilities/fileUtils'
 import * as TSutils from '../../utilities/trafficSplitUtils'
@@ -31,26 +31,26 @@ let testObjects: BlueGreenManifests
 let kc = new Kubectl('')
 const ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
 const mockTsObject: TrafficSplitObject = {
-    apiVersion: 'v1alpha3',
-    kind: TRAFFIC_SPLIT_OBJECT,
-    metadata: {
-       name: 'nginx-service-trafficsplit',
-       labels: new Map<string, string>()
-    },
-    spec: {
-       service: 'nginx-service',
-       backends: [
-          {
-             service: 'nginx-service-stable',
-             weight: MIN_VAL
-          },
-          {
-             service: 'nginx-service-green',
-             weight: MAX_VAL
-          }
-       ]
-    }
- }
+   apiVersion: 'v1alpha3',
+   kind: TRAFFIC_SPLIT_OBJECT,
+   metadata: {
+      name: 'nginx-service-trafficsplit',
+      labels: new Map<string, string>()
+   },
+   spec: {
+      service: 'nginx-service',
+      backends: [
+         {
+            service: 'nginx-service-stable',
+            weight: MIN_VAL
+         },
+         {
+            service: 'nginx-service-green',
+            weight: MAX_VAL
+         }
+      ]
+   }
+}
 
 describe('SMI Helper tests', () => {
    beforeEach(() => {
@@ -67,47 +67,45 @@ describe('SMI Helper tests', () => {
          .mockImplementationOnce(() => [''])
    })
 
-   test('setupSMI tests', () => {
-      const smiResults = setupSMI(kc, testObjects.serviceEntityList)
+   test('setupSMI tests', async () => {
+      const smiResults = await setupSMI(kc, testObjects.serviceEntityList)
 
-      smiResults.then((value) => {
-         let found = 0
-         for (let obj of value.objects) {
-            core.debug('obj is ' + JSON.stringify(obj))
+      let found = 0
+      for (let obj of smiResults.objects) {
+         core.debug('obj is ' + JSON.stringify(obj))
 
-            if (obj.metadata.name === 'nginx-service-stable') {
-               expect(obj.metadata.labels[BLUE_GREEN_VERSION_LABEL]).toBe(
-                  NONE_LABEL_VALUE
-               )
-               expect(obj.spec.selector.app).toBe('nginx')
-               found++
-            }
+         if (obj.metadata.name === 'nginx-service-stable') {
+            expect(obj.metadata.labels[BLUE_GREEN_VERSION_LABEL]).toBe(
+               NONE_LABEL_VALUE
+            )
+            expect(obj.spec.selector.app).toBe('nginx')
+            found++
+         }
 
-            if (obj.metadata.name === 'nginx-service-green') {
-               expect(obj.metadata.labels[BLUE_GREEN_VERSION_LABEL]).toBe(
-                  GREEN_LABEL_VALUE
-               )
-               found++
-            }
+         if (obj.metadata.name === 'nginx-service-green') {
+            expect(obj.metadata.labels[BLUE_GREEN_VERSION_LABEL]).toBe(
+               GREEN_LABEL_VALUE
+            )
+            found++
+         }
 
-            if (obj.metadata.name === 'nginx-service-trafficsplit') {
-               found++
-               // expect stable weight to be max val
-               const casted = obj as TrafficSplitObject
-               expect(casted.spec.backends).toHaveLength(2)
-               for (let be of casted.spec.backends) {
-                  if (be.service === 'nginx-service-stable') {
-                     expect(be.weight).toBe(MAX_VAL)
-                  }
-                  if (be.service === 'nginx-service-green') {
-                     expect(be.weight).toBe(MIN_VAL)
-                  }
+         if (obj.metadata.name === 'nginx-service-trafficsplit') {
+            found++
+            // expect stable weight to be max val
+            const casted = obj as TrafficSplitObject
+            expect(casted.spec.backends).toHaveLength(2)
+            for (let be of casted.spec.backends) {
+               if (be.service === 'nginx-service-stable') {
+                  expect(be.weight).toBe(MAX_VAL)
+               }
+               if (be.service === 'nginx-service-green') {
+                  expect(be.weight).toBe(MIN_VAL)
                }
             }
          }
+      }
 
-         expect(found).toBe(3)
-      })
+      expect(found).toBe(3)
    })
 
    test('createTrafficSplitObject tests', async () => {
@@ -176,8 +174,8 @@ describe('SMI Helper tests', () => {
       const mockTsCopy = JSON.parse(JSON.stringify(mockTsObject))
       mockTsCopy.spec.backends[0].weight = MAX_VAL
       jest
-      .spyOn(bgHelper, 'fetchResource')
-      .mockImplementation(() => Promise.resolve(mockTsCopy))
+         .spyOn(bgHelper, 'fetchResource')
+         .mockImplementation(() => Promise.resolve(mockTsCopy))
 
       valResult = await validateTrafficSplitsState(
          kc,
@@ -185,9 +183,7 @@ describe('SMI Helper tests', () => {
       )
       expect(valResult).toBe(false)
 
-      jest
-         .spyOn(bgHelper, 'fetchResource')
-         .mockImplementation()
+      jest.spyOn(bgHelper, 'fetchResource').mockImplementation()
       valResult = await validateTrafficSplitsState(
          kc,
          testObjects.serviceEntityList

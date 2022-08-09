@@ -1,24 +1,19 @@
-import { K8sDeleteObject, K8sObject } from '../../types/k8sObject'
+import {K8sDeleteObject} from '../../types/k8sObject'
 import {Kubectl} from '../../types/kubectl'
 import {
    BlueGreenDeployment,
    BlueGreenManifests,
    deleteGreenObjects,
-   getManifestObjects,
    NONE_LABEL_VALUE
 } from './blueGreenHelper'
 
-import{
-   routeBlueGreenSMI
-} from './route'
+import {routeBlueGreenSMI} from './route'
 
-import {
-   cleanupSMI
-} from './smiBlueGreenHelper'
+import {cleanupSMI} from './smiBlueGreenHelper'
 
-export interface RejectResult{
-   deleteResult: K8sDeleteObject[],
-   routeResult: BlueGreenDeployment 
+export interface RejectResult {
+   deleteResult: K8sDeleteObject[]
+   routeResult: BlueGreenDeployment
 }
 
 import {routeBlueGreenIngressUnchanged, routeBlueGreenService} from './route'
@@ -26,7 +21,7 @@ import {routeBlueGreenIngressUnchanged, routeBlueGreenService} from './route'
 export async function rejectBlueGreenIngress(
    kubectl: Kubectl,
    manifestObjects: BlueGreenManifests
-): Promise<RejectResult>  {
+): Promise<RejectResult> {
    // get all kubernetes objects defined in manifest files
    // route ingress to stables services
    let routeResult = await routeBlueGreenIngressUnchanged(
@@ -58,7 +53,10 @@ export async function rejectBlueGreenService(
    )
 
    // delete new deployments with green suffix
-   let deleteResult = await deleteGreenObjects(kubectl, manifestObjects.deploymentEntityList)
+   let deleteResult = await deleteGreenObjects(
+      kubectl,
+      manifestObjects.deploymentEntityList
+   )
 
    return {routeResult, deleteResult}
 }
@@ -81,7 +79,10 @@ export async function rejectBlueGreenSMI(
    )
 
    // delete trafficsplit and extra services
-   const cleanupResult = await cleanupSMI(kubectl, manifestObjects.serviceEntityList)
+   const cleanupResult = await cleanupSMI(
+      kubectl,
+      manifestObjects.serviceEntityList
+   )
 
    return {routeResult, deleteResult: deleteResult.concat(cleanupResult)}
 }

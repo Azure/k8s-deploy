@@ -1,14 +1,12 @@
 import * as core from '@actions/core'
-import { K8sObject, K8sServiceObject } from '../../types/k8sObject'
+import {K8sServiceObject} from '../../types/k8sObject'
 import {Kubectl} from '../../types/kubectl'
 import {
    addBlueGreenLabelsAndAnnotations,
    BLUE_GREEN_VERSION_LABEL,
    fetchResource,
-   GREEN_LABEL_VALUE,
+   GREEN_LABEL_VALUE
 } from './blueGreenHelper'
-
-
 
 // add green labels to configure existing service
 export function getUpdatedBlueGreenService(
@@ -36,7 +34,10 @@ export async function validateServicesState(
          serviceObject.metadata.name
       )
 
-      let isServiceGreen = !!existingService && getServiceSpecLabel(existingService as K8sServiceObject) == GREEN_LABEL_VALUE
+      let isServiceGreen =
+         !!existingService &&
+         getServiceSpecLabel(existingService as K8sServiceObject) ==
+            GREEN_LABEL_VALUE
       areServicesGreen = areServicesGreen && isServiceGreen
    }
 

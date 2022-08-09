@@ -13,7 +13,6 @@ import {
 } from '../strategyHelpers/deploymentHelper'
 import {DeploymentStrategy} from '../types/deploymentStrategy'
 import {parseTrafficSplitMethod} from '../types/trafficSplitMethod'
-import {parseRouteStrategy} from '../types/routeStrategy'
 
 export async function deploy(
    kubectl: Kubectl,

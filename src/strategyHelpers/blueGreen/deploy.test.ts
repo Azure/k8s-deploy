@@ -1,61 +1,74 @@
-import * as core from '@actions/core'
-import { BlueGreenDeployment, getManifestObjects } from './blueGreenHelper'
+import {BlueGreenDeployment, getManifestObjects} from './blueGreenHelper'
 import {deployBlueGreen, deployBlueGreenIngress} from './deploy'
 import * as routeTester from './route'
-import { Kubectl } from '../../types/kubectl'
-import { RouteStrategy } from '../../types/routeStrategy'
+import {Kubectl} from '../../types/kubectl'
+import {RouteStrategy} from '../../types/routeStrategy'
 import * as TSutils from '../../utilities/trafficSplitUtils'
-import { ExecOutput } from '@actions/exec'
 
 let testObjects
 let ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
 
 jest.mock('../../types/kubectl')
 
-describe("deploy tests", () => {
-    beforeEach(() => {
-        //@ts-ignore
-        Kubectl.mockClear()
-        testObjects = getManifestObjects(ingressFilepath)
-    })
+describe('deploy tests', () => {
+   beforeEach(() => {
+      //@ts-ignore
+      Kubectl.mockClear()
+      testObjects = getManifestObjects(ingressFilepath)
+   })
 
-    test("correctly determines deploy type and acts accordingly", () => {
-        const kubectl = new Kubectl("")
-        const mockBgDeployment: BlueGreenDeployment = {deployResult: { result: {exitCode: 0, stderr: '', stdout: ''}, manifestFiles: []}, objects: []}
+   test('correctly determines deploy type and acts accordingly', async () => {
+      const kubectl = new Kubectl('')
+      const mockBgDeployment: BlueGreenDeployment = {
+         deployResult: {
+            result: {exitCode: 0, stderr: '', stdout: ''},
+            manifestFiles: []
+         },
+         objects: []
+      }
 
-        jest.spyOn(routeTester, 'routeBlueGreenForDeploy').mockImplementation(() => Promise.resolve(mockBgDeployment))
-        jest.spyOn(TSutils, 'getTrafficSplitAPIVersion').mockImplementation(() => Promise.resolve("v1alpha3"))
+      jest
+         .spyOn(routeTester, 'routeBlueGreenForDeploy')
+         .mockImplementation(() => Promise.resolve(mockBgDeployment))
+      jest
+         .spyOn(TSutils, 'getTrafficSplitAPIVersion')
+         .mockImplementation(() => Promise.resolve('v1alpha3'))
 
-        const ingressResult = deployBlueGreen(kubectl, ingressFilepath, RouteStrategy.INGRESS)
-        ingressResult.then((result) => {
-            expect(result.objects.length).toBe(2)
-        })
+      const ingressResult = await deployBlueGreen(
+         kubectl,
+         ingressFilepath,
+         RouteStrategy.INGRESS
+      )
 
+      expect(ingressResult.objects.length).toBe(2)
 
-        const svcResult = deployBlueGreen(kubectl, ingressFilepath, RouteStrategy.SERVICE)
-        svcResult.then((result) => {
-            expect(result.objects.length).toBe(2)
-        })
+      const result = await deployBlueGreen(
+         kubectl,
+         ingressFilepath,
+         RouteStrategy.SERVICE
+      )
 
-        const smiResult = deployBlueGreen(kubectl, ingressFilepath, RouteStrategy.SMI)
-        smiResult.then((result) => {
-            expect(result.objects.length).toBe(3)
-        })
-    })
+      expect(result.objects.length).toBe(2)
 
-    test("correctly deploys blue/green ingress", () => {
-        const kc = new Kubectl("")
-        const result = deployBlueGreenIngress(kc, ingressFilepath)
-        result.then((value) => {
-            const nol = value.objects.map(obj => {
-                if(obj.kind === "Service"){
-                    expect(obj.metadata.name).toBe('nginx-service-green')
-                }
-                if(obj.kind === "Deployment"){
-                    expect(obj.metadata.name).toBe('nginx-deployment-green')
-                }
-            })
-           
-        })
-    })
+      const smiResult = await deployBlueGreen(
+         kubectl,
+         ingressFilepath,
+         RouteStrategy.SMI
+      )
+
+      expect(smiResult.objects.length).toBe(3)
+   })
+
+   test('correctly deploys blue/green ingress', async () => {
+      const kc = new Kubectl('')
+      const value = await deployBlueGreenIngress(kc, ingressFilepath)
+      const nol = value.objects.map((obj) => {
+         if (obj.kind === 'Service') {
+            expect(obj.metadata.name).toBe('nginx-service-green')
+         }
+         if (obj.kind === 'Deployment') {
+            expect(obj.metadata.name).toBe('nginx-deployment-green')
+         }
+      })
+   })
 })
