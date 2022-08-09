@@ -42,14 +42,13 @@ export async function promote(
    kubectl: Kubectl,
    manifests: string[],
    deploymentStrategy: DeploymentStrategy,
-   annotations: {[key: string]: string} = {}
 ) {
    switch (deploymentStrategy) {
       case DeploymentStrategy.CANARY:
          await promoteCanary(kubectl, manifests)
          break
       case DeploymentStrategy.BLUE_GREEN:
-         await promoteBlueGreen(kubectl, manifests, annotations)
+         await promoteBlueGreen(kubectl, manifests)
          break
       default:
          throw Error('Invalid promote deployment strategy')
@@ -109,7 +108,6 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
 async function promoteBlueGreen(
    kubectl: Kubectl,
    manifests: string[],
-   annotations: {[key: string]: string} = {}
 ) {
    // update container images and pull secrets
    const inputManifestFiles: string[] = updateManifestFiles(manifests)
@@ -164,7 +162,6 @@ async function promoteBlueGreen(
          kubectl,
          NONE_LABEL_VALUE,
          manifestObjects.serviceEntityList,
-         annotations
       )
       await deleteGreenObjects(kubectl, manifestObjects.deploymentEntityList)
       await cleanupSMI(kubectl, manifestObjects.serviceEntityList)

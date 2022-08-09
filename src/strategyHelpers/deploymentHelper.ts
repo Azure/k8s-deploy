@@ -45,7 +45,6 @@ export async function deployManifests(
    deploymentStrategy: DeploymentStrategy,
    kubectl: Kubectl,
    trafficSplitMethod: TrafficSplitMethod,
-   annotations: {[key: string]: string} = {}
 ): Promise<string[]> {
    switch (deploymentStrategy) {
       case DeploymentStrategy.CANARY: {

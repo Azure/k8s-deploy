@@ -22,14 +22,13 @@ export async function reject(
    kubectl: Kubectl,
    manifests: string[],
    deploymentStrategy: DeploymentStrategy,
-   annotations: {[key: string]: string} = {}
 ) {
    switch (deploymentStrategy) {
       case DeploymentStrategy.CANARY:
          await rejectCanary(kubectl, manifests)
          break
       case DeploymentStrategy.BLUE_GREEN:
-         await rejectBlueGreen(kubectl, manifests, annotations)
+         await rejectBlueGreen(kubectl, manifests)
          break
       default:
          throw 'Invalid delete deployment strategy'
@@ -64,7 +63,6 @@ async function rejectCanary(kubectl: Kubectl, manifests: string[]) {
 async function rejectBlueGreen(
    kubectl: Kubectl,
    manifests: string[],
-   annotations: {[key: string]: string} = {}
 ) {
    core.startGroup('Rejecting deployment with blue green strategy')
 
