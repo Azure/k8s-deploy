@@ -9,26 +9,27 @@ import {
 import * as models from '../types/kubernetesTypes'
 import * as KubernetesManifestUtility from '../utilities/manifestStabilityUtils'
 import {
+   BlueGreenDeployment,
    BlueGreenManifests,
-   deleteWorkloadsAndServicesWithLabel,
-   deleteWorkloadsWithLabel,
+   deleteGreenObjects,
    getManifestObjects,
    GREEN_LABEL_VALUE,
    NONE_LABEL_VALUE
 } from '../strategyHelpers/blueGreen/blueGreenHelper'
-import {
-   promoteBlueGreenService,
-   routeBlueGreenService
-} from '../strategyHelpers/blueGreen/serviceBlueGreenHelper'
+
 import {
    promoteBlueGreenIngress,
-   routeBlueGreenIngress
-} from '../strategyHelpers/blueGreen/ingressBlueGreenHelper'
+   promoteBlueGreenService,
+   promoteBlueGreenSMI
+} from '../strategyHelpers/blueGreen/promote'
+
 import {
-   cleanupSMI,
-   promoteBlueGreenSMI,
+   routeBlueGreenService,
+   routeBlueGreenIngressUnchanged,
    routeBlueGreenSMI
-} from '../strategyHelpers/blueGreen/smiBlueGreenHelper'
+} from '../strategyHelpers/blueGreen/route'
+
+import {cleanupSMI} from '../strategyHelpers/blueGreen/smiBlueGreenHelper'
 import {Kubectl, Resource} from '../types/kubectl'
 import {DeploymentStrategy} from '../types/deploymentStrategy'
 import {
@@ -120,7 +121,7 @@ async function promoteBlueGreen(
    )
 
    core.startGroup('Deleting old deployment and making new one')
-   let result
+   let result: BlueGreenDeployment
    if (routeStrategy == RouteStrategy.INGRESS) {
       result = await promoteBlueGreenIngress(kubectl, manifestObjects)
    } else if (routeStrategy == RouteStrategy.SMI) {
@@ -132,7 +133,7 @@ async function promoteBlueGreen(
 
    // checking stability of newly created deployments
    core.startGroup('Checking manifest stability')
-   const deployedManifestFiles = result.newFilePaths
+   const deployedManifestFiles = result.deployResult.manifestFiles
    const resources: Resource[] = getResources(
       deployedManifestFiles,
       models.DEPLOYMENT_TYPES.concat([
@@ -146,17 +147,17 @@ async function promoteBlueGreen(
       'Routing to new deployments and deleting old workloads and services'
    )
    if (routeStrategy == RouteStrategy.INGRESS) {
-      await routeBlueGreenIngress(
+      await routeBlueGreenIngressUnchanged(
          kubectl,
-         null,
          manifestObjects.serviceNameMap,
          manifestObjects.ingressEntityList
       )
-      await deleteWorkloadsAndServicesWithLabel(
+
+      await deleteGreenObjects(
          kubectl,
-         GREEN_LABEL_VALUE,
-         manifestObjects.deploymentEntityList,
-         manifestObjects.serviceEntityList
+         manifestObjects.deploymentEntityList.concat(
+            manifestObjects.serviceEntityList
+         )
       )
    } else if (routeStrategy == RouteStrategy.SMI) {
       await routeBlueGreenSMI(
@@ -165,11 +166,7 @@ async function promoteBlueGreen(
          manifestObjects.serviceEntityList,
          annotations
       )
-      await deleteWorkloadsWithLabel(
-         kubectl,
-         GREEN_LABEL_VALUE,
-         manifestObjects.deploymentEntityList
-      )
+      await deleteGreenObjects(kubectl, manifestObjects.deploymentEntityList)
       await cleanupSMI(kubectl, manifestObjects.serviceEntityList)
    } else {
       await routeBlueGreenService(
@@ -177,11 +174,7 @@ async function promoteBlueGreen(
          NONE_LABEL_VALUE,
          manifestObjects.serviceEntityList
       )
-      await deleteWorkloadsWithLabel(
-         kubectl,
-         GREEN_LABEL_VALUE,
-         manifestObjects.deploymentEntityList
-      )
+      await deleteGreenObjects(kubectl, manifestObjects.deploymentEntityList)
    }
    core.endGroup()
 }

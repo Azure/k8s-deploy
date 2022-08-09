@@ -1,20 +1,20 @@
 import {getManifestObjects, GREEN_LABEL_VALUE} from './blueGreenHelper'
+import * as bgHelper from './blueGreenHelper'
 import {
-   deployBlueGreenIngress,
    getUpdatedBlueGreenIngress,
    isIngressRouted,
-   routeBlueGreenIngress
+   validateIngresses
 } from './ingressBlueGreenHelper'
 import {Kubectl} from '../../types/kubectl'
 import * as fileHelper from '../../utilities/fileUtils'
 
+let testObjects
+const betaFilepath = ['test/unit/manifests/test-ingress.yml']
+const ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
+const kubectl = new Kubectl('')
 jest.mock('../../types/kubectl')
 
 describe('ingress blue green helpers', () => {
-   let testObjects
-   const betaFilepath = ['test/unit/manifests/test-ingress.yml']
-   const ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
-
    beforeEach(() => {
       //@ts-ignore
       Kubectl.mockClear()
@@ -38,7 +38,6 @@ describe('ingress blue green helpers', () => {
             testObjects.serviceNameMap
          )
       ).toBe(false)
-
       expect(
          isIngressRouted(
             getManifestObjects(betaFilepath).ingressEntityList[0],
@@ -53,36 +52,72 @@ describe('ingress blue green helpers', () => {
          testObjects.serviceNameMap,
          GREEN_LABEL_VALUE
       )
-      //@ts-ignore
+      expect(updatedIng.metadata.name).toBe('nginx-ingress')
       expect(updatedIng.metadata.labels['k8s.deploy.color']).toBe('green')
-      //@ts-ignore
+      expect(updatedIng.spec.rules[0].http.paths[0].backend.service.name).toBe(
+         'nginx-service-green'
+      )
+
+      let oldIngObjects = getManifestObjects(betaFilepath)
+      const oldIng = getUpdatedBlueGreenIngress(
+         oldIngObjects.ingressEntityList[0],
+         oldIngObjects.serviceNameMap,
+         GREEN_LABEL_VALUE
+      )
+      expect(updatedIng.metadata.labels['k8s.deploy.color']).toBe('green')
       expect(updatedIng.spec.rules[0].http.paths[0].backend.service.name).toBe(
          'nginx-service-green'
       )
    })
 
-   test('correctly prepares blue/green ingresses for deployment', () => {
-      const kc = new Kubectl('')
-      const generatedObjects = routeBlueGreenIngress(
-         kc,
-         GREEN_LABEL_VALUE,
-         testObjects.serviceNameMap,
-         testObjects.ingressEntityList
+   test('it should validate ingresses', async () => {
+      // what if nothing gets returned from fetchResource?
+      jest.spyOn(bgHelper, 'fetchResource').mockImplementation()
+      let validResponse = await validateIngresses(
+         kubectl,
+         testObjects.ingressEntityList,
+         testObjects.serviceNameMap
       )
-      generatedObjects.then((value) => {
-         expect(value).toHaveLength(1)
-         //@ts-ignore
-         expect(value[0].metadata.name).toBe('nginx-ingress')
-      })
-   })
-   test('correctly deploys services', () => {
-      const kc = new Kubectl('')
-      const result = deployBlueGreenIngress(kc, ingressFilepath)
+      expect(validResponse.areValid).toBe(false)
 
-      result.then((value) => {
-         const nol = value.newObjectsList
-         //@ts-ignore
-         expect(nol[0].metadata.name).toBe('nginx-service-green')
-      })
+      // test valid ingress
+      let mockIngress = JSON.parse(
+         JSON.stringify(testObjects.ingressEntityList[0])
+      )
+      mockIngress.spec.rules[0].http.paths[0].backend.service.name =
+         'nginx-service-green'
+      const mockLabels = new Map<string, string>()
+      mockLabels[bgHelper.BLUE_GREEN_VERSION_LABEL] = GREEN_LABEL_VALUE
+      mockIngress.metadata.labels = mockLabels
+      jest
+         .spyOn(bgHelper, 'fetchResource')
+         .mockImplementation(() => Promise.resolve(mockIngress))
+      validResponse = await validateIngresses(
+         kubectl,
+         testObjects.ingressEntityList,
+         testObjects.serviceNameMap
+      )
+      expect(validResponse.areValid).toBe(true)
+
+      // test invalid labels
+      mockIngress.metadata.labels[bgHelper.BLUE_GREEN_VERSION_LABEL] =
+         bgHelper.NONE_LABEL_VALUE
+      mockIngress.spec.rules[0].http.paths[0].backend.service.name =
+         'nginx-service'
+      validResponse = await validateIngresses(
+         kubectl,
+         testObjects.ingressEntityList,
+         testObjects.serviceNameMap
+      )
+      expect(validResponse.areValid).toBe(false)
+
+      // test missing fields
+      mockIngress = {}
+      validResponse = await validateIngresses(
+         kubectl,
+         testObjects.ingressEntityList,
+         testObjects.serviceNameMap
+      )
+      expect(validResponse.areValid).toBe(false)
    })
 })
