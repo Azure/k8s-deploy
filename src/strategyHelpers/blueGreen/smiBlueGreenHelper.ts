@@ -1,16 +1,11 @@
 import * as core from '@actions/core'
 import {Kubectl} from '../../types/kubectl'
 import * as kubectlUtils from '../../utilities/trafficSplitUtils'
-import * as fileHelper from '../../utilities/fileUtils'
 import {
-   BlueGreenManifests,
-   deployWithLabel,
    deleteObjects,
-   deleteGreenObjects,
    deployObjects,
    fetchResource,
    getBlueGreenResourceName,
-   getManifestObjects,
    getNewBlueGreenObject,
    GREEN_LABEL_VALUE,
    GREEN_SUFFIX,
@@ -18,18 +13,22 @@ import {
    STABLE_SUFFIX,
    BlueGreenDeployment
 } from './blueGreenHelper'
-import { K8sDeleteObject, K8sIngress, K8sObject, TrafficSplitObject } from '../../types/k8sObject'
-import { ExecOutput } from '@actions/exec'
-import { DeployResult } from '../../types/deployResult'
-import { exec } from 'child_process'
+import {
+   K8sDeleteObject,
+   K8sObject,
+   TrafficSplitObject
+} from '../../types/k8sObject'
+import {DeployResult} from '../../types/deployResult'
 
 export const TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX = '-trafficsplit'
 export const TRAFFIC_SPLIT_OBJECT = 'TrafficSplit'
 export const MIN_VAL = 0
 export const MAX_VAL = 100
 
-
-export async function setupSMI(kubectl: Kubectl, serviceEntityList: any[]): Promise<BlueGreenDeployment> {
+export async function setupSMI(
+   kubectl: Kubectl,
+   serviceEntityList: any[]
+): Promise<BlueGreenDeployment> {
    const newObjectsList = []
    const trafficObjectList = []
 
@@ -37,19 +36,21 @@ export async function setupSMI(kubectl: Kubectl, serviceEntityList: any[]): Prom
       // create a trafficsplit for service
       trafficObjectList.push(serviceObject)
       // set up the services for trafficsplit
-      const newStableService = getStableSMIServiceResource(
-         serviceObject)
+      const newStableService = getStableSMIServiceResource(serviceObject)
       const newGreenService = getGreenSMIServiceResource(serviceObject)
       newObjectsList.push(newStableService)
       newObjectsList.push(newGreenService)
    })
 
    // create services
-   let servicesDeploymentResult: DeployResult = await deployObjects(kubectl, newObjectsList)
+   let servicesDeploymentResult: DeployResult = await deployObjects(
+      kubectl,
+      newObjectsList
+   )
 
    let tsObjects: TrafficSplitObject[] = []
    // route to stable service
-   for(let svc of trafficObjectList){
+   for (let svc of trafficObjectList) {
       const tsObject = await createTrafficSplitObject(
          kubectl,
          svc.metadata.name,
@@ -60,8 +61,10 @@ export async function setupSMI(kubectl: Kubectl, serviceEntityList: any[]): Prom
 
    let tsObjectsDeploymentResult = await deployObjects(kubectl, tsObjects)
 
-
-   return {objects: newObjectsList.concat(tsObjects), deployResult: servicesDeploymentResult}
+   return {
+      objects: newObjectsList.concat(tsObjects),
+      deployResult: servicesDeploymentResult
+   }
 }
 
 let trafficSplitAPIVersion = ''
@@ -108,27 +111,19 @@ export async function createTrafficSplitObject(
    return trafficSplitObject
 }
 
-export function getStableSMIServiceResource(
-   inputObject: K8sObject,
-): K8sObject {
-   const newObject = JSON.parse(JSON.stringify(inputObject)) 
+export function getStableSMIServiceResource(inputObject: K8sObject): K8sObject {
+   const newObject = JSON.parse(JSON.stringify(inputObject))
    // adding stable suffix to service name
    newObject.metadata.name = getBlueGreenResourceName(
       inputObject.metadata.name,
       STABLE_SUFFIX
    )
    return getNewBlueGreenObject(newObject, NONE_LABEL_VALUE)
-   
 }
 
-
-export function getGreenSMIServiceResource(
-   inputObject: K8sObject,
-): K8sObject {
+export function getGreenSMIServiceResource(inputObject: K8sObject): K8sObject {
    const newObject = JSON.parse(JSON.stringify(inputObject))
    return getNewBlueGreenObject(newObject, GREEN_LABEL_VALUE)
-   
-   
 }
 
 export async function validateTrafficSplitsState(
@@ -144,7 +139,9 @@ export async function validateTrafficSplitsState(
          TRAFFIC_SPLIT_OBJECT,
          getBlueGreenResourceName(name, TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX)
       )
-      core.debug('ts object extracted was ' + JSON.stringify(trafficSplitObject))
+      core.debug(
+         'ts object extracted was ' + JSON.stringify(trafficSplitObject)
+      )
       if (!trafficSplitObject) {
          core.debug('no traffic split exits for ' + name)
          trafficSplitsInRightState = false
@@ -154,21 +151,26 @@ export async function validateTrafficSplitsState(
       trafficSplitObject.spec.backends.forEach((element) => {
          // checking if trafficsplit in right state to deploy
          if (element.service === getBlueGreenResourceName(name, GREEN_SUFFIX)) {
-            trafficSplitsInRightState = trafficSplitsInRightState && element.weight == MAX_VAL
+            trafficSplitsInRightState =
+               trafficSplitsInRightState && element.weight == MAX_VAL
          }
 
          if (
             element.service === getBlueGreenResourceName(name, STABLE_SUFFIX)
          ) {
-            trafficSplitsInRightState = trafficSplitsInRightState && element.weight == MIN_VAL
+            trafficSplitsInRightState =
+               trafficSplitsInRightState && element.weight == MIN_VAL
          }
       })
    }
-   core.debug("returning " + String(trafficSplitsInRightState))
+   core.debug('returning ' + String(trafficSplitsInRightState))
    return trafficSplitsInRightState
 }
 
-export async function cleanupSMI(kubectl: Kubectl, serviceEntityList: any[]): Promise<K8sDeleteObject[]> {
+export async function cleanupSMI(
+   kubectl: Kubectl,
+   serviceEntityList: any[]
+): Promise<K8sDeleteObject[]> {
    const deleteList: K8sDeleteObject[] = []
 
    serviceEntityList.forEach((serviceObject) => {

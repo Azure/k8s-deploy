@@ -2,8 +2,8 @@ import * as core from '@actions/core'
 import * as fs from 'fs'
 import * as yaml from 'js-yaml'
 
-import { DeployResult } from '../../types/deployResult'
-import { K8sObject, K8sDeleteObject } from '../../types/k8sObject'
+import {DeployResult} from '../../types/deployResult'
+import {K8sObject, K8sDeleteObject} from '../../types/k8sObject'
 import {Kubectl} from '../../types/kubectl'
 import {
    isDeploymentEntity,
@@ -20,15 +20,14 @@ import {
    updateSelectorLabels
 } from '../../utilities/manifestUpdateUtils'
 
-
 export const GREEN_LABEL_VALUE = 'green'
 export const NONE_LABEL_VALUE = 'None'
 export const BLUE_GREEN_VERSION_LABEL = 'k8s.deploy.color'
 export const GREEN_SUFFIX = '-green'
 export const STABLE_SUFFIX = '-stable'
 
-export interface BlueGreenDeployment{
-   deployResult: DeployResult,
+export interface BlueGreenDeployment {
+   deployResult: DeployResult
    objects: K8sObject[]
 }
 
@@ -62,15 +61,17 @@ export async function deleteGreenObjects(
    return resourcesToDelete
 }
 
-
-export async function deleteObjects(kubectl: Kubectl, deleteList: K8sDeleteObject[]) {
+export async function deleteObjects(
+   kubectl: Kubectl,
+   deleteList: K8sDeleteObject[]
+) {
    // delete services and deployments
    for (const delObject of deleteList) {
       try {
          const result = await kubectl.delete([delObject.kind, delObject.name])
          checkForErrors([result])
       } catch (ex) {
-         core.debug("failed to delete object " + delObject.name)
+         core.debug('failed to delete object ' + delObject.name)
       }
    }
 }
@@ -129,14 +130,17 @@ export function isServiceRouted(
    let shouldBeRouted: boolean = false
    const serviceSelector: any = getServiceSelector(serviceObject)
 
-   return serviceSelector && deploymentEntityList.some((depObject) => {
-            // finding if there is a deployment in the given manifests the service targets
-            const matchLabels: any = getDeploymentMatchLabels(depObject)
-            return (
-               matchLabels &&
-               isServiceSelectorSubsetOfMatchLabel(serviceSelector, matchLabels)
-            )
-         })
+   return (
+      serviceSelector &&
+      deploymentEntityList.some((depObject) => {
+         // finding if there is a deployment in the given manifests the service targets
+         const matchLabels: any = getDeploymentMatchLabels(depObject)
+         return (
+            matchLabels &&
+            isServiceSelectorSubsetOfMatchLabel(serviceSelector, matchLabels)
+         )
+      })
+   )
 }
 
 export async function deployWithLabel(
@@ -150,7 +154,9 @@ export async function deployWithLabel(
       const newBlueGreenObject = getNewBlueGreenObject(inputObject, nextLabel)
       newObjectsList.push(newBlueGreenObject)
    })
-   core.debug("objects deployed with label are " + JSON.stringify(newObjectsList))
+   core.debug(
+      'objects deployed with label are ' + JSON.stringify(newObjectsList)
+   )
    let deployResult = await deployObjects(kubectl, newObjectsList)
    return {deployResult, objects: newObjectsList}
 }
@@ -252,7 +258,7 @@ export async function fetchResource(
    }
 
    if (!!result.stdout) {
-      const resource = (JSON.parse(result.stdout) as K8sObject)
+      const resource = JSON.parse(result.stdout) as K8sObject
 
       try {
          UnsetClusterSpecificDetails(resource)
@@ -265,13 +271,12 @@ export async function fetchResource(
    }
 }
 
-export async function deployObjects(kubectl: Kubectl, objectsList: any[]): Promise<DeployResult> {
+export async function deployObjects(
+   kubectl: Kubectl,
+   objectsList: any[]
+): Promise<DeployResult> {
    const manifestFiles = fileHelper.writeObjectsToFile(objectsList)
    const result = await kubectl.apply(manifestFiles)
 
    return {result, manifestFiles}
 }
-
-
-
-

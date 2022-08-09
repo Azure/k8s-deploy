@@ -18,18 +18,18 @@ import {
 } from '../strategyHelpers/blueGreen/blueGreenHelper'
 
 import {
-   promoteBlueGreenIngress, promoteBlueGreenService, promoteBlueGreenSMI,
+   promoteBlueGreenIngress,
+   promoteBlueGreenService,
+   promoteBlueGreenSMI
 } from '../strategyHelpers/blueGreen/promote'
 
-import{
+import {
    routeBlueGreenService,
    routeBlueGreenIngressUnchanged,
-   routeBlueGreenSMI,
+   routeBlueGreenSMI
 } from '../strategyHelpers/blueGreen/route'
 
-import {
-   cleanupSMI,
-} from '../strategyHelpers/blueGreen/smiBlueGreenHelper'
+import {cleanupSMI} from '../strategyHelpers/blueGreen/smiBlueGreenHelper'
 import {Kubectl, Resource} from '../types/kubectl'
 import {DeploymentStrategy} from '../types/deploymentStrategy'
 import {
@@ -147,11 +147,17 @@ async function promoteBlueGreen(
       'Routing to new deployments and deleting old workloads and services'
    )
    if (routeStrategy == RouteStrategy.INGRESS) {
-      await routeBlueGreenIngressUnchanged(kubectl, manifestObjects.serviceNameMap, manifestObjects.ingressEntityList)
+      await routeBlueGreenIngressUnchanged(
+         kubectl,
+         manifestObjects.serviceNameMap,
+         manifestObjects.ingressEntityList
+      )
 
       await deleteGreenObjects(
          kubectl,
-         manifestObjects.deploymentEntityList.concat(manifestObjects.serviceEntityList)
+         manifestObjects.deploymentEntityList.concat(
+            manifestObjects.serviceEntityList
+         )
       )
    } else if (routeStrategy == RouteStrategy.SMI) {
       await routeBlueGreenSMI(
@@ -160,10 +166,7 @@ async function promoteBlueGreen(
          manifestObjects.serviceEntityList,
          annotations
       )
-      await deleteGreenObjects(
-         kubectl,
-         manifestObjects.deploymentEntityList
-      )
+      await deleteGreenObjects(kubectl, manifestObjects.deploymentEntityList)
       await cleanupSMI(kubectl, manifestObjects.serviceEntityList)
    } else {
       await routeBlueGreenService(
@@ -171,10 +174,7 @@ async function promoteBlueGreen(
          NONE_LABEL_VALUE,
          manifestObjects.serviceEntityList
       )
-      await deleteGreenObjects(
-         kubectl,
-         manifestObjects.deploymentEntityList
-      )
+      await deleteGreenObjects(kubectl, manifestObjects.deploymentEntityList)
    }
    core.endGroup()
 }

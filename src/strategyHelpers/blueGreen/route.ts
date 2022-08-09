@@ -17,7 +17,7 @@ import {getUpdatedBlueGreenService} from './serviceBlueGreenHelper'
 import {createTrafficSplitObject} from './smiBlueGreenHelper'
 
 import * as core from '@actions/core'
-import { K8sObject, TrafficSplitObject } from '../../types/k8sObject'
+import {TrafficSplitObject} from '../../types/k8sObject'
 
 export async function routeBlueGreenForDeploy(
    kubectl: Kubectl,
@@ -129,14 +129,15 @@ export async function routeBlueGreenSMI(
    nextLabel: string,
    serviceEntityList: any[]
 ): Promise<BlueGreenDeployment> {
-   
    const tsObjects: TrafficSplitObject[] = []
    for (const serviceObject of serviceEntityList) {
       // route trafficsplit to given label
-      tsObjects.push(await createTrafficSplitObject(
-         kubectl,
-         serviceObject.metadata.name,
-         nextLabel)
+      tsObjects.push(
+         await createTrafficSplitObject(
+            kubectl,
+            serviceObject.metadata.name,
+            nextLabel
+         )
       )
    }
 

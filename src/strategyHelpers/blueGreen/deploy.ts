@@ -1,6 +1,5 @@
 import * as core from '@actions/core'
 
-import {DeployResult} from '../../types/deployResult'
 import {Kubectl} from '../../types/kubectl'
 import {RouteStrategy} from '../../types/routeStrategy'
 
@@ -23,18 +22,29 @@ export async function deployBlueGreen(
 ): Promise<BlueGreenDeployment> {
    let blueGreenDeployment: BlueGreenDeployment
 
-   if(routeStrategy == RouteStrategy.INGRESS){
-      blueGreenDeployment = await Promise.resolve(deployBlueGreenIngress(kubectl, files))
-   } else if(routeStrategy == RouteStrategy.SMI){
-      blueGreenDeployment = await Promise.resolve(deployBlueGreenSMI(kubectl, files))
-   } else{
-      blueGreenDeployment = await Promise.resolve(deployBlueGreenService(kubectl, files))
+   if (routeStrategy == RouteStrategy.INGRESS) {
+      blueGreenDeployment = await Promise.resolve(
+         deployBlueGreenIngress(kubectl, files)
+      )
+   } else if (routeStrategy == RouteStrategy.SMI) {
+      blueGreenDeployment = await Promise.resolve(
+         deployBlueGreenSMI(kubectl, files)
+      )
+   } else {
+      blueGreenDeployment = await Promise.resolve(
+         deployBlueGreenService(kubectl, files)
+      )
    }
 
    core.startGroup('Routing blue green')
    await routeBlueGreenForDeploy(kubectl, files, routeStrategy)
    core.endGroup()
-   core.debug("objects deployed for " + routeStrategy + ": "  + JSON.stringify(blueGreenDeployment.objects))
+   core.debug(
+      'objects deployed for ' +
+         routeStrategy +
+         ': ' +
+         JSON.stringify(blueGreenDeployment.objects)
+   )
    return blueGreenDeployment
 }
 
@@ -62,7 +72,10 @@ export async function deployBlueGreenSMI(
       manifestObjects.deploymentEntityList,
       GREEN_LABEL_VALUE
    )
-   return {deployResult: blueGreenDeployment.deployResult, objects: blueGreenDeployment.objects.concat(newObjectsList)}
+   return {
+      deployResult: blueGreenDeployment.deployResult,
+      objects: blueGreenDeployment.objects.concat(newObjectsList)
+   }
 }
 
 export async function deployBlueGreenIngress(
@@ -93,7 +106,10 @@ export async function deployBlueGreenIngress(
          JSON.stringify(servicesAndDeployments)
    )
 
-   return {deployResult: workloadDeployment.deployResult, objects: workloadDeployment.objects.concat(otherObjects)}
+   return {
+      deployResult: workloadDeployment.deployResult,
+      objects: workloadDeployment.objects.concat(otherObjects)
+   }
 }
 
 export async function deployBlueGreenService(
@@ -116,5 +132,8 @@ export async function deployBlueGreenService(
 
    deployObjects(kubectl, newObjectsList)
    // returning deployment details to check for rollout stability
-   return {deployResult: blueGreenDeployment.deployResult, objects: blueGreenDeployment.objects.concat(newObjectsList)}
+   return {
+      deployResult: blueGreenDeployment.deployResult,
+      objects: blueGreenDeployment.objects.concat(newObjectsList)
+   }
 }

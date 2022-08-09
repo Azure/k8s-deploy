@@ -11,7 +11,6 @@ import {Kubectl} from '../../types/kubectl'
 import {MAX_VAL, MIN_VAL, TRAFFIC_SPLIT_OBJECT} from './smiBlueGreenHelper'
 import * as smiTester from './smiBlueGreenHelper'
 import * as bgHelper from './blueGreenHelper'
-import {validateServicesState} from './serviceBlueGreenHelper'
 
 let testObjects
 let ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
@@ -25,49 +24,43 @@ describe('promote tests', () => {
       testObjects = getManifestObjects(ingressFilepath)
    })
 
-   test('promote blue/green ingress', () => {
+   test('promote blue/green ingress', async () => {
       const mockLabels = new Map<string, string>()
       mockLabels[bgHelper.BLUE_GREEN_VERSION_LABEL] = bgHelper.GREEN_LABEL_VALUE
       core.debug('mock labels is ' + JSON.stringify(mockLabels))
 
-      jest
-         .spyOn(bgHelper, 'fetchResource')
-         .mockImplementation(() =>
-            Promise.resolve({
-               kind: 'Ingress',
-               spec: {},
-               metadata: {labels: mockLabels, name: 'nginx-ingress-green'}
-            })
-         )
-      let bgDeployment = promoteBlueGreenIngress(kubectl, testObjects)
+      jest.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
+         Promise.resolve({
+            kind: 'Ingress',
+            spec: {},
+            metadata: {labels: mockLabels, name: 'nginx-ingress-green'}
+         })
+      )
+      let value = await promoteBlueGreenIngress(kubectl, testObjects)
 
-      bgDeployment.then((value) => {
-         let objects = value.objects
-         expect(objects).toHaveLength(2)
+      let objects = value.objects
+      expect(objects).toHaveLength(2)
 
-         for (const obj of objects) {
-            if (obj.kind === 'Service') {
-               expect(obj.metadata.name).toBe('nginx-service')
-            } else if (obj.kind == 'Deployment') {
-               expect(obj.metadata.name).toBe('nginx-deployment')
-            }
-            expect(obj.metadata.labels['k8s.deploy.color']).toBe('None')
+      for (const obj of objects) {
+         if (obj.kind === 'Service') {
+            expect(obj.metadata.name).toBe('nginx-service')
+         } else if (obj.kind == 'Deployment') {
+            expect(obj.metadata.name).toBe('nginx-deployment')
          }
-      })
+         expect(obj.metadata.labels['k8s.deploy.color']).toBe('None')
+      }
    })
 
    test('fail to promote invalid blue/green ingress', async () => {
       const mockLabels = new Map<string, string>()
       mockLabels[bgHelper.BLUE_GREEN_VERSION_LABEL] = bgHelper.NONE_LABEL_VALUE
-      jest
-         .spyOn(bgHelper, 'fetchResource')
-         .mockImplementation(() =>
-            Promise.resolve({
-               kind: 'Ingress',
-               spec: {},
-               metadata: {labels: mockLabels, name: 'nginx-ingress-green'}
-            })
-         )
+      jest.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
+         Promise.resolve({
+            kind: 'Ingress',
+            spec: {},
+            metadata: {labels: mockLabels, name: 'nginx-ingress-green'}
+         })
+      )
 
       await expect(
          promoteBlueGreenIngress(kubectl, testObjects)
@@ -77,39 +70,33 @@ describe('promote tests', () => {
    test('promote blue/green service', async () => {
       const mockLabels = new Map<string, string>()
       mockLabels[bgHelper.BLUE_GREEN_VERSION_LABEL] = bgHelper.GREEN_LABEL_VALUE
-      jest
-         .spyOn(bgHelper, 'fetchResource')
-         .mockImplementation(() =>
-            Promise.resolve({
-               kind: 'Service',
-               spec: {selector: mockLabels},
-               metadata: {labels: mockLabels, name: 'nginx-service-green'}
-            })
-         )
+      jest.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
+         Promise.resolve({
+            kind: 'Service',
+            spec: {selector: mockLabels},
+            metadata: {labels: mockLabels, name: 'nginx-service-green'}
+         })
+      )
 
-      let bgDeployment = promoteBlueGreenService(kubectl, testObjects)
+      let value = await promoteBlueGreenService(kubectl, testObjects)
 
-      bgDeployment.then((value) => {
-         expect(value.objects).toHaveLength(1)
-         expect(
-            value.objects[0].metadata.labels[bgHelper.BLUE_GREEN_VERSION_LABEL]
-         ).toBe(bgHelper.NONE_LABEL_VALUE)
-         expect(value.objects[0].metadata.name).toBe('nginx-deployment')
-      })
+      expect(value.objects).toHaveLength(1)
+      expect(
+         value.objects[0].metadata.labels[bgHelper.BLUE_GREEN_VERSION_LABEL]
+      ).toBe(bgHelper.NONE_LABEL_VALUE)
+      expect(value.objects[0].metadata.name).toBe('nginx-deployment')
    })
 
    test('fail to promote invalid blue/green service', async () => {
       const mockLabels = new Map<string, string>()
       mockLabels[bgHelper.BLUE_GREEN_VERSION_LABEL] = bgHelper.NONE_LABEL_VALUE
-      jest
-         .spyOn(bgHelper, 'fetchResource')
-         .mockImplementation(() =>
-            Promise.resolve({
-               kind: 'Service',
-               spec: {},
-               metadata: {labels: mockLabels, name: 'nginx-ingress-green'}
-            })
-         )
+      jest.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
+         Promise.resolve({
+            kind: 'Service',
+            spec: {},
+            metadata: {labels: mockLabels, name: 'nginx-ingress-green'}
+         })
+      )
       jest
          .spyOn(servicesTester, 'validateServicesState')
          .mockImplementationOnce(() => Promise.resolve(false))
@@ -162,7 +149,9 @@ describe('promote tests', () => {
    test('promote blue/green SMI with bad trafficsplit', async () => {
       const mockLabels = new Map<string, string>()
       mockLabels[bgHelper.BLUE_GREEN_VERSION_LABEL] = bgHelper.NONE_LABEL_VALUE
-      jest.spyOn(smiTester, 'validateTrafficSplitsState').mockImplementation(() => Promise.resolve(false))
+      jest
+         .spyOn(smiTester, 'validateTrafficSplitsState')
+         .mockImplementation(() => Promise.resolve(false))
 
       expect(promoteBlueGreenSMI(kubectl, testObjects)).rejects.toThrowError()
    })

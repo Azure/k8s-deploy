@@ -3,44 +3,45 @@ import * as core from '@actions/core'
 import {Kubectl} from '../../types/kubectl'
 import {
    BlueGreenDeployment,
-   BLUE_GREEN_VERSION_LABEL,
    deployWithLabel,
-   fetchResource,
-   GREEN_LABEL_VALUE,
    NONE_LABEL_VALUE
 } from './blueGreenHelper'
 
 import {validateIngresses} from './ingressBlueGreenHelper'
-import { validateServicesState } from './serviceBlueGreenHelper'
-import { validateTrafficSplitsState } from './smiBlueGreenHelper'
+import {validateServicesState} from './serviceBlueGreenHelper'
+import {validateTrafficSplitsState} from './smiBlueGreenHelper'
 
 export async function promoteBlueGreenIngress(
-    kubectl: Kubectl,
-    manifestObjects
- ): Promise<BlueGreenDeployment> {
-    //checking if anything to promote
-    let {areValid, invalidIngresses} = await validateIngresses(
-       kubectl,
-       manifestObjects.ingressEntityList,
-       manifestObjects.serviceNameMap
-    )
-    if (!areValid) {
+   kubectl: Kubectl,
+   manifestObjects
+): Promise<BlueGreenDeployment> {
+   //checking if anything to promote
+   let {areValid, invalidIngresses} = await validateIngresses(
+      kubectl,
+      manifestObjects.ingressEntityList,
+      manifestObjects.serviceNameMap
+   )
+   if (!areValid) {
       core.debug('are valid was false')
-      throw new Error('Ingresses are not in promote state: ' + invalidIngresses.toString())
-    }
-    
-    // create stable deployments with new configuration
-    const result: BlueGreenDeployment = await deployWithLabel(
-       kubectl,
-       manifestObjects.deploymentEntityList.concat(manifestObjects.serviceEntityList),
-       NONE_LABEL_VALUE
-    )
- 
-    // create stable services with new configuration
-    return result
- }
+      throw new Error(
+         'Ingresses are not in promote state: ' + invalidIngresses.toString()
+      )
+   }
 
- export async function promoteBlueGreenService(
+   // create stable deployments with new configuration
+   const result: BlueGreenDeployment = await deployWithLabel(
+      kubectl,
+      manifestObjects.deploymentEntityList.concat(
+         manifestObjects.serviceEntityList
+      ),
+      NONE_LABEL_VALUE
+   )
+
+   // create stable services with new configuration
+   return result
+}
+
+export async function promoteBlueGreenService(
    kubectl: Kubectl,
    manifestObjects
 ): Promise<BlueGreenDeployment> {
@@ -59,7 +60,10 @@ export async function promoteBlueGreenIngress(
    )
 }
 
-export async function promoteBlueGreenSMI(kubectl: Kubectl, manifestObjects): Promise<BlueGreenDeployment> {
+export async function promoteBlueGreenSMI(
+   kubectl: Kubectl,
+   manifestObjects
+): Promise<BlueGreenDeployment> {
    // checking if there is something to promote
    if (
       !(await validateTrafficSplitsState(
@@ -77,4 +81,3 @@ export async function promoteBlueGreenSMI(kubectl: Kubectl, manifestObjects): Pr
       NONE_LABEL_VALUE
    )
 }
-

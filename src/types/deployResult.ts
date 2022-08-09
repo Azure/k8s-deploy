@@ -1,6 +1,6 @@
-import { ExecOutput } from "@actions/exec";
+import {ExecOutput} from '@actions/exec'
 
-export interface DeployResult{
-    result: ExecOutput,
-    manifestFiles: string[]
+export interface DeployResult {
+   result: ExecOutput
+   manifestFiles: string[]
 }

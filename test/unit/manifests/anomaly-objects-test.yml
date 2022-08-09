@@ -13,11 +13,11 @@ spec:
 ---
 kind: TrafficSplit
 metadata:
-  name: foobar-rollout
+   name: foobar-rollout
 spec:
-  service: foobar
-  backends:
-  - service: foobar-v1
-    weight: 1000
-  - service: foobar-v2
-    weight: 500
+   service: foobar
+   backends:
+      - service: foobar-v1
+        weight: 1000
+      - service: foobar-v2
+        weight: 500
