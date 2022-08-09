@@ -44,7 +44,7 @@ export async function deployManifests(
    files: string[],
    deploymentStrategy: DeploymentStrategy,
    kubectl: Kubectl,
-   trafficSplitMethod: TrafficSplitMethod
+   trafficSplitMethod: TrafficSplitMethod,
 ): Promise<string[]> {
    switch (deploymentStrategy) {
       case DeploymentStrategy.CANARY: {
@@ -142,7 +142,7 @@ export async function annotateAndLabelResources(
    const workflowFilePath = await getWorkflowFilePath(githubToken)
 
    const deploymentConfig = await getDeploymentConfig()
-   const annotationKeyLabel = getWorkflowAnnotationKeyLabel(workflowFilePath)
+   const annotationKeyLabel = getWorkflowAnnotationKeyLabel()
 
    await annotateResources(
       files,

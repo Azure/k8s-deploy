@@ -19,6 +19,7 @@ import {
    TrafficSplitObject
 } from '../../types/k8sObject'
 import {DeployResult} from '../../types/deployResult'
+import { getInputAnnotations } from '../../utilities/inputUtils'
 
 export const TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX = '-trafficsplit'
 export const TRAFFIC_SPLIT_OBJECT = 'TrafficSplit'
@@ -72,13 +73,16 @@ let trafficSplitAPIVersion = ''
 export async function createTrafficSplitObject(
    kubectl: Kubectl,
    name: string,
-   nextLabel: string
+   nextLabel: string,
 ): Promise<TrafficSplitObject> {
    // cache traffic split api version
    if (!trafficSplitAPIVersion)
       trafficSplitAPIVersion = await kubectlUtils.getTrafficSplitAPIVersion(
          kubectl
       )
+   
+   // retrieve annotations for TS object
+   const annotations = getInputAnnotations()
 
    // decide weights based on nextlabel
    const stableWeight: number =
@@ -91,7 +95,8 @@ export async function createTrafficSplitObject(
       kind: TRAFFIC_SPLIT_OBJECT,
       metadata: {
          name: getBlueGreenResourceName(name, TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX),
-         labels: new Map<string, string>()
+         annotations: annotations,
+         labels: new Map<string,string>()
       },
       spec: {
          service: name,
