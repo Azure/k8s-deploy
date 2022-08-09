@@ -39,11 +39,11 @@ export interface K8sIngress extends K8sObject {
 }
 
 export interface TrafficSplitObject extends K8sObject {
-   apiVersion: string,
+   apiVersion: string
    metadata: {
-      name: string,
-      labels: Map<string,string>
-      annotations: Map<string,string>
+      name: string
+      labels: Map<string, string>
+      annotations: Map<string, string>
    }
    spec: {
       service: string

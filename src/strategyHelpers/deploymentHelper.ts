@@ -44,7 +44,7 @@ export async function deployManifests(
    files: string[],
    deploymentStrategy: DeploymentStrategy,
    kubectl: Kubectl,
-   trafficSplitMethod: TrafficSplitMethod,
+   trafficSplitMethod: TrafficSplitMethod
 ): Promise<string[]> {
    switch (deploymentStrategy) {
       case DeploymentStrategy.CANARY: {

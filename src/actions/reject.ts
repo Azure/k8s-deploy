@@ -21,7 +21,7 @@ import {parseRouteStrategy, RouteStrategy} from '../types/routeStrategy'
 export async function reject(
    kubectl: Kubectl,
    manifests: string[],
-   deploymentStrategy: DeploymentStrategy,
+   deploymentStrategy: DeploymentStrategy
 ) {
    switch (deploymentStrategy) {
       case DeploymentStrategy.CANARY:
@@ -60,10 +60,7 @@ async function rejectCanary(kubectl: Kubectl, manifests: string[]) {
    core.endGroup()
 }
 
-async function rejectBlueGreen(
-   kubectl: Kubectl,
-   manifests: string[],
-) {
+async function rejectBlueGreen(kubectl: Kubectl, manifests: string[]) {
    core.startGroup('Rejecting deployment with blue green strategy')
 
    const manifestObjects: BlueGreenManifests = getManifestObjects(manifests)

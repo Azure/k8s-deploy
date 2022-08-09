@@ -17,7 +17,7 @@ import {parseTrafficSplitMethod} from '../types/trafficSplitMethod'
 export async function deploy(
    kubectl: Kubectl,
    manifestFilePaths: string[],
-   deploymentStrategy: DeploymentStrategy,
+   deploymentStrategy: DeploymentStrategy
 ) {
    // update manifests
    const inputManifestFiles: string[] = updateManifestFiles(manifestFilePaths)
@@ -32,7 +32,7 @@ export async function deploy(
       inputManifestFiles,
       deploymentStrategy,
       kubectl,
-      trafficSplitMethod,
+      trafficSplitMethod
    )
    core.endGroup()
    core.debug('Deployed manifest files: ' + deployedManifestFiles)

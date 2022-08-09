@@ -41,7 +41,7 @@ import {parseRouteStrategy, RouteStrategy} from '../types/routeStrategy'
 export async function promote(
    kubectl: Kubectl,
    manifests: string[],
-   deploymentStrategy: DeploymentStrategy,
+   deploymentStrategy: DeploymentStrategy
 ) {
    switch (deploymentStrategy) {
       case DeploymentStrategy.CANARY:
@@ -105,10 +105,7 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
    core.endGroup()
 }
 
-async function promoteBlueGreen(
-   kubectl: Kubectl,
-   manifests: string[],
-) {
+async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
    // update container images and pull secrets
    const inputManifestFiles: string[] = updateManifestFiles(manifests)
    const manifestObjects: BlueGreenManifests =
@@ -161,7 +158,7 @@ async function promoteBlueGreen(
       await routeBlueGreenSMI(
          kubectl,
          NONE_LABEL_VALUE,
-         manifestObjects.serviceEntityList,
+         manifestObjects.serviceEntityList
       )
       await deleteGreenObjects(kubectl, manifestObjects.deploymentEntityList)
       await cleanupSMI(kubectl, manifestObjects.serviceEntityList)
