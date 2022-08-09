@@ -19,7 +19,7 @@ import {
    TrafficSplitObject
 } from '../../types/k8sObject'
 import {DeployResult} from '../../types/deployResult'
-import { getInputAnnotations } from '../../utilities/inputUtils'
+import {getInputAnnotations} from '../../utilities/inputUtils'
 
 export const TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX = '-trafficsplit'
 export const TRAFFIC_SPLIT_OBJECT = 'TrafficSplit'
@@ -73,14 +73,14 @@ let trafficSplitAPIVersion = ''
 export async function createTrafficSplitObject(
    kubectl: Kubectl,
    name: string,
-   nextLabel: string,
+   nextLabel: string
 ): Promise<TrafficSplitObject> {
    // cache traffic split api version
    if (!trafficSplitAPIVersion)
       trafficSplitAPIVersion = await kubectlUtils.getTrafficSplitAPIVersion(
          kubectl
       )
-   
+
    // retrieve annotations for TS object
    const annotations = getInputAnnotations()
 
@@ -96,7 +96,7 @@ export async function createTrafficSplitObject(
       metadata: {
          name: getBlueGreenResourceName(name, TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX),
          annotations: annotations,
-         labels: new Map<string,string>()
+         labels: new Map<string, string>()
       },
       spec: {
          service: name,
