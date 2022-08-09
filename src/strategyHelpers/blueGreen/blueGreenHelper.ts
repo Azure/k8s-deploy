@@ -56,6 +56,7 @@ export async function deleteGreenObjects(
       }
       resourcesToDelete.push(resourceToDelete)
    })
+   core.debug('deleting green objects: ' + JSON.stringify(resourcesToDelete))
 
    await deleteObjects(kubectl, resourcesToDelete)
    return resourcesToDelete
