@@ -115,7 +115,8 @@ describe('promote tests', () => {
          kind: TRAFFIC_SPLIT_OBJECT,
          metadata: {
             name: 'nginx-service-trafficsplit',
-            labels: new Map<string, string>()
+            labels: new Map<string, string>(),
+            annotations: new Map<string, string>()
          },
          spec: {
             service: 'nginx-service',
