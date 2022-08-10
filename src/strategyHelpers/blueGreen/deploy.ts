@@ -102,8 +102,8 @@ export async function deployBlueGreenIngress(
    deployObjects(kubectl, otherObjects)
 
    core.debug(
-      'new objects after processing services and other objects: \n' +
-         JSON.stringify(servicesAndDeployments)
+      `new objects after processing services and other objects: \n
+         ${JSON.stringify(servicesAndDeployments)}`
    )
 
    return {

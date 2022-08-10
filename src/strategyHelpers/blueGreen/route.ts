@@ -42,7 +42,7 @@ export async function routeBlueGreenForDeploy(
 
    const manifestObjects: BlueGreenManifests =
       getManifestObjects(inputManifestFiles)
-   core.debug('Manifest objects: ' + JSON.stringify(manifestObjects))
+   core.debug(`Manifest objects: ${JSON.stringify(manifestObjects)}`)
 
    // route to new deployments
    if (routeStrategy == RouteStrategy.INGRESS) {
@@ -82,7 +82,7 @@ export async function routeBlueGreenIngress(
          )
          newObjectsList.push(newBlueGreenIngressObject)
       } else {
-         core.debug('unrouted ingress detected ' + inputObject.metadata.name)
+         core.debug(`unrouted ingress detected ${inputObject.metadata.name}`)
          newObjectsList.push(inputObject)
       }
    })

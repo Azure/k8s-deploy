@@ -57,10 +57,7 @@ describe('blue/green service helper tests', () => {
    test('getServiceSpecLabel', () => {
       testObjects.serviceEntityList[0].spec.selector[BLUE_GREEN_VERSION_LABEL] =
          GREEN_LABEL_VALUE
-      core.debug(
-         'svc getting read is ' +
-            JSON.stringify(testObjects.serviceEntityList[0])
-      )
+
       expect(getServiceSpecLabel(testObjects.serviceEntityList[0])).toBe(
          GREEN_LABEL_VALUE
       )
