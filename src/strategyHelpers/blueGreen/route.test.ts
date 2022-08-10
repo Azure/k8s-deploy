@@ -4,7 +4,7 @@ import {Kubectl} from '../../types/kubectl'
 import * as fileHelper from '../../utilities/fileUtils'
 import * as TSutils from '../../utilities/trafficSplitUtils'
 import {RouteStrategy} from '../../types/routeStrategy'
-import { getBufferTime } from '../../inputUtils'
+import {getBufferTime} from '../../inputUtils'
 import * as inputUtils from '../../inputUtils'
 
 import {
@@ -117,7 +117,6 @@ describe('route function tests', () => {
       ).toHaveLength(2)
    })
    test('routeBlueGreenForDeploy throws error with invalid bounds', async () => {
-
       jest.spyOn(inputUtils, 'getBufferTime').mockImplementation(() => 500)
       await expect(
          routeBlueGreenForDeploy(kc, ingressFilepath, RouteStrategy.SMI)
