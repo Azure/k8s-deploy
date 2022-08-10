@@ -106,8 +106,9 @@ export async function validateIngresses(
                GREEN_LABEL_VALUE
          if (!isValid) {
             core.debug(
-               'Invalid ingress detected (must be in green state)' +
-                  JSON.stringify(inputObject)
+               `Invalid ingress detected (must be in green state): ${JSON.stringify(
+                  inputObject
+               )}`
             )
             invalidIngresses.push(inputObject.metadata.name)
          }

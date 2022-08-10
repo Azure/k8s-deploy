@@ -72,7 +72,7 @@ export async function deleteObjects(
          const result = await kubectl.delete([delObject.kind, delObject.name])
          checkForErrors([result])
       } catch (ex) {
-         core.debug('failed to delete object ' + delObject.name)
+         core.debug(`failed to delete object ${delObject.name}: ${ex}`)
       }
    }
 }
@@ -156,7 +156,7 @@ export async function deployWithLabel(
       newObjectsList.push(newBlueGreenObject)
    })
    core.debug(
-      'objects deployed with label are ' + JSON.stringify(newObjectsList)
+      `objects deployed with label are ${JSON.stringify(newObjectsList)}`
    )
    let deployResult = await deployObjects(kubectl, newObjectsList)
    return {deployResult, objects: newObjectsList}

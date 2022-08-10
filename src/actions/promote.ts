@@ -98,8 +98,7 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
       )
    } catch (ex) {
       core.warning(
-         'Exception occurred while deleting canary and baseline workloads: ' +
-            ex
+         `Exception occurred while deleting canary and baseline workloads: ${ex}`
       )
    }
    core.endGroup()
@@ -116,14 +115,18 @@ async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
    )
 
    core.startGroup('Deleting old deployment and making new one')
-   let result: BlueGreenDeployment
-   if (routeStrategy == RouteStrategy.INGRESS) {
-      result = await promoteBlueGreenIngress(kubectl, manifestObjects)
-   } else if (routeStrategy == RouteStrategy.SMI) {
-      result = await promoteBlueGreenSMI(kubectl, manifestObjects)
-   } else {
-      result = await promoteBlueGreenService(kubectl, manifestObjects)
-   }
+
+   const result: BlueGreenDeployment = await (async () => {
+      switch (routeStrategy) {
+         case RouteStrategy.INGRESS:
+            return await promoteBlueGreenIngress(kubectl, manifestObjects)
+         case RouteStrategy.SMI:
+            return await promoteBlueGreenSMI(kubectl, manifestObjects)
+         default:
+            return await promoteBlueGreenSMI(kubectl, manifestObjects)
+      }
+   })()
+
    core.endGroup()
 
    // checking stability of newly created deployments
@@ -150,7 +153,8 @@ async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
 
       await deleteGreenObjects(
          kubectl,
-         manifestObjects.deploymentEntityList.concat(
+         [].concat(
+            manifestObjects.deploymentEntityList,
             manifestObjects.serviceEntityList
          )
       )

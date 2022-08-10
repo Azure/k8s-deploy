@@ -61,13 +61,16 @@ async function rejectCanary(kubectl: Kubectl, manifests: string[]) {
 }
 
 async function rejectBlueGreen(kubectl: Kubectl, manifests: string[]) {
-   core.startGroup('Rejecting deployment with blue green strategy')
-
-   const manifestObjects: BlueGreenManifests = getManifestObjects(manifests)
-
    const routeStrategy = parseRouteStrategy(
       core.getInput('route-method', {required: true})
    )
+   core.startGroup(
+      `Rejecting deployment with blue green strategy using routeMethod ${routeStrategy}`
+         
+   )
+
+   const manifestObjects: BlueGreenManifests = getManifestObjects(manifests)
+
    if (routeStrategy == RouteStrategy.INGRESS) {
       await rejectBlueGreenIngress(kubectl, manifestObjects)
    } else if (routeStrategy == RouteStrategy.SMI) {

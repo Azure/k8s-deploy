@@ -24,14 +24,15 @@ export async function promoteBlueGreenIngress(
    if (!areValid) {
       core.debug('are valid was false')
       throw new Error(
-         'Ingresses are not in promote state: ' + invalidIngresses.toString()
+         `Ingresses are not in promote state: ${invalidIngresses.toString()}` 
       )
    }
 
    // create stable deployments with new configuration
    const result: BlueGreenDeployment = await deployWithLabel(
       kubectl,
-      manifestObjects.deploymentEntityList.concat(
+      [].concat(
+         manifestObjects.deploymentEntityList,
          manifestObjects.serviceEntityList
       ),
       NONE_LABEL_VALUE
