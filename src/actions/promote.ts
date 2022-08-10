@@ -123,7 +123,7 @@ async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
          case RouteStrategy.SMI:
             return await promoteBlueGreenSMI(kubectl, manifestObjects)
          default:
-            return await promoteBlueGreenSMI(kubectl, manifestObjects)
+            return await promoteBlueGreenService(kubectl, manifestObjects)
       }
    })()
 
