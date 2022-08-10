@@ -66,7 +66,6 @@ async function rejectBlueGreen(kubectl: Kubectl, manifests: string[]) {
    )
    core.startGroup(
       `Rejecting deployment with blue green strategy using routeMethod ${routeStrategy}`
-         
    )
 
    const manifestObjects: BlueGreenManifests = getManifestObjects(manifests)
