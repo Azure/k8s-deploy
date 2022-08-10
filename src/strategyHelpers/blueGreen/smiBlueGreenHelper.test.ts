@@ -74,7 +74,7 @@ describe('SMI Helper tests', () => {
 
       let found = 0
       for (let obj of smiResults.objects) {
-         core.debug('obj is ' + JSON.stringify(obj))
+         core.debug(`obj is ${JSON.stringify(obj)}`)
 
          if (obj.metadata.name === 'nginx-service-stable') {
             expect(obj.metadata.labels[BLUE_GREEN_VERSION_LABEL]).toBe(

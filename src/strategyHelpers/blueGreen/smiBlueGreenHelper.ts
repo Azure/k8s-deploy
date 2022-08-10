@@ -145,10 +145,10 @@ export async function validateTrafficSplitsState(
          getBlueGreenResourceName(name, TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX)
       )
       core.debug(
-         'ts object extracted was ' + JSON.stringify(trafficSplitObject)
+         `ts object extracted was ${JSON.stringify(trafficSplitObject)}`
       )
       if (!trafficSplitObject) {
-         core.debug('no traffic split exits for ' + name)
+         core.debug(`no traffic split exits for ${name}`)
          trafficSplitsInRightState = false
          continue
       }

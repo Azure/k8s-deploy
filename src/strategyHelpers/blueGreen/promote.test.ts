@@ -27,7 +27,6 @@ describe('promote tests', () => {
    test('promote blue/green ingress', async () => {
       const mockLabels = new Map<string, string>()
       mockLabels[bgHelper.BLUE_GREEN_VERSION_LABEL] = bgHelper.GREEN_LABEL_VALUE
-      core.debug('mock labels is ' + JSON.stringify(mockLabels))
 
       jest.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
          Promise.resolve({
