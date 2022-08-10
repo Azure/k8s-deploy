@@ -5,12 +5,12 @@ import {Kubectl} from '../../types/kubectl'
 import {RouteStrategy} from '../../types/routeStrategy'
 import * as TSutils from '../../utilities/trafficSplitUtils'
 
-let testObjects
 let ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
 
 jest.mock('../../types/kubectl')
 
 describe('deploy tests', () => {
+   let testObjects
    beforeEach(() => {
       //@ts-ignore
       Kubectl.mockClear()

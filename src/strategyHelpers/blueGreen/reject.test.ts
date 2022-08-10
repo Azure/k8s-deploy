@@ -8,13 +8,14 @@ import {
    RejectResult
 } from './reject'
 
-let testObjects
 let ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
 let kubectl = new Kubectl('')
 
 jest.mock('../../types/kubectl')
 
 describe('reject tests', () => {
+   let testObjects
+
    beforeEach(() => {
       //@ts-ignore
       Kubectl.mockClear()

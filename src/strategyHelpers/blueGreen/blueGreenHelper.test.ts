@@ -16,10 +16,11 @@ import * as manifestUpdateUtils from '../../utilities/manifestUpdateUtils'
 import {ExecOutput} from '@actions/exec'
 
 jest.mock('../../types/kubectl')
-let testObjects
+
 const kubectl = new Kubectl('')
 
 describe('bluegreenhelper functions', () => {
+   let testObjects
    beforeEach(() => {
       //@ts-ignore
       Kubectl.mockClear()
@@ -35,7 +36,10 @@ describe('bluegreenhelper functions', () => {
 
       const value = await deleteGreenObjects(
          kubectl,
-         testObjects.deploymentEntityList.concat(testObjects.serviceEntityList)
+         [].concat(
+            testObjects.deploymentEntityList,
+            testObjects.serviceEntityList
+         )
       )
 
       expect(value).toHaveLength(2)

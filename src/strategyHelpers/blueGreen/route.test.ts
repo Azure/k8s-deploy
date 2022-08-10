@@ -18,12 +18,12 @@ import {
 } from './route'
 
 jest.mock('../../types/kubectl')
-let testObjects: BlueGreenManifests
 let betaFilepath = ['test/unit/manifests/test-ingress.yml']
 let ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
 const kc = new Kubectl('')
 
 describe('route function tests', () => {
+   let testObjects: BlueGreenManifests
    beforeEach(() => {
       //@ts-ignore
       Kubectl.mockClear()

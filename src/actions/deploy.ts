@@ -21,7 +21,8 @@ export async function deploy(
 ) {
    // update manifests
    const inputManifestFiles: string[] = updateManifestFiles(manifestFilePaths)
-   core.debug('Input manifest files: ' + inputManifestFiles)
+   core.debug(`Input manifest files: ${inputManifestFiles}`)
+   
 
    // deploy manifests
    core.startGroup('Deploying manifests')
@@ -35,7 +36,7 @@ export async function deploy(
       trafficSplitMethod
    )
    core.endGroup()
-   core.debug('Deployed manifest files: ' + deployedManifestFiles)
+   core.debug(`Deployed manifest files: ${deployedManifestFiles}`)
 
    // check manifest stability
    core.startGroup('Checking manifest stability')
@@ -67,7 +68,7 @@ export async function deploy(
    try {
       allPods = JSON.parse((await kubectl.getAllPods()).stdout)
    } catch (e) {
-      core.debug('Unable to parse pods: ' + e)
+      core.debug(`Unable to parse pods: ${e}`)
    }
    await annotateAndLabelResources(
       deployedManifestFiles,

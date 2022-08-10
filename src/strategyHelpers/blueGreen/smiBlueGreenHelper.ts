@@ -63,7 +63,7 @@ export async function setupSMI(
    let tsObjectsDeploymentResult = await deployObjects(kubectl, tsObjects)
 
    return {
-      objects: newObjectsList.concat(tsObjects),
+      objects: [].concat(newObjectsList, tsObjects),
       deployResult: servicesDeploymentResult
    }
 }

@@ -27,7 +27,7 @@ import {
 import * as bgHelper from './blueGreenHelper'
 
 jest.mock('../../types/kubectl')
-let testObjects: BlueGreenManifests
+
 let kc = new Kubectl('')
 const ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
 const mockTsObject: TrafficSplitObject = {
@@ -54,6 +54,7 @@ const mockTsObject: TrafficSplitObject = {
 }
 
 describe('SMI Helper tests', () => {
+   let testObjects: BlueGreenManifests
    beforeEach(() => {
       //@ts-ignore
       Kubectl.mockClear()

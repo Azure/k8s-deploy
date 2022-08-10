@@ -8,13 +8,13 @@ import {
 import {Kubectl} from '../../types/kubectl'
 import * as fileHelper from '../../utilities/fileUtils'
 
-let testObjects
 const betaFilepath = ['test/unit/manifests/test-ingress.yml']
 const ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
 const kubectl = new Kubectl('')
 jest.mock('../../types/kubectl')
 
 describe('ingress blue green helpers', () => {
+   let testObjects
    beforeEach(() => {
       //@ts-ignore
       Kubectl.mockClear()
