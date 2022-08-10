@@ -16,7 +16,7 @@ export async function promoteBlueGreenIngress(
    manifestObjects
 ): Promise<BlueGreenDeployment> {
    //checking if anything to promote
-   let {areValid, invalidIngresses} = await validateIngresses(
+   const {areValid, invalidIngresses} = await validateIngresses(
       kubectl,
       manifestObjects.ingressEntityList,
       manifestObjects.serviceNameMap

@@ -13,7 +13,7 @@ import {
 } from './serviceBlueGreenHelper'
 
 let testObjects
-let ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
+const ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
 jest.mock('../../types/kubectl')
 const kubectl = new Kubectl('')
 
@@ -25,7 +25,7 @@ describe('blue/green service helper tests', () => {
    })
 
    test('getUpdatedBlueGreenService', () => {
-      let newService = getUpdatedBlueGreenService(
+      const newService = getUpdatedBlueGreenService(
          testObjects.serviceEntityList[0],
          GREEN_LABEL_VALUE
       )

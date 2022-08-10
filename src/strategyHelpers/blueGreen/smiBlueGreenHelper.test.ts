@@ -28,7 +28,7 @@ import * as bgHelper from './blueGreenHelper'
 
 jest.mock('../../types/kubectl')
 
-let kc = new Kubectl('')
+const kc = new Kubectl('')
 const ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
 const mockTsObject: TrafficSplitObject = {
    apiVersion: 'v1alpha3',
@@ -73,7 +73,7 @@ describe('SMI Helper tests', () => {
       const smiResults = await setupSMI(kc, testObjects.serviceEntityList)
 
       let found = 0
-      for (let obj of smiResults.objects) {
+      for (const obj of smiResults.objects) {
          core.debug(`obj is ${JSON.stringify(obj)}`)
 
          if (obj.metadata.name === 'nginx-service-stable') {
@@ -96,7 +96,7 @@ describe('SMI Helper tests', () => {
             // expect stable weight to be max val
             const casted = obj as TrafficSplitObject
             expect(casted.spec.backends).toHaveLength(2)
-            for (let be of casted.spec.backends) {
+            for (const be of casted.spec.backends) {
                if (be.service === 'nginx-service-stable') {
                   expect(be.weight).toBe(MAX_VAL)
                }
@@ -132,7 +132,7 @@ describe('SMI Helper tests', () => {
          GREEN_LABEL_VALUE
       )
       expect(greenTsObject.metadata.name).toBe('nginx-service-trafficsplit')
-      for (let be of greenTsObject.spec.backends) {
+      for (const be of greenTsObject.spec.backends) {
          if (be.service === 'nginx-service-stable') {
             expect(be.weight).toBe(MIN_VAL)
          }

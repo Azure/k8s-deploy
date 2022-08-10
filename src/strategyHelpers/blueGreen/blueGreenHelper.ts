@@ -128,7 +128,6 @@ export function isServiceRouted(
    serviceObject: any[],
    deploymentEntityList: any[]
 ): boolean {
-   let shouldBeRouted: boolean = false
    const serviceSelector: any = getServiceSelector(serviceObject)
 
    return (
@@ -158,7 +157,7 @@ export async function deployWithLabel(
    core.debug(
       `objects deployed with label are ${JSON.stringify(newObjectsList)}`
    )
-   let deployResult = await deployObjects(kubectl, newObjectsList)
+   const deployResult = await deployObjects(kubectl, newObjectsList)
    return {deployResult, objects: newObjectsList}
 }
 
@@ -277,7 +276,7 @@ export async function deployObjects(
    objectsList: any[]
 ): Promise<DeployResult> {
    const manifestFiles = fileHelper.writeObjectsToFile(objectsList)
-   const result = await kubectl.apply(manifestFiles)
+   const execResult = await kubectl.apply(manifestFiles)
 
-   return {result, manifestFiles}
+   return {execResult, manifestFiles}
 }
