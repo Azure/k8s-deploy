@@ -18,7 +18,7 @@ import {createTrafficSplitObject} from './smiBlueGreenHelper'
 
 import * as core from '@actions/core'
 import {TrafficSplitObject} from '../../types/k8sObject'
-import {inputBufferTime} from '../../inputUtils'
+import {getBufferTime} from '../../inputUtils'
 
 export async function routeBlueGreenForDeploy(
    kubectl: Kubectl,
@@ -26,7 +26,7 @@ export async function routeBlueGreenForDeploy(
    routeStrategy: RouteStrategy
 ): Promise<BlueGreenDeployment> {
    // sleep for buffer time
-   const bufferTime: number = inputBufferTime
+   const bufferTime: number = getBufferTime()
    if (bufferTime < 0 || bufferTime > 300)
       throw Error('Version switch buffer must be between 0 and 300 (inclusive)')
    const startSleepDate = new Date()
