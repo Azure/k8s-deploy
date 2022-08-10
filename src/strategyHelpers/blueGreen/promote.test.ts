@@ -13,7 +13,7 @@ import * as smiTester from './smiBlueGreenHelper'
 import * as bgHelper from './blueGreenHelper'
 
 let testObjects
-let ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
+const ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
 jest.mock('../../types/kubectl')
 const kubectl = new Kubectl('')
 
@@ -35,9 +35,9 @@ describe('promote tests', () => {
             metadata: {labels: mockLabels, name: 'nginx-ingress-green'}
          })
       )
-      let value = await promoteBlueGreenIngress(kubectl, testObjects)
+      const value = await promoteBlueGreenIngress(kubectl, testObjects)
 
-      let objects = value.objects
+      const objects = value.objects
       expect(objects).toHaveLength(2)
 
       for (const obj of objects) {

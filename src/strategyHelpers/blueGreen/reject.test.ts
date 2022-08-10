@@ -8,8 +8,8 @@ import {
    RejectResult
 } from './reject'
 
-let ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
-let kubectl = new Kubectl('')
+const ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
+const kubectl = new Kubectl('')
 
 jest.mock('../../types/kubectl')
 
@@ -23,13 +23,13 @@ describe('reject tests', () => {
    })
 
    test('reject blue/green ingress', async () => {
-      let value = await rejectBlueGreenIngress(kubectl, testObjects)
+      const value = await rejectBlueGreenIngress(kubectl, testObjects)
 
-      let bgDeployment = value.routeResult
-      let deleteResult = value.deleteResult
+      const bgDeployment = value.routeResult
+      const deleteResult = value.deleteResult
 
       expect(deleteResult).toHaveLength(2)
-      for (let obj of deleteResult) {
+      for (const obj of deleteResult) {
          if (obj.kind == 'Service') {
             expect(obj.name).toBe('nginx-service-green')
          }
@@ -43,10 +43,10 @@ describe('reject tests', () => {
    })
 
    test('reject blue/green service', async () => {
-      let value = await rejectBlueGreenService(kubectl, testObjects)
+      const value = await rejectBlueGreenService(kubectl, testObjects)
 
-      let bgDeployment = value.routeResult
-      let deleteResult = value.deleteResult
+      const bgDeployment = value.routeResult
+      const deleteResult = value.deleteResult
 
       expect(deleteResult).toHaveLength(1)
       expect(deleteResult[0].name).toBe('nginx-deployment-green')
@@ -59,7 +59,7 @@ describe('reject tests', () => {
       jest
          .spyOn(TSutils, 'getTrafficSplitAPIVersion')
          .mockImplementation(() => Promise.resolve('v1alpha3'))
-      let rejectResult = await rejectBlueGreenSMI(kubectl, testObjects)
+      const rejectResult = await rejectBlueGreenSMI(kubectl, testObjects)
       expect(rejectResult.deleteResult).toHaveLength(4)
    })
 })

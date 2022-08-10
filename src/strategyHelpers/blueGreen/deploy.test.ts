@@ -5,7 +5,7 @@ import {Kubectl} from '../../types/kubectl'
 import {RouteStrategy} from '../../types/routeStrategy'
 import * as TSutils from '../../utilities/trafficSplitUtils'
 
-let ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
+const ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
 
 jest.mock('../../types/kubectl')
 
@@ -21,7 +21,7 @@ describe('deploy tests', () => {
       const kubectl = new Kubectl('')
       const mockBgDeployment: BlueGreenDeployment = {
          deployResult: {
-            result: {exitCode: 0, stderr: '', stdout: ''},
+            execResult: {exitCode: 0, stderr: '', stdout: ''},
             manifestFiles: []
          },
          objects: []

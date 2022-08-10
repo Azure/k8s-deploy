@@ -19,7 +19,7 @@ import {
    TrafficSplitObject
 } from '../../types/k8sObject'
 import {DeployResult} from '../../types/deployResult'
-import {getInputAnnotations} from '../../utilities/inputUtils'
+import {inputAnnotations} from '../../inputUtils'
 
 export const TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX = '-trafficsplit'
 export const TRAFFIC_SPLIT_OBJECT = 'TrafficSplit'
@@ -43,15 +43,9 @@ export async function setupSMI(
       newObjectsList.push(newGreenService)
    })
 
-   // create services
-   let servicesDeploymentResult: DeployResult = await deployObjects(
-      kubectl,
-      newObjectsList
-   )
-
-   let tsObjects: TrafficSplitObject[] = []
+   const tsObjects: TrafficSplitObject[] = []
    // route to stable service
-   for (let svc of trafficObjectList) {
+   for (const svc of trafficObjectList) {
       const tsObject = await createTrafficSplitObject(
          kubectl,
          svc.metadata.name,
@@ -60,11 +54,17 @@ export async function setupSMI(
       tsObjects.push(tsObject as TrafficSplitObject)
    }
 
-   let tsObjectsDeploymentResult = await deployObjects(kubectl, tsObjects)
+   const objectsToDeploy = [].concat(newObjectsList, tsObjects)
+
+   // create services
+   const smiDeploymentResult: DeployResult = await deployObjects(
+      kubectl,
+      objectsToDeploy
+   )
 
    return {
-      objects: [].concat(newObjectsList, tsObjects),
-      deployResult: servicesDeploymentResult
+      objects: objectsToDeploy,
+      deployResult: smiDeploymentResult
    }
 }
 
@@ -82,7 +82,7 @@ export async function createTrafficSplitObject(
       )
 
    // retrieve annotations for TS object
-   const annotations = getInputAnnotations()
+   const annotations = inputAnnotations
 
    // decide weights based on nextlabel
    const stableWeight: number =

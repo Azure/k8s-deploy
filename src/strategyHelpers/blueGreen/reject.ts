@@ -24,14 +24,14 @@ export async function rejectBlueGreenIngress(
 ): Promise<RejectResult> {
    // get all kubernetes objects defined in manifest files
    // route ingress to stables services
-   let routeResult = await routeBlueGreenIngressUnchanged(
+   const routeResult = await routeBlueGreenIngressUnchanged(
       kubectl,
       manifestObjects.serviceNameMap,
       manifestObjects.ingressEntityList
    )
 
    // delete green services and deployments
-   let deleteResult = await deleteGreenObjects(
+   const deleteResult = await deleteGreenObjects(
       kubectl,
       [].concat(
          manifestObjects.deploymentEntityList,
@@ -47,14 +47,14 @@ export async function rejectBlueGreenService(
    manifestObjects: BlueGreenManifests
 ): Promise<RejectResult> {
    // route to stable objects
-   let routeResult = await routeBlueGreenService(
+   const routeResult = await routeBlueGreenService(
       kubectl,
       NONE_LABEL_VALUE,
       manifestObjects.serviceEntityList
    )
 
    // delete new deployments with green suffix
-   let deleteResult = await deleteGreenObjects(
+   const deleteResult = await deleteGreenObjects(
       kubectl,
       manifestObjects.deploymentEntityList
    )

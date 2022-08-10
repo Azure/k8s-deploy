@@ -18,6 +18,7 @@ import {createTrafficSplitObject} from './smiBlueGreenHelper'
 
 import * as core from '@actions/core'
 import {TrafficSplitObject} from '../../types/k8sObject'
+import {inputBufferTime} from '../../inputUtils'
 
 export async function routeBlueGreenForDeploy(
    kubectl: Kubectl,
@@ -25,9 +26,7 @@ export async function routeBlueGreenForDeploy(
    routeStrategy: RouteStrategy
 ): Promise<BlueGreenDeployment> {
    // sleep for buffer time
-   const bufferTime: number = parseInt(
-      core.getInput('version-switch-buffer') || '0'
-   )
+   const bufferTime: number = inputBufferTime
    if (bufferTime < 0 || bufferTime > 300)
       throw Error('Version switch buffer must be between 0 and 300 (inclusive)')
    const startSleepDate = new Date()
@@ -71,7 +70,7 @@ export async function routeBlueGreenIngress(
    serviceNameMap: Map<string, string>,
    ingressEntityList: any[]
 ): Promise<BlueGreenDeployment> {
-   let newObjectsList = []
+   const newObjectsList = []
 
    ingressEntityList.forEach((inputObject) => {
       if (isIngressRouted(inputObject, serviceNameMap)) {
@@ -87,7 +86,7 @@ export async function routeBlueGreenIngress(
       }
    })
 
-   let deployResult = await deployObjects(kubectl, newObjectsList)
+   const deployResult = await deployObjects(kubectl, newObjectsList)
 
    return {deployResult, objects: newObjectsList}
 }
@@ -101,7 +100,7 @@ export async function routeBlueGreenIngressUnchanged(
       isIngressRouted(ingress, serviceNameMap)
    )
 
-   let deployResult = await deployObjects(kubectl, objects)
+   const deployResult = await deployObjects(kubectl, objects)
    return {deployResult, objects}
 }
 
@@ -119,7 +118,7 @@ export async function routeBlueGreenService(
       objects.push(newBlueGreenServiceObject)
    })
 
-   let deployResult = await deployObjects(kubectl, objects)
+   const deployResult = await deployObjects(kubectl, objects)
 
    return {deployResult, objects}
 }

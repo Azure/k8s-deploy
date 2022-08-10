@@ -18,8 +18,7 @@ import {
 } from './route'
 
 jest.mock('../../types/kubectl')
-let betaFilepath = ['test/unit/manifests/test-ingress.yml']
-let ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
+const ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
 const kc = new Kubectl('')
 
 describe('route function tests', () => {
@@ -42,7 +41,7 @@ describe('route function tests', () => {
       unroutedIngCopy.spec.rules[0].http.paths[0].backend.service.name =
          'fake-service'
       testObjects.ingressEntityList.push(unroutedIngCopy)
-      let value = await routeBlueGreenIngress(
+      const value = await routeBlueGreenIngress(
          kc,
          testObjects.serviceNameMap,
          testObjects.ingressEntityList
@@ -64,7 +63,7 @@ describe('route function tests', () => {
    })
 
    test('correctly prepares blue/green services for deployment', async () => {
-      let value = await routeBlueGreenService(
+      const value = await routeBlueGreenService(
          kc,
          GREEN_LABEL_VALUE,
          testObjects.serviceEntityList

@@ -58,7 +58,7 @@ describe('ingress blue green helpers', () => {
          'nginx-service-green'
       )
 
-      let oldIngObjects = getManifestObjects(betaFilepath)
+      const oldIngObjects = getManifestObjects(betaFilepath)
       const oldIng = getUpdatedBlueGreenIngress(
          oldIngObjects.ingressEntityList[0],
          oldIngObjects.serviceNameMap,

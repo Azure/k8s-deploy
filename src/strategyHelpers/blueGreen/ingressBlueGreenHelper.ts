@@ -91,7 +91,7 @@ export async function validateIngresses(
    let areValid: boolean = true
    const invalidIngresses = []
 
-   for (let inputObject of ingressEntityList) {
+   for (const inputObject of ingressEntityList) {
       if (isIngressRouted(inputObject, serviceNameMap)) {
          //querying existing ingress
          const existingIngress = await fetchResource(
@@ -100,7 +100,7 @@ export async function validateIngresses(
             inputObject.metadata.name
          )
 
-         let isValid =
+         const isValid =
             !!existingIngress &&
             existingIngress?.metadata?.labels[BLUE_GREEN_VERSION_LABEL] ===
                GREEN_LABEL_VALUE

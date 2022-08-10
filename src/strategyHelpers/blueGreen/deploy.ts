@@ -20,8 +20,6 @@ export async function deployBlueGreen(
    files: string[],
    routeStrategy: RouteStrategy
 ): Promise<BlueGreenDeployment> {
-   // let blueGreenDeployment: BlueGreenDeployment
-
    const blueGreenDeployment = await (async () => {
       switch (routeStrategy) {
          case RouteStrategy.INGRESS:
@@ -84,7 +82,7 @@ export async function deployBlueGreenIngress(
    const manifestObjects: BlueGreenManifests = getManifestObjects(filePaths)
 
    // create deployments with green label value
-   let servicesAndDeployments = [].concat(
+   const servicesAndDeployments = [].concat(
       manifestObjects.deploymentEntityList,
       manifestObjects.serviceEntityList
    )
@@ -99,7 +97,7 @@ export async function deployBlueGreenIngress(
       manifestObjects.unroutedServiceEntityList
    )
 
-   deployObjects(kubectl, otherObjects)
+   await deployObjects(kubectl, otherObjects)
 
    core.debug(
       `new objects after processing services and other objects: \n

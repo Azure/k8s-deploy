@@ -67,7 +67,7 @@ export async function deployManifests(
             routeStrategy
          )
 
-         checkForErrors([deployResult.result])
+         checkForErrors([deployResult.execResult])
          return deployResult.manifestFiles
       }
 

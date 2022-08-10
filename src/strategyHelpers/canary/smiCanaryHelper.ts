@@ -8,7 +8,7 @@ import * as kubectlUtils from '../../utilities/trafficSplitUtils'
 import * as canaryDeploymentHelper from './canaryHelper'
 import {isDeploymentEntity, isServiceEntity} from '../../types/kubernetesTypes'
 import {checkForErrors} from '../../utilities/kubectlUtils'
-import {getInputAnnotations} from '../../utilities/inputUtils'
+import {inputAnnotations} from '../../inputUtils'
 
 const TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX = '-workflow-rollout'
 const TRAFFIC_SPLIT_OBJECT = 'TrafficSplit'
@@ -298,14 +298,12 @@ async function getTrafficSplitObject(
       )
    }
 
-   const annotations = getInputAnnotations()
-
    return JSON.stringify({
       apiVersion: trafficSplitAPIVersion,
       kind: 'TrafficSplit',
       metadata: {
          name: getTrafficSplitResourceName(name),
-         annotations: annotations
+         annotations: inputAnnotations
       },
       spec: {
          backends: [
