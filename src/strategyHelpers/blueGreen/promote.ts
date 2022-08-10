@@ -24,7 +24,7 @@ export async function promoteBlueGreenIngress(
    if (!areValid) {
       core.debug('are valid was false')
       throw new Error(
-         `Ingresses are not in promote state: ${invalidIngresses.toString()}` 
+         `Ingresses are not in promote state: ${invalidIngresses.toString()}`
       )
    }
 
