@@ -6,7 +6,7 @@ import * as TSutils from '../../utilities/trafficSplitUtils'
 import {
    rejectBlueGreenIngress,
    rejectBlueGreenService,
-   rejectBlueGreenSMI,
+   rejectBlueGreenSMI
 } from './reject'
 
 const ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']

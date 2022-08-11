@@ -74,7 +74,6 @@ describe('SMI Helper tests', () => {
 
       let found = 0
       for (const obj of smiResults.objects) {
-
          if (obj.metadata.name === 'nginx-service-stable') {
             expect(obj.metadata.labels[BLUE_GREEN_VERSION_LABEL]).toBe(
                NONE_LABEL_VALUE

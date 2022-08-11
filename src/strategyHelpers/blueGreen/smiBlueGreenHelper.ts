@@ -12,8 +12,7 @@ import {
    NONE_LABEL_VALUE,
    STABLE_SUFFIX
 } from './blueGreenHelper'
-import {BlueGreenDeployment
-} from '../../types/blueGreenTypes'
+import {BlueGreenDeployment} from '../../types/blueGreenTypes'
 import {
    K8sDeleteObject,
    K8sObject,

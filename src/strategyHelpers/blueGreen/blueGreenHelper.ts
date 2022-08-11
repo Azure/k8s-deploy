@@ -32,10 +32,10 @@ export const STABLE_SUFFIX = '-stable'
 
 export async function deleteGreenObjects(
    kubectl: Kubectl,
-   toDeleteList: any[]
+   toDelete: K8sObject[]
 ): Promise<K8sDeleteObject[]> {
    const resourcesToDelete: K8sDeleteObject[] = []
-   toDeleteList.forEach((inputObject) => {
+   toDelete.forEach((inputObject) => {
       const name = inputObject.metadata.name
       const kind = inputObject.kind
 

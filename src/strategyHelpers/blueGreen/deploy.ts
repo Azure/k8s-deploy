@@ -1,8 +1,10 @@
 import * as core from '@actions/core'
 
 import {Kubectl} from '../../types/kubectl'
-import {BlueGreenDeployment,
-   BlueGreenManifests} from '../../types/blueGreenTypes'
+import {
+   BlueGreenDeployment,
+   BlueGreenManifests
+} from '../../types/blueGreenTypes'
 
 import {RouteStrategy} from '../../types/routeStrategy'
 

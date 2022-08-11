@@ -3,7 +3,7 @@ import {RouteStrategy} from '../../types/routeStrategy'
 import {Kubectl} from '../../types/kubectl'
 import {
    BlueGreenDeployment,
-   BlueGreenManifests,
+   BlueGreenManifests
 } from '../../types/blueGreenTypes'
 import {
    getManifestObjects,
