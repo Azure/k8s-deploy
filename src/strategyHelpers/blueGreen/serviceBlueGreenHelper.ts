@@ -45,6 +45,5 @@ export async function validateServicesState(
 }
 
 export function getServiceSpecLabel(inputObject: K8sServiceObject): string {
-   core.debug(`svc getting read is ${JSON.stringify(inputObject)}`)
    return inputObject.spec.selector[BLUE_GREEN_VERSION_LABEL]
 }

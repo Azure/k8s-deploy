@@ -9,13 +9,13 @@ import {
 import * as models from '../types/kubernetesTypes'
 import * as KubernetesManifestUtility from '../utilities/manifestStabilityUtils'
 import {
-   BlueGreenDeployment,
-   BlueGreenManifests,
    deleteGreenObjects,
    getManifestObjects,
    GREEN_LABEL_VALUE,
    NONE_LABEL_VALUE
 } from '../strategyHelpers/blueGreen/blueGreenHelper'
+
+import {BlueGreenDeployment, BlueGreenManifests} from '../types/blueGreenTypes'
 
 import {
    promoteBlueGreenIngress,
@@ -37,6 +37,7 @@ import {
    TrafficSplitMethod
 } from '../types/trafficSplitMethod'
 import {parseRouteStrategy, RouteStrategy} from '../types/routeStrategy'
+import {DeployResult} from '../types/deployResult'
 
 export async function promote(
    kubectl: Kubectl,
@@ -116,7 +117,7 @@ async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
 
    core.startGroup('Deleting old deployment and making new one')
 
-   const result: BlueGreenDeployment = await (async () => {
+   const {deployResult} = await (async () => {
       switch (routeStrategy) {
          case RouteStrategy.INGRESS:
             return await promoteBlueGreenIngress(kubectl, manifestObjects)
@@ -131,7 +132,7 @@ async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
 
    // checking stability of newly created deployments
    core.startGroup('Checking manifest stability')
-   const deployedManifestFiles = result.deployResult.manifestFiles
+   const deployedManifestFiles = deployResult.manifestFiles
    const resources: Resource[] = getResources(
       deployedManifestFiles,
       models.DEPLOYMENT_TYPES.concat([

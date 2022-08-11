@@ -61,14 +61,19 @@ export async function deployManifests(
          const routeStrategy = parseRouteStrategy(
             core.getInput('route-method', {required: true})
          )
-         const {deployResult} = await deployBlueGreen(
+         const blueGreenDeployment = await deployBlueGreen(
             kubectl,
             files,
             routeStrategy
          )
+         core.debug(
+            `objects deployed for ${routeStrategy}: ${JSON.stringify(
+               blueGreenDeployment.objects
+            )} `
+         )
 
-         checkForErrors([deployResult.execResult])
-         return deployResult.manifestFiles
+         checkForErrors([blueGreenDeployment.deployResult.execResult])
+         return blueGreenDeployment.deployResult.manifestFiles
       }
 
       case DeploymentStrategy.BASIC: {

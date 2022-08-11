@@ -11,6 +11,10 @@ import {
    isServiceEntity,
    KubernetesWorkload
 } from '../../types/kubernetesTypes'
+import {
+   BlueGreenDeployment,
+   BlueGreenManifests
+} from '../../types/blueGreenTypes'
 import * as fileHelper from '../../utilities/fileUtils'
 import {updateSpecLabels} from '../../utilities/manifestSpecLabelUtils'
 import {checkForErrors} from '../../utilities/kubectlUtils'
@@ -25,20 +29,6 @@ export const NONE_LABEL_VALUE = 'None'
 export const BLUE_GREEN_VERSION_LABEL = 'k8s.deploy.color'
 export const GREEN_SUFFIX = '-green'
 export const STABLE_SUFFIX = '-stable'
-
-export interface BlueGreenDeployment {
-   deployResult: DeployResult
-   objects: K8sObject[]
-}
-
-export interface BlueGreenManifests {
-   serviceEntityList: K8sObject[]
-   serviceNameMap: Map<string, string>
-   unroutedServiceEntityList: K8sObject[]
-   deploymentEntityList: K8sObject[]
-   ingressEntityList: K8sObject[]
-   otherObjects: K8sObject[]
-}
 
 export async function deleteGreenObjects(
    kubectl: Kubectl,

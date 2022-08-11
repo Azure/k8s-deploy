@@ -1,9 +1,11 @@
-import {Kubectl} from '../../types/kubectl'
 import {sleep} from '../../utilities/timeUtils'
 import {RouteStrategy} from '../../types/routeStrategy'
+import {Kubectl} from '../../types/kubectl'
 import {
    BlueGreenDeployment,
    BlueGreenManifests,
+} from '../../types/blueGreenTypes'
+import {
    getManifestObjects,
    GREEN_LABEL_VALUE,
    deployObjects

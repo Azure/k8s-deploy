@@ -1,8 +1,7 @@
 import {K8sDeleteObject} from '../../types/k8sObject'
 import {Kubectl} from '../../types/kubectl'
+import {BlueGreenDeployment, BlueGreenManifests, BlueGreenRejectResult} from '../../types/blueGreenTypes'
 import {
-   BlueGreenDeployment,
-   BlueGreenManifests,
    deleteGreenObjects,
    NONE_LABEL_VALUE
 } from './blueGreenHelper'
@@ -11,17 +10,12 @@ import {routeBlueGreenSMI} from './route'
 
 import {cleanupSMI} from './smiBlueGreenHelper'
 
-export interface RejectResult {
-   deleteResult: K8sDeleteObject[]
-   routeResult: BlueGreenDeployment
-}
-
 import {routeBlueGreenIngressUnchanged, routeBlueGreenService} from './route'
 
 export async function rejectBlueGreenIngress(
    kubectl: Kubectl,
    manifestObjects: BlueGreenManifests
-): Promise<RejectResult> {
+): Promise<BlueGreenRejectResult> {
    // get all kubernetes objects defined in manifest files
    // route ingress to stables services
    const routeResult = await routeBlueGreenIngressUnchanged(
@@ -45,7 +39,7 @@ export async function rejectBlueGreenIngress(
 export async function rejectBlueGreenService(
    kubectl: Kubectl,
    manifestObjects: BlueGreenManifests
-): Promise<RejectResult> {
+): Promise<BlueGreenRejectResult> {
    // route to stable objects
    const routeResult = await routeBlueGreenService(
       kubectl,
@@ -65,7 +59,7 @@ export async function rejectBlueGreenService(
 export async function rejectBlueGreenSMI(
    kubectl: Kubectl,
    manifestObjects: BlueGreenManifests
-): Promise<RejectResult> {
+): Promise<BlueGreenRejectResult> {
    // route trafficsplit to stable deployments
    const routeResult = await routeBlueGreenSMI(
       kubectl,

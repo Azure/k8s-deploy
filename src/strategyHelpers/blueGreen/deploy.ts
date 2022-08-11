@@ -1,11 +1,12 @@
 import * as core from '@actions/core'
 
 import {Kubectl} from '../../types/kubectl'
+import {BlueGreenDeployment,
+   BlueGreenManifests} from '../../types/blueGreenTypes'
+
 import {RouteStrategy} from '../../types/routeStrategy'
 
 import {
-   BlueGreenDeployment,
-   BlueGreenManifests,
    deployWithLabel,
    getManifestObjects,
    GREEN_LABEL_VALUE,
@@ -34,11 +35,7 @@ export async function deployBlueGreen(
    core.startGroup('Routing blue green')
    await routeBlueGreenForDeploy(kubectl, files, routeStrategy)
    core.endGroup()
-   core.debug(
-      `objects deployed for ${routeStrategy}: ${JSON.stringify(
-         blueGreenDeployment.objects
-      )} `
-   )
+
    return blueGreenDeployment
 }
 

@@ -10,9 +10,10 @@ import {
    GREEN_LABEL_VALUE,
    GREEN_SUFFIX,
    NONE_LABEL_VALUE,
-   STABLE_SUFFIX,
-   BlueGreenDeployment
+   STABLE_SUFFIX
 } from './blueGreenHelper'
+import {BlueGreenDeployment
+} from '../../types/blueGreenTypes'
 import {
    K8sDeleteObject,
    K8sObject,
@@ -168,7 +169,6 @@ export async function validateTrafficSplitsState(
          }
       })
    }
-   core.debug('returning ' + String(trafficSplitsInRightState))
    return trafficSplitsInRightState
 }
 

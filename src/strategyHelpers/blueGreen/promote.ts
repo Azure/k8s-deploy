@@ -1,8 +1,9 @@
 import * as core from '@actions/core'
 
 import {Kubectl} from '../../types/kubectl'
+
+import {BlueGreenDeployment} from '../../types/blueGreenTypes'
 import {
-   BlueGreenDeployment,
    deployWithLabel,
    NONE_LABEL_VALUE
 } from './blueGreenHelper'
