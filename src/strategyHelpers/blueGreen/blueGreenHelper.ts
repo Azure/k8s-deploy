@@ -34,18 +34,14 @@ export async function deleteGreenObjects(
    kubectl: Kubectl,
    toDelete: K8sObject[]
 ): Promise<K8sDeleteObject[]> {
-   const resourcesToDelete: K8sDeleteObject[] = []
-   toDelete.forEach((inputObject) => {
-      const name = inputObject.metadata.name
-      const kind = inputObject.kind
-
-      // delete new green deployments
-      const resourceToDelete = {
-         name: getBlueGreenResourceName(name, GREEN_SUFFIX),
-         kind: kind
+   // const resourcesToDelete: K8sDeleteObject[] = []
+   const resourcesToDelete: K8sDeleteObject[] = toDelete.map((obj) => {
+      return {
+         name: getBlueGreenResourceName(obj.metadata.name, GREEN_SUFFIX),
+         kind: obj.kind
       }
-      resourcesToDelete.push(resourceToDelete)
    })
+
    core.debug(`deleting green objects: ${JSON.stringify(resourcesToDelete)}`)
 
    await deleteObjects(kubectl, resourcesToDelete)
