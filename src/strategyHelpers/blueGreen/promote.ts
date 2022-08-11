@@ -3,10 +3,7 @@ import * as core from '@actions/core'
 import {Kubectl} from '../../types/kubectl'
 
 import {BlueGreenDeployment} from '../../types/blueGreenTypes'
-import {
-   deployWithLabel,
-   NONE_LABEL_VALUE
-} from './blueGreenHelper'
+import {deployWithLabel, NONE_LABEL_VALUE} from './blueGreenHelper'
 
 import {validateIngresses} from './ingressBlueGreenHelper'
 import {validateServicesState} from './serviceBlueGreenHelper'

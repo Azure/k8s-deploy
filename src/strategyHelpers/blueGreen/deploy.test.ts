@@ -1,4 +1,4 @@
-import { getManifestObjects} from './blueGreenHelper'
+import {getManifestObjects} from './blueGreenHelper'
 import {BlueGreenDeployment} from '../../types/blueGreenTypes'
 import {deployBlueGreen, deployBlueGreenIngress} from './deploy'
 import * as routeTester from './route'

@@ -1,10 +1,11 @@
 import {K8sDeleteObject} from '../../types/k8sObject'
 import {Kubectl} from '../../types/kubectl'
-import {BlueGreenDeployment, BlueGreenManifests, BlueGreenRejectResult} from '../../types/blueGreenTypes'
 import {
-   deleteGreenObjects,
-   NONE_LABEL_VALUE
-} from './blueGreenHelper'
+   BlueGreenDeployment,
+   BlueGreenManifests,
+   BlueGreenRejectResult
+} from '../../types/blueGreenTypes'
+import {deleteGreenObjects, NONE_LABEL_VALUE} from './blueGreenHelper'
 
 import {routeBlueGreenSMI} from './route'
 
