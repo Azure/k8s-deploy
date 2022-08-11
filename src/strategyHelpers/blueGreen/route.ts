@@ -19,7 +19,7 @@ import {getUpdatedBlueGreenService} from './serviceBlueGreenHelper'
 import {createTrafficSplitObject} from './smiBlueGreenHelper'
 
 import * as core from '@actions/core'
-import {TrafficSplitObject} from '../../types/k8sObject'
+import {K8sObject, TrafficSplitObject} from '../../types/k8sObject'
 import {getBufferTime} from '../../inputUtils'
 
 export async function routeBlueGreenForDeploy(
@@ -29,8 +29,6 @@ export async function routeBlueGreenForDeploy(
 ): Promise<BlueGreenDeployment> {
    // sleep for buffer time
    const bufferTime: number = getBufferTime()
-   if (bufferTime < 0 || bufferTime > 300)
-      throw Error('Version switch buffer must be between 0 and 300 (inclusive)')
    const startSleepDate = new Date()
    core.info(
       `Starting buffer time of ${bufferTime} minute(s) at ${startSleepDate.toISOString()}`
@@ -71,19 +69,18 @@ export async function routeBlueGreenIngress(
    serviceNameMap: Map<string, string>,
    ingressEntityList: any[]
 ): Promise<BlueGreenDeployment> {
-   const newObjectsList = []
-
-   ingressEntityList.forEach((inputObject) => {
-      if (isIngressRouted(inputObject, serviceNameMap)) {
+   // const newObjectsList = []
+   const newObjectsList: K8sObject[] = ingressEntityList.map(obj => {
+      if (isIngressRouted(obj, serviceNameMap)) {
          const newBlueGreenIngressObject = getUpdatedBlueGreenIngress(
-            inputObject,
+            obj,
             serviceNameMap,
             GREEN_LABEL_VALUE
          )
-         newObjectsList.push(newBlueGreenIngressObject)
+         return newBlueGreenIngressObject
       } else {
-         core.debug(`unrouted ingress detected ${inputObject.metadata.name}`)
-         newObjectsList.push(inputObject)
+         core.debug(`unrouted ingress detected ${obj.metadata.name}`)
+         return obj
       }
    })
 
@@ -129,17 +126,17 @@ export async function routeBlueGreenSMI(
    nextLabel: string,
    serviceEntityList: any[]
 ): Promise<BlueGreenDeployment> {
-   const tsObjects: TrafficSplitObject[] = []
-   for (const serviceObject of serviceEntityList) {
-      // route trafficsplit to given label
-      tsObjects.push(
-         await createTrafficSplitObject(
-            kubectl,
-            serviceObject.metadata.name,
-            nextLabel
-         )
+   // let tsObjects: TrafficSplitObject[] = []
+
+   const tsObjects: TrafficSplitObject[] = await Promise.all(serviceEntityList.map(async (serviceObject) => {
+      const tsObject: TrafficSplitObject = await createTrafficSplitObject(
+         kubectl,
+         serviceObject.metadata.name,
+         nextLabel
       )
-   }
+
+      return tsObject
+   }))
 
    const deployResult = await deployObjects(kubectl, tsObjects)
 

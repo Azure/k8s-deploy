@@ -8,6 +8,7 @@ import {
    GREEN_LABEL_VALUE,
    isServiceRouted
 } from './blueGreenHelper'
+import { BlueGreenDeployment } from '../../types/blueGreenTypes'
 import * as bgHelper from './blueGreenHelper'
 import {Kubectl} from '../../types/kubectl'
 import * as fileHelper from '../../utilities/fileUtils'
@@ -92,7 +93,7 @@ describe('bluegreenhelper functions', () => {
    })
 
    test('correctly makes labeled workloads', async () => {
-      const cwlResult: bgHelper.BlueGreenDeployment = await deployWithLabel(
+      const cwlResult: BlueGreenDeployment = await deployWithLabel(
          kubectl,
          testObjects.deploymentEntityList,
          GREEN_LABEL_VALUE

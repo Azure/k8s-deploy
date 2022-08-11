@@ -11,7 +11,6 @@ import * as KubernetesManifestUtility from '../utilities/manifestStabilityUtils'
 import {
    deleteGreenObjects,
    getManifestObjects,
-   GREEN_LABEL_VALUE,
    NONE_LABEL_VALUE
 } from '../strategyHelpers/blueGreen/blueGreenHelper'
 
