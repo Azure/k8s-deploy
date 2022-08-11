@@ -8,7 +8,7 @@ import {
    GREEN_LABEL_VALUE,
    isServiceRouted
 } from './blueGreenHelper'
-import { BlueGreenDeployment } from '../../types/blueGreenTypes'
+import {BlueGreenDeployment} from '../../types/blueGreenTypes'
 import * as bgHelper from './blueGreenHelper'
 import {Kubectl} from '../../types/kubectl'
 import * as fileHelper from '../../utilities/fileUtils'

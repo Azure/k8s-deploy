@@ -70,7 +70,7 @@ export async function routeBlueGreenIngress(
    ingressEntityList: any[]
 ): Promise<BlueGreenDeployment> {
    // const newObjectsList = []
-   const newObjectsList: K8sObject[] = ingressEntityList.map(obj => {
+   const newObjectsList: K8sObject[] = ingressEntityList.map((obj) => {
       if (isIngressRouted(obj, serviceNameMap)) {
          const newBlueGreenIngressObject = getUpdatedBlueGreenIngress(
             obj,
@@ -128,15 +128,17 @@ export async function routeBlueGreenSMI(
 ): Promise<BlueGreenDeployment> {
    // let tsObjects: TrafficSplitObject[] = []
 
-   const tsObjects: TrafficSplitObject[] = await Promise.all(serviceEntityList.map(async (serviceObject) => {
-      const tsObject: TrafficSplitObject = await createTrafficSplitObject(
-         kubectl,
-         serviceObject.metadata.name,
-         nextLabel
-      )
+   const tsObjects: TrafficSplitObject[] = await Promise.all(
+      serviceEntityList.map(async (serviceObject) => {
+         const tsObject: TrafficSplitObject = await createTrafficSplitObject(
+            kubectl,
+            serviceObject.metadata.name,
+            nextLabel
+         )
 
-      return tsObject
-   }))
+         return tsObject
+      })
+   )
 
    const deployResult = await deployObjects(kubectl, tsObjects)
 
