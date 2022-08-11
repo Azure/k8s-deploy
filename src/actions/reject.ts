@@ -2,6 +2,7 @@ import * as core from '@actions/core'
 import * as canaryDeploymentHelper from '../strategyHelpers/canary/canaryHelper'
 import * as SMICanaryDeploymentHelper from '../strategyHelpers/canary/smiCanaryHelper'
 import {Kubectl} from '../types/kubectl'
+import { BlueGreenManifests } from '../types/blueGreenTypes'
 import {
    rejectBlueGreenIngress,
    rejectBlueGreenService,
@@ -9,7 +10,6 @@ import {
 } from '../strategyHelpers/blueGreen/reject'
 import {
    getManifestObjects,
-   BlueGreenManifests
 } from '../strategyHelpers/blueGreen/blueGreenHelper'
 import {DeploymentStrategy} from '../types/deploymentStrategy'
 import {
