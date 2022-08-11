@@ -6,11 +6,8 @@ import {
    BlueGreenRejectResult
 } from '../../types/blueGreenTypes'
 import {deleteGreenObjects, NONE_LABEL_VALUE} from './blueGreenHelper'
-
 import {routeBlueGreenSMI} from './route'
-
 import {cleanupSMI} from './smiBlueGreenHelper'
-
 import {routeBlueGreenIngressUnchanged, routeBlueGreenService} from './route'
 
 export async function rejectBlueGreenIngress(

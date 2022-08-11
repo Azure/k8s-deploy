@@ -20,7 +20,6 @@ export async function promoteBlueGreenIngress(
       manifestObjects.serviceNameMap
    )
    if (!areValid) {
-      core.debug('are valid was false')
       throw new Error(
          `Ingresses are not in promote state: ${invalidIngresses.toString()}`
       )

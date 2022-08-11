@@ -15,7 +15,7 @@ import {
    NONE_LABEL_VALUE
 } from '../strategyHelpers/blueGreen/blueGreenHelper'
 
-import {BlueGreenDeployment, BlueGreenManifests} from '../types/blueGreenTypes'
+import {BlueGreenManifests} from '../types/blueGreenTypes'
 
 import {
    promoteBlueGreenIngress,
@@ -37,7 +37,6 @@ import {
    TrafficSplitMethod
 } from '../types/trafficSplitMethod'
 import {parseRouteStrategy, RouteStrategy} from '../types/routeStrategy'
-import {DeployResult} from '../types/deployResult'
 
 export async function promote(
    kubectl: Kubectl,

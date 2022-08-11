@@ -129,7 +129,7 @@ export async function deployBlueGreenService(
       manifestObjects.unroutedServiceEntityList
    )
 
-   deployObjects(kubectl, newObjectsList)
+   await deployObjects(kubectl, newObjectsList)
    // returning deployment details to check for rollout stability
    return {
       deployResult: blueGreenDeployment.deployResult,
