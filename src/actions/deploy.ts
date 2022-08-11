@@ -36,7 +36,6 @@ export async function deploy(
    )
    core.debug(`Deployed manifest files: ${deployedManifestFiles}`)
    core.endGroup()
-   
 
    // check manifest stability
    core.startGroup('Checking manifest stability')
