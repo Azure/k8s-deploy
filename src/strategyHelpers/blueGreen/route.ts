@@ -107,14 +107,9 @@ export async function routeBlueGreenService(
    nextLabel: string,
    serviceEntityList: any[]
 ): Promise<BlueGreenDeployment> {
-   const objects = []
-   serviceEntityList.forEach((serviceObject) => {
-      const newBlueGreenServiceObject = getUpdatedBlueGreenService(
-         serviceObject,
-         nextLabel
-      )
-      objects.push(newBlueGreenServiceObject)
-   })
+   const objects = serviceEntityList.map((serviceObject) =>
+      getUpdatedBlueGreenService(serviceObject, nextLabel)
+   )
 
    const deployResult = await deployObjects(kubectl, objects)
 

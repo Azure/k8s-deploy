@@ -134,12 +134,10 @@ export async function deployWithLabel(
    deploymentObjectList: any[],
    nextLabel: string
 ): Promise<BlueGreenDeployment> {
-   const newObjectsList = []
-   deploymentObjectList.forEach((inputObject) => {
-      // creating deployment with label
-      const newBlueGreenObject = getNewBlueGreenObject(inputObject, nextLabel)
-      newObjectsList.push(newBlueGreenObject)
-   })
+   const newObjectsList = deploymentObjectList.map((inputObject) =>
+      getNewBlueGreenObject(inputObject, nextLabel)
+   )
+
    core.debug(
       `objects deployed with label are ${JSON.stringify(newObjectsList)}`
    )
