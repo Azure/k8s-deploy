@@ -95,9 +95,7 @@ export async function deployBlueGreenIngress(
       manifestObjects.otherObjects,
       manifestObjects.unroutedServiceEntityList
    )
-
    await deployObjects(kubectl, otherObjects)
-
    core.debug(
       `new objects after processing services and other objects: \n
          ${JSON.stringify(servicesAndDeployments)}`
