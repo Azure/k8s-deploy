@@ -34,8 +34,9 @@ export async function deploy(
       kubectl,
       trafficSplitMethod
    )
-   core.endGroup()
    core.debug(`Deployed manifest files: ${deployedManifestFiles}`)
+   core.endGroup()
+   
 
    // check manifest stability
    core.startGroup('Checking manifest stability')
