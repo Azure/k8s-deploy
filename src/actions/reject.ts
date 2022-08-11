@@ -62,10 +62,8 @@ async function rejectBlueGreen(kubectl: Kubectl, manifests: string[]) {
    const routeStrategy = parseRouteStrategy(
       core.getInput('route-method', {required: true})
    )
-   core.startGroup(
-      `Rejecting deployment with blue green strategy using routeMethod ${routeStrategy}`
-   )
-
+   core.startGroup('Rejecting deployment with blue green strategy')
+   core.info(`using routeMethod ${routeStrategy}`)
    const manifestObjects: BlueGreenManifests = getManifestObjects(manifests)
 
    if (routeStrategy == RouteStrategy.INGRESS) {
