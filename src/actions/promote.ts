@@ -113,7 +113,7 @@ async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
       core.getInput('route-method', {required: true})
    )
 
-   core.startGroup('Deleting old deployment and making new one')
+   core.startGroup('Deleting old deployment and making new stable deployment')
 
    const {deployResult} = await (async () => {
       switch (routeStrategy) {
