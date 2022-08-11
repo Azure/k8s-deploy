@@ -4,8 +4,8 @@ import {Kubectl} from '../../types/kubectl'
 import * as fileHelper from '../../utilities/fileUtils'
 import * as TSutils from '../../utilities/trafficSplitUtils'
 
+import {BlueGreenManifests} from '../../types/blueGreenTypes'
 import {
-   BlueGreenManifests,
    BLUE_GREEN_VERSION_LABEL,
    getManifestObjects,
    GREEN_LABEL_VALUE,
@@ -74,7 +74,6 @@ describe('SMI Helper tests', () => {
 
       let found = 0
       for (const obj of smiResults.objects) {
-         core.debug(`obj is ${JSON.stringify(obj)}`)
 
          if (obj.metadata.name === 'nginx-service-stable') {
             expect(obj.metadata.labels[BLUE_GREEN_VERSION_LABEL]).toBe(

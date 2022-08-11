@@ -1,11 +1,12 @@
 import {getManifestObjects} from './blueGreenHelper'
 import {Kubectl} from '../../types/kubectl'
+import {BlueGreenRejectResult} from '../../types/blueGreenTypes'
+
 import * as TSutils from '../../utilities/trafficSplitUtils'
 import {
    rejectBlueGreenIngress,
    rejectBlueGreenService,
    rejectBlueGreenSMI,
-   RejectResult
 } from './reject'
 
 const ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']

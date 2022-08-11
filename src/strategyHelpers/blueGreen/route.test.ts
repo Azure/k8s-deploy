@@ -6,9 +6,9 @@ import * as TSutils from '../../utilities/trafficSplitUtils'
 import {RouteStrategy} from '../../types/routeStrategy'
 import {getBufferTime} from '../../inputUtils'
 import * as inputUtils from '../../inputUtils'
+import {BlueGreenManifests} from '../../types/blueGreenTypes'
 
 import {
-   BlueGreenManifests,
    BLUE_GREEN_VERSION_LABEL,
    getManifestObjects,
    GREEN_LABEL_VALUE
