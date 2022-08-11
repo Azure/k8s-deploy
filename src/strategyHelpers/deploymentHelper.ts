@@ -10,16 +10,19 @@ import {Kubectl, Resource} from '../types/kubectl'
 import {deployPodCanary} from './canary/podCanaryHelper'
 import {deploySMICanary} from './canary/smiCanaryHelper'
 import {DeploymentConfig} from '../types/deploymentConfig'
-import {deployBlueGreenService} from './blueGreen/serviceBlueGreenHelper'
-import {deployBlueGreenIngress} from './blueGreen/ingressBlueGreenHelper'
-import {deployBlueGreenSMI} from './blueGreen/smiBlueGreenHelper'
+import {
+   deployBlueGreen,
+   deployBlueGreenIngress,
+   deployBlueGreenService
+} from './blueGreen/deploy'
+import {deployBlueGreenSMI} from './blueGreen/deploy'
 import {DeploymentStrategy} from '../types/deploymentStrategy'
 import * as core from '@actions/core'
 import {
    parseTrafficSplitMethod,
    TrafficSplitMethod
 } from '../types/trafficSplitMethod'
-import {parseRouteStrategy, RouteStrategy} from '../types/routeStrategy'
+import {parseRouteStrategy} from '../types/routeStrategy'
 import {ExecOutput} from '@actions/exec'
 import {
    getWorkflowAnnotationKeyLabel,
@@ -41,8 +44,7 @@ export async function deployManifests(
    files: string[],
    deploymentStrategy: DeploymentStrategy,
    kubectl: Kubectl,
-   trafficSplitMethod: TrafficSplitMethod,
-   annotations: {[key: string]: string} = {}
+   trafficSplitMethod: TrafficSplitMethod
 ): Promise<string[]> {
    switch (deploymentStrategy) {
       case DeploymentStrategy.CANARY: {
@@ -59,17 +61,19 @@ export async function deployManifests(
          const routeStrategy = parseRouteStrategy(
             core.getInput('route-method', {required: true})
          )
-
-         const {workloadDeployment, newObjectsList} = await Promise.resolve(
-            (routeStrategy == RouteStrategy.INGRESS &&
-               deployBlueGreenIngress(kubectl, files)) ||
-               (routeStrategy == RouteStrategy.SMI &&
-                  deployBlueGreenSMI(kubectl, files, annotations)) ||
-               deployBlueGreenService(kubectl, files)
+         const blueGreenDeployment = await deployBlueGreen(
+            kubectl,
+            files,
+            routeStrategy
+         )
+         core.debug(
+            `objects deployed for ${routeStrategy}: ${JSON.stringify(
+               blueGreenDeployment.objects
+            )} `
          )
 
-         checkForErrors([workloadDeployment.result])
-         return workloadDeployment.newFilePaths
+         checkForErrors([blueGreenDeployment.deployResult.execResult])
+         return blueGreenDeployment.deployResult.manifestFiles
       }
 
       case DeploymentStrategy.BASIC: {

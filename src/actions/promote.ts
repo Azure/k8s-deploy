@@ -9,26 +9,26 @@ import {
 import * as models from '../types/kubernetesTypes'
 import * as KubernetesManifestUtility from '../utilities/manifestStabilityUtils'
 import {
-   BlueGreenManifests,
-   deleteWorkloadsAndServicesWithLabel,
-   deleteWorkloadsWithLabel,
+   deleteGreenObjects,
    getManifestObjects,
-   GREEN_LABEL_VALUE,
    NONE_LABEL_VALUE
 } from '../strategyHelpers/blueGreen/blueGreenHelper'
-import {
-   promoteBlueGreenService,
-   routeBlueGreenService
-} from '../strategyHelpers/blueGreen/serviceBlueGreenHelper'
+
+import {BlueGreenManifests} from '../types/blueGreenTypes'
+
 import {
    promoteBlueGreenIngress,
-   routeBlueGreenIngress
-} from '../strategyHelpers/blueGreen/ingressBlueGreenHelper'
+   promoteBlueGreenService,
+   promoteBlueGreenSMI
+} from '../strategyHelpers/blueGreen/promote'
+
 import {
-   cleanupSMI,
-   promoteBlueGreenSMI,
+   routeBlueGreenService,
+   routeBlueGreenIngressUnchanged,
    routeBlueGreenSMI
-} from '../strategyHelpers/blueGreen/smiBlueGreenHelper'
+} from '../strategyHelpers/blueGreen/route'
+
+import {cleanupSMI} from '../strategyHelpers/blueGreen/smiBlueGreenHelper'
 import {Kubectl, Resource} from '../types/kubectl'
 import {DeploymentStrategy} from '../types/deploymentStrategy'
 import {
@@ -40,15 +40,14 @@ import {parseRouteStrategy, RouteStrategy} from '../types/routeStrategy'
 export async function promote(
    kubectl: Kubectl,
    manifests: string[],
-   deploymentStrategy: DeploymentStrategy,
-   annotations: {[key: string]: string} = {}
+   deploymentStrategy: DeploymentStrategy
 ) {
    switch (deploymentStrategy) {
       case DeploymentStrategy.CANARY:
          await promoteCanary(kubectl, manifests)
          break
       case DeploymentStrategy.BLUE_GREEN:
-         await promoteBlueGreen(kubectl, manifests, annotations)
+         await promoteBlueGreen(kubectl, manifests)
          break
       default:
          throw Error('Invalid promote deployment strategy')
@@ -98,18 +97,13 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
       )
    } catch (ex) {
       core.warning(
-         'Exception occurred while deleting canary and baseline workloads: ' +
-            ex
+         `Exception occurred while deleting canary and baseline workloads: ${ex}`
       )
    }
    core.endGroup()
 }
 
-async function promoteBlueGreen(
-   kubectl: Kubectl,
-   manifests: string[],
-   annotations: {[key: string]: string} = {}
-) {
+async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
    // update container images and pull secrets
    const inputManifestFiles: string[] = updateManifestFiles(manifests)
    const manifestObjects: BlueGreenManifests =
@@ -119,20 +113,24 @@ async function promoteBlueGreen(
       core.getInput('route-method', {required: true})
    )
 
-   core.startGroup('Deleting old deployment and making new one')
-   let result
-   if (routeStrategy == RouteStrategy.INGRESS) {
-      result = await promoteBlueGreenIngress(kubectl, manifestObjects)
-   } else if (routeStrategy == RouteStrategy.SMI) {
-      result = await promoteBlueGreenSMI(kubectl, manifestObjects)
-   } else {
-      result = await promoteBlueGreenService(kubectl, manifestObjects)
-   }
+   core.startGroup('Deleting old deployment and making new stable deployment')
+
+   const {deployResult} = await (async () => {
+      switch (routeStrategy) {
+         case RouteStrategy.INGRESS:
+            return await promoteBlueGreenIngress(kubectl, manifestObjects)
+         case RouteStrategy.SMI:
+            return await promoteBlueGreenSMI(kubectl, manifestObjects)
+         default:
+            return await promoteBlueGreenService(kubectl, manifestObjects)
+      }
+   })()
+
    core.endGroup()
 
    // checking stability of newly created deployments
    core.startGroup('Checking manifest stability')
-   const deployedManifestFiles = result.newFilePaths
+   const deployedManifestFiles = deployResult.manifestFiles
    const resources: Resource[] = getResources(
       deployedManifestFiles,
       models.DEPLOYMENT_TYPES.concat([
@@ -146,30 +144,26 @@ async function promoteBlueGreen(
       'Routing to new deployments and deleting old workloads and services'
    )
    if (routeStrategy == RouteStrategy.INGRESS) {
-      await routeBlueGreenIngress(
+      await routeBlueGreenIngressUnchanged(
          kubectl,
-         null,
          manifestObjects.serviceNameMap,
          manifestObjects.ingressEntityList
       )
-      await deleteWorkloadsAndServicesWithLabel(
+
+      await deleteGreenObjects(
          kubectl,
-         GREEN_LABEL_VALUE,
-         manifestObjects.deploymentEntityList,
-         manifestObjects.serviceEntityList
+         [].concat(
+            manifestObjects.deploymentEntityList,
+            manifestObjects.serviceEntityList
+         )
       )
    } else if (routeStrategy == RouteStrategy.SMI) {
       await routeBlueGreenSMI(
          kubectl,
          NONE_LABEL_VALUE,
-         manifestObjects.serviceEntityList,
-         annotations
+         manifestObjects.serviceEntityList
       )
-      await deleteWorkloadsWithLabel(
-         kubectl,
-         GREEN_LABEL_VALUE,
-         manifestObjects.deploymentEntityList
-      )
+      await deleteGreenObjects(kubectl, manifestObjects.deploymentEntityList)
       await cleanupSMI(kubectl, manifestObjects.serviceEntityList)
    } else {
       await routeBlueGreenService(
@@ -177,11 +171,7 @@ async function promoteBlueGreen(
          NONE_LABEL_VALUE,
          manifestObjects.serviceEntityList
       )
-      await deleteWorkloadsWithLabel(
-         kubectl,
-         GREEN_LABEL_VALUE,
-         manifestObjects.deploymentEntityList
-      )
+      await deleteGreenObjects(kubectl, manifestObjects.deploymentEntityList)
    }
    core.endGroup()
 }

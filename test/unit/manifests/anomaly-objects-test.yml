@@ -1,0 +1,23 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+   name: unrouted-service
+spec:
+   selector:
+      app: fake-application
+   ports:
+      - protocol: TCP
+        port: 80
+        targetPort: 80
+---
+kind: TrafficSplit
+metadata:
+   name: foobar-rollout
+spec:
+   service: foobar
+   backends:
+      - service: foobar-v1
+        weight: 1000
+      - service: foobar-v2
+        weight: 500
