@@ -5,5 +5,11 @@ export const inputAnnotations = parseAnnotations(
    core.getInput('annotations', {required: false})
 )
 
-const inputBufferTime = parseInt(core.getInput('version-switch-buffer') || '0')
-export const getBufferTime = () => inputBufferTime
+
+export function getBufferTime(): number{
+   const inputBufferTime = parseInt(core.getInput('version-switch-buffer') || '0')
+   if (inputBufferTime < 0 || inputBufferTime > 300)
+   throw Error('Version switch buffer must be between 0 and 300 (inclusive)')
+
+   return inputBufferTime
+}

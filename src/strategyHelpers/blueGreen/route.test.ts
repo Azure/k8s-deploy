@@ -116,10 +116,4 @@ describe('route function tests', () => {
          (smiResult.objects as TrafficSplitObject[])[0].spec.backends
       ).toHaveLength(2)
    })
-   test('routeBlueGreenForDeploy throws error with invalid bounds', async () => {
-      jest.spyOn(inputUtils, 'getBufferTime').mockImplementation(() => 500)
-      await expect(
-         routeBlueGreenForDeploy(kc, ingressFilepath, RouteStrategy.SMI)
-      ).rejects.toThrowError()
-   })
 })
