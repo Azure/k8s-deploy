@@ -1,6 +1,9 @@
 import * as core from '@actions/core'
 import * as fs from 'fs'
 import * as yaml from 'js-yaml'
+
+import {DeployResult} from '../../types/deployResult'
+import {K8sObject, K8sDeleteObject} from '../../types/k8sObject'
 import {Kubectl} from '../../types/kubectl'
 import {
    isDeploymentEntity,
@@ -8,19 +11,18 @@ import {
    isServiceEntity,
    KubernetesWorkload
 } from '../../types/kubernetesTypes'
+import {
+   BlueGreenDeployment,
+   BlueGreenManifests
+} from '../../types/blueGreenTypes'
 import * as fileHelper from '../../utilities/fileUtils'
-import {routeBlueGreenService} from './serviceBlueGreenHelper'
-import {routeBlueGreenIngress} from './ingressBlueGreenHelper'
-import {routeBlueGreenSMI} from './smiBlueGreenHelper'
+import {updateSpecLabels} from '../../utilities/manifestSpecLabelUtils'
+import {checkForErrors} from '../../utilities/kubectlUtils'
 import {
    UnsetClusterSpecificDetails,
    updateObjectLabels,
    updateSelectorLabels
 } from '../../utilities/manifestUpdateUtils'
-import {updateSpecLabels} from '../../utilities/manifestSpecLabelUtils'
-import {checkForErrors} from '../../utilities/kubectlUtils'
-import {sleep} from '../../utilities/timeUtils'
-import {RouteStrategy} from '../../types/routeStrategy'
 
 export const GREEN_LABEL_VALUE = 'green'
 export const NONE_LABEL_VALUE = 'None'
@@ -28,144 +30,46 @@ export const BLUE_GREEN_VERSION_LABEL = 'k8s.deploy.color'
 export const GREEN_SUFFIX = '-green'
 export const STABLE_SUFFIX = '-stable'
 
-export interface BlueGreenManifests {
-   serviceEntityList: any[]
-   serviceNameMap: Map<string, string>
-   unroutedServiceEntityList: any[]
-   deploymentEntityList: any[]
-   ingressEntityList: any[]
-   otherObjects: any[]
-}
-
-export async function routeBlueGreen(
+export async function deleteGreenObjects(
    kubectl: Kubectl,
-   inputManifestFiles: string[],
-   routeStrategy: RouteStrategy,
-   annotations: {[key: string]: string} = {}
-) {
-   // sleep for buffer time
-   const bufferTime: number = parseInt(
-      core.getInput('version-switch-buffer') || '0'
-   )
-   if (bufferTime < 0 || bufferTime > 300)
-      throw Error('Version switch buffer must be between 0 and 300 (inclusive)')
-   const startSleepDate = new Date()
-   core.info(
-      `Starting buffer time of ${bufferTime} minute(s) at ${startSleepDate.toISOString()}`
-   )
-   await sleep(bufferTime * 1000 * 60)
-   const endSleepDate = new Date()
-   core.info(
-      `Stopping buffer time of ${bufferTime} minute(s) at ${endSleepDate.toISOString()}`
-   )
-
-   const manifestObjects: BlueGreenManifests =
-      getManifestObjects(inputManifestFiles)
-   core.debug('Manifest objects: ' + JSON.stringify(manifestObjects))
-
-   // route to new deployments
-   if (routeStrategy == RouteStrategy.INGRESS) {
-      await routeBlueGreenIngress(
-         kubectl,
-         GREEN_LABEL_VALUE,
-         manifestObjects.serviceNameMap,
-         manifestObjects.ingressEntityList
-      )
-   } else if (routeStrategy == RouteStrategy.SMI) {
-      await routeBlueGreenSMI(
-         kubectl,
-         GREEN_LABEL_VALUE,
-         manifestObjects.serviceEntityList,
-         annotations
-      )
-   } else {
-      await routeBlueGreenService(
-         kubectl,
-         GREEN_LABEL_VALUE,
-         manifestObjects.serviceEntityList
-      )
-   }
-}
-
-export async function deleteWorkloadsWithLabel(
-   kubectl: Kubectl,
-   deleteLabel: string,
-   deploymentEntityList: any[]
-) {
-   const resourcesToDelete = []
-   deploymentEntityList.forEach((inputObject) => {
-      const name = inputObject.metadata.name
-      const kind = inputObject.kind
-
-      if (deleteLabel === NONE_LABEL_VALUE) {
-         // delete stable deployments
-         const resourceToDelete = {name, kind}
-         resourcesToDelete.push(resourceToDelete)
-      } else {
-         // delete new green deployments
-         const resourceToDelete = {
-            name: getBlueGreenResourceName(name, GREEN_SUFFIX),
-            kind: kind
-         }
-         resourcesToDelete.push(resourceToDelete)
+   toDelete: K8sObject[]
+): Promise<K8sDeleteObject[]> {
+   // const resourcesToDelete: K8sDeleteObject[] = []
+   const resourcesToDelete: K8sDeleteObject[] = toDelete.map((obj) => {
+      return {
+         name: getBlueGreenResourceName(obj.metadata.name, GREEN_SUFFIX),
+         kind: obj.kind
       }
    })
+
+   core.debug(`deleting green objects: ${JSON.stringify(resourcesToDelete)}`)
 
    await deleteObjects(kubectl, resourcesToDelete)
    return resourcesToDelete
 }
 
-export async function deleteWorkloadsAndServicesWithLabel(
+export async function deleteObjects(
    kubectl: Kubectl,
-   deleteLabel: string,
-   deploymentEntityList: any[],
-   serviceEntityList: any[]
+   deleteList: K8sDeleteObject[]
 ) {
-   // need to delete services and deployments
-   const deletionEntitiesList = deploymentEntityList.concat(serviceEntityList)
-   const resourcesToDelete = []
-
-   deletionEntitiesList.forEach((inputObject) => {
-      const name = inputObject.metadata.name
-      const kind = inputObject.kind
-
-      if (deleteLabel === NONE_LABEL_VALUE) {
-         // delete stable objects
-         const resourceToDelete = {name, kind}
-         resourcesToDelete.push(resourceToDelete)
-      } else {
-         // delete green labels
-         const resourceToDelete = {
-            name: getBlueGreenResourceName(name, GREEN_SUFFIX),
-            kind: kind
-         }
-         resourcesToDelete.push(resourceToDelete)
-      }
-   })
-
-   await deleteObjects(kubectl, resourcesToDelete)
-   return resourcesToDelete
-}
-
-export async function deleteObjects(kubectl: Kubectl, deleteList: any[]) {
    // delete services and deployments
    for (const delObject of deleteList) {
       try {
          const result = await kubectl.delete([delObject.kind, delObject.name])
          checkForErrors([result])
       } catch (ex) {
-         // Ignore failures of delete if it doesn't exist
+         core.debug(`failed to delete object ${delObject.name}: ${ex}`)
       }
    }
 }
 
 // other common functions
 export function getManifestObjects(filePaths: string[]): BlueGreenManifests {
-   const deploymentEntityList = []
-   const routedServiceEntityList = []
-   const unroutedServiceEntityList = []
-   const ingressEntityList = []
-   const otherEntitiesList = []
+   const deploymentEntityList: K8sObject[] = []
+   const routedServiceEntityList: K8sObject[] = []
+   const unroutedServiceEntityList: K8sObject[] = []
+   const ingressEntityList: K8sObject[] = []
+   const otherEntitiesList: K8sObject[] = []
    const serviceNameMap = new Map<string, string>()
 
    filePaths.forEach((filePath: string) => {
@@ -210,48 +114,41 @@ export function isServiceRouted(
    serviceObject: any[],
    deploymentEntityList: any[]
 ): boolean {
-   let shouldBeRouted: boolean = false
    const serviceSelector: any = getServiceSelector(serviceObject)
-   if (serviceSelector) {
-      if (
-         deploymentEntityList.some((depObject) => {
-            // finding if there is a deployment in the given manifests the service targets
-            const matchLabels: any = getDeploymentMatchLabels(depObject)
-            return (
-               matchLabels &&
-               isServiceSelectorSubsetOfMatchLabel(serviceSelector, matchLabels)
-            )
-         })
-      ) {
-         shouldBeRouted = true
-      }
-   }
 
-   return shouldBeRouted
+   return (
+      serviceSelector &&
+      deploymentEntityList.some((depObject) => {
+         // finding if there is a deployment in the given manifests the service targets
+         const matchLabels: any = getDeploymentMatchLabels(depObject)
+         return (
+            matchLabels &&
+            isServiceSelectorSubsetOfMatchLabel(serviceSelector, matchLabels)
+         )
+      })
+   )
 }
 
-export async function createWorkloadsWithLabel(
+export async function deployWithLabel(
    kubectl: Kubectl,
    deploymentObjectList: any[],
    nextLabel: string
-) {
-   const newObjectsList = []
-   deploymentObjectList.forEach((inputObject) => {
-      // creating deployment with label
-      const newBlueGreenObject = getNewBlueGreenObject(inputObject, nextLabel)
-      newObjectsList.push(newBlueGreenObject)
-   })
+): Promise<BlueGreenDeployment> {
+   const newObjectsList = deploymentObjectList.map((inputObject) =>
+      getNewBlueGreenObject(inputObject, nextLabel)
+   )
 
-   const manifestFiles = fileHelper.writeObjectsToFile(newObjectsList)
-   const result = await kubectl.apply(manifestFiles)
-
-   return {result: result, newFilePaths: manifestFiles}
+   core.debug(
+      `objects deployed with label are ${JSON.stringify(newObjectsList)}`
+   )
+   const deployResult = await deployObjects(kubectl, newObjectsList)
+   return {deployResult, objects: newObjectsList}
 }
 
 export function getNewBlueGreenObject(
    inputObject: any,
    labelValue: string
-): object {
+): K8sObject {
    const newObject = JSON.parse(JSON.stringify(inputObject))
 
    // Updating name only if label is green label is given
@@ -338,14 +235,14 @@ export async function fetchResource(
    kubectl: Kubectl,
    kind: string,
    name: string
-) {
+): Promise<K8sObject> {
    const result = await kubectl.getResource(kind, name)
    if (result == null || !!result.stderr) {
       return null
    }
 
    if (!!result.stdout) {
-      const resource = JSON.parse(result.stdout)
+      const resource = JSON.parse(result.stdout) as K8sObject
 
       try {
          UnsetClusterSpecificDetails(resource)
@@ -356,4 +253,14 @@ export async function fetchResource(
          )
       }
    }
+}
+
+export async function deployObjects(
+   kubectl: Kubectl,
+   objectsList: any[]
+): Promise<DeployResult> {
+   const manifestFiles = fileHelper.writeObjectsToFile(objectsList)
+   const execResult = await kubectl.apply(manifestFiles)
+
+   return {execResult, manifestFiles}
 }
