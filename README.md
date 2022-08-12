@@ -43,7 +43,15 @@ Following are the key capabilities of this action:
   <tr>
     <td>manifests </br></br>(Required)</td>
     <td>Path to the manifest files to be used for deployment. These can also be directories containing manifest files, in which case, all manifest files in the referenced directory at every depth will be deployed. Files not ending in .yml or .yaml will be ignored.</td>
-  </tr>  
+  </tr>
+    <tr>
+    <td>strategy </br></br>(Required)</td>
+    <td>Acceptable values: basic/canary/blue-green. <br>
+    Default value: basic
+    <br>Deployment strategy to be used while applying manifest files on the cluster.
+    <br>basic - Template is force applied to all pods when deploying to cluster. NOTE: Can only be used with action == deploy
+    <br>canary - Canary deployment strategy is used when deploying to the cluster.<br>blue-green - Blue-Green deployment strategy is used when deploying to cluster.</td>
+  </tr>
   <tr>
     <td>namespace </br></br>(Optional)
     <td>Namespace within the cluster to deploy to.</td>
@@ -63,14 +71,12 @@ Following are the key capabilities of this action:
     <td>Acceptable values: true/false</br>Default value: true</br>Switch whether to pull the images from the registry before deployment to find out Dockerfile's path in order to add it to the annotations</td>
   </tr>
   <tr>
-    <td>strategy </br></br>(Optional)</td>
-    <td>Acceptable values: none/canary/blue-green. <br>
-    Deployment strategy to be used while applying manifest files on the cluster.<br>none - No deployment strategy is used when deploying.<br>canary - Canary deployment strategy is used when deploying to the cluster.<br>blue-green - Blue-Green deployment strategy is used when deploying to cluster.</td>
-  </tr>
-  <tr>
     <td>traffic-split-method </br></br>(Optional)</td>
     <td>Acceptable values: pod/smi.<br> Default value: pod <br>SMI: Percentage traffic split is done at request level using service mesh. Service mesh has to be setup by cluster admin. Orchestration of <a href="https://github.com/servicemeshinterface/smi-spec/blob/master/apis/traffic-split/v1alpha3/traffic-split.md" data-raw-source="TrafficSplit](https://github.com/deislabs/smi-spec/blob/master/traffic-split.md)">TrafficSplit</a> objects of SMI is handled by this action. <br>Pod: Percentage split not possible at request level in the absence of service mesh. Percentage input is used to calculate the replicas for baseline and canary as a percentage of replicas specified in the input manifests for the stable variant.</td>
   </tr>
+  <tr>
+   <td>traffic-split-annotations </br></br>(Optional)</td>
+   <td>Annotations in the form of key/value pair to be added to TrafficSplit.</td>
   <tr>
     <td>percentage </br></br>(Optional but required if strategy is canary)</td>
     <td>Used to compute the number of replicas of &#39;-baseline&#39; and &#39;-canary&#39; variants of the workloads found in manifest files. For the specified percentage input, if (percentage * numberOfDesirerdReplicas)/100 is not a round number, the floor of this number is used while creating &#39;-baseline&#39; and &#39;-canary&#39;.<br/><br/>For example, if Deployment hello-world was found in the input manifest file with &#39;replicas: 4&#39; and if &#39;strategy: canary&#39; and &#39;percentage: 25&#39; are given as inputs to the action, then the Deployments hello-world-baseline and hello-world-canary are created with 1 replica each. The &#39;-baseline&#39; variant is created with the same image and tag as the stable version (4 replica variant prior to deployment) while the &#39;-canary&#39; variant is created with the image and tag corresponding to the new changes being deployed</td>
@@ -89,6 +95,10 @@ Following are the key capabilities of this action:
   <tr>
     <td>version-switch-buffer </br></br>(Optional and relevant only if strategy is blue-green)</td>
     <td>Acceptable values: 1-300.</br>Default value: 0.</br>Waits for the given input in minutes before routing traffic to '-green' workloads.</td>
+  </tr>
+  <tr>
+    <td>private-cluster </br></br>(Optional and relevant only using K8's deploy for a cluster with private cluster enabled)</td>
+    <td>Acceptable values: true, false</br>Default value: false.</td>
   </tr>
   <tr>
     <td>force </br></br>(Optional)</td>
@@ -114,7 +124,26 @@ Following are the key capabilities of this action:
      imagepullsecrets: |
         image-pull-secret1
         image-pull-secret2
-     kubectl-version: 'latest'
+```
+
+### Private cluster deployment
+
+```yaml
+- uses: Azure/k8s-deploy@v4
+  with:
+     resource-group: yourResourceGroup
+     name: yourClusterName
+     action: deploy
+     strategy: basic
+
+     private-cluster: true
+     manifests: |
+        manifests/azure-vote-backend-deployment.yaml
+        manifests/azure-vote-backend-service.yaml
+        manifests/azure-vote-frontend-deployment.yaml
+        manifests/azure-vote-frontend-service.yaml
+     images: |
+        registry.azurecr.io/containername
 ```
 
 ### Canary deployment without service mesh
