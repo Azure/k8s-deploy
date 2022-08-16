@@ -7,7 +7,6 @@ import {Action, parseAction} from './types/action'
 import {parseDeploymentStrategy} from './types/deploymentStrategy'
 import {getFilesFromDirectories} from './utilities/fileUtils'
 import {PrivateKubectl} from './types/privatekubectl'
-import {parseAnnotations} from './types/annotations'
 
 export async function run() {
    // verify kubeconfig is set
@@ -19,9 +18,6 @@ export async function run() {
    // get inputs
    const action: Action | undefined = parseAction(
       core.getInput('action', {required: true})
-   )
-   const annotations = parseAnnotations(
-      core.getInput('annotations', {required: false})
    )
    const strategy = parseDeploymentStrategy(core.getInput('strategy'))
    const manifestsInput = core.getInput('manifests', {required: true})
@@ -51,15 +47,15 @@ export async function run() {
    // run action
    switch (action) {
       case Action.DEPLOY: {
-         await deploy(kubectl, fullManifestFilePaths, strategy, annotations)
+         await deploy(kubectl, fullManifestFilePaths, strategy)
          break
       }
       case Action.PROMOTE: {
-         await promote(kubectl, fullManifestFilePaths, strategy, annotations)
+         await promote(kubectl, fullManifestFilePaths, strategy)
          break
       }
       case Action.REJECT: {
-         await reject(kubectl, fullManifestFilePaths, strategy, annotations)
+         await reject(kubectl, fullManifestFilePaths, strategy)
          break
       }
       default: {
