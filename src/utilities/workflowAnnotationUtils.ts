@@ -37,7 +37,11 @@ export function getWorkflowAnnotationKeyLabel(): string {
  * @returns cleaned label
  */
 export function cleanLabel(label: string): string {
-   const removedInvalidChars = label.replace(/[^-A-Za-z0-9_.]/gi, '')
+   let removedInvalidChars = label
+      .replace(/\s/gi, '_')
+      .replace(/[\/\\\|]/gi, '-')
+      .replace(/[^-A-Za-z0-9_.]/gi, '')
+
    const regex = /([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9]/
    return regex.exec(removedInvalidChars)[0] || ''
 }
