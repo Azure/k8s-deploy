@@ -13,7 +13,6 @@ permissions:
   actions: read
 ```
 
-
 ## Action capabilities
 
 Following are the key capabilities of this action:
