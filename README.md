@@ -220,7 +220,7 @@ To promote/reject the canary created by the above snippet, the following YAML sn
         dir/manifestsDirectory
      strategy: canary
      traffic-split-method: smi
-     action: reject # substitute reject if you want to reject
+     action: reject # substitute promote if you want to promote
 ```
 
 ### Blue-Green deployment with different route methods
