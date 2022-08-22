@@ -8,9 +8,9 @@ This action requires the following permissions from your workflow:
 
 ```yaml
 permissions:
-  id-token: write
-  contents: read
-  actions: read
+   id-token: write
+   contents: read
+   actions: read
 ```
 
 ## Action capabilities
