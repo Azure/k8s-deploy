@@ -1,6 +1,6 @@
 blank_issues_enabled: false
 contact_links:
-   - name: GitHub Action "k8s-create-secret" Support
-     url: https://github.com/Azure/k8s-create-secret
-     security: https://github.com/Azure/k8s-create-secret/blob/main/SECURITY.md
+   - name: GitHub Action "k8s-deploy" Support
+     url: https://github.com/Azure/k8s-deploy
+     security: https://github.com/Azure/k8s-deploy/blob/main/SECURITY.md
      about: Please ask and answer questions here.
