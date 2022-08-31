@@ -4,6 +4,15 @@ This action is used to deploy manifests to Kubernetes clusters. It requires that
 
 If you are looking to automate your workflows to deploy to [Azure Web Apps](https://azure.microsoft.com/en-us/services/app-service/web/) and [Azure Web App for Containers](https://azure.microsoft.com/en-us/services/app-service/containers/), consider using [`Azure/webapps-deploy`](https://github.com/Azure/webapps-deploy) action.
 
+This action requires the following permissions from your workflow:
+
+```yaml
+permissions:
+   id-token: write
+   contents: read
+   actions: read
+```
+
 ## Action capabilities
 
 Following are the key capabilities of this action:
