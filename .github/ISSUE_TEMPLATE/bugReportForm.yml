@@ -1,0 +1,37 @@
+name: Bug Report
+description: File a bug report specifying all inputs you provided for the action, we will respond to this thread with any questions.
+title: 'Bug: '
+labels: ['bug', 'triage']
+assignees: '@Azure/aks-atlanta'
+body:
+   - type: input
+     id: What-happened
+     attributes:
+        label: What happened?
+        description: Tell us what happened and how is it different from the expected?
+        placeholder: Tell us what you see!
+     validations:
+        required: true
+   - type: checkboxes
+     id: Version
+     attributes:
+        label: Version
+        options:
+           - label: I am using the latest version
+             required: true
+   - type: input
+     id: Runner
+     attributes:
+        label: Runner
+        description: What runner are you using?
+        placeholder: Mention the runner info (self-hosted, operating system)
+     validations:
+        required: true
+   - type: input
+     id: Logs
+     attributes:
+        label: Relevant log output
+        description: Run in debug mode for the most verbose logs. Please feel free to attach a screenshot of the logs
+        render: shell
+     validations:
+        required: true
