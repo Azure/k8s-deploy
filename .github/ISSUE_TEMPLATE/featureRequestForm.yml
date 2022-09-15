@@ -4,8 +4,8 @@ title: 'Feature Request: '
 labels: ['Feature']
 assignees: '@Azure/aks-atlanta'
 body:
-   - type: input
-     id: Feature request
+   - type: textarea
+     id: Feature_request
      attributes:
         label: Feature request
         description: Provide example functionality and links to relevant docs
