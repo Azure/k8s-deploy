@@ -56,5 +56,5 @@ export async function deployPodCanary(
 
 function calculateReplicaCountForCanary(inputObject: any, percentage: number) {
    const inputReplicaCount = getReplicaCount(inputObject)
-   return Math.min(1, Math.round((inputReplicaCount * percentage) / 100))
+   return Math.max(1, Math.round((inputReplicaCount * percentage) / 100))
 }
