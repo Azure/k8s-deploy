@@ -2,6 +2,7 @@ import {Kubectl} from '../../types/kubectl'
 import * as fs from 'fs'
 import * as yaml from 'js-yaml'
 import * as core from '@actions/core'
+import {ExecOutput} from '@actions/exec'
 import {
    isDeploymentEntity,
    isServiceEntity,
@@ -79,7 +80,12 @@ export async function fetchResource(
    kind: string,
    name: string
 ) {
-   const result = await kubectl.getResource(kind, name)
+   let result: ExecOutput
+   try {
+      result = await kubectl.getResource(kind, name)
+   } catch (e) {
+      core.debug(`detected error while fetching resources: ${e}`)
+   }
 
    if (!result || result?.stderr) {
       return null

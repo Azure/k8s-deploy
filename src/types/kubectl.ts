@@ -174,6 +174,7 @@ export class Kubectl {
       }
       core.debug(`Kubectl run with command: ${this.kubectlPath} ${args}`)
 
+      // TODO: eventually refactor to use something like this/the errorable pattern
       // let toReturn: ExecOutput
       // await getExecOutput(this.kubectlPath, args, {
       //    silent,
