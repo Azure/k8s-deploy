@@ -143,17 +143,16 @@ export class Kubectl {
 
    public async getResource(
       resourceType: string,
-      name: string
+      name: string,
+      silentFailure: boolean = false
    ): Promise<ExecOutput> {
       core.debug(
          'fetching resource of type ' + resourceType + ' and name ' + name
       )
-      return await this.execute([
-         'get',
-         `${resourceType}/${name}`,
-         '-o',
-         'json'
-      ])
+      return await this.execute(
+         ['get', `${resourceType}/${name}`, '-o', 'json'],
+         silentFailure
+      )
    }
 
    public executeCommand(command: string, args?: string) {
@@ -175,20 +174,23 @@ export class Kubectl {
       }
       core.debug(`Kubectl run with command: ${this.kubectlPath} ${args}`)
 
-      let toReturn: ExecOutput
-      await getExecOutput(this.kubectlPath, args, {
+      // let toReturn: ExecOutput
+      // await getExecOutput(this.kubectlPath, args, {
+      //    silent,
+      //    failOnStdErr: false
+      // })
+      //    .then((output) => {
+      //       toReturn = output
+      //       core.debug(`got exec output: ${toReturn}`)
+      //    })
+      //    .catch((error: Error) => {
+      //       core.debug(`encountered error: ${error} ` + JSON.stringify(error))
+      //    })
+
+      return await getExecOutput(this.kubectlPath, args, {
          silent,
          failOnStdErr: false
       })
-         .then((output) => {
-            toReturn = output
-            core.debug(`got exec output: ${toReturn}`)
-         })
-         .catch((error: Error) => {
-            core.debug(`encountered error: ${error} ` + JSON.stringify(error))
-         })
-
-      return toReturn
    }
 }
 
