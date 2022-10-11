@@ -144,6 +144,9 @@ export class Kubectl {
       resourceType: string,
       name: string
    ): Promise<ExecOutput> {
+      core.debug(
+         'fetching resource of type ' + resourceType + ' and name ' + name
+      )
       return await this.execute([
          'get',
          `${resourceType}/${name}`,

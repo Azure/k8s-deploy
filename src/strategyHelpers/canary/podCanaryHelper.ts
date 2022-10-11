@@ -90,5 +90,5 @@ export async function deployPodCanary(filePaths: string[], kubectl: Kubectl) {
 
 function calculateReplicaCountForCanary(inputObject: any, percentage: number) {
    const inputReplicaCount = getReplicaCount(inputObject)
-   return Math.round((inputReplicaCount * percentage) / 100)
+   return Math.min(1, Math.round((inputReplicaCount * percentage) / 100))
 }
