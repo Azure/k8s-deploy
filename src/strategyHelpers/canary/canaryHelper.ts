@@ -80,7 +80,6 @@ export async function fetchResource(
    name: string
 ) {
    const result = await kubectl.getResource(kind, name)
-   core.debug('result from canary fetch resource: ' + JSON.stringify(result))
 
    if (!result || result?.stderr) {
       return null

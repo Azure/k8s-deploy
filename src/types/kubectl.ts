@@ -173,7 +173,18 @@ export class Kubectl {
          args = args.concat(['--namespace', this.namespace])
       }
       core.debug(`Kubectl run with command: ${this.kubectlPath} ${args}`)
-      return await getExecOutput(this.kubectlPath, args, {silent})
+
+      const execResult = await getExecOutput(this.kubectlPath, args, {
+         silent,
+         failOnStdErr: false
+      })
+
+      core.debug('result from execute ' + JSON.stringify(execResult))
+
+      return await getExecOutput(this.kubectlPath, args, {
+         silent,
+         failOnStdErr: false
+      })
    }
 }
 
