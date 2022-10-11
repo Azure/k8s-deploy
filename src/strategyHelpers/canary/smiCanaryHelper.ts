@@ -13,7 +13,11 @@ import {inputAnnotations} from '../../inputUtils'
 const TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX = '-workflow-rollout'
 const TRAFFIC_SPLIT_OBJECT = 'TrafficSplit'
 
-export async function deploySMICanary(filePaths: string[], kubectl: Kubectl) {
+export async function deploySMICanary(
+   filePaths: string[],
+   kubectl: Kubectl,
+   stable: boolean = false
+) {
    const canaryReplicaCount = parseInt(
       core.getInput('baseline-and-canary-replicas')
    )
@@ -28,45 +32,12 @@ export async function deploySMICanary(filePaths: string[], kubectl: Kubectl) {
          const kind = inputObject.kind
 
          if (isDeploymentEntity(kind)) {
-            const stableObject = canaryDeploymentHelper.fetchResource(
-               kubectl,
-               kind,
-               name
+            core.debug('Creating canary object')
+            const newCanaryObject = canaryDeploymentHelper.getNewCanaryResource(
+               inputObject,
+               canaryReplicaCount
             )
-
-            if (!stableObject) {
-               core.debug(
-                  'Stable object not found. Creating only canary object'
-               )
-               const newCanaryObject =
-                  canaryDeploymentHelper.getNewCanaryResource(
-                     inputObject,
-                     canaryReplicaCount
-                  )
-               newObjectsList.push(newCanaryObject)
-            } else {
-               if (
-                  !canaryDeploymentHelper.isResourceMarkedAsStable(stableObject)
-               ) {
-                  throw Error(`StableSpecSelectorNotExist : ${name}`)
-               }
-
-               core.debug(
-                  'Stable object found. Creating canary and baseline objects'
-               )
-               const newCanaryObject =
-                  canaryDeploymentHelper.getNewCanaryResource(
-                     inputObject,
-                     canaryReplicaCount
-                  )
-               const newBaselineObject =
-                  canaryDeploymentHelper.getNewBaselineResource(
-                     stableObject,
-                     canaryReplicaCount
-                  )
-               newObjectsList.push(newCanaryObject)
-               newObjectsList.push(newBaselineObject)
-            }
+            newObjectsList.push(newCanaryObject)
          } else {
             // Update non deployment entity as it is
             newObjectsList.push(inputObject)

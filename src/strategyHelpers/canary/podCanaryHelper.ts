@@ -8,7 +8,11 @@ import * as canaryDeploymentHelper from './canaryHelper'
 import {isDeploymentEntity} from '../../types/kubernetesTypes'
 import {getReplicaCount} from '../../utilities/manifestUpdateUtils'
 
-export async function deployPodCanary(filePaths: string[], kubectl: Kubectl) {
+export async function deployPodCanary(
+   filePaths: string[],
+   kubectl: Kubectl,
+   stable: boolean = false
+) {
    const newObjectsList = []
    const percentage = parseInt(core.getInput('percentage'))
 
@@ -22,7 +26,7 @@ export async function deployPodCanary(filePaths: string[], kubectl: Kubectl) {
          const name = inputObject.metadata.name
          const kind = inputObject.kind
 
-         if (isDeploymentEntity(kind)) {
+         if (!stable && isDeploymentEntity(kind)) {
             core.debug('Calculating replica count for canary')
             const canaryReplicaCount = calculateReplicaCountForCanary(
                inputObject,
@@ -30,49 +34,11 @@ export async function deployPodCanary(filePaths: string[], kubectl: Kubectl) {
             )
             core.debug('Replica count is ' + canaryReplicaCount)
 
-            // Get stable object
-            core.debug('Querying stable object')
-            const stableObject = await canaryDeploymentHelper.fetchResource(
-               kubectl,
-               kind,
-               name
+            const newCanaryObject = canaryDeploymentHelper.getNewCanaryResource(
+               inputObject,
+               canaryReplicaCount
             )
-
-            if (!stableObject) {
-               core.debug('Stable object not found. Creating canary object')
-               const newCanaryObject =
-                  canaryDeploymentHelper.getNewCanaryResource(
-                     inputObject,
-                     canaryReplicaCount
-                  )
-               newObjectsList.push(newCanaryObject)
-            } else {
-               core.debug(
-                  'Creating canary and baseline objects. Stable object found: ' +
-                     JSON.stringify(stableObject)
-               )
-
-               const newCanaryObject =
-                  canaryDeploymentHelper.getNewCanaryResource(
-                     inputObject,
-                     canaryReplicaCount
-                  )
-               core.debug(
-                  'New canary object: ' + JSON.stringify(newCanaryObject)
-               )
-
-               const newBaselineObject =
-                  canaryDeploymentHelper.getNewBaselineResource(
-                     stableObject,
-                     canaryReplicaCount
-                  )
-               core.debug(
-                  'New baseline object: ' + JSON.stringify(newBaselineObject)
-               )
-
-               newObjectsList.push(newCanaryObject)
-               newObjectsList.push(newBaselineObject)
-            }
+            newObjectsList.push(newCanaryObject)
          } else {
             // update non deployment entity as it is
             newObjectsList.push(inputObject)
