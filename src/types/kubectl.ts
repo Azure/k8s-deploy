@@ -185,7 +185,7 @@ export class Kubectl {
             core.debug(`got exec output: ${toReturn}`)
          })
          .catch((error: Error) => {
-            core.debug('encountered error: ' + JSON.stringify(error))
+            core.debug(`encountered error: ${error} ` + JSON.stringify(error))
          })
 
       return toReturn
