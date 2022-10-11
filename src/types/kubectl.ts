@@ -3,6 +3,7 @@ import {createInlineArray} from '../utilities/arrayUtils'
 import * as core from '@actions/core'
 import * as toolCache from '@actions/tool-cache'
 import * as io from '@actions/io'
+import {exec} from 'child_process'
 
 export interface Resource {
    name: string
@@ -174,17 +175,20 @@ export class Kubectl {
       }
       core.debug(`Kubectl run with command: ${this.kubectlPath} ${args}`)
 
-      const execResult = await getExecOutput(this.kubectlPath, args, {
+      let toReturn: ExecOutput
+      await getExecOutput(this.kubectlPath, args, {
          silent,
          failOnStdErr: false
       })
+         .then((output) => {
+            toReturn = output
+            core.debug(`got exec output: ${toReturn}`)
+         })
+         .catch((error: Error) => {
+            core.debug('encountered error: ' + JSON.stringify(error))
+         })
 
-      core.debug('result from execute ' + JSON.stringify(execResult))
-
-      return await getExecOutput(this.kubectlPath, args, {
-         silent,
-         failOnStdErr: false
-      })
+      return toReturn
    }
 }
 
