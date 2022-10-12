@@ -25,9 +25,9 @@ export async function deploySMICanary(
       throw Error('Baseline-and-canary-replicas must be between 1 and 100')
 
    const newObjectsList = []
-   filePaths.forEach((filePath: string) => {
+   filePaths.forEach(async (filePath: string) => {
       const fileContents = fs.readFileSync(filePath).toString()
-      yaml.safeLoadAll(fileContents, (inputObject) => {
+      yaml.safeLoadAll(fileContents, async (inputObject) => {
          const name = inputObject.metadata.name
          const kind = inputObject.kind
 
@@ -39,7 +39,7 @@ export async function deploySMICanary(
             )
             newObjectsList.push(newCanaryObject)
 
-            const stableObject = canaryDeploymentHelper.fetchResource(
+            const stableObject = await canaryDeploymentHelper.fetchResource(
                kubectl,
                kind,
                name
