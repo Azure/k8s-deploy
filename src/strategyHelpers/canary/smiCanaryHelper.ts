@@ -54,7 +54,7 @@ export async function deploySMICanary(
 
 async function createCanaryService(kubectl: Kubectl, filePaths: string[]) {
    const newObjectsList = []
-   const trafficObjectsList = []
+   const trafficObjectsList: string[] = []
 
    for (const filePath of filePaths) {
       const fileContents = fs.readFileSync(filePath).toString()
@@ -126,7 +126,7 @@ async function createCanaryService(kubectl: Kubectl, filePaths: string[]) {
                         name
                   )
                   trafficObjectsList.push(
-                     updateTrafficSplitObject(kubectl, name)
+                     await updateTrafficSplitObject(kubectl, name)
                   )
                }
             }
@@ -201,7 +201,7 @@ async function updateTrafficSplitObject(
    kubectl: Kubectl,
    serviceName: string
 ): Promise<string> {
-   const percentage = parseInt(core.getInput('percentage'))
+   const percentage = parseInt(core.getInput('percentage', {required: true}))
    if (percentage < 0 || percentage > 100)
       throw Error('Percentage must be between 0 and 100')
 
