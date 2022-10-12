@@ -44,7 +44,7 @@ export async function deploySMICanary(
                kind,
                name
             )
-            if (stableObject) {
+            if (stableObject != undefined) {
                core.debug('Stable object found. Creating baseline objects')
                const newBaselineObject =
                   canaryDeploymentHelper.getNewBaselineResource(
@@ -93,7 +93,7 @@ async function createCanaryService(kubectl: Kubectl, filePaths: string[]) {
                kind,
                canaryDeploymentHelper.getStableResourceName(name)
             )
-            if (!stableObject) {
+            if (stableObject == undefined) {
                const newStableServiceObject =
                   canaryDeploymentHelper.getStableResource(inputObject)
                newObjectsList.push(newStableServiceObject)
@@ -116,7 +116,7 @@ async function createCanaryService(kubectl: Kubectl, filePaths: string[]) {
                   getTrafficSplitResourceName(name)
                )
 
-               if (trafficObject) {
+               if (trafficObject != undefined) {
                   const trafficJObject = JSON.parse(
                      JSON.stringify(trafficObject)
                   )

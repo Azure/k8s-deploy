@@ -48,7 +48,7 @@ export async function deployPodCanary(
                kind,
                name
             )
-            if (stableObject) {
+            if (stableObject != undefined) {
                const newBaselineObject =
                   canaryDeploymentHelper.getNewBaselineResource(
                      stableObject,
