@@ -42,7 +42,7 @@ export async function deploySMICanary(
             const stableObject = await canaryDeploymentHelper.fetchResource(
                kubectl,
                kind,
-               name
+               canaryDeploymentHelper.getStableResourceName(name)
             )
             if (stableObject != undefined) {
                core.debug(
