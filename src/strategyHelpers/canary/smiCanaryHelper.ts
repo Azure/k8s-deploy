@@ -57,6 +57,10 @@ export async function deploySMICanary(
                   )
                newObjectsList.push(newBaselineObject)
             }
+         } else if (isDeploymentEntity(kind)) {
+            const stableDeployment =
+               canaryDeploymentHelper.getStableResource(inputObject)
+            newObjectsList.push(stableDeployment)
          } else {
             // Update non deployment entity or stable deployment as it is
             newObjectsList.push(inputObject)
