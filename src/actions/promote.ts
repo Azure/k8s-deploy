@@ -79,7 +79,8 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
       )
       await SMICanaryDeploymentHelper.deploySMICanary(
          manifestFilesForDeployment,
-         kubectl
+         kubectl,
+         true
       )
       core.endGroup()
 

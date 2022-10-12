@@ -13,7 +13,11 @@ import {inputAnnotations} from '../../inputUtils'
 const TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX = '-workflow-rollout'
 const TRAFFIC_SPLIT_OBJECT = 'TrafficSplit'
 
-export async function deploySMICanary(filePaths: string[], kubectl: Kubectl) {
+export async function deploySMICanary(
+   filePaths: string[],
+   kubectl: Kubectl,
+   onlyDeployStable: boolean = false
+) {
    const canaryReplicaCount = parseInt(
       core.getInput('baseline-and-canary-replicas', {required: true})
    )
@@ -27,15 +31,30 @@ export async function deploySMICanary(filePaths: string[], kubectl: Kubectl) {
          const name = inputObject.metadata.name
          const kind = inputObject.kind
 
-         if (isDeploymentEntity(kind)) {
+         if (!onlyDeployStable && isDeploymentEntity(kind)) {
             core.debug('Creating canary object')
             const newCanaryObject = canaryDeploymentHelper.getNewCanaryResource(
                inputObject,
                canaryReplicaCount
             )
             newObjectsList.push(newCanaryObject)
+
+            const stableObject = canaryDeploymentHelper.fetchResource(
+               kubectl,
+               kind,
+               name
+            )
+            if (stableObject) {
+               core.debug('Stable object found. Creating baseline objects')
+               const newBaselineObject =
+                  canaryDeploymentHelper.getNewBaselineResource(
+                     stableObject,
+                     canaryReplicaCount
+                  )
+               newObjectsList.push(newBaselineObject)
+            }
          } else {
-            // Update non deployment entity as it is
+            // Update non deployment entity or stable deployment as it is
             newObjectsList.push(inputObject)
          }
       })

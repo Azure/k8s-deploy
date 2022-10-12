@@ -11,7 +11,7 @@ import {getReplicaCount} from '../../utilities/manifestUpdateUtils'
 export async function deployPodCanary(
    filePaths: string[],
    kubectl: Kubectl,
-   stable: boolean = false
+   onlyDeployStable: boolean = false
 ) {
    const newObjectsList = []
    const percentage = parseInt(core.getInput('percentage'))
@@ -26,7 +26,7 @@ export async function deployPodCanary(
          const name = inputObject.metadata.name
          const kind = inputObject.kind
 
-         if (!stable && isDeploymentEntity(kind)) {
+         if (!onlyDeployStable && isDeploymentEntity(kind)) {
             core.debug('Calculating replica count for canary')
             const canaryReplicaCount = calculateReplicaCountForCanary(
                inputObject,
@@ -39,6 +39,26 @@ export async function deployPodCanary(
                canaryReplicaCount
             )
             newObjectsList.push(newCanaryObject)
+
+            // if there's already a stable object, deploy baseline as well
+            // TODO: get rid of baseline objects entirely
+
+            const stableObject = await canaryDeploymentHelper.fetchResource(
+               kubectl,
+               kind,
+               name
+            )
+            if (stableObject) {
+               const newBaselineObject =
+                  canaryDeploymentHelper.getNewBaselineResource(
+                     stableObject,
+                     canaryReplicaCount
+                  )
+               core.debug(
+                  'New baseline object: ' + JSON.stringify(newBaselineObject)
+               )
+               newObjectsList.push(newBaselineObject)
+            }
          } else {
             // update non deployment entity as it is
             newObjectsList.push(inputObject)
