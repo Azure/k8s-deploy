@@ -13,11 +13,7 @@ import {inputAnnotations} from '../../inputUtils'
 const TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX = '-workflow-rollout'
 const TRAFFIC_SPLIT_OBJECT = 'TrafficSplit'
 
-export async function deploySMICanary(
-   filePaths: string[],
-   kubectl: Kubectl,
-   stable: boolean = false
-) {
+export async function deploySMICanary(filePaths: string[], kubectl: Kubectl) {
    const canaryReplicaCount = parseInt(
       core.getInput('baseline-and-canary-replicas', {required: true})
    )
@@ -44,7 +40,7 @@ export async function deploySMICanary(
          }
       })
    })
-
+   core.debug('deploying canary objects...')
    const newFilePaths = fileHelper.writeObjectsToFile(newObjectsList)
    const forceDeployment = core.getInput('force').toLowerCase() === 'true'
    const result = await kubectl.apply(newFilePaths, forceDeployment)
@@ -64,6 +60,7 @@ async function createCanaryService(kubectl: Kubectl, filePaths: string[]) {
          const kind = inputObject.kind
 
          if (isServiceEntity(kind)) {
+            core.debug(`Creating services for ${kind} ${name}`)
             const newCanaryServiceObject =
                canaryDeploymentHelper.getNewCanaryResource(inputObject)
             newObjectsList.push(newCanaryServiceObject)
