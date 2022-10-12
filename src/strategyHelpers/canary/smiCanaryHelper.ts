@@ -45,7 +45,11 @@ export async function deploySMICanary(
                name
             )
             if (stableObject != undefined) {
-               core.debug('Stable object found. Creating baseline objects')
+               core.debug(
+                  `Stable object found: \n ${JSON.stringify(
+                     stableObject
+                  )}. \n Creating baseline objects`
+               )
                const newBaselineObject =
                   canaryDeploymentHelper.getNewBaselineResource(
                      stableObject,
