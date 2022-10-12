@@ -19,10 +19,10 @@ export async function deploySMICanary(
    stable: boolean = false
 ) {
    const canaryReplicaCount = parseInt(
-      core.getInput('baseline-and-canary-replicas')
+      core.getInput('baseline-and-canary-replicas', {required: true})
    )
-   if (canaryReplicaCount < 0 || canaryReplicaCount > 100)
-      throw Error('Baseline-and-canary-replicas must be between 0 and 100')
+   if (!(canaryReplicaCount > 0 && canaryReplicaCount < 100))
+      throw Error('Baseline-and-canary-replicas must be between 1 and 100')
 
    const newObjectsList = []
    filePaths.forEach((filePath: string) => {
@@ -212,9 +212,9 @@ async function updateTrafficSplitObject(
    core.debug(
       'Creating the traffic object with canary weight: ' +
          baselineAndCanaryWeight +
-         ',baseling weight: ' +
+         ', baseline weight: ' +
          baselineAndCanaryWeight +
-         ',stable: ' +
+         ', stable weight: ' +
          stableDeploymentWeight
    )
    return await createTrafficSplitManifestFile(

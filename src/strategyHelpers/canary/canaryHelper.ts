@@ -31,7 +31,7 @@ export async function deleteCanaryDeployment(
    includeServices: boolean
 ) {
    if (manifestFilePaths == null || manifestFilePaths.length == 0) {
-      throw new Error('Manifest file not found')
+      throw new Error('Manifest files for deleting canary deployment not found')
    }
 
    await cleanUpCanary(kubectl, manifestFilePaths, includeServices)
@@ -99,7 +99,7 @@ export async function fetchResource(
          return resource
       } catch (ex) {
          core.debug(
-            `Exception occurred while Parsing ${resource} in JSON object: ${ex}`
+            `Exception occurred while parsing ${resource} in JSON object: ${ex}`
          )
       }
    }
