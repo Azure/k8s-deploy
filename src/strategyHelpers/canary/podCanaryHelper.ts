@@ -49,6 +49,9 @@ export async function deployPodCanary(
                name
             )
             if (stableObject != undefined) {
+               core.debug(
+                  `Stable object found for ${kind} ${name}. Creating baseline objects`
+               )
                const newBaselineObject =
                   canaryDeploymentHelper.getNewBaselineResource(
                      stableObject,

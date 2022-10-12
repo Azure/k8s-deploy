@@ -46,9 +46,7 @@ export async function deploySMICanary(
             )
             if (stableObject != undefined) {
                core.debug(
-                  `Stable object found: \n ${JSON.stringify(
-                     stableObject
-                  )}. \n Creating baseline objects`
+                  `Stable object found for ${kind} ${name}. Creating baseline objects`
                )
                const newBaselineObject =
                   canaryDeploymentHelper.getNewBaselineResource(
@@ -67,7 +65,9 @@ export async function deploySMICanary(
          }
       })
    })
-   core.debug('deploying canary objects...')
+   core.debug(
+      `deploying canary objects with SMI: \n ${JSON.stringify(newObjectsList)}`
+   )
    const newFilePaths = fileHelper.writeObjectsToFile(newObjectsList)
    const forceDeployment = core.getInput('force').toLowerCase() === 'true'
    const result = await kubectl.apply(newFilePaths, forceDeployment)
