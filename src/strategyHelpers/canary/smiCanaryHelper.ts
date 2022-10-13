@@ -44,7 +44,8 @@ export async function deploySMICanary(
                kind,
                canaryDeploymentHelper.getStableResourceName(name)
             )
-            if (stableObject != undefined) {
+            //  THIS SEEMS TO BE FAILING
+            if (stableObject) {
                core.debug(
                   `Stable object found for ${kind} ${name}. Creating baseline objects`
                )
@@ -52,7 +53,7 @@ export async function deploySMICanary(
                   canaryDeploymentHelper.getNewBaselineResource(
                      stableObject,
                      canaryReplicaCount
-                  )
+                  ) // WHY ISN'T THE PUSH HAPPENING
                newObjectsList.push(newBaselineObject)
             }
          } else if (isDeploymentEntity(kind)) {
@@ -124,7 +125,7 @@ async function createCanaryService(kubectl: Kubectl, filePaths: string[]) {
                   getTrafficSplitResourceName(name)
                )
 
-               if (trafficObject != undefined) {
+               if (trafficObject) {
                   const trafficJObject = JSON.parse(
                      JSON.stringify(trafficObject)
                   )

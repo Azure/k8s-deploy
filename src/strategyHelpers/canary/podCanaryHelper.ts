@@ -48,7 +48,7 @@ export async function deployPodCanary(
                kind,
                name
             )
-            if (stableObject != undefined) {
+            if (stableObject) {
                core.debug(
                   `Stable object found for ${kind} ${name}. Creating baseline objects`
                )
