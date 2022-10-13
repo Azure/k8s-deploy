@@ -117,6 +117,26 @@ export function getStableResourceName(name: string) {
    return name + STABLE_SUFFIX
 }
 
+export function getBaselineDeploymentFromStableDeployment(
+   inputObject: any,
+   replicaCount: number
+): object {
+   // TODO: REFACTOR TO MAKE EVERYTHING TYPE SAFE
+   const oldName = inputObject.metadata.name
+   const newName =
+      oldName.substring(0, oldName.length - STABLE_SUFFIX.length) +
+      BASELINE_SUFFIX
+
+   const newObject = getNewCanaryObject(
+      inputObject,
+      replicaCount,
+      BASELINE_LABEL_VALUE
+   ) as any
+   newObject.metadata.name = newName
+
+   return newObject
+}
+
 function getNewCanaryObject(
    inputObject: any,
    replicas: number,

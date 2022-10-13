@@ -54,7 +54,7 @@ export async function deployPodCanary(
                )
                const newBaselineObject =
                   canaryDeploymentHelper.getNewBaselineResource(
-                     inputObject,
+                     stableObject,
                      canaryReplicaCount
                   )
                core.debug(
