@@ -27,7 +27,8 @@ export async function deploySMICanary(
    const newObjectsList = []
    for await (const filePath of filePaths) {
       const fileContents = fs.readFileSync(filePath).toString()
-      await yaml.safeLoadAll(fileContents, async (inputObject) => {
+      const inputObjects = yaml.safeLoadAll(fileContents)
+      for (const inputObject of inputObjects) {
          const name = inputObject.metadata.name
          const kind = inputObject.kind
 
@@ -63,7 +64,7 @@ export async function deploySMICanary(
             // Update non deployment entity or stable deployment as it is
             newObjectsList.push(inputObject)
          }
-      })
+      }
    }
    core.debug(
       `deploying canary objects with SMI: \n ${JSON.stringify(newObjectsList)}`
@@ -101,7 +102,7 @@ async function createCanaryService(kubectl: Kubectl, filePaths: string[]) {
                kind,
                canaryDeploymentHelper.getStableResourceName(name)
             )
-            if (stableObject == undefined) {
+            if (!stableObject) {
                const newStableServiceObject =
                   canaryDeploymentHelper.getStableResource(inputObject)
                newObjectsList.push(newStableServiceObject)
