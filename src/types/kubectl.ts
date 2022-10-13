@@ -189,8 +189,7 @@ export class Kubectl {
       //    })
 
       return await getExecOutput(this.kubectlPath, args, {
-         silent,
-         failOnStdErr: false
+         silent
       })
    }
 }
