@@ -21,8 +21,10 @@ export async function deploySMICanary(
 ) {
    const canaryReplicasInput = core.getInput('baseline-and-canary-replicas')
    let canaryReplicaCount
+   let calculateReplicas = true
    if (canaryReplicasInput !== '') {
       canaryReplicaCount = parseInt(canaryReplicasInput)
+      calculateReplicas = false
       core.debug(`read replica count ${canaryReplicaCount} from input`)
    }
 
@@ -38,7 +40,8 @@ export async function deploySMICanary(
          const kind = inputObject.kind
 
          if (!onlyDeployStable && isDeploymentEntity(kind)) {
-            if (!canaryReplicaCount) {
+            if (calculateReplicas) {
+               // calculate for each object
                const percentage = parseInt(
                   core.getInput('percentage', {required: true})
                )
