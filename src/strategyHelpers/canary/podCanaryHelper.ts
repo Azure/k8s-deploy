@@ -62,8 +62,12 @@ export async function deployPodCanary(
                )
                newObjectsList.push(newBaselineObject)
             }
+         } else if (isDeploymentEntity(kind)) {
+            const stableDeployment =
+               canaryDeploymentHelper.getStableResource(inputObject)
+            newObjectsList.push(stableDeployment)
          } else {
-            // update non deployment entity as it is
+            // deploy non deployment entity or regular deployments for promote as they are
             newObjectsList.push(inputObject)
          }
       }
