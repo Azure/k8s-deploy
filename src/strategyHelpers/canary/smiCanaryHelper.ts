@@ -6,6 +6,7 @@ import * as yaml from 'js-yaml'
 import * as fileHelper from '../../utilities/fileUtils'
 import * as kubectlUtils from '../../utilities/trafficSplitUtils'
 import * as canaryDeploymentHelper from './canaryHelper'
+import * as podCanaryHelper from './podCanaryHelper'
 import {isDeploymentEntity, isServiceEntity} from '../../types/kubernetesTypes'
 import {checkForErrors} from '../../utilities/kubectlUtils'
 import {inputAnnotations} from '../../inputUtils'
@@ -18,10 +19,13 @@ export async function deploySMICanary(
    kubectl: Kubectl,
    onlyDeployStable: boolean = false
 ) {
-   const canaryReplicaCount = parseInt(
-      core.getInput('baseline-and-canary-replicas', {required: true})
-   )
-   if (!(canaryReplicaCount > 0 && canaryReplicaCount < 100))
+   const canaryReplicasInput = core.getInput('baseline-and-canary-replicas')
+   let canaryReplicaCount
+   if (canaryReplicasInput !== '') {
+      canaryReplicaCount = parseInt(canaryReplicasInput)
+   }
+
+   if (canaryReplicaCount < 0 && canaryReplicaCount > 100)
       throw Error('Baseline-and-canary-replicas must be between 1 and 100')
 
    const newObjectsList = []
@@ -33,6 +37,17 @@ export async function deploySMICanary(
          const kind = inputObject.kind
 
          if (!onlyDeployStable && isDeploymentEntity(kind)) {
+            if (!canaryReplicaCount) {
+               const percentage = parseInt(
+                  core.getInput('percentage', {required: true})
+               )
+               canaryReplicaCount =
+                  podCanaryHelper.calculateReplicaCountForCanary(
+                     inputObject,
+                     percentage
+                  )
+            }
+
             core.debug('Creating canary object')
             const newCanaryObject = canaryDeploymentHelper.getNewCanaryResource(
                inputObject,

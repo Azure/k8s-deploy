@@ -14,7 +14,7 @@ export async function deployPodCanary(
    onlyDeployStable: boolean = false
 ) {
    const newObjectsList = []
-   const percentage = parseInt(core.getInput('percentage'))
+   const percentage = parseInt(core.getInput('percentage', {required: true}))
 
    if (percentage < 0 || percentage > 100)
       throw Error('Percentage must be between 0 and 100')
@@ -77,7 +77,10 @@ export async function deployPodCanary(
    return {result, newFilePaths: manifestFiles}
 }
 
-function calculateReplicaCountForCanary(inputObject: any, percentage: number) {
+export function calculateReplicaCountForCanary(
+   inputObject: any,
+   percentage: number
+) {
    const inputReplicaCount = getReplicaCount(inputObject)
    return Math.max(1, Math.round((inputReplicaCount * percentage) / 100))
 }
