@@ -23,6 +23,7 @@ export async function deploySMICanary(
    let canaryReplicaCount
    if (canaryReplicasInput !== '') {
       canaryReplicaCount = parseInt(canaryReplicasInput)
+      core.debug(`read replica count ${canaryReplicaCount} from input`)
    }
 
    if (canaryReplicaCount < 0 && canaryReplicaCount > 100)
@@ -46,6 +47,7 @@ export async function deploySMICanary(
                      inputObject,
                      percentage
                   )
+               core.debug(`calculated replica count ${canaryReplicaCount}`)
             }
 
             core.debug('Creating canary object')
