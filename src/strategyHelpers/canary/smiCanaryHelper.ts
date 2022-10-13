@@ -51,7 +51,7 @@ export async function deploySMICanary(
                )
                const newBaselineObject =
                   canaryDeploymentHelper.getNewBaselineResource(
-                     stableObject,
+                     inputObject,
                      canaryReplicaCount
                   )
                newObjectsList.push(newBaselineObject)
