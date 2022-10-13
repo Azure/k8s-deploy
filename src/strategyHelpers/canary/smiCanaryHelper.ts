@@ -25,9 +25,9 @@ export async function deploySMICanary(
       throw Error('Baseline-and-canary-replicas must be between 1 and 100')
 
    const newObjectsList = []
-   for (const filePath of filePaths) {
+   for await (const filePath of filePaths) {
       const fileContents = fs.readFileSync(filePath).toString()
-      yaml.safeLoadAll(fileContents, async (inputObject) => {
+      await yaml.safeLoadAll(fileContents, async (inputObject) => {
          const name = inputObject.metadata.name
          const kind = inputObject.kind
 
@@ -44,7 +44,6 @@ export async function deploySMICanary(
                kind,
                canaryDeploymentHelper.getStableResourceName(name)
             )
-            //  THIS SEEMS TO BE FAILING
             if (stableObject) {
                core.debug(
                   `Stable object found for ${kind} ${name}. Creating baseline objects`
@@ -53,7 +52,7 @@ export async function deploySMICanary(
                   canaryDeploymentHelper.getNewBaselineResource(
                      stableObject,
                      canaryReplicaCount
-                  ) // WHY ISN'T THE PUSH HAPPENING
+                  )
                newObjectsList.push(newBaselineObject)
             }
          } else if (isDeploymentEntity(kind)) {
