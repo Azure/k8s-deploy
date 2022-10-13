@@ -26,7 +26,7 @@ export async function deploySMICanary(
       canaryReplicaCount = parseInt(canaryReplicasInput)
       calculateReplicas = false
       core.debug(
-         `read replica count ${canaryReplicaCount} from input: ${canaryReplicaCount}`
+         `read replica count ${canaryReplicaCount} from input: ${canaryReplicasInput}`
       )
    }
 
