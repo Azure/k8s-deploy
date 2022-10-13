@@ -115,7 +115,7 @@ Following are the key capabilities of this action:
   </tr>
   <tr>
     <td>name</br></br>(Optional)</td>
-    <td>Resource group name - Only required if using private cluster</td>
+    <td>Name of the private cluster - Only required if using private cluster</td>
   </tr>
   <tr>
     <td>force</br></br>(Optional)</td>
