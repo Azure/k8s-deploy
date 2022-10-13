@@ -73,7 +73,7 @@ export async function deploySMICanary(
             }
          } else if (isDeploymentEntity(kind)) {
             core.debug(
-               `creating stable deployment with ${inputObject.spec.replicas} replicas: ${inputObject}`
+               `creating stable deployment with ${inputObject.spec.replicas} replicas`
             )
             const stableDeployment =
                canaryDeploymentHelper.getStableResource(inputObject)
