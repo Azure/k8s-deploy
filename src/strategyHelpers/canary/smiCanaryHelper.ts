@@ -23,6 +23,7 @@ export async function deploySMICanary(
    let canaryReplicaCount
    let calculateReplicas = true
    if (canaryReplicasInput !== '') {
+      core.debug('canary replicas input is ' + canaryReplicasInput)
       canaryReplicaCount = parseInt(canaryReplicasInput)
       calculateReplicas = false
       core.debug(
@@ -31,7 +32,7 @@ export async function deploySMICanary(
    }
 
    if (canaryReplicaCount < 0 && canaryReplicaCount > 100)
-      throw Error('Baseline-and-canary-replicas must be between 1 and 100')
+      throw Error('Baseline-and-canary-replicas must be between 0 and 100')
 
    const newObjectsList = []
    for await (const filePath of filePaths) {
