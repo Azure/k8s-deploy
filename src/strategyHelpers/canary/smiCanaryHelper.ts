@@ -25,7 +25,7 @@ export async function deploySMICanary(
       throw Error('Baseline-and-canary-replicas must be between 1 and 100')
 
    const newObjectsList = []
-   filePaths.forEach(async (filePath: string) => {
+   for (const filePath of filePaths) {
       const fileContents = fs.readFileSync(filePath).toString()
       yaml.safeLoadAll(fileContents, async (inputObject) => {
          const name = inputObject.metadata.name
@@ -65,7 +65,7 @@ export async function deploySMICanary(
             newObjectsList.push(inputObject)
          }
       })
-   })
+   }
    core.debug(
       `deploying canary objects with SMI: \n ${JSON.stringify(newObjectsList)}`
    )
