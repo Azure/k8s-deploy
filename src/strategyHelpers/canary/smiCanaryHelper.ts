@@ -72,6 +72,9 @@ export async function deploySMICanary(
                newObjectsList.push(newBaselineObject)
             }
          } else if (isDeploymentEntity(kind)) {
+            core.debug(
+               `creating stable deployment with ${inputObject.metadata.replicas} replicas`
+            )
             const stableDeployment =
                canaryDeploymentHelper.getStableResource(inputObject)
             newObjectsList.push(stableDeployment)

@@ -57,7 +57,9 @@ export function getStableResource(inputObject: any): object {
    const replicaCount = specContainsReplicas(inputObject.kind)
       ? inputObject.metadata.replicas
       : 0
-
+   core.debug(
+      `creating stable resource of kind ${inputObject.metadata.kind} with ${replicaCount} replicas`
+   )
    return getNewCanaryObject(inputObject, replicaCount, STABLE_LABEL_VALUE)
 }
 
