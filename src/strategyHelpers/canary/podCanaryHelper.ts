@@ -41,8 +41,6 @@ export async function deployPodCanary(
             newObjectsList.push(newCanaryObject)
 
             // if there's already a stable object, deploy baseline as well
-            // TODO: get rid of baseline objects entirely
-
             const stableObject = await canaryDeploymentHelper.fetchResource(
                kubectl,
                kind,

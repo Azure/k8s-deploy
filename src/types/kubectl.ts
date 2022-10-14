@@ -174,20 +174,6 @@ export class Kubectl {
       }
       core.debug(`Kubectl run with command: ${this.kubectlPath} ${args}`)
 
-      // TODO: eventually refactor to use something like this/the errorable pattern
-      // let toReturn: ExecOutput
-      // await getExecOutput(this.kubectlPath, args, {
-      //    silent,
-      //    failOnStdErr: false
-      // })
-      //    .then((output) => {
-      //       toReturn = output
-      //       core.debug(`got exec output: ${toReturn}`)
-      //    })
-      //    .catch((error: Error) => {
-      //       core.debug(`encountered error: ${error} ` + JSON.stringify(error))
-      //    })
-
       return await getExecOutput(this.kubectlPath, args, {
          silent
       })
