@@ -2,7 +2,6 @@ import {Kubectl} from '../../types/kubectl'
 import * as fs from 'fs'
 import * as yaml from 'js-yaml'
 import * as core from '@actions/core'
-import {ExecOutput} from '@actions/exec'
 import {
    isDeploymentEntity,
    isServiceEntity,
@@ -31,7 +30,7 @@ export async function deleteCanaryDeployment(
    includeServices: boolean
 ) {
    if (manifestFilePaths == null || manifestFilePaths.length == 0) {
-      throw new Error('Manifest files for deleting canary deployment not found')
+      throw new Error('Manifest file not found')
    }
 
    await cleanUpCanary(kubectl, manifestFilePaths, includeServices)
@@ -55,7 +54,7 @@ export function isResourceMarkedAsStable(inputObject: any): boolean {
 
 export function getStableResource(inputObject: any): object {
    const replicaCount = specContainsReplicas(inputObject.kind)
-      ? inputObject.spec.replicas
+      ? inputObject.metadata.replicas
       : 0
 
    return getNewCanaryObject(inputObject, replicaCount, STABLE_LABEL_VALUE)
@@ -80,12 +79,7 @@ export async function fetchResource(
    kind: string,
    name: string
 ) {
-   let result: ExecOutput
-   try {
-      result = await kubectl.getResource(kind, name)
-   } catch (e) {
-      core.debug(`detected error while fetching resources: ${e}`)
-   }
+   const result = await kubectl.getResource(kind, name)
 
    if (!result || result?.stderr) {
       return null
@@ -99,7 +93,7 @@ export async function fetchResource(
          return resource
       } catch (ex) {
          core.debug(
-            `Exception occurred while parsing ${resource} in JSON object: ${ex}`
+            `Exception occurred while Parsing ${resource} in JSON object: ${ex}`
          )
       }
    }
@@ -115,26 +109,6 @@ export function getBaselineResourceName(name: string) {
 
 export function getStableResourceName(name: string) {
    return name + STABLE_SUFFIX
-}
-
-export function getBaselineDeploymentFromStableDeployment(
-   inputObject: any,
-   replicaCount: number
-): object {
-   // TODO: REFACTOR TO MAKE EVERYTHING TYPE SAFE
-   const oldName = inputObject.metadata.name
-   const newName =
-      oldName.substring(0, oldName.length - STABLE_SUFFIX.length) +
-      BASELINE_SUFFIX
-
-   const newObject = getNewCanaryObject(
-      inputObject,
-      replicaCount,
-      BASELINE_LABEL_VALUE
-   ) as any
-   newObject.metadata.name = newName
-
-   return newObject
 }
 
 function getNewCanaryObject(

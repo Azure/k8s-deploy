@@ -8,13 +8,9 @@ import * as canaryDeploymentHelper from './canaryHelper'
 import {isDeploymentEntity} from '../../types/kubernetesTypes'
 import {getReplicaCount} from '../../utilities/manifestUpdateUtils'
 
-export async function deployPodCanary(
-   filePaths: string[],
-   kubectl: Kubectl,
-   onlyDeployStable: boolean = false
-) {
+export async function deployPodCanary(filePaths: string[], kubectl: Kubectl) {
    const newObjectsList = []
-   const percentage = parseInt(core.getInput('percentage', {required: true}))
+   const percentage = parseInt(core.getInput('percentage'))
 
    if (percentage < 0 || percentage > 100)
       throw Error('Percentage must be between 0 and 100')
@@ -26,7 +22,7 @@ export async function deployPodCanary(
          const name = inputObject.metadata.name
          const kind = inputObject.kind
 
-         if (!onlyDeployStable && isDeploymentEntity(kind)) {
+         if (isDeploymentEntity(kind)) {
             core.debug('Calculating replica count for canary')
             const canaryReplicaCount = calculateReplicaCountForCanary(
                inputObject,
@@ -34,22 +30,37 @@ export async function deployPodCanary(
             )
             core.debug('Replica count is ' + canaryReplicaCount)
 
-            const newCanaryObject = canaryDeploymentHelper.getNewCanaryResource(
-               inputObject,
-               canaryReplicaCount
-            )
-            newObjectsList.push(newCanaryObject)
-
-            // if there's already a stable object, deploy baseline as well
+            // Get stable object
+            core.debug('Querying stable object')
             const stableObject = await canaryDeploymentHelper.fetchResource(
                kubectl,
                kind,
                name
             )
-            if (stableObject) {
+
+            if (!stableObject) {
+               core.debug('Stable object not found. Creating canary object')
+               const newCanaryObject =
+                  canaryDeploymentHelper.getNewCanaryResource(
+                     inputObject,
+                     canaryReplicaCount
+                  )
+               newObjectsList.push(newCanaryObject)
+            } else {
                core.debug(
-                  `Stable object found for ${kind} ${name}. Creating baseline objects`
+                  'Creating canary and baseline objects. Stable object found: ' +
+                     JSON.stringify(stableObject)
                )
+
+               const newCanaryObject =
+                  canaryDeploymentHelper.getNewCanaryResource(
+                     inputObject,
+                     canaryReplicaCount
+                  )
+               core.debug(
+                  'New canary object: ' + JSON.stringify(newCanaryObject)
+               )
+
                const newBaselineObject =
                   canaryDeploymentHelper.getNewBaselineResource(
                      stableObject,
@@ -58,10 +69,12 @@ export async function deployPodCanary(
                core.debug(
                   'New baseline object: ' + JSON.stringify(newBaselineObject)
                )
+
+               newObjectsList.push(newCanaryObject)
                newObjectsList.push(newBaselineObject)
             }
          } else {
-            // deploy non deployment entity or regular deployments for promote as they are
+            // update non deployment entity as it is
             newObjectsList.push(inputObject)
          }
       }
@@ -75,10 +88,7 @@ export async function deployPodCanary(
    return {result, newFilePaths: manifestFiles}
 }
 
-export function calculateReplicaCountForCanary(
-   inputObject: any,
-   percentage: number
-) {
+function calculateReplicaCountForCanary(inputObject: any, percentage: number) {
    const inputReplicaCount = getReplicaCount(inputObject)
-   return Math.max(1, Math.round((inputReplicaCount * percentage) / 100))
+   return Math.round((inputReplicaCount * percentage) / 100)
 }

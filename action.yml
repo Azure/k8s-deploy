@@ -41,7 +41,7 @@ inputs:
    baseline-and-canary-replicas:
       description: 'Baseline and canary replicas count. Valid value between 0 to 100 (inclusive)'
       required: false
-      default: ''
+      default: 0
    percentage:
       description: 'Percentage of traffic redirect to canary deployment'
       required: false

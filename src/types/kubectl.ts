@@ -3,7 +3,6 @@ import {createInlineArray} from '../utilities/arrayUtils'
 import * as core from '@actions/core'
 import * as toolCache from '@actions/tool-cache'
 import * as io from '@actions/io'
-import {exec} from 'child_process'
 
 export interface Resource {
    name: string
@@ -143,16 +142,14 @@ export class Kubectl {
 
    public async getResource(
       resourceType: string,
-      name: string,
-      silentFailure: boolean = false
+      name: string
    ): Promise<ExecOutput> {
-      core.debug(
-         'fetching resource of type ' + resourceType + ' and name ' + name
-      )
-      return await this.execute(
-         ['get', `${resourceType}/${name}`, '-o', 'json'],
-         silentFailure
-      )
+      return await this.execute([
+         'get',
+         `${resourceType}/${name}`,
+         '-o',
+         'json'
+      ])
    }
 
    public executeCommand(command: string, args?: string) {
@@ -173,10 +170,7 @@ export class Kubectl {
          args = args.concat(['--namespace', this.namespace])
       }
       core.debug(`Kubectl run with command: ${this.kubectlPath} ${args}`)
-
-      return await getExecOutput(this.kubectlPath, args, {
-         silent
-      })
+      return await getExecOutput(this.kubectlPath, args, {silent})
    }
 }
 
