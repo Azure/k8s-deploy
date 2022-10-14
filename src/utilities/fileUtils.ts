@@ -1,8 +1,12 @@
 import * as fs from 'fs'
+import * as https from 'https'
 import * as path from 'path'
 import * as core from '@actions/core'
 import * as os from 'os'
 import {getCurrentTime} from './timeUtils'
+import {isHttpUrl} from './githubUtils'
+
+const urlFileKind = 'urlfile'
 
 export function getTempDirectory(): string {
    return process.env['runner.tempDirectory'] || os.tmpdir()
@@ -62,12 +66,29 @@ function getManifestFileName(kind: string, name: string) {
    return path.join(tempDirectory, path.basename(filePath))
 }
 
-export function getFilesFromDirectories(filePaths: string[]): string[] {
+export async function getFilesFromDirectoriesAndURLs(
+   filePaths: string[]
+): Promise<string[]> {
    const fullPathSet: Set<string> = new Set<string>()
 
-   filePaths.forEach((fileName) => {
+   let fileCounter = 0
+   for (const fileName of filePaths) {
       try {
-         if (fs.lstatSync(fileName).isDirectory()) {
+         if (isHttpUrl(fileName)) {
+            try {
+               const tempFilePath: string = await writeYamlFromURLToFile(
+                  fileName,
+                  fileCounter++
+               )
+               fullPathSet.add(tempFilePath)
+            } catch {
+               ;(e) => {
+                  throw Error(
+                     `encountered error trying to pull YAML from URL ${fileName}: ${e}`
+                  )
+               }
+            }
+         } else if (fs.lstatSync(fileName).isDirectory()) {
             recurisveManifestGetter(fileName).forEach((file) => {
                fullPathSet.add(file)
             })
@@ -86,9 +107,54 @@ export function getFilesFromDirectories(filePaths: string[]): string[] {
             `Exception occurred while reading the file ${fileName}: ${ex}`
          )
       }
-   })
+   }
 
    return Array.from(fullPathSet)
+}
+
+async function writeYamlFromURLToFile(
+   url: string,
+   fileNumber: number
+): Promise<string> {
+   if (!url.endsWith('.yml') && !url.endsWith('.yaml')) {
+      throw Error('invalid URL for yaml detected: must end in .yml or .yaml')
+   }
+
+   return await new Promise((resolve, reject) => {
+      https
+         .get(url, (response) => {
+            const code = response.statusCode ?? 0
+
+            if (code >= 400) {
+               throw Error(
+                  `received response status ${response.statusMessage} from url ${url}`
+               )
+            }
+
+            // handle redirects
+            if (code > 300 && code < 400 && !!response.headers.location) {
+               return writeYamlFromURLToFile(
+                  response.headers.location,
+                  fileNumber
+               )
+            }
+            const targetPath = getManifestFileName(
+               urlFileKind,
+               fileNumber.toString()
+            )
+            // save the file to disk
+            const fileWriter = fs
+               .createWriteStream(targetPath)
+               .on('finish', () => {
+                  resolve(targetPath)
+               })
+
+            response.pipe(fileWriter)
+         })
+         .on('error', (error) => {
+            reject(error)
+         })
+   })
 }
 
 function recurisveManifestGetter(dirName: string): string[] {

@@ -1,11 +1,16 @@
-import {getFilesFromDirectories} from './fileUtils'
+import {getFilesFromDirectoriesAndURLs} from './fileUtils'
 
 import * as path from 'path'
 
+const sampleYamlUrl =
+   'https://raw.githubusercontent.com/kubernetes/website/main/content/en/examples/controllers/nginx-deployment.yaml'
 describe('File utils', () => {
-   it('detects files in nested directories and ignores non-manifest files and empty dirs', () => {
+   it('detects files in nested directories and ignores non-manifest files and empty dirs', async () => {
       const testPath = path.join('test', 'unit', 'manifests')
-      const testSearch: string[] = getFilesFromDirectories([testPath])
+      const testSearch: string[] = await getFilesFromDirectoriesAndURLs([
+         testPath,
+         sampleYamlUrl
+      ])
 
       const expectedManifests = [
          'test/unit/manifests/manifest_test_dir/another_layer/deep-ingress.yaml',
@@ -33,7 +38,7 @@ describe('File utils', () => {
       )
 
       expect(() => {
-         getFilesFromDirectories([badPath, goodPath])
+         getFilesFromDirectoriesAndURLs([badPath, goodPath])
       }).toThrowError()
    })
 
@@ -53,7 +58,7 @@ describe('File utils', () => {
       )
 
       expect(
-         getFilesFromDirectories([outerPath, fileAtOuter, innerPath])
+         getFilesFromDirectoriesAndURLs([outerPath, fileAtOuter, innerPath])
       ).toHaveLength(7)
    })
 })
