@@ -22,9 +22,7 @@ export async function deploySMICanary(
    const canaryReplicasInput = core.getInput('baseline-and-canary-replicas')
    let canaryReplicaCount
    let calculateReplicas = true
-   core.debug(`prior to if, input is ${canaryReplicasInput}`)
    if (canaryReplicasInput !== '') {
-      core.debug('canary replicas input is ' + canaryReplicasInput)
       canaryReplicaCount = parseInt(canaryReplicasInput)
       calculateReplicas = false
       core.debug(
