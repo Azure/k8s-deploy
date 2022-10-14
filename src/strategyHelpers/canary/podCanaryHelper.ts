@@ -8,9 +8,13 @@ import * as canaryDeploymentHelper from './canaryHelper'
 import {isDeploymentEntity} from '../../types/kubernetesTypes'
 import {getReplicaCount} from '../../utilities/manifestUpdateUtils'
 
-export async function deployPodCanary(filePaths: string[], kubectl: Kubectl) {
+export async function deployPodCanary(
+   filePaths: string[],
+   kubectl: Kubectl,
+   onlyDeployStable: boolean = false
+) {
    const newObjectsList = []
-   const percentage = parseInt(core.getInput('percentage'))
+   const percentage = parseInt(core.getInput('percentage', {required: true}))
 
    if (percentage < 0 || percentage > 100)
       throw Error('Percentage must be between 0 and 100')
@@ -22,7 +26,7 @@ export async function deployPodCanary(filePaths: string[], kubectl: Kubectl) {
          const name = inputObject.metadata.name
          const kind = inputObject.kind
 
-         if (isDeploymentEntity(kind)) {
+         if (!onlyDeployStable && isDeploymentEntity(kind)) {
             core.debug('Calculating replica count for canary')
             const canaryReplicaCount = calculateReplicaCountForCanary(
                inputObject,
@@ -30,37 +34,22 @@ export async function deployPodCanary(filePaths: string[], kubectl: Kubectl) {
             )
             core.debug('Replica count is ' + canaryReplicaCount)
 
-            // Get stable object
-            core.debug('Querying stable object')
+            const newCanaryObject = canaryDeploymentHelper.getNewCanaryResource(
+               inputObject,
+               canaryReplicaCount
+            )
+            newObjectsList.push(newCanaryObject)
+
+            // if there's already a stable object, deploy baseline as well
             const stableObject = await canaryDeploymentHelper.fetchResource(
                kubectl,
                kind,
                name
             )
-
-            if (!stableObject) {
-               core.debug('Stable object not found. Creating canary object')
-               const newCanaryObject =
-                  canaryDeploymentHelper.getNewCanaryResource(
-                     inputObject,
-                     canaryReplicaCount
-                  )
-               newObjectsList.push(newCanaryObject)
-            } else {
+            if (stableObject) {
                core.debug(
-                  'Creating canary and baseline objects. Stable object found: ' +
-                     JSON.stringify(stableObject)
+                  `Stable object found for ${kind} ${name}. Creating baseline objects`
                )
-
-               const newCanaryObject =
-                  canaryDeploymentHelper.getNewCanaryResource(
-                     inputObject,
-                     canaryReplicaCount
-                  )
-               core.debug(
-                  'New canary object: ' + JSON.stringify(newCanaryObject)
-               )
-
                const newBaselineObject =
                   canaryDeploymentHelper.getNewBaselineResource(
                      stableObject,
@@ -69,12 +58,10 @@ export async function deployPodCanary(filePaths: string[], kubectl: Kubectl) {
                core.debug(
                   'New baseline object: ' + JSON.stringify(newBaselineObject)
                )
-
-               newObjectsList.push(newCanaryObject)
                newObjectsList.push(newBaselineObject)
             }
          } else {
-            // update non deployment entity as it is
+            // deploy non deployment entity or regular deployments for promote as they are
             newObjectsList.push(inputObject)
          }
       }
@@ -88,7 +75,10 @@ export async function deployPodCanary(filePaths: string[], kubectl: Kubectl) {
    return {result, newFilePaths: manifestFiles}
 }
 
-function calculateReplicaCountForCanary(inputObject: any, percentage: number) {
+export function calculateReplicaCountForCanary(
+   inputObject: any,
+   percentage: number
+) {
    const inputReplicaCount = getReplicaCount(inputObject)
-   return Math.round((inputReplicaCount * percentage) / 100)
+   return Math.max(1, Math.round((inputReplicaCount * percentage) / 100))
 }

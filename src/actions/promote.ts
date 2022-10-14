@@ -1,7 +1,7 @@
 import * as core from '@actions/core'
-import * as deploy from './deploy'
 import * as canaryDeploymentHelper from '../strategyHelpers/canary/canaryHelper'
 import * as SMICanaryDeploymentHelper from '../strategyHelpers/canary/smiCanaryHelper'
+import * as PodCanaryHelper from '../strategyHelpers/canary/podCanaryHelper'
 import {
    getResources,
    updateManifestFiles
@@ -57,6 +57,8 @@ export async function promote(
 async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
    let includeServices = false
 
+   const manifestFilesForDeployment: string[] = updateManifestFiles(manifests)
+
    const trafficSplitMethod = parseTrafficSplitMethod(
       core.getInput('traffic-split-method', {required: true})
    )
@@ -72,8 +74,14 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
       )
       core.endGroup()
 
-      core.startGroup('Deploying input manifests with SMI canary strategy')
-      await deploy.deploy(kubectl, manifests, DeploymentStrategy.CANARY)
+      core.startGroup(
+         'Deploying input manifests with SMI canary strategy from promote'
+      )
+      await SMICanaryDeploymentHelper.deploySMICanary(
+         manifestFilesForDeployment,
+         kubectl,
+         true
+      )
       core.endGroup()
 
       core.startGroup('Redirecting traffic to stable deployment')
@@ -83,8 +91,12 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
       )
       core.endGroup()
    } else {
-      core.startGroup('Deploying input manifests')
-      await deploy.deploy(kubectl, manifests, DeploymentStrategy.CANARY)
+      core.startGroup('Deploying input manifests from promote')
+      await PodCanaryHelper.deployPodCanary(
+         manifestFilesForDeployment,
+         kubectl,
+         true
+      )
       core.endGroup()
    }
 
