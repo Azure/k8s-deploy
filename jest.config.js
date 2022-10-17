@@ -8,5 +8,4 @@ module.exports = {
    },
    verbose: true,
    testTimeout: 9000
-
 }
