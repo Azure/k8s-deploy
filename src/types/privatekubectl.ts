@@ -10,7 +10,11 @@ export class PrivateKubectl extends Kubectl {
       args.unshift('kubectl')
       let kubectlCmd = args.join(' ')
       let addFileFlag = false
-      let eo = <ExecOptions>{silent: true}
+      let eo = <ExecOptions>{
+         silent: true,
+         failOnStdErr: false,
+         ignoreReturnCode: true
+      }
 
       if (this.containsFilenames(kubectlCmd)) {
          // For private clusters, files will referenced solely by their basename
@@ -62,16 +66,15 @@ export class PrivateKubectl extends Kubectl {
          runOutput.stdout
       )
       if (!silent) core.info(runObj.logs)
-      if (runObj.exitCode !== 0) {
+      if (runOutput.exitCode !== 0 && runObj.exitCode !== 0) {
          throw Error(`failed private cluster Kubectl command: ${kubectlCmd}`)
       }
 
-      const output: ExecOutput = {
-         exitCode: 0,
-         stdout: '',
+      return {
+         exitCode: runObj.exitCode,
+         stdout: runObj.logs,
          stderr: ''
-      }
-      return output
+      } as ExecOutput
    }
 
    private replaceFilnamesWithBasenames(kubectlCmd: string) {
