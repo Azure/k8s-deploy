@@ -204,6 +204,8 @@ jobs:
               python test/integration/k8s-deploy-test.py 'Service' 'nginx-service' 'None' ${{ steps.ns.outputs.name }}
               python test/integration/k8s-deploy-test.py 'Ingress' 'nginx-ingress' 'None' ${{ steps.ns.outputs.name }}
 
+         # install linkerd and run smi tests here
+
          - if: ${{ always() }}
            name: Delete created namespace
            run: kubectl delete ns test-${{ steps.ns.outputs.name }}
