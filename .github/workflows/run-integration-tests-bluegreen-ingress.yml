@@ -1,4 +1,4 @@
-name: Minikube Integration Tests
+name: Minikube Integration Tests - blue-green ingress
 on:
    pull_request:
       branches:
@@ -64,88 +64,18 @@ jobs:
               python test/integration/k8s-deploy-delete.py 'Deployment' 'nginx-deployment' ${{ steps.ns.outputs.name }}
               python test/integration/k8s-deploy-delete.py 'Ingress' 'nginx-ingress' ${{ steps.ns.outputs.name }}
 
-         - name: Executing deploy action
-           uses: ./
-           with:
-              namespace: test-${{ steps.ns.outputs.name }}
-              images: nginx:1.14.2
-              manifests: |
-                 test/integration/manifests/test-service.yml
-              strategy: blue-green
-              route-method: service
-              action: deploy
-
-         - name: Checking if deploments and services were created with green labels
-           run: |
-              python test/integration/k8s-deploy-test.py 'Deployment' 'nginx-deployment-green' 'green' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-test.py 'Service' 'nginx-service' 'green' ${{ steps.ns.outputs.name }}
-
-         - name: Executing promote action
-           uses: ./
-           with:
-              namespace: test-${{ steps.ns.outputs.name }}
-              images: nginx:1.14.2
-              manifests: |
-                 test/integration/manifests/test-service.yml
-              strategy: blue-green
-              route-method: service
-              action: promote
-
-         - name: Checking if deploments and services were created with none labels after promote
-           run: |
-              python test/integration/k8s-deploy-test.py 'Deployment' 'nginx-deployment' 'None' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-test.py 'Service' 'nginx-service' 'None' ${{ steps.ns.outputs.name }}
-
-         - name: Executing deploy action on
-           uses: ./
-           with:
-              namespace: test-${{ steps.ns.outputs.name }}
-              images: nginx:1.19.1
-              manifests: |
-                 test/integration/manifests/test-service.yml
-              strategy: blue-green
-              route-method: service
-              action: deploy
-
-         - name: Checking if deploments and services were created with green labels, and old workloads persist on deploy
-           run: |
-              python test/integration/k8s-deploy-test.py 'Deployment' 'nginx-deployment-green' 'green' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-test.py 'Service' 'nginx-service' 'green' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-test.py 'Deployment' 'nginx-deployment' 'None' ${{ steps.ns.outputs.name }}
-
-         - name: Executing reject action
-           uses: ./
-           with:
-              namespace: test-${{ steps.ns.outputs.name }}
-              images: nginx:1.19.1
-              manifests: |
-                 test/integration/manifests/test-service.yml
-              strategy: blue-green
-              route-method: service
-              action: reject
-
-         - name: Checking if deploments and services were routed back to none labels after reject
-           run: |
-              python test/integration/k8s-deploy-test.py 'Deployment' 'nginx-deployment' 'None' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-test.py 'Service' 'nginx-service' 'None' ${{ steps.ns.outputs.name }}
-
-         - name: Cleaning up current set up
-           run: |
-              python test/integration/k8s-deploy-delete.py 'Service' 'nginx-service' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-delete.py 'Deployment' 'nginx-deployment' ${{ steps.ns.outputs.name }}
-
          - name: Executing deploy action for ingress
            uses: ./
            with:
               namespace: test-${{ steps.ns.outputs.name }}
               images: nginx:1.14.2
               manifests: |
-                 test/integration/manifests/test-ingress.yml
+                 test/integration/manifests/blue-green/test-ingress.yml
               strategy: blue-green
               route-method: ingress
               action: deploy
 
-         - name: Checking if deploments, services and ingresses were created with green labels
+         - name: Checking if deployments, services and ingresses were created with green labels
            run: |
               python test/integration/k8s-deploy-test.py 'Deployment' 'nginx-deployment-green' 'green' ${{ steps.ns.outputs.name }}
               python test/integration/k8s-deploy-test.py 'Service' 'nginx-service-green' 'green' ${{ steps.ns.outputs.name }}
@@ -157,12 +87,12 @@ jobs:
               namespace: test-${{ steps.ns.outputs.name }}
               images: nginx:1.14.2
               manifests: |
-                 test/integration/manifests/test-ingress.yml
+                 test/integration/manifests/blue-green/test-ingress.yml
               strategy: blue-green
               route-method: ingress
               action: promote
 
-         - name: Checking if deploments, services and ingresses were created with none labels after promote
+         - name: Checking if deployments, services and ingresses were created with none labels after promote
            run: |
               python test/integration/k8s-deploy-test.py 'Deployment' 'nginx-deployment' 'None' ${{ steps.ns.outputs.name }}
               python test/integration/k8s-deploy-test.py 'Service' 'nginx-service' 'None' ${{ steps.ns.outputs.name }}
@@ -174,12 +104,12 @@ jobs:
               namespace: test-${{ steps.ns.outputs.name }}
               images: nginx:1.19.1
               manifests: |
-                 test/integration/manifests/test-ingress.yml
+                 test/integration/manifests/blue-green/test-ingress.yml
               strategy: blue-green
               route-method: ingress
               action: deploy
 
-         - name: Checking if deploments, services and ingresses were created with green labels after deploy, and old deployment persists
+         - name: Checking if deployments, services and ingresses were created with green labels after deploy, and old deployment persists
            run: |
               python test/integration/k8s-deploy-test.py 'Deployment' 'nginx-deployment-green' 'green' ${{ steps.ns.outputs.name }}
               python test/integration/k8s-deploy-test.py 'Deployment' 'nginx-deployment' 'None' ${{ steps.ns.outputs.name }}
@@ -193,18 +123,21 @@ jobs:
               namespace: test-${{ steps.ns.outputs.name }}
               images: nginx:1.19.1
               manifests: |
-                 test/integration/manifests/test-ingress.yml
+                 test/integration/manifests/blue-green/test-ingress.yml
               strategy: blue-green
               route-method: ingress
               action: reject
 
-         - name: Checking if deploments, services and ingresses were created with none labels after reject
+         - name: Checking if deployments, services and ingresses were created with none labels after reject
            run: |
               python test/integration/k8s-deploy-test.py 'Deployment' 'nginx-deployment' 'None' ${{ steps.ns.outputs.name }}
               python test/integration/k8s-deploy-test.py 'Service' 'nginx-service' 'None' ${{ steps.ns.outputs.name }}
               python test/integration/k8s-deploy-test.py 'Ingress' 'nginx-ingress' 'None' ${{ steps.ns.outputs.name }}
 
-         # install linkerd and run smi tests here
+         - name: Cleaning up current set up
+           run: |
+              python test/integration/k8s-deploy-delete.py 'Service' 'nginx-service' ${{ steps.ns.outputs.name }}
+              python test/integration/k8s-deploy-delete.py 'Deployment' 'nginx-deployment' ${{ steps.ns.outputs.name }}
 
          - if: ${{ always() }}
            name: Delete created namespace
