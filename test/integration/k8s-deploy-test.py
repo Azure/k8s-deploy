@@ -153,7 +153,7 @@ def compareDicts(actual: dict, expected: dict):
 
 
 def main():
-    parsedArgs: dict = stringListToDict(sys.argv, "=")
+    parsedArgs: dict = stringListToDict(sys.argv[1:], "=")
     RESULT = False
     msg = ""
     k8_object = None
