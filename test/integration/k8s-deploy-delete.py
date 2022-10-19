@@ -18,8 +18,12 @@ def delete(kind, name, namespace):
         print('Error occured during deletion', ex)
 
 
-if __name__ == "__main__":
+def main():
     kind = sys.argv[1]
     name = sys.argv[2]
     namespace = 'test-' + sys.argv[3]
     delete(kind, name, namespace)
+
+
+if __name__ == "__main__":
+    sys.exit(main())
