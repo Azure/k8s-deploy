@@ -75,11 +75,11 @@ jobs:
               route-method: ingress
               action: deploy
 
-         - name: Checking if deployments, services and ingresses were created with green labels
+         - name: Checking if deployments, services and ingresses were created with green labels and original tag
            run: |
-              python test/integration/k8s-deploy-test.py 'Deployment' 'nginx-deployment-green' 'green' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-test.py 'Service' 'nginx-service-green' 'green' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-test.py 'Ingress' 'nginx-ingress' 'green' ${{ steps.ns.outputs.name }}
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment-green containerName=nginx:1.14.2 labels=k8s.deploy.color:green,app:nginx selectorLabels=app:nginx,k8s.deploy.color:green
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-green labels=k8s.deploy.color:green,app:nginx selectorLabels=app:nginx,k8s.deploy.color:green
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Ingress name=nginx-ingress ingressServices=nginx-service-green,unrouted-service
 
          - name: Executing promote action for ingress
            uses: ./
@@ -92,47 +92,90 @@ jobs:
               route-method: ingress
               action: promote
 
-         - name: Checking if deployments, services and ingresses were created with none labels after promote
+         - name: Checking if deployments, services and ingresses were created with none labels after first promote
            run: |
-              python test/integration/k8s-deploy-test.py 'Deployment' 'nginx-deployment' 'None' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-test.py 'Service' 'nginx-service' 'None' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-test.py 'Ingress' 'nginx-ingress' 'None' ${{ steps.ns.outputs.name }}
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment containerName=nginx:1.14.2 labels=k8s.deploy.color:None,app:nginx selectorLabels=app:nginx,k8s.deploy.color:None
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=k8s.deploy.color:None,app:nginx selectorLabels=app:nginx,k8s.deploy.color:None
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Ingress name=nginx-ingress ingressServices=nginx-service,unrouted-service
 
-         - name: Executing deploy action for ingress
+         - name: Executing second deploy action for ingress with new tag
            uses: ./
            with:
               namespace: test-${{ steps.ns.outputs.name }}
-              images: nginx:1.19.1
+              images: nginx:latest
+              manifests: |
+                 test/integration/manifests/blue-green/test-ingress-newtag.yml
+              strategy: blue-green
+              route-method: ingress
+              action: deploy
+
+         - name: Checking if deployments (with new tag), services and ingresses were created with green labels after deploy, and old deployment persists
+           run: |
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment-green containerName=nginx:latest labels=k8s.deploy.color:green,app:nginx selectorLabels=app:nginx,k8s.deploy.color:green
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment containerName=nginx:1.14.2 labels=k8s.deploy.color:None,app:nginx selectorLabels=app:nginx,k8s.deploy.color:None
+
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-green labels=k8s.deploy.color:green,app:nginx selectorLabels=app:nginx,k8s.deploy.color:green
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=k8s.deploy.color:None,app:nginx selectorLabels=app:nginx,k8s.deploy.color:None
+
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Ingress name=nginx-ingress ingressServices=nginx-service-green,unrouted-service
+
+         - name: Executing second promote action for ingress now using new image tag
+           uses: ./
+           with:
+              namespace: test-${{ steps.ns.outputs.name }}
+              images: nginx:latest
+              manifests: |
+                 test/integration/manifests/blue-green/test-ingress-newtag.yml
+              strategy: blue-green
+              route-method: ingress
+              action: promote
+
+         - name: Checking if deployments, services and ingresses were created with none labels after promote for new tag
+           run: |
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment containerName=nginx:latest labels=k8s.deploy.color:None,app:nginx selectorLabels=app:nginx,k8s.deploy.color:None
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=k8s.deploy.color:None,app:nginx selectorLabels=app:nginx,k8s.deploy.color:None
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Ingress name=nginx-ingress ingressServices=nginx-service,unrouted-service
+         
+         - name: Executing deploy action for ingress to be rejected using old tag
+           uses: ./
+           with:
+              namespace: test-${{ steps.ns.outputs.name }}
+              images: nginx:1.14.2
               manifests: |
                  test/integration/manifests/blue-green/test-ingress.yml
               strategy: blue-green
               route-method: ingress
               action: deploy
 
-         - name: Checking if deployments, services and ingresses were created with green labels after deploy, and old deployment persists
+         - name: Checking if new deployments (with old tag), services and ingresses were created with green labels after deploy, and old deployment (with latest tag) persists
            run: |
-              python test/integration/k8s-deploy-test.py 'Deployment' 'nginx-deployment-green' 'green' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-test.py 'Deployment' 'nginx-deployment' 'None' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-test.py 'Service' 'nginx-service' 'None' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-test.py 'Service' 'nginx-service-green' 'green' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-test.py 'Ingress' 'nginx-ingress' 'green' ${{ steps.ns.outputs.name }}
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment-green containerName=nginx:1.14.2 labels=k8s.deploy.color:green,app:nginx selectorLabels=app:nginx,k8s.deploy.color:green
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment containerName=nginx:latest labels=k8s.deploy.color:None,app:nginx selectorLabels=app:nginx,k8s.deploy.color:None
 
-         - name: Executing reject action for ingress
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-green labels=k8s.deploy.color:green,app:nginx selectorLabels=app:nginx,k8s.deploy.color:green
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=k8s.deploy.color:None,app:nginx selectorLabels=app:nginx,k8s.deploy.color:None
+
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Ingress name=nginx-ingress ingressServices=nginx-service-green,unrouted-service
+         
+         # NEED TO MAKE SURE THIS WORKS - DO IMAGES AND MANIFESTS PARAMETERS MATTER HERE? IN THEORY SHOULD REJECT STUFF FROM DEPLOY STEP
+         - name: Executing reject action for ingress to reject new deployment with 1.14.2 tag
            uses: ./
            with:
               namespace: test-${{ steps.ns.outputs.name }}
-              images: nginx:1.19.1
+              images: nginx:1.14.2
               manifests: |
                  test/integration/manifests/blue-green/test-ingress.yml
               strategy: blue-green
               route-method: ingress
               action: reject
 
-         - name: Checking if deployments, services and ingresses were created with none labels after reject
+         # MAY BE USEFUL TO ADD AN ANTI-CHECK - CHECK TO MAKE SURE CERTAIN OBJECTS DON'T EXIST
+         - name: Checking if deployments, services and ingresses were created with none labels and latest tag after reject
            run: |
-              python test/integration/k8s-deploy-test.py 'Deployment' 'nginx-deployment' 'None' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-test.py 'Service' 'nginx-service' 'None' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-test.py 'Ingress' 'nginx-ingress' 'None' ${{ steps.ns.outputs.name }}
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment containerName=nginx:latest labels=k8s.deploy.color:None,app:nginx selectorLabels=app:nginx,k8s.deploy.color:None
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=k8s.deploy.color:None,app:nginx selectorLabels=app:nginx,k8s.deploy.color:None
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Ingress name=nginx-ingress ingressServices=nginx-service,unrouted-service
+         
 
          - name: Cleaning up current set up
            run: |

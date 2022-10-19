@@ -102,7 +102,7 @@ def verifyService(service, parsedArgs):
         raise ValueError(
             f"expected selector labels not provided to inspect service {parsedArgs[nameKey]}")
     dictMatch, msg = compareDicts(
-        service['spec']['selector']['matchLabels'], parsedArgs[selectorLabelsKey])
+        service['spec']['selector'], parsedArgs[selectorLabelsKey])
     if not dictMatch:
         return dictMatch, msg
 
@@ -120,7 +120,7 @@ def verifyService(service, parsedArgs):
 
 
 def verifyIngress(ingress, parsedArgs):
-    # test labels, annotations, backend service name
+    # test services in paths
     if not ingressServicesKey in parsedArgs:
         raise ValueError(
             f"expected services not provided to inspect ingress {parsedArgs[nameKey]}")
