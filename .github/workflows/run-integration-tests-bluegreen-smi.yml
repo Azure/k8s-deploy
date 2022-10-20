@@ -1,4 +1,4 @@
-name: Minikube Integration Tests
+name: Minikube Integration Tests - blue-green SMI
 on:
    pull_request:
       branches:
@@ -48,6 +48,12 @@ jobs:
               driver: 'none'
            timeout-minutes: 3
 
+         - name: Install linkerd and add controlplane to cluster
+           run: |
+              curl --proto '=https' --tlsv1.2 -sSfL https://run.linkerd.io/install | sh
+              linkerd install | kubectl apply -f -
+              
+
          - name: Create namespace to run tests
            run: kubectl create ns test-${{ steps.ns.outputs.name }}
 
@@ -56,19 +62,12 @@ jobs:
            with:
               python-version: '3.x'
 
-         - name: Install linkerd and add controlplane to cluster
-           run: |
-              curl --proto '=https' --tlsv1.2 -sSfL https://run.linkerd.io/install | sh
-              linkerd install | kubectl apply -f -
-              
          - name: Cleaning any previously created items
            run: |
-              python test/integration/k8s-deploy-delete.py 'Service' 'nginx-service' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-delete.py 'Service' 'nginx-service-green' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-delete.py 'Deployment' 'nginx-deployment-green' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-delete.py 'Deployment' 'nginx-deployment' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-delete.py 'Ingress' 'nginx-ingress' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-delete.py "TrafficSplit" 'all' ${{ steps.ns.outputs.name }}
+              python test/integration/k8s-deploy-delete.py 'Service' 'all' ${{ steps.ns.outputs.name }}
+              python test/integration/k8s-deploy-delete.py 'Deployment' 'all' ${{ steps.ns.outputs.name }}
+              python test/integration/k8s-deploy-delete.py 'Ingress' 'all' ${{ steps.ns.outputs.name }}
+              python test/integration/k8s-deploy-delete.py 'TrafficSplit' 'all' ${{ steps.ns.outputs.name }}
 
          - name: Executing deploy action for smi
            uses: ./
@@ -81,12 +80,16 @@ jobs:
               route-method: smi
               action: deploy
 
-          # need to correct this
-         - name: Checking if deployments, services and ingresses were created with green labels
+         - name: Checking if deployments, services, and ts objects were created with green labels and original tag
            run: |
-              python test/integration/k8s-deploy-test.py 'Deployment' 'nginx-deployment-green' 'green' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-test.py 'Service' 'nginx-service-green' 'green' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-test.py 'Ingress' 'nginx-ingress' 'green' ${{ steps.ns.outputs.name }}
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment-green containerName=nginx:1.14.2 labels=k8s.deploy.color:green,app:nginx selectorLabels=app:nginx,k8s.deploy.color:green
+              
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=app:nginx selectorLabels=app:nginx
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-stable labels=app:nginx,k8s.deploy.color:None selectorLabels=app:nginx,k8s.deploy.color:None
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-green labels=app:nginx,k8s.deploy.color:green selectorLabels=app:nginx,k8s.deploy.color:green
+
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=TrafficSplit name=nginx-service-trafficsplit tsServices=nginx-service-stable:0,nginx-service-green:100
+
 
          - name: Executing promote action for smi
            uses: ./
@@ -98,51 +101,102 @@ jobs:
               strategy: blue-green
               route-method: smi
               action: promote
-         
-          # need to correct this
-         - name: Checking if deployments, services and ingresses were created with none labels after promote for smi
-           run: |
-              python test/integration/k8s-deploy-test.py 'Deployment' 'nginx-deployment' 'None' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-test.py 'Service' 'nginx-service' 'None' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-test.py 'Ingress' 'nginx-ingress' 'None' ${{ steps.ns.outputs.name }}
 
-         - name: Executing deploy action for smi
+         # another good place for anti-test - ensure old deps are deleted after promote
+         - name: Checking if deployments, services, and ts objects were created with none labels after first promote
+           run: |
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment containerName=nginx:1.14.2 labels=k8s.deploy.color:None,app:nginx selectorLabels=app:nginx,k8s.deploy.color:None
+              
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=app:nginx selectorLabels=app:nginx
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-stable labels=app:nginx,k8s.deploy.color:None selectorLabels=app:nginx,k8s.deploy.color:None
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-green labels=app:nginx,k8s.deploy.color:green selectorLabels=app:nginx,k8s.deploy.color:green
+
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=TrafficSplit name=nginx-service-trafficsplit tsServices=nginx-service-stable:100,nginx-service-green:0
+
+         - name: Executing second deploy action for smi with new tag
            uses: ./
            with:
               namespace: test-${{ steps.ns.outputs.name }}
-              images: nginx:1.19.1
+              images: nginx:latest
+              manifests: |
+                 test/integration/manifests/blue-green/test-service.yml
+              strategy: blue-green
+              route-method: smi
+              action: deploy
+         
+
+         - name: Checking if deployments (with new tag) and services were created with green labels after deploy, and old deployment persists
+           run: |
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment containerName=nginx:1.14.2 labels=k8s.deploy.color:None,app:nginx selectorLabels=app:nginx,k8s.deploy.color:None
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment-green containerName=nginx:latest labels=k8s.deploy.color:green,app:nginx selectorLabels=app:nginx,k8s.deploy.color:green
+
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=app:nginx selectorLabels=app:nginx
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-stable labels=app:nginx,k8s.deploy.color:None selectorLabels=app:nginx,k8s.deploy.color:None
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-green labels=app:nginx,k8s.deploy.color:green selectorLabels=app:nginx,k8s.deploy.color:green
+
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=TrafficSplit name=nginx-service-trafficsplit tsServices=nginx-service-stable:0,nginx-service-green:100
+
+         - name: Executing second promote action for smi now using new image tag
+           uses: ./
+           with:
+              namespace: test-${{ steps.ns.outputs.name }}
+              images: nginx:latest
+              manifests: |
+                 test/integration/manifests/blue-green/test-service.yml
+              strategy: blue-green
+              route-method: smi
+              action: promote
+
+         - name: Checking if deployments and services were created with none labels after promote for new tag, ts is stable
+           run: |
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment containerName=nginx:latest labels=k8s.deploy.color:None,app:nginx selectorLabels=app:nginx,k8s.deploy.color:None
+
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=app:nginx selectorLabels=app:nginx
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-stable labels=app:nginx,k8s.deploy.color:None selectorLabels=app:nginx,k8s.deploy.color:None
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-green labels=app:nginx,k8s.deploy.color:green selectorLabels=app:nginx,k8s.deploy.color:green
+
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=TrafficSplit name=nginx-service-trafficsplit tsServices=nginx-service-stable:100,nginx-service-green:0
+         
+         - name: Executing deploy action for smi to be rejected using old tag
+           uses: ./
+           with:
+              namespace: test-${{ steps.ns.outputs.name }}
+              images: nginx:1.14.2
               manifests: |
                  test/integration/manifests/blue-green/test-service.yml
               strategy: blue-green
               route-method: smi
               action: deploy
 
-          # need to correct this
-         - name: Checking if deployments, services and ingresses were created with green labels after deploy, and old deployment persists
+         - name: Checking if new deployments (with old tag) and services were created with green labels after deploy, and old deployment (with latest tag) persists
            run: |
-              python test/integration/k8s-deploy-test.py 'Deployment' 'nginx-deployment-green' 'green' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-test.py 'Deployment' 'nginx-deployment' 'None' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-test.py 'Service' 'nginx-service' 'None' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-test.py 'Service' 'nginx-service-green' 'green' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-test.py 'Ingress' 'nginx-ingress' 'green' ${{ steps.ns.outputs.name }}
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment-green containerName=nginx:1.14.2 labels=k8s.deploy.color:green,app:nginx selectorLabels=app:nginx,k8s.deploy.color:green
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment containerName=nginx:latest labels=k8s.deploy.color:None,app:nginx selectorLabels=app:nginx,k8s.deploy.color:None
 
-         - name: Executing reject action for smi
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=app:nginx selectorLabels=app:nginx
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-stable labels=app:nginx,k8s.deploy.color:None selectorLabels=app:nginx,k8s.deploy.color:None
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-green labels=app:nginx,k8s.deploy.color:green selectorLabels=app:nginx,k8s.deploy.color:green
+
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=TrafficSplit name=nginx-service-trafficsplit tsServices=nginx-service-stable:100,nginx-service-green:0
+         
+         # NEED TO MAKE SURE THIS WORKS - DO IMAGES AND MANIFESTS PARAMETERS MATTER HERE? IN THEORY SHOULD REJECT STUFF FROM DEPLOY STEP
+         - name: Executing reject action for smi to reject new deployment with 1.14.2 tag
            uses: ./
            with:
               namespace: test-${{ steps.ns.outputs.name }}
-              images: nginx:1.19.1
+              images: nginx:1.14.2
               manifests: |
                  test/integration/manifests/blue-green/test-service.yml
               strategy: blue-green
               route-method: smi
               action: reject
-         
-          # need to correct this
-         - name: Checking if deployments, services and ingresses were created with none labels after reject
+
+         # MAY BE USEFUL TO ADD AN ANTI-CHECK - CHECK TO MAKE SURE CERTAIN OBJECTS DON'T EXIST
+         - name: Checking if deployments and services were created with none labels and latest tag after reject
            run: |
-              python test/integration/k8s-deploy-test.py 'Deployment' 'nginx-deployment' 'None' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-test.py 'Service' 'nginx-service' 'None' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-test.py 'Ingress' 'nginx-ingress' 'None' ${{ steps.ns.outputs.name }}
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment containerName=nginx:latest labels=k8s.deploy.color:None,app:nginx selectorLabels=app:nginx,k8s.deploy.color:None
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=k8s.deploy.color:None,app:nginx selectorLabels=app:nginx,k8s.deploy.color:None
+         
 
          - name: Cleaning up current set up
            run: |

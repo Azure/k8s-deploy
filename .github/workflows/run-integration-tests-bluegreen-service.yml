@@ -58,11 +58,9 @@ jobs:
 
          - name: Cleaning any previously created items
            run: |
-              python test/integration/k8s-deploy-delete.py 'Service' 'nginx-service' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-delete.py 'Service' 'nginx-service-green' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-delete.py 'Deployment' 'nginx-deployment-green' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-delete.py 'Deployment' 'nginx-deployment' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-delete.py 'Ingress' 'nginx-ingress' ${{ steps.ns.outputs.name }}
+              python test/integration/k8s-deploy-delete.py 'Service' 'all' ${{ steps.ns.outputs.name }}
+              python test/integration/k8s-deploy-delete.py 'Deployment' 'all' ${{ steps.ns.outputs.name }}
+              python test/integration/k8s-deploy-delete.py 'Ingress' 'all' ${{ steps.ns.outputs.name }}
 
          - name: Executing deploy action for service
            uses: ./
@@ -75,11 +73,10 @@ jobs:
               route-method: service
               action: deploy
 
-         - name: Checking if deployments and services were created with green labels
+         - name: Checking if deployments and services were created with green labels and original tag
            run: |
-              python test/integration/k8s-deploy-test.py 'Deployment' 'nginx-deployment-green' 'green' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-test.py 'Service' 'nginx-service' 'green' ${{ steps.ns.outputs.name }}
-
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment-green containerName=nginx:1.14.2 labels=k8s.deploy.color:green,app:nginx selectorLabels=app:nginx,k8s.deploy.color:green
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=k8s.deploy.color:green,app:nginx selectorLabels=app:nginx,k8s.deploy.color:green
          - name: Executing promote action for service
            uses: ./
            with:
@@ -91,43 +88,88 @@ jobs:
               route-method: service
               action: promote
 
-         - name: Checking if deployments and services were created with none labels after promote for service
+         - name: Checking if deployments and services were created with none labels after first promote
            run: |
-              python test/integration/k8s-deploy-test.py 'Deployment' 'nginx-deployment' 'None' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-test.py 'Service' 'nginx-service' 'None' ${{ steps.ns.outputs.name }}
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment containerName=nginx:1.14.2 labels=k8s.deploy.color:None,app:nginx selectorLabels=app:nginx,k8s.deploy.color:None
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=k8s.deploy.color:None,app:nginx selectorLabels=app:nginx,k8s.deploy.color:None
 
-         - name: Executing deploy action for service
+         - name: Executing second deploy action for service with new tag
            uses: ./
            with:
               namespace: test-${{ steps.ns.outputs.name }}
-              images: nginx:1.19.1
+              images: nginx:latest
+              manifests: |
+                 test/integration/manifests/blue-green/test-service.yml
+              strategy: blue-green
+              route-method: service
+              action: deploy
+         
+         # confirm deploy behavior here - do we hold onto second service? or just relabel same one
+
+         - name: Checking if deployments (with new tag) and services were created with green labels after deploy, and old deployment persists
+           run: |
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment-green containerName=nginx:latest labels=k8s.deploy.color:green,app:nginx selectorLabels=app:nginx,k8s.deploy.color:green
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment containerName=nginx:1.14.2 labels=k8s.deploy.color:None,app:nginx selectorLabels=app:nginx,k8s.deploy.color:None
+
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=k8s.deploy.color:green,app:nginx selectorLabels=app:nginx,k8s.deploy.color:green
+
+         - name: Executing second promote action for service now using new image tag
+           uses: ./
+           with:
+              namespace: test-${{ steps.ns.outputs.name }}
+              images: nginx:latest
+              manifests: |
+                 test/integration/manifests/blue-green/test-service.yml
+              strategy: blue-green
+              route-method: service
+              action: promote
+
+         - name: Checking if deployments and services were created with none labels after promote for new tag
+           run: |
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment containerName=nginx:latest labels=k8s.deploy.color:None,app:nginx selectorLabels=app:nginx,k8s.deploy.color:None
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=k8s.deploy.color:None,app:nginx selectorLabels=app:nginx,k8s.deploy.color:None
+         
+         - name: Executing deploy action for service to be rejected using old tag
+           uses: ./
+           with:
+              namespace: test-${{ steps.ns.outputs.name }}
+              images: nginx:1.14.2
               manifests: |
                  test/integration/manifests/blue-green/test-service.yml
               strategy: blue-green
               route-method: service
               action: deploy
 
-         - name: Checking if deployments and services were created with green labels, and old workloads persist on deploy for service
+         - name: Checking if new deployments (with old tag) and services were created with green labels after deploy, and old deployment (with latest tag) persists
            run: |
-              python test/integration/k8s-deploy-test.py 'Deployment' 'nginx-deployment-green' 'green' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-test.py 'Service' 'nginx-service' 'green' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-test.py 'Deployment' 'nginx-deployment' 'None' ${{ steps.ns.outputs.name }}
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment-green containerName=nginx:1.14.2 labels=k8s.deploy.color:green,app:nginx selectorLabels=app:nginx,k8s.deploy.color:green
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment containerName=nginx:latest labels=k8s.deploy.color:None,app:nginx selectorLabels=app:nginx,k8s.deploy.color:None
 
-         - name: Executing reject action for service
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=k8s.deploy.color:green,app:nginx selectorLabels=app:nginx,k8s.deploy.color:green
+         
+         # NEED TO MAKE SURE THIS WORKS - DO IMAGES AND MANIFESTS PARAMETERS MATTER HERE? IN THEORY SHOULD REJECT STUFF FROM DEPLOY STEP
+         - name: Executing reject action for service to reject new deployment with 1.14.2 tag
            uses: ./
            with:
               namespace: test-${{ steps.ns.outputs.name }}
-              images: nginx:1.19.1
+              images: nginx:1.14.2
               manifests: |
                  test/integration/manifests/blue-green/test-service.yml
               strategy: blue-green
               route-method: service
               action: reject
 
-         - name: Checking if deployments and services were routed back to none labels after reject
+         # MAY BE USEFUL TO ADD AN ANTI-CHECK - CHECK TO MAKE SURE CERTAIN OBJECTS DON'T EXIST
+         - name: Checking if deployments and services were created with none labels and latest tag after reject
            run: |
-              python test/integration/k8s-deploy-test.py 'Deployment' 'nginx-deployment' 'None' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-test.py 'Service' 'nginx-service' 'None' ${{ steps.ns.outputs.name }}
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment containerName=nginx:latest labels=k8s.deploy.color:None,app:nginx selectorLabels=app:nginx,k8s.deploy.color:None
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=k8s.deploy.color:None,app:nginx selectorLabels=app:nginx,k8s.deploy.color:None
+         
+
+         - name: Cleaning up current set up
+           run: |
+              python test/integration/k8s-deploy-delete.py 'Service' 'nginx-service' ${{ steps.ns.outputs.name }}
+              python test/integration/k8s-deploy-delete.py 'Deployment' 'nginx-deployment' ${{ steps.ns.outputs.name }}
 
          - if: ${{ always() }}
            name: Delete created namespace

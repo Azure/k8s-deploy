@@ -104,7 +104,7 @@ jobs:
               namespace: test-${{ steps.ns.outputs.name }}
               images: nginx:latest
               manifests: |
-                 test/integration/manifests/blue-green/test-ingress-newtag.yml
+                 test/integration/manifests/blue-green/test-ingress.yml
               strategy: blue-green
               route-method: ingress
               action: deploy
@@ -125,7 +125,7 @@ jobs:
               namespace: test-${{ steps.ns.outputs.name }}
               images: nginx:latest
               manifests: |
-                 test/integration/manifests/blue-green/test-ingress-newtag.yml
+                 test/integration/manifests/blue-green/test-ingress.yml
               strategy: blue-green
               route-method: ingress
               action: promote

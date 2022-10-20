@@ -1,6 +1,8 @@
+from operator import truediv
 import os
 import sys
 import json
+from unicodedata import name
 
 # Multiline comment here about
 # how tests work/how to format args
@@ -19,6 +21,7 @@ annotationsKey = "annotations"
 selectorLabelsKey = "selectorLabels"
 namespaceKey = "namespace"
 ingressServicesKey = "ingressServices"
+tsServicesKey = "tsServices"
 
 
 def parseArgs(sysArgs):
@@ -46,6 +49,13 @@ def parseArgs(sysArgs):
     if selectorLabelsKey in argsDict:
         argsDict[selectorLabelsKey] = stringListToDict(
             argsDict[selectorLabelsKey].split(","), ":")
+
+    if tsServicesKey in argsDict:
+        argsDict[tsServicesKey] = stringListToDict(
+            argsDict[tsServicesKey].split(","), ":")
+
+    for key in argsDict[tsServicesKey]:
+        argsDict[tsServicesKey][key] = int(argsDict[tsServicesKey][key])
 
     # reformat list-like parameters (eg, paramName=value1,value2,value3)
     if ingressServicesKey in argsDict:
@@ -126,16 +136,32 @@ def verifyIngress(ingress, parsedArgs):
             f"expected services not provided to inspect ingress {parsedArgs[nameKey]}")
 
     expectedIngresses = parsedArgs[ingressServicesKey]
-    for i in range(k8s_object['spec']['rules'][0]['http']['paths']):
-        svcName = k8s_object['spec']['rules'][0]['http']['paths'][i]['backend']['serviceName']
+    for i in range(len(ingress['spec']['rules'][0]['http']['paths'])):
+        svcName = ingress['spec']['rules'][0]['http']['paths'][i]['backend']['serviceName']
         if svcName != expectedIngresses[i]:
             return False, f"for ingress {parsedArgs[nameKey]} expected svc name {expectedIngresses[i]} at position {i} but got {svcName}"
 
     return True, ""
 
 
-def verifyTs(tsObj, percentages):
-    actual = tsObj  # fill out the rest of this
+def verifyTSObject(tsObj, parsedArgs):
+    if not tsServicesKey in parsedArgs:
+        raise ValueError(
+            f"expected services not provided to inspect ts object {parsedArgs[nameKey]}")
+
+    expectedServices = parsedArgs[tsServicesKey]
+    actualServices = {}
+    backends = tsObj['spec']['backends']
+    for i in range(len(backends)):
+        svcName = backends[i]['service']
+        svcWeight = int(backends[i]['weight'])
+        actualServices[svcName] = svcWeight
+
+    dictResult, msg = compareDicts(actualServices, expectedServices)
+    if not dictResult:
+        return False, msg
+
+    return True, ""
 
 
 def compareDicts(actual: dict, expected: dict):
@@ -154,7 +180,7 @@ def compareDicts(actual: dict, expected: dict):
 def main():
     parsedArgs: dict = parseArgs(sys.argv[1:])
     RESULT = False
-    msg = "placeholder"
+    msg = "unknown type (no verification method currently exists)"
     k8_object = None
 
     kind = parsedArgs[kindKey]
@@ -176,6 +202,8 @@ def main():
             k8_object, parsedArgs)
     if kind == 'Ingress':
         RESULT, msg = verifyIngress(k8_object, parsedArgs)
+    if kind == "TrafficSplitObject":
+        RESULT, msg = verifyTSObject(k8_object, parsedArgs)
 
     if not RESULT:
         sys.exit(f"{kind} {name} failed check: {msg}")
