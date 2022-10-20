@@ -39,6 +39,7 @@ import {
    normalizeWorkflowStrLabel
 } from '../utilities/githubUtils'
 import {getDeploymentConfig} from '../utilities/dockerUtils'
+import {deploy} from '../actions/deploy'
 
 export async function deployManifests(
    files: string[],
@@ -73,7 +74,12 @@ export async function deployManifests(
          )
 
          checkForErrors([blueGreenDeployment.deployResult.execResult])
-         return blueGreenDeployment.deployResult.manifestFiles
+         const deployedManifestFiles =
+            blueGreenDeployment.deployResult.manifestFiles
+         core.debug(
+            `from blue-green service, deployed manifest files are ${deployedManifestFiles}`
+         )
+         return deployedManifestFiles
       }
 
       case DeploymentStrategy.BASIC: {

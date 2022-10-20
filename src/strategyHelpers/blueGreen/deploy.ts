@@ -35,9 +35,17 @@ export async function deployBlueGreen(
    })()
 
    core.startGroup('Routing blue green')
-   await routeBlueGreenForDeploy(kubectl, files, routeStrategy)
+   const routeDeployment = await routeBlueGreenForDeploy(
+      kubectl,
+      files,
+      routeStrategy
+   )
    core.endGroup()
 
+   blueGreenDeployment.objects.push(routeDeployment.objects)
+   blueGreenDeployment.deployResult.manifestFiles.push(
+      ...routeDeployment.deployResult.manifestFiles
+   )
    return blueGreenDeployment
 }
 
