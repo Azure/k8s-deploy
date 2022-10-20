@@ -36,8 +36,10 @@ def parseArgs(sysArgs):
 
     # reformat map-like parameters (eg, paramName=key1:value1,key2:value2)
     if labelsKey in argsDict:
+        print(f"original string is {argsDict[labelsKey]}")
         argsDict[labelsKey] = stringListToDict(
             argsDict[labelsKey].split(","), ":")
+        print(f"argsDict[labelsKey] is now {argsDict[labelsKey]}")
 
     if annotationsKey in argsDict:
         argsDict[annotationsKey] = stringListToDict(
@@ -58,7 +60,9 @@ def stringListToDict(args: list[str], separator: str):
     parsedArgs = {}
     for arg in args:
         argSplit = arg.split(separator)
+        print(f"argsplit is {argSplit}")
         parsedArgs[argSplit[0]] = argSplit[1]
+        print(f"assigned parsedArgs[{argSplit[0]}] = {argSplit[1]}")
 
     return parsedArgs
 
