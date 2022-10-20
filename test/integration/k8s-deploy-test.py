@@ -172,13 +172,16 @@ def compareDicts(actual: dict, expected: dict, paramName=""):
     expectedKeys = expected.keys()
 
     if not actualKeys == expectedKeys:
-        return False, f'dicts had different keys.\n actual: {actual}\n expected: {expected}'
+        msg = f'dicts had different keys.\n actual: {actual}\n expected: {expected}'
+        if not paramName == "":
+            msg = f"for param {paramName}, " + msg
+        return False, msg
     for key in actualKeys:
         if not actual[key] == expected[key]:
             msg = f'dicts differed at key {key}.\n actual[{key}] is {actual[key]} and expected[{key}] is {expected[key]}'
             if not paramName == "":
                 msg = f"for param {paramName}, " + msg
-            return False,
+            return False, msg
 
     return True, ""
 
