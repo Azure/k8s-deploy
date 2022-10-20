@@ -178,6 +178,18 @@ async function annotateResources(
       annotationKey
    )
 
+   if (core.isDebug()) {
+      core.debug(`files getting annotated are ${JSON.stringify(files)}`)
+      for (const filePath of files) {
+         core.debug('printing objects getting annotated...')
+         const fileContents = fs.readFileSync(filePath).toString()
+         const inputObjects = yaml.safeLoadAll(fileContents)
+         for (const inputObject of inputObjects) {
+            core.debug(`object: ${JSON.stringify(inputObject)}`)
+         }
+      }
+   }
+
    const annotationKeyValStr = `${annotationKey}=${getWorkflowAnnotations(
       lastSuccessSha,
       workflowFilePath,
