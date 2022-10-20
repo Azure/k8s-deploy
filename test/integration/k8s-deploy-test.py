@@ -35,7 +35,9 @@ def parseArgs(sysArgs):
         raise ValueError(f"missing key: {namespaceKey}")
 
     # reformat map-like parameters (eg, paramName=key1:value1,key2:value2)
+    print(f"reformatting map-like parameters for dict: {argsDict}")
     if labelsKey in argsDict:
+        print("found labels key")
         print(f"original string is {argsDict[labelsKey]}")
         argsDict[labelsKey] = stringListToDict(
             argsDict[labelsKey].split(","), ":")
