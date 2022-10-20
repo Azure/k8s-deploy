@@ -84,9 +84,9 @@ jobs:
            run: |
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment-green containerName=nginx:1.14.2 labels=k8s.deploy.color:green,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_SMI selectorLabels=app:nginx,k8s.deploy.color:green
               
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=app:nginx selectorLabels=app:nginx
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-stable labels=app:nginx,k8s.deploy.color:None selectorLabels=app:nginx,k8s.deploy.color:None
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-green labels=app:nginx,k8s.deploy.color:green selectorLabels=app:nginx,k8s.deploy.color:green
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_SMI selectorLabels=app:nginx
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-stable labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_SMI,k8s.deploy.color:None selectorLabels=app:nginx,k8s.deploy.color:None
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-green labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_SMI,k8s.deploy.color:green selectorLabels=app:nginx,k8s.deploy.color:green
 
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=TrafficSplit name=nginx-service-trafficsplit tsServices=nginx-service-stable:0,nginx-service-green:100
 
@@ -107,9 +107,9 @@ jobs:
            run: |
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment containerName=nginx:1.14.2 labels=k8s.deploy.color:None,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_SMI selectorLabels=app:nginx,k8s.deploy.color:None
               
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=app:nginx selectorLabels=app:nginx
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-stable labels=app:nginx,k8s.deploy.color:None selectorLabels=app:nginx,k8s.deploy.color:None
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-green labels=app:nginx,k8s.deploy.color:green selectorLabels=app:nginx,k8s.deploy.color:green
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_SMI selectorLabels=app:nginx
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-stable labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_SMI,k8s.deploy.color:None selectorLabels=app:nginx,k8s.deploy.color:None
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-green labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_SMI,k8s.deploy.color:green selectorLabels=app:nginx,k8s.deploy.color:green
 
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=TrafficSplit name=nginx-service-trafficsplit tsServices=nginx-service-stable:100,nginx-service-green:0
 
@@ -130,9 +130,9 @@ jobs:
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment containerName=nginx:1.14.2 labels=k8s.deploy.color:None,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_SMI selectorLabels=app:nginx,k8s.deploy.color:None
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment-green containerName=nginx:latest labels=k8s.deploy.color:green,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_SMI selectorLabels=app:nginx,k8s.deploy.color:green
 
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=app:nginx selectorLabels=app:nginx
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-stable labels=app:nginx,k8s.deploy.color:None selectorLabels=app:nginx,k8s.deploy.color:None
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-green labels=app:nginx,k8s.deploy.color:green selectorLabels=app:nginx,k8s.deploy.color:green
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_SMI selectorLabels=app:nginx
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-stable labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_SMI,k8s.deploy.color:None selectorLabels=app:nginx,k8s.deploy.color:None
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-green labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_SMI,k8s.deploy.color:green selectorLabels=app:nginx,k8s.deploy.color:green
 
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=TrafficSplit name=nginx-service-trafficsplit tsServices=nginx-service-stable:0,nginx-service-green:100
 
@@ -151,9 +151,9 @@ jobs:
            run: |
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment containerName=nginx:latest labels=k8s.deploy.color:None,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_SMI selectorLabels=app:nginx,k8s.deploy.color:None
 
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=app:nginx selectorLabels=app:nginx
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-stable labels=app:nginx,k8s.deploy.color:None selectorLabels=app:nginx,k8s.deploy.color:None
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-green labels=app:nginx,k8s.deploy.color:green selectorLabels=app:nginx,k8s.deploy.color:green
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_SMI selectorLabels=app:nginx
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-stable labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_SMI,k8s.deploy.color:None selectorLabels=app:nginx,k8s.deploy.color:None
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-green labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_SMI,k8s.deploy.color:green selectorLabels=app:nginx,k8s.deploy.color:green
 
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=TrafficSplit name=nginx-service-trafficsplit tsServices=nginx-service-stable:100,nginx-service-green:0
          
@@ -173,11 +173,11 @@ jobs:
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment-green containerName=nginx:1.14.2 labels=k8s.deploy.color:green,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_SMI selectorLabels=app:nginx,k8s.deploy.color:green
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment containerName=nginx:latest labels=k8s.deploy.color:None,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_SMI selectorLabels=app:nginx,k8s.deploy.color:None
 
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=app:nginx selectorLabels=app:nginx
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-stable labels=app:nginx,k8s.deploy.color:None selectorLabels=app:nginx,k8s.deploy.color:None
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-green labels=app:nginx,k8s.deploy.color:green selectorLabels=app:nginx,k8s.deploy.color:green
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_SMI selectorLabels=app:nginx
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-stable labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_SMI,k8s.deploy.color:None selectorLabels=app:nginx,k8s.deploy.color:None
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-green labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_SMI,k8s.deploy.color:green selectorLabels=app:nginx,k8s.deploy.color:green
 
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=TrafficSplit name=nginx-service-trafficsplit tsServices=nginx-service-stable:100,nginx-service-green:0
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=TrafficSplit name=nginx-service-trafficsplit tsServices=nginx-service-stable:0,nginx-service-green:100
          
          # NEED TO MAKE SURE THIS WORKS - DO IMAGES AND MANIFESTS PARAMETERS MATTER HERE? IN THEORY SHOULD REJECT STUFF FROM DEPLOY STEP
          - name: Executing reject action for smi to reject new deployment with 1.14.2 tag
@@ -195,9 +195,13 @@ jobs:
          - name: Checking if deployments and services were created with none labels and latest tag after reject
            run: |
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment containerName=nginx:latest labels=k8s.deploy.color:None,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_SMI selectorLabels=app:nginx,k8s.deploy.color:None
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=k8s.deploy.color:None,app:nginx selectorLabels=app:nginx,k8s.deploy.color:None
-         
 
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_SMI selectorLabels=app:nginx
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-stable labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_SMI,k8s.deploy.color:None selectorLabels=app:nginx,k8s.deploy.color:None
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-green labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_SMI,k8s.deploy.color:green selectorLabels=app:nginx,k8s.deploy.color:green
+
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=TrafficSplit name=nginx-service-trafficsplit tsServices=nginx-service-stable:100,nginx-service-green:0
+         
          - name: Cleaning up current set up
            run: |
               python test/integration/k8s-deploy-delete.py 'Service' 'nginx-service' ${{ steps.ns.outputs.name }}

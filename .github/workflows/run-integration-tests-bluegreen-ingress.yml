@@ -78,7 +78,7 @@ jobs:
          - name: Checking if deployments, services and ingresses were created with green labels and original tag
            run: |
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment-green containerName=nginx:1.14.2 labels=k8s.deploy.color:green,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_ingress selectorLabels=app:nginx,k8s.deploy.color:green
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-green labels=k8s.deploy.color:green,app:nginx selectorLabels=app:nginx,k8s.deploy.color:green
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-green labels=k8s.deploy.color:green,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_ingress selectorLabels=app:nginx,k8s.deploy.color:green
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Ingress name=nginx-ingress ingressServices=nginx-service-green,unrouted-service
 
          - name: Executing promote action for ingress
@@ -95,7 +95,7 @@ jobs:
          - name: Checking if deployments, services and ingresses were created with none labels after first promote
            run: |
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment containerName=nginx:1.14.2 labels=k8s.deploy.color:None,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_ingress selectorLabels=app:nginx,k8s.deploy.color:None
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=k8s.deploy.color:None,app:nginx selectorLabels=app:nginx,k8s.deploy.color:None
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=k8s.deploy.color:None,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_ingress selectorLabels=app:nginx,k8s.deploy.color:None
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Ingress name=nginx-ingress ingressServices=nginx-service,unrouted-service
 
          - name: Executing second deploy action for ingress with new tag
@@ -114,8 +114,8 @@ jobs:
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment-green containerName=nginx:latest labels=k8s.deploy.color:green,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_ingress selectorLabels=app:nginx,k8s.deploy.color:green
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment containerName=nginx:1.14.2 labels=k8s.deploy.color:None,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_ingress selectorLabels=app:nginx,k8s.deploy.color:None
 
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-green labels=k8s.deploy.color:green,app:nginx selectorLabels=app:nginx,k8s.deploy.color:green
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=k8s.deploy.color:None,app:nginx selectorLabels=app:nginx,k8s.deploy.color:None
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-green labels=k8s.deploy.color:green,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_ingress selectorLabels=app:nginx,k8s.deploy.color:green
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=k8s.deploy.color:None,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_ingress selectorLabels=app:nginx,k8s.deploy.color:None
 
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Ingress name=nginx-ingress ingressServices=nginx-service-green,unrouted-service
 
@@ -133,7 +133,7 @@ jobs:
          - name: Checking if deployments, services and ingresses were created with none labels after promote for new tag
            run: |
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment containerName=nginx:latest labels=k8s.deploy.color:None,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_ingress selectorLabels=app:nginx,k8s.deploy.color:None
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=k8s.deploy.color:None,app:nginx selectorLabels=app:nginx,k8s.deploy.color:None
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=k8s.deploy.color:None,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_ingress selectorLabels=app:nginx,k8s.deploy.color:None
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Ingress name=nginx-ingress ingressServices=nginx-service,unrouted-service
          
          - name: Executing deploy action for ingress to be rejected using old tag
@@ -152,8 +152,8 @@ jobs:
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment-green containerName=nginx:1.14.2 labels=k8s.deploy.color:green,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_ingress selectorLabels=app:nginx,k8s.deploy.color:green
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment containerName=nginx:latest labels=k8s.deploy.color:None,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_ingress selectorLabels=app:nginx,k8s.deploy.color:None
 
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-green labels=k8s.deploy.color:green,app:nginx selectorLabels=app:nginx,k8s.deploy.color:green
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=k8s.deploy.color:None,app:nginx selectorLabels=app:nginx,k8s.deploy.color:None
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-green labels=k8s.deploy.color:green,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_ingress selectorLabels=app:nginx,k8s.deploy.color:green
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=k8s.deploy.color:None,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_ingress selectorLabels=app:nginx,k8s.deploy.color:None
 
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Ingress name=nginx-ingress ingressServices=nginx-service-green,unrouted-service
          
@@ -173,7 +173,7 @@ jobs:
          - name: Checking if deployments, services and ingresses were created with none labels and latest tag after reject
            run: |
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment containerName=nginx:latest labels=k8s.deploy.color:None,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_ingress selectorLabels=app:nginx,k8s.deploy.color:None
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=k8s.deploy.color:None,app:nginx selectorLabels=app:nginx,k8s.deploy.color:None
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=k8s.deploy.color:None,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_ingress selectorLabels=app:nginx,k8s.deploy.color:None
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Ingress name=nginx-ingress ingressServices=nginx-service,unrouted-service
          
 

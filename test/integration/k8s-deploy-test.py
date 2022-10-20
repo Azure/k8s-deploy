@@ -87,19 +87,19 @@ def verifyDeployment(deployment, parsedArgs):
         raise ValueError(
             f"expected selector labels not provided to inspect deployment {parsedArgs[nameKey]}")
     dictMatch, msg = compareDicts(
-        deployment['spec']['selector']['matchLabels'], parsedArgs[selectorLabelsKey])
+        deployment['spec']['selector']['matchLabels'], parsedArgs[selectorLabelsKey], selectorLabelsKey)
     if not dictMatch:
         return dictMatch, msg
 
     if labelsKey in parsedArgs:
         dictMatch, msg = compareDicts(
-            deployment['metadata']['labels'], parsedArgs[labelsKey])
+            deployment['metadata']['labels'], parsedArgs[labelsKey], labelsKey)
         if not dictMatch:
             return dictMatch, msg
 
     if annotationsKey in parsedArgs:
         dictMatch, msg = compareDicts(
-            deployment['metadata']['annotations'], parsedArgs[annotationsKey])
+            deployment['metadata']['annotations'], parsedArgs[annotationsKey], annotationsKey)
         if not dictMatch:
             return dictMatch, msg
 
@@ -112,19 +112,19 @@ def verifyService(service, parsedArgs):
         raise ValueError(
             f"expected selector labels not provided to inspect service {parsedArgs[nameKey]}")
     dictMatch, msg = compareDicts(
-        service['spec']['selector'], parsedArgs[selectorLabelsKey])
+        service['spec']['selector'], parsedArgs[selectorLabelsKey], selectorLabelsKey)
     if not dictMatch:
         return dictMatch, msg
 
     if labelsKey in parsedArgs:
         dictMatch, msg = compareDicts(
-            service['metadata']['labels'], parsedArgs[labelsKey])
+            service['metadata']['labels'], parsedArgs[labelsKey], labelsKey)
         if not dictMatch:
             return dictMatch, msg
 
     if annotationsKey in parsedArgs:
         dictMatch, msg = compareDicts(
-            service['metadata']['annotations'], parsedArgs[annotationsKey])
+            service['metadata']['annotations'], parsedArgs[annotationsKey], annotationsKey)
         if not dictMatch:
             return dictMatch, msg
 
@@ -157,7 +157,8 @@ def verifyTSObject(tsObj, parsedArgs):
         svcWeight = int(backends[i]['weight'])
         actualServices[svcName] = svcWeight
 
-    dictResult, msg = compareDicts(actualServices, expectedServices)
+    dictResult, msg = compareDicts(
+        actualServices, expectedServices, tsServicesKey)
     if not dictResult:
         return False, msg
 
@@ -172,7 +173,10 @@ def compareDicts(actual: dict, expected: dict, paramName=""):
         return False, f'dicts had different keys.\n actual: {actual}\n expected: {expected}'
     for key in actualKeys:
         if not actual[key] == expected[key]:
-            return False, f'dicts differed at key {key}.\n actual[{key}] is {actual[key]} and expected[{key}] is {expected[key]}'
+            msg = f'dicts differed at key {key}.\n actual[{key}] is {actual[key]} and expected[{key}] is {expected[key]}'
+            if not paramName == "":
+                msg = f"for param {paramName}, " + msg
+            return False,
 
     return True, ""
 
