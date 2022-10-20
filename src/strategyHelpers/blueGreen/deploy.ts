@@ -42,7 +42,7 @@ export async function deployBlueGreen(
    )
    core.endGroup()
 
-   blueGreenDeployment.objects.push(routeDeployment.objects)
+   blueGreenDeployment.objects.push(...routeDeployment.objects)
    blueGreenDeployment.deployResult.manifestFiles.push(
       ...routeDeployment.deployResult.manifestFiles
    )
