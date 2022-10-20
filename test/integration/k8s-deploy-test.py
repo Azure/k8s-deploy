@@ -155,7 +155,7 @@ def compareDicts(actual: dict, expected: dict):
 def main():
     parsedArgs: dict = stringListToDict(sys.argv[1:], "=")
     RESULT = False
-    msg = ""
+    msg = "placeholder"
     k8_object = None
 
     kind = parsedArgs[kindKey]
@@ -169,20 +169,17 @@ def main():
     except:
         sys.exit(kind+' '+name+' not created or not found')
 
-    try:
-        if kind == 'Deployment':
-            RESULT, msg = verifyDeployment(
-                k8_object, parsedArgs)
-        if kind == 'Service':
-            RESULT, msg = verifyDeployment(
-                k8_object, parsedArgs)
-        if kind == 'Ingress':
-            RESULT, msg = verifyIngress(k8_object, parsedArgs)
-    except:
-        pass
+    if kind == 'Deployment':
+        RESULT, msg = verifyDeployment(
+            k8_object, parsedArgs)
+    if kind == 'Service':
+        RESULT, msg = verifyDeployment(
+            k8_object, parsedArgs)
+    if kind == 'Ingress':
+        RESULT, msg = verifyIngress(k8_object, parsedArgs)
 
     if not RESULT:
-        sys.exit(f"{kind} {name} failed check: ${msg}")
+        sys.exit(f"{kind} {name} failed check: {msg}")
     print('Test passed')
 
 
