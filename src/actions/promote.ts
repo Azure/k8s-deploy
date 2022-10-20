@@ -6,6 +6,7 @@ import {
    getResources,
    updateManifestFiles
 } from '../utilities/manifestUpdateUtils'
+import {annotateAndLabelResources} from '../strategyHelpers/deploymentHelper'
 import * as models from '../types/kubernetesTypes'
 import * as KubernetesManifestUtility from '../utilities/manifestStabilityUtils'
 import {
@@ -185,5 +186,21 @@ async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
       )
       await deleteGreenObjects(kubectl, manifestObjects.deploymentEntityList)
    }
+   core.endGroup()
+
+   // annotate resources
+   core.startGroup('Annotating resources')
+   let allPods
+   try {
+      allPods = JSON.parse((await kubectl.getAllPods()).stdout)
+   } catch (e) {
+      core.debug(`Unable to parse pods: ${e}`)
+   }
+   await annotateAndLabelResources(
+      deployedManifestFiles,
+      kubectl,
+      resources,
+      allPods
+   )
    core.endGroup()
 }
