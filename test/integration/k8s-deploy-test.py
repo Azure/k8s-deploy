@@ -164,12 +164,12 @@ def verifyTSObject(tsObj, parsedArgs):
     return True, ""
 
 
-def compareDicts(actual: dict, expected: dict):
+def compareDicts(actual: dict, expected: dict, paramName=""):
     actualKeys = actual.keys()
     expectedKeys = expected.keys()
 
     if not actualKeys == expectedKeys:
-        return False, f'dicts had different keys.\n actual keys: {actualKeys}\n expected keys: {expectedKeys}'
+        return False, f'dicts had different keys.\n actual: {actual}\n expected: {expected}'
     for key in actualKeys:
         if not actual[key] == expected[key]:
             return False, f'dicts differed at key {key}.\n actual[{key}] is {actual[key]} and expected[{key}] is {expected[key]}'
