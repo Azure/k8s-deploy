@@ -58,7 +58,7 @@ def stringListToDict(args: list[str], separator: str):
     parsedArgs = {}
     for arg in args:
         argSplit = arg.split(separator)
-        parsedArgs[argSplit[0]] = parsedArgs[argSplit[1]]
+        parsedArgs[argSplit[0]] = argSplit[1]
 
     return parsedArgs
 
