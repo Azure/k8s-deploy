@@ -54,8 +54,8 @@ def parseArgs(sysArgs):
         argsDict[tsServicesKey] = stringListToDict(
             argsDict[tsServicesKey].split(","), ":")
 
-    for key in argsDict[tsServicesKey]:
-        argsDict[tsServicesKey][key] = int(argsDict[tsServicesKey][key])
+        for key in argsDict[tsServicesKey]:
+            argsDict[tsServicesKey][key] = int(argsDict[tsServicesKey][key])
 
     # reformat list-like parameters (eg, paramName=value1,value2,value3)
     if ingressServicesKey in argsDict:
