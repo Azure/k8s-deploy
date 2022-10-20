@@ -69,7 +69,7 @@ def verifyDeployment(deployment, parsedArgs):
         raise ValueError(
             f"expected container image name not provided to inspect deployment {parsedArgs[nameKey]}")
 
-    actualImageName = deployment['spec']['template']['spec']['containers']['image']
+    actualImageName = deployment['spec']['template']['spec']['containers'][0]['image']
     if not actualImageName == parsedArgs[containerKey]:
         return False, f"expected container image name {parsedArgs[containerKey]} but got {actualImageName} instead"
 
