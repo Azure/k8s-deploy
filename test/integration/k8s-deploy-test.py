@@ -67,6 +67,7 @@ def parseArgs(sysArgs):
 def stringListToDict(args: list[str], separator: str):
     parsedArgs = {}
     for arg in args:
+        print(f"parsing arg {arg}")
         argSplit = arg.split(separator)
         parsedArgs[argSplit[0]] = argSplit[1]
 

@@ -51,9 +51,9 @@ jobs:
          - name: Install linkerd and add controlplane to cluster
            run: |
               curl --proto '=https' --tlsv1.2 -sSfL https://run.linkerd.io/install | sh
+              export PATH=$PATH:/home/runner/.linkerd2/bin
               linkerd install | kubectl apply -f -
               
-
          - name: Create namespace to run tests
            run: kubectl create ns test-${{ steps.ns.outputs.name }}
 
