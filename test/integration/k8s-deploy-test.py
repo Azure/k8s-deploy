@@ -195,6 +195,9 @@ def main():
     try:
         k8_object = json.load(os.popen('kubectl get '+kind +
                               ' '+name+' -n '+namespace+' -o json'))
+
+        if k8_object == None:
+            raise ValueError(f"{kind} {name} was not found")
     except:
         sys.exit(kind+' '+name+' not created or not found')
 
@@ -211,6 +214,7 @@ def main():
 
     if not RESULT:
         sys.exit(f"{kind} {name} failed check: {msg}")
+
     print('Test passed')
 
 
