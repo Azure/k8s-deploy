@@ -128,6 +128,8 @@ def verifyService(service, parsedArgs):
         if not dictMatch:
             return dictMatch, msg
 
+    return True, ""
+
 
 def verifyIngress(ingress, parsedArgs):
     # test services in paths
