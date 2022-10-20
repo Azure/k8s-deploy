@@ -35,13 +35,9 @@ def parseArgs(sysArgs):
         raise ValueError(f"missing key: {namespaceKey}")
 
     # reformat map-like parameters (eg, paramName=key1:value1,key2:value2)
-    print(f"reformatting map-like parameters for dict: {argsDict}")
     if labelsKey in argsDict:
-        print("found labels key")
-        print(f"original string is {argsDict[labelsKey]}")
         argsDict[labelsKey] = stringListToDict(
             argsDict[labelsKey].split(","), ":")
-        print(f"argsDict[labelsKey] is now {argsDict[labelsKey]}")
 
     if annotationsKey in argsDict:
         argsDict[annotationsKey] = stringListToDict(
@@ -62,9 +58,7 @@ def stringListToDict(args: list[str], separator: str):
     parsedArgs = {}
     for arg in args:
         argSplit = arg.split(separator)
-        print(f"argsplit is {argSplit}")
         parsedArgs[argSplit[0]] = argSplit[1]
-        print(f"assigned parsedArgs[{argSplit[0]}] = {argSplit[1]}")
 
     return parsedArgs
 
@@ -150,10 +144,7 @@ def compareDicts(actual: dict, expected: dict):
 
     if not actualKeys == expectedKeys:
         return False, f'dicts had different keys.\n actual keys: {actualKeys}\n expected keys: {expectedKeys}'
-    print(f"actual is {actual} \n expected is {expected}")
     for key in actualKeys:
-        print(f"at key {key}")
-
         if not actual[key] == expected[key]:
             return False, f'dicts differed at key {key}.\n actual[{key}] is {actual[key]} and expected[{key}] is {expected[key]}'
 
@@ -161,7 +152,7 @@ def compareDicts(actual: dict, expected: dict):
 
 
 def main():
-    parsedArgs: dict = stringListToDict(sys.argv[1:], "=")
+    parsedArgs: dict = parseArgs(sys.argv[1:])
     RESULT = False
     msg = "placeholder"
     k8_object = None
