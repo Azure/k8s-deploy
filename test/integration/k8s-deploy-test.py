@@ -144,8 +144,10 @@ def compareDicts(actual: dict, expected: dict):
 
     if not actualKeys == expectedKeys:
         return False, f'dicts had different keys.\n actual keys: {actualKeys}\n expected keys: {expectedKeys}'
-
+    print(f"actual is {actual} \n expected is {expected}")
     for key in actualKeys:
+        print(f"at key {key}")
+
         if not actual[key] == expected[key]:
             return False, f'dicts differed at key {key}.\n actual[{key}] is {actual[key]} and expected[{key}] is {expected[key]}'
 
