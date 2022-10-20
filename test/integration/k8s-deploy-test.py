@@ -198,7 +198,7 @@ def main():
         RESULT, msg = verifyDeployment(
             k8_object, parsedArgs)
     if kind == 'Service':
-        RESULT, msg = verifyDeployment(
+        RESULT, msg = verifyService(
             k8_object, parsedArgs)
     if kind == 'Ingress':
         RESULT, msg = verifyIngress(k8_object, parsedArgs)
