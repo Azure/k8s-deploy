@@ -216,7 +216,7 @@ def main():
             k8_object, parsedArgs)
     if kind == 'Ingress':
         RESULT, msg = verifyIngress(k8_object, parsedArgs)
-    if kind == "TrafficSplitObject":
+    if kind == "TrafficSplit":
         RESULT, msg = verifyTSObject(k8_object, parsedArgs)
 
     if not RESULT:
