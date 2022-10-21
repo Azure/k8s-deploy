@@ -52,9 +52,9 @@ jobs:
            run: |
               curl --proto '=https' --tlsv1.2 -sSfL https://run.linkerd.io/install | sh
               export PATH=$PATH:/home/runner/.linkerd2/bin
-              linkerd check --pre
 
-              linkerd install | kubectl apply -f -
+              linkerd install --crds | kubectl apply -f -
+              linkerd install --set proxyInit.runAsRoot=true | kubectl apply -f -
               
          - name: Create namespace to run tests
            run: kubectl create ns test-${{ steps.ns.outputs.name }}
