@@ -44,7 +44,7 @@ jobs:
            uses: manusa/actions-setup-minikube@v2.4.2
            with:
               minikube version: 'v1.24.0'
-              kubernetes version: 'v1.17.8'
+              kubernetes version: 'v1.21.0'
               driver: 'none'
            timeout-minutes: 3
 

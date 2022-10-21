@@ -44,7 +44,7 @@ jobs:
            uses: manusa/actions-setup-minikube@v2.4.2
            with:
               minikube version: 'v1.24.0'
-              kubernetes version: 'v1.17.8'
+              kubernetes version: 'v1.21.0'
               driver: 'none'
            timeout-minutes: 3
 
@@ -53,7 +53,7 @@ jobs:
               curl --proto '=https' --tlsv1.2 -sSfL https://run.linkerd.io/install | sh
               export PATH=$PATH:/home/runner/.linkerd2/bin
               linkerd check --pre
-              
+
               linkerd install --crds | kubectl apply -f -
               linkerd install | kubectl apply -f -
               
