@@ -206,7 +206,11 @@ def main():
         if k8_object == None:
             raise ValueError(f"{kind} {name} was not found")
     except:
-        sys.exit(kind+' '+name+' not created or not found')
+        msg = kind+' '+name+' not created or not found'
+        foundObjects = json.load(
+            os.popen('kubectl get '+kind+' -n '+namespace+' -o json'))
+        suffix = f"resources of type {kind}: {foundObjects}"
+        sys.exit(msg + suffix)
 
     if kind == 'Deployment':
         RESULT, msg = verifyDeployment(
