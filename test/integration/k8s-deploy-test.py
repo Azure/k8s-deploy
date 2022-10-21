@@ -118,6 +118,7 @@ def verifyService(service, parsedArgs):
         return dictMatch, msg
 
     if labelsKey in parsedArgs:
+        print(f" service is {service}")
         dictMatch, msg = compareDicts(
             service['metadata']['labels'], parsedArgs[labelsKey], labelsKey)
         if not dictMatch:
