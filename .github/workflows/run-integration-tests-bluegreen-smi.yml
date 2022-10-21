@@ -109,14 +109,9 @@ jobs:
          # another good place for anti-test - ensure old deps are deleted after promote
          - name: Checking if deployments, services, and ts objects were created with none labels after first promote
            run: |
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment containerName=nginx:1.14.2 labels=k8s.deploy.color:None,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_SMI selectorLabels=app:nginx,k8s.deploy.color:None
-              
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_SMI selectorLabels=app:nginx
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-stable labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_SMI,k8s.deploy.color:None selectorLabels=app:nginx,k8s.deploy.color:None
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-green labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_SMI,k8s.deploy.color:green selectorLabels=app:nginx,k8s.deploy.color:green
-
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=TrafficSplit name=nginx-service-trafficsplit tsServices=nginx-service-stable:100,nginx-service-green:0
-
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment containerName=nginx:1.14.2 labels=k8s.deploy.color:None,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_SMI selectorLabels=app:nginx,k8s.deploy.color:None             
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_SMI selectorLabels=app:nginx,k8s.deploy.color:None   
+ 
          - name: Executing second deploy action for smi with new tag
            uses: ./
            with:
