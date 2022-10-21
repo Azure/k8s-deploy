@@ -52,6 +52,8 @@ jobs:
            run: |
               curl --proto '=https' --tlsv1.2 -sSfL https://run.linkerd.io/install | sh
               export PATH=$PATH:/home/runner/.linkerd2/bin
+              linkerd check --pre
+              
               linkerd install --crds | kubectl apply -f -
               linkerd install | kubectl apply -f -
               
