@@ -54,7 +54,6 @@ jobs:
               export PATH=$PATH:/home/runner/.linkerd2/bin
               linkerd check --pre
 
-              linkerd install --crds | kubectl apply -f -
               linkerd install | kubectl apply -f -
               
          - name: Create namespace to run tests
