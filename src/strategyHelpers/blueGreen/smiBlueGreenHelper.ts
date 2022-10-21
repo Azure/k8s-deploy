@@ -178,13 +178,13 @@ export async function cleanupSMI(
    const deleteList: K8sDeleteObject[] = []
 
    serviceEntityList.forEach((serviceObject) => {
-      deleteList.push({
-         name: getBlueGreenResourceName(
-            serviceObject.metadata.name,
-            TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX
-         ),
-         kind: TRAFFIC_SPLIT_OBJECT
-      })
+      // deleteList.push({
+      //    name: getBlueGreenResourceName(
+      //       serviceObject.metadata.name,
+      //       TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX
+      //    ),
+      //    kind: TRAFFIC_SPLIT_OBJECT
+      // })
 
       deleteList.push({
          name: getBlueGreenResourceName(
@@ -194,13 +194,13 @@ export async function cleanupSMI(
          kind: serviceObject.kind
       })
 
-      deleteList.push({
-         name: getBlueGreenResourceName(
-            serviceObject.metadata.name,
-            STABLE_SUFFIX
-         ),
-         kind: serviceObject.kind
-      })
+      // deleteList.push({
+      //    name: getBlueGreenResourceName(
+      //       serviceObject.metadata.name,
+      //       STABLE_SUFFIX
+      //    ),
+      //    kind: serviceObject.kind
+      // })
    })
 
    // delete all objects
