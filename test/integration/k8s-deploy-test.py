@@ -143,7 +143,7 @@ def verifyIngress(ingress, parsedArgs):
     for i in range(len(ingress['spec']['rules'][0]['http']['paths'])):
         print(
             f"service obj is {ingress['spec']['rules'][0]['http']['paths'][i]}")
-        svcName = ingress['spec']['rules'][0]['http']['paths'][i]['backend']['serviceName']
+        svcName = ingress['spec']['rules'][0]['http']['paths'][i]['backend']['service']['name']
         if svcName != expectedIngresses[i]:
             return False, f"for ingress {parsedArgs[nameKey]} expected svc name {expectedIngresses[i]} at position {i} but got {svcName}"
 

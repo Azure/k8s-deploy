@@ -97,11 +97,15 @@ export async function deploySMICanary(
    const newFilePaths = fileHelper.writeObjectsToFile(newObjectsList)
    const forceDeployment = core.getInput('force').toLowerCase() === 'true'
    const result = await kubectl.apply(newFilePaths, forceDeployment)
-   await createCanaryService(kubectl, filePaths)
+   const svcDeploymentFiles = await createCanaryService(kubectl, filePaths)
+   newFilePaths.push(...svcDeploymentFiles)
    return {result, newFilePaths}
 }
 
-async function createCanaryService(kubectl: Kubectl, filePaths: string[]) {
+async function createCanaryService(
+   kubectl: Kubectl,
+   filePaths: string[]
+): Promise<string[]> {
    const newObjectsList = []
    const trafficObjectsList: string[] = []
 
@@ -190,6 +194,7 @@ async function createCanaryService(kubectl: Kubectl, filePaths: string[]) {
 
    const result = await kubectl.apply(manifestFiles, forceDeployment)
    checkForErrors([result])
+   return manifestFiles
 }
 
 export async function redirectTrafficToCanaryDeployment(
