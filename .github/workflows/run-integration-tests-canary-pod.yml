@@ -92,16 +92,10 @@ jobs:
               action: promote
 
          # another good place for anti-test - ensure old deps are deleted after promote
-         - name: Checking if deployments, services, and ts objects were created with stable labels after first promote
+         - name: Checking if deployments and services were created with stable labels after first promote
            run: |
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment-stable containerName=nginx:1.14.2 labels=workflow/version:stable,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_pod selectorLabels=app:nginx,workflow/version:stable
-              
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_pod selectorLabels=app:nginx
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-canary labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_pod,workflow/version:canary selectorLabels=app:nginx,workflow/version:canary
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-stable labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_pod,workflow/version:stable selectorLabels=app:nginx,workflow/version:stable
-
-
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=TrafficSplit name=nginx-service-workflow-rollout tsServices=nginx-service-stable:100,nginx-service-canary:0
 
          - name: Executing second deploy action for pod with new tag
            uses: ./
@@ -120,14 +114,10 @@ jobs:
            run: |
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment-stable containerName=nginx:1.14.2 labels=workflow/version:stable,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_pod selectorLabels=app:nginx,workflow/version:stable
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment-canary containerName=nginx:latest labels=workflow/version:canary,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_pod selectorLabels=app:nginx,workflow/version:canary
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment-baseline containerName=nginx:1.14.2 labels=workflow/version:baseline,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_pod selectorLabels=app:nginx,workflow/version:baseline
 
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_pod selectorLabels=app:nginx
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-stable labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_pod,workflow/version:stable selectorLabels=app:nginx,workflow/version:stable
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_pod,workflow/version:stable selectorLabels=app:nginx,workflow/version:stable
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-canary labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_pod,workflow/version:canary selectorLabels=app:nginx,workflow/version:canary
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-baseline labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_pod,workflow/version:baseline selectorLabels=app:nginx,workflow/version:baseline
 
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=TrafficSplit name=nginx-service-workflow-rollout tsServices=nginx-service-stable:50,nginx-service-canary:25,nginx-service-canary:25
 
          - name: Executing second promote action for pod now using new image tag
            uses: ./
@@ -144,11 +134,8 @@ jobs:
          - name: Checking if deployments and services were created with stable labels after promote for new tag, ts is stable
            run: |
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment-stable containerName=nginx:latest labels=workflow/version:stable,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_pod selectorLabels=app:nginx,workflow/version:stable
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_pod,workflow/version:stable selectorLabels=app:nginx,workflow/version:stable
 
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_pod selectorLabels=app:nginx
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-stable labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_pod,workflow/version:stable selectorLabels=app:nginx,workflow/version:stable
-
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=TrafficSplit name=nginx-service-workflow-rollout tsServices=nginx-service-stable:100,nginx-service-canary:0,nginx-service-baseline:0
          
          - name: Executing deploy action for pod to be rejected using old tag
            uses: ./

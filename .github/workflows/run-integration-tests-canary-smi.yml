@@ -81,7 +81,7 @@ jobs:
               manifests: |
                  test/integration/manifests/test.yml
               strategy: canary
-              percent: 50
+              percentage: 50
               traffic-split-method: smi
               action: deploy
 
@@ -103,7 +103,7 @@ jobs:
               manifests: |
                  test/integration/manifests/test.yml
               strategy: canary
-              percent: 50
+              percentage: 50
               traffic-split-method: smi
               action: promote
 
@@ -127,7 +127,7 @@ jobs:
               manifests: |
                  test/integration/manifests/test.yml
               strategy: canary
-              percent: 50
+              percentage: 50
               traffic-split-method: smi
               action: deploy
          
@@ -153,7 +153,7 @@ jobs:
               manifests: |
                  test/integration/manifests/test.yml
               strategy: canary
-              percent: 50
+              percentage: 50
               traffic-split-method: smi
               action: promote
 
@@ -174,7 +174,7 @@ jobs:
               manifests: |
                  test/integration/manifests/test.yml
               strategy: canary
-              percent: 50
+              percentage: 50
               traffic-split-method: smi
               action: deploy
 
@@ -200,7 +200,7 @@ jobs:
               manifests: |
                  test/integration/manifests/test.yml
               strategy: canary
-              percent: 50
+              percentage: 50
               traffic-split-method: smi
               action: reject
 

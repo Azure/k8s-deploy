@@ -87,8 +87,11 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
          kubectl,
          true
       )
-      promoteResult.execResult = unpacked.result
-      promoteResult.manifestFiles = unpacked.newFilePaths
+      promoteResult = {
+         execResult: unpacked.result,
+         manifestFiles: unpacked.newFilePaths
+      }
+
       core.endGroup()
 
       core.startGroup('Redirecting traffic to stable deployment')
