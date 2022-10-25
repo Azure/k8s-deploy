@@ -16,6 +16,7 @@ import {
 } from '../strategyHelpers/blueGreen/blueGreenHelper'
 
 import {BlueGreenManifests} from '../types/blueGreenTypes'
+import {DeployResult} from '../types/deployResult'
 
 import {
    promoteBlueGreenIngress,
@@ -63,6 +64,8 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
    const trafficSplitMethod = parseTrafficSplitMethod(
       core.getInput('traffic-split-method', {required: true})
    )
+   let promoteResult: DeployResult
+   let stableRedirectManifests
    if (trafficSplitMethod == TrafficSplitMethod.SMI) {
       includeServices = true
 
@@ -78,18 +81,24 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
       core.startGroup(
          'Deploying input manifests with SMI canary strategy from promote'
       )
-      await SMICanaryDeploymentHelper.deploySMICanary(
+
+      const unpacked = await SMICanaryDeploymentHelper.deploySMICanary(
          manifestFilesForDeployment,
          kubectl,
          true
       )
+      promoteResult.execResult = unpacked.result
+      promoteResult.manifestFiles = unpacked.newFilePaths
       core.endGroup()
 
       core.startGroup('Redirecting traffic to stable deployment')
-      await SMICanaryDeploymentHelper.redirectTrafficToStableDeployment(
-         kubectl,
-         manifests
-      )
+      stableRedirectManifests =
+         await SMICanaryDeploymentHelper.redirectTrafficToStableDeployment(
+            kubectl,
+            manifests
+         )
+
+      promoteResult.manifestFiles.push(...stableRedirectManifests)
       core.endGroup()
    } else {
       core.startGroup('Deploying input manifests from promote')
@@ -113,6 +122,29 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
          `Exception occurred while deleting canary and baseline workloads: ${ex}`
       )
    }
+   core.endGroup()
+
+   const deployedManifestFiles =
+      // annotate resources
+      core.startGroup('Annotating resources')
+   let allPods
+   try {
+      allPods = JSON.parse((await kubectl.getAllPods()).stdout)
+   } catch (e) {
+      core.debug(`Unable to parse pods: ${e}`)
+   }
+   const resources: Resource[] = getResources(
+      promoteResult.manifestFiles,
+      models.DEPLOYMENT_TYPES.concat([
+         models.DiscoveryAndLoadBalancerResource.SERVICE
+      ])
+   )
+   await annotateAndLabelResources(
+      promoteResult.manifestFiles,
+      kubectl,
+      resources,
+      allPods
+   )
    core.endGroup()
 }
 

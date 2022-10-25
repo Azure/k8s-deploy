@@ -216,8 +216,10 @@ jobs:
          
          - name: Cleaning up current set up
            run: |
-              python test/integration/k8s-deploy-delete.py 'Service' 'nginx-service' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-delete.py 'Deployment' 'nginx-deployment' ${{ steps.ns.outputs.name }}
+              python test/integration/k8s-deploy-delete.py 'Service' 'all' ${{ steps.ns.outputs.name }}
+              python test/integration/k8s-deploy-delete.py 'Deployment' 'all' ${{ steps.ns.outputs.name }}
+              python test/integration/k8s-deploy-delete.py 'Ingress' 'all' ${{ steps.ns.outputs.name }}
+              python test/integration/k8s-deploy-delete.py 'TrafficSplit' 'all' ${{ steps.ns.outputs.name }}
 
          - if: ${{ always() }}
            name: Delete created namespace

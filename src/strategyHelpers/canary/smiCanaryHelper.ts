@@ -250,6 +250,7 @@ async function adjustTraffic(
    const forceDeployment = core.getInput('force').toLowerCase() === 'true'
    const result = await kubectl.apply(trafficSplitManifests, forceDeployment)
    checkForErrors([result])
+   return trafficSplitManifests
 }
 
 async function updateTrafficSplitObject(
