@@ -79,7 +79,7 @@ jobs:
               namespace: test-${{ steps.ns.outputs.name }}
               images: nginx:1.14.2
               manifests: |
-                 test/integration/manifests/test-service.yml
+                 test/integration/manifests/test.yml
               strategy: canary
               percent: 50
               traffic-split-method: smi
@@ -101,7 +101,7 @@ jobs:
               namespace: test-${{ steps.ns.outputs.name }}
               images: nginx:1.14.2
               manifests: |
-                 test/integration/manifests/test-service.yml
+                 test/integration/manifests/test.yml
               strategy: canary
               percent: 50
               traffic-split-method: smi
@@ -125,7 +125,7 @@ jobs:
               namespace: test-${{ steps.ns.outputs.name }}
               images: nginx:latest
               manifests: |
-                 test/integration/manifests/test-service.yml
+                 test/integration/manifests/test.yml
               strategy: canary
               percent: 50
               traffic-split-method: smi
@@ -151,7 +151,7 @@ jobs:
               namespace: test-${{ steps.ns.outputs.name }}
               images: nginx:latest
               manifests: |
-                 test/integration/manifests/test-service.yml
+                 test/integration/manifests/test.yml
               strategy: canary
               percent: 50
               traffic-split-method: smi
@@ -172,7 +172,7 @@ jobs:
               namespace: test-${{ steps.ns.outputs.name }}
               images: nginx:1.14.2
               manifests: |
-                 test/integration/manifests/test-service.yml
+                 test/integration/manifests/test.yml
               strategy: canary
               percent: 50
               traffic-split-method: smi
@@ -198,7 +198,7 @@ jobs:
               namespace: test-${{ steps.ns.outputs.name }}
               images: nginx:1.14.2
               manifests: |
-                 test/integration/manifests/test-service.yml
+                 test/integration/manifests/test.yml
               strategy: canary
               percent: 50
               traffic-split-method: smi
