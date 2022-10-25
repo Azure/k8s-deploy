@@ -207,8 +207,8 @@ export async function redirectTrafficToCanaryDeployment(
 export async function redirectTrafficToStableDeployment(
    kubectl: Kubectl,
    manifestFilePaths: string[]
-) {
-   await adjustTraffic(kubectl, manifestFilePaths, 1000, 0)
+): Promise<string[]> {
+   return await adjustTraffic(kubectl, manifestFilePaths, 1000, 0)
 }
 
 async function adjustTraffic(

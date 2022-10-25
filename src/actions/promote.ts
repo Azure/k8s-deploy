@@ -65,7 +65,7 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
       core.getInput('traffic-split-method', {required: true})
    )
    let promoteResult: DeployResult
-   let stableRedirectManifests
+   let stableRedirectManifests: string[]
    if (trafficSplitMethod == TrafficSplitMethod.SMI) {
       includeServices = true
 
