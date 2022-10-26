@@ -212,7 +212,7 @@ def main():
         foundObjects = json.load(
             os.popen('kubectl get '+kind+' -n '+namespace+' -o json'))
         suffix = f"resources of type {kind}: {foundObjects}"
-        sys.exit(msg + suffix)
+        sys.exit(msg + " " + suffix)
 
     if kind == 'Deployment':
         RESULT, msg = verifyDeployment(
