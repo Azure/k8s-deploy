@@ -77,7 +77,7 @@ jobs:
          - name: Checking if deployments and services were created with canary labels and original tag
            run: |
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment-canary containerName=nginx:1.14.2 labels=workflow/version:canary,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_pod selectorLabels=app:nginx,workflow/version:canary
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-canary labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_pod selectorLabels=app:nginx
+              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_pod selectorLabels=app:nginx
 
          - name: Executing promote action for pod
            uses: ./
