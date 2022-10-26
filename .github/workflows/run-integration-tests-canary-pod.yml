@@ -152,15 +152,11 @@ jobs:
          - name: Checking if new deployments (with old tag) and services were created with canary and baseline labels after deploy, and stable deployment (with latest tag) persists
            run: |
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment-canary containerName=nginx:1.14.2 labels=workflow/version:canary,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_pod selectorLabels=app:nginx,workflow/version:canary
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment-baseline containerName=nginx:latest labels=workflow/version:baseline,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_pod selectorLabels=app:nginx,workflow/version:baseline
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment-stable containerName=nginx:latest labels=workflow/version:stable,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_pod selectorLabels=app:nginx,workflow/version:stable
 
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_pod selectorLabels=app:nginx
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-stable labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_pod,workflow/version:stable selectorLabels=app:nginx,workflow/version:stable
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-baseline labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_pod,workflow/version:baseline selectorLabels=app:nginx,workflow/version:baseline
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-canary labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_pod,workflow/version:canary selectorLabels=app:nginx,workflow/version:canary
 
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=TrafficSplit name=nginx-service-workflow-rollout tsServices=nginx-service-stable:50,nginx-service-canary:25,nginx-service-baseline:25
          
          # NEED TO MAKE SURE THIS WORKS - DO IMAGES AND MANIFESTS PARAMETERS MATTER HERE? IN THEORY SHOULD REJECT STUFF FROM DEPLOY STEP
          - name: Executing reject action for pod to reject new deployment with 1.14.2 tag
