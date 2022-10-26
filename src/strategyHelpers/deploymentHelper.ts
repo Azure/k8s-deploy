@@ -254,5 +254,14 @@ async function labelResources(
       `workflow=${cleanLabel(label)}`
    ]
 
-   checkForErrors([await kubectl.labelFiles(files, labels)], true)
+   const labelResults = []
+   for (const file of files) {
+      try {
+         const labelResult = await kubectl.labelFiles(files, labels)
+         labelResults.push(labelResult)
+      } catch (e) {
+         core.warning(`failed to annotate resource: ${e}`)
+      }
+   }
+   checkForErrors(labelResults, true)
 }

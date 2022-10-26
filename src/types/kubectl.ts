@@ -120,6 +120,11 @@ export class Kubectl {
       return await this.execute(args)
    }
 
+   public async labelFile(file: string, labels: string[]): Promise<ExecOutput> {
+      const args = ['label', '-f', file, ...labels, '--overwrite']
+      return await this.execute(args)
+   }
+
    public async labelFiles(
       files: string | string[],
       labels: string[]
