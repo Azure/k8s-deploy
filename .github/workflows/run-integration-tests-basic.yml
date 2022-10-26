@@ -69,7 +69,6 @@ jobs:
               images: nginx:1.14.2
               manifests: |
                  test/integration/manifests/test.yml
-              strategy: canary
               action: deploy
 
          - name: Checking if deployments and services were created with canary labels and original tag
