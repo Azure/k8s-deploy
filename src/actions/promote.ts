@@ -114,8 +114,9 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
    }
 
    core.startGroup('Deleting canary and baseline workloads')
+   let deletedResources: string[]
    try {
-      await canaryDeploymentHelper.deleteCanaryDeployment(
+      deletedResources = await canaryDeploymentHelper.deleteCanaryDeployment(
          kubectl,
          manifests,
          includeServices
@@ -126,10 +127,11 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
       )
    }
    core.endGroup()
-
-   const deployedManifestFiles =
-      // annotate resources
-      core.startGroup('Annotating resources')
+   const toAnnotate = promoteResult.manifestFiles.filter(
+      (obj: string) => deletedResources.indexOf(obj) == -1
+   )
+   // annotate resources
+   core.startGroup('Annotating resources')
    let allPods
    try {
       allPods = JSON.parse((await kubectl.getAllPods()).stdout)
@@ -137,17 +139,12 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
       core.debug(`Unable to parse pods: ${e}`)
    }
    const resources: Resource[] = getResources(
-      promoteResult.manifestFiles,
+      toAnnotate,
       models.DEPLOYMENT_TYPES.concat([
          models.DiscoveryAndLoadBalancerResource.SERVICE
       ])
    )
-   await annotateAndLabelResources(
-      promoteResult.manifestFiles,
-      kubectl,
-      resources,
-      allPods
-   )
+   await annotateAndLabelResources(toAnnotate, kubectl, resources, allPods)
    core.endGroup()
 }
 
