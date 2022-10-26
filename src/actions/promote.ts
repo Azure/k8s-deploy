@@ -65,7 +65,6 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
       core.getInput('traffic-split-method', {required: true})
    )
    let promoteResult: DeployResult
-   let stableRedirectManifests: string[]
    if (trafficSplitMethod == TrafficSplitMethod.SMI) {
       includeServices = true
 
@@ -82,30 +81,26 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
          'Deploying input manifests with SMI canary strategy from promote'
       )
 
-      const unpacked = await SMICanaryDeploymentHelper.deploySMICanary(
+      promoteResult = await SMICanaryDeploymentHelper.deploySMICanary(
          manifestFilesForDeployment,
          kubectl,
          true
       )
-      promoteResult = {
-         execResult: unpacked.result,
-         manifestFiles: unpacked.newFilePaths
-      }
 
       core.endGroup()
 
       core.startGroup('Redirecting traffic to stable deployment')
-      stableRedirectManifests =
+      const stableRedirectManifests =
          await SMICanaryDeploymentHelper.redirectTrafficToStableDeployment(
             kubectl,
             manifests
          )
-
       promoteResult.manifestFiles.push(...stableRedirectManifests)
+
       core.endGroup()
    } else {
       core.startGroup('Deploying input manifests from promote')
-      await PodCanaryHelper.deployPodCanary(
+      promoteResult = await PodCanaryHelper.deployPodCanary(
          manifestFilesForDeployment,
          kubectl,
          true

@@ -40,6 +40,7 @@ import {
 } from '../utilities/githubUtils'
 import {getDeploymentConfig} from '../utilities/dockerUtils'
 import {deploy} from '../actions/deploy'
+import {DeployResult} from '../types/deployResult'
 
 export async function deployManifests(
    files: string[],
@@ -49,13 +50,13 @@ export async function deployManifests(
 ): Promise<string[]> {
    switch (deploymentStrategy) {
       case DeploymentStrategy.CANARY: {
-         const {result, newFilePaths} =
+         const canaryDeployResult: DeployResult =
             trafficSplitMethod == TrafficSplitMethod.SMI
                ? await deploySMICanary(files, kubectl)
                : await deployPodCanary(files, kubectl)
 
-         checkForErrors([result])
-         return newFilePaths
+         checkForErrors([canaryDeployResult.execResult])
+         return canaryDeployResult.manifestFiles
       }
 
       case DeploymentStrategy.BLUE_GREEN: {

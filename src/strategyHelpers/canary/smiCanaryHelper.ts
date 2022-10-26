@@ -10,6 +10,7 @@ import * as podCanaryHelper from './podCanaryHelper'
 import {isDeploymentEntity, isServiceEntity} from '../../types/kubernetesTypes'
 import {checkForErrors} from '../../utilities/kubectlUtils'
 import {inputAnnotations} from '../../inputUtils'
+import {DeployResult} from '../../types/deployResult'
 
 const TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX = '-workflow-rollout'
 const TRAFFIC_SPLIT_OBJECT = 'TrafficSplit'
@@ -18,7 +19,7 @@ export async function deploySMICanary(
    filePaths: string[],
    kubectl: Kubectl,
    onlyDeployStable: boolean = false
-) {
+): Promise<DeployResult> {
    const canaryReplicasInput = core.getInput('baseline-and-canary-replicas')
    let canaryReplicaCount
    let calculateReplicas = true
@@ -99,7 +100,7 @@ export async function deploySMICanary(
    const result = await kubectl.apply(newFilePaths, forceDeployment)
    const svcDeploymentFiles = await createCanaryService(kubectl, filePaths)
    newFilePaths.push(...svcDeploymentFiles)
-   return {result, newFilePaths}
+   return {execResult: result, manifestFiles: newFilePaths}
 }
 
 async function createCanaryService(
