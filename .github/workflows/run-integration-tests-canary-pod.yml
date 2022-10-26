@@ -108,7 +108,6 @@ jobs:
               percentage: 50
               traffic-split-method: pod
               action: deploy
-         
 
          - name: Checking if deployments (with new tag) and services were created with canary labels after deploy, and old deployment persists
            run: |
@@ -116,7 +115,6 @@ jobs:
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment-canary containerName=nginx:latest labels=workflow/version:canary,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_pod selectorLabels=app:nginx,workflow/version:canary
 
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_pod selectorLabels=app:nginx
-
 
          - name: Executing second promote action for pod now using new image tag
            uses: ./
@@ -135,7 +133,6 @@ jobs:
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment containerName=nginx:latest labels=app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_pod selectorLabels=app:nginx
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_pod selectorLabels=app:nginx
 
-         
          - name: Executing deploy action for pod to be rejected using old tag
            uses: ./
            with:
@@ -155,7 +152,6 @@ jobs:
 
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_pod selectorLabels=app:nginx
 
-         
          # NEED TO MAKE SURE THIS WORKS - DO IMAGES AND MANIFESTS PARAMETERS MATTER HERE? IN THEORY SHOULD REJECT STUFF FROM DEPLOY STEP
          - name: Executing reject action for pod to reject new deployment with 1.14.2 tag
            uses: ./
@@ -175,7 +171,7 @@ jobs:
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment containerName=nginx:latest labels=app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_pod selectorLabels=app:nginx
 
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_pod selectorLabels=app:nginx
-         
+
          - name: Cleaning up current set up
            run: |
               python test/integration/k8s-deploy-delete.py 'Service' 'nginx-service' ${{ steps.ns.outputs.name }}

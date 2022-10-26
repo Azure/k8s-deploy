@@ -57,7 +57,7 @@ jobs:
               linkerd install --crds | kubectl apply -f -
               linkerd install --set proxyInit.runAsRoot=true | kubectl apply -f -
               linkerd smi install | kubectl apply -f -
-              
+
          - name: Create namespace to run tests
            run: kubectl create ns test-${{ steps.ns.outputs.name }}
 
@@ -87,13 +87,12 @@ jobs:
          - name: Checking if deployments, services, and ts objects were created with green labels and original tag
            run: |
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment-green containerName=nginx:1.14.2 labels=k8s.deploy.color:green,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_SMI selectorLabels=app:nginx,k8s.deploy.color:green
-              
+
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_SMI selectorLabels=app:nginx
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-stable labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_SMI,k8s.deploy.color:None selectorLabels=app:nginx,k8s.deploy.color:None
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-green labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_SMI,k8s.deploy.color:green selectorLabels=app:nginx,k8s.deploy.color:green
 
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=TrafficSplit name=nginx-service-trafficsplit tsServices=nginx-service-stable:0,nginx-service-green:100
-
 
          - name: Executing promote action for smi
            uses: ./
@@ -110,7 +109,7 @@ jobs:
          - name: Checking if deployments, services, and ts objects were created with none labels after first promote
            run: |
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment containerName=nginx:1.14.2 labels=k8s.deploy.color:None,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_SMI selectorLabels=app:nginx,k8s.deploy.color:None
-              
+
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_SMI selectorLabels=app:nginx
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-stable labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_SMI,k8s.deploy.color:None selectorLabels=app:nginx,k8s.deploy.color:None
 
@@ -126,7 +125,6 @@ jobs:
               strategy: blue-green
               route-method: smi
               action: deploy
-         
 
          - name: Checking if deployments (with new tag) and services were created with green labels after deploy, and old deployment persists
            run: |
@@ -158,7 +156,7 @@ jobs:
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-stable labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_SMI,k8s.deploy.color:None selectorLabels=app:nginx,k8s.deploy.color:None
 
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=TrafficSplit name=nginx-service-trafficsplit tsServices=nginx-service-stable:100,nginx-service-green:0
-         
+
          - name: Executing deploy action for smi to be rejected using old tag
            uses: ./
            with:
@@ -180,7 +178,7 @@ jobs:
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-green labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_SMI,k8s.deploy.color:green selectorLabels=app:nginx,k8s.deploy.color:green
 
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=TrafficSplit name=nginx-service-trafficsplit tsServices=nginx-service-stable:0,nginx-service-green:100
-         
+
          # NEED TO MAKE SURE THIS WORKS - DO IMAGES AND MANIFESTS PARAMETERS MATTER HERE? IN THEORY SHOULD REJECT STUFF FROM DEPLOY STEP
          - name: Executing reject action for smi to reject new deployment with 1.14.2 tag
            uses: ./
@@ -202,7 +200,7 @@ jobs:
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service-stable labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_SMI,k8s.deploy.color:None selectorLabels=app:nginx,k8s.deploy.color:None
 
               python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=TrafficSplit name=nginx-service-trafficsplit tsServices=nginx-service-stable:100,nginx-service-green:0
-         
+
          - name: Cleaning up current set up
            run: |
               python test/integration/k8s-deploy-delete.py 'Service' 'nginx-service' ${{ steps.ns.outputs.name }}
