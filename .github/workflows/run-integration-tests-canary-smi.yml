@@ -11,11 +11,15 @@ on:
          - main
          - 'releases/*'
    workflow_dispatch:
-
+   
 jobs:
    run-integration-test:
+      strategy: 
+         matrix:
+            os: [ubuntu-latest, macos-12, windows-latest]
+   
       name: Run Minikube Integration Tests
-      runs-on: ubuntu-latest
+      runs-on: ${{ matrix.os }}
       env:
          KUBECONFIG: /home/runner/.kube/config
       steps:
