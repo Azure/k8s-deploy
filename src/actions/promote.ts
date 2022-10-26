@@ -126,10 +126,16 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
          `Exception occurred while deleting canary and baseline workloads: ${ex}`
       )
    }
+   core.debug(`deleted resources ${JSON.stringify(deletedResources)}`)
    core.endGroup()
-   const toAnnotate = promoteResult.manifestFiles.filter(
-      (obj: string) => deletedResources.indexOf(obj) == -1
-   )
+   const toAnnotate = promoteResult.manifestFiles.filter((obj: string) => {
+      core.debug(
+         `in deletedObjects, index of ${obj} was ${deletedResources.indexOf(
+            obj
+         )}`
+      )
+      deletedResources.indexOf(obj) == -1
+   })
    // annotate resources
    core.startGroup('Annotating resources')
    let allPods
