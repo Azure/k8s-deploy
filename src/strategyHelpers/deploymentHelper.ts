@@ -210,7 +210,17 @@ async function annotateResources(
          await kubectl.annotate('namespace', namespace, annotationKeyValStr)
       )
    }
-   annotateResults.push(await kubectl.annotateFiles(files, annotationKeyValStr))
+   for (const file of files) {
+      try {
+         const annotateResult = await kubectl.annotateFile(
+            file,
+            annotationKeyValStr
+         )
+         annotateResults.push(annotateResult)
+      } catch (e) {
+         core.warning(`failed to annotate resource: ${e}`)
+      }
+   }
 
    for (const resource of resourceTypes) {
       if (

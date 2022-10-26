@@ -98,6 +98,14 @@ export class Kubectl {
       return await this.execute(args)
    }
 
+   public async annotateFile(
+      file: string,
+      annotation: string
+   ): Promise<ExecOutput> {
+      const args = ['annotate', '-f', file, annotation, '--overwrite']
+      return await this.execute(args)
+   }
+
    public async annotateFiles(
       files: string | string[],
       annotation: string
