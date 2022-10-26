@@ -14,8 +14,12 @@ on:
 
 jobs:
    run-integration-test:
+      strategy: 
+         matrix:
+            os: [ubuntu-latest, macos-12, windows-latest]
+   
       name: Run Minikube Integration Tests
-      runs-on: ubuntu-latest
+      runs-on: ${{ matrix.os }}
       env:
          KUBECONFIG: /home/runner/.kube/config
       steps:
@@ -31,9 +35,15 @@ jobs:
          - name: Build
            run: ncc build src/run.ts -o lib
 
-         - name: Set name of ns
+         - if: ${{ matrix.os }} != "windows"
+           name: Set name of ns
            run: echo "::set-output name=name::$(echo `date +%Y%m%d%H%M%S`)"
            shell: bash
+           id: ns
+
+         - if: ${{ matrix.os }} == "windows"
+           name: Set name of ns
+           run: Write-Output "::set-output name=name::-join ((65..90) + (97..122) | Get-Random -Count 5 | % {[char]$_})"
            id: ns
 
          - uses: Azure/setup-kubectl@v1
