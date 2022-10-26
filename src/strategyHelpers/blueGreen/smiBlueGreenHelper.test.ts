@@ -193,11 +193,8 @@ describe('SMI Helper tests', () => {
 
    test('cleanupSMI test', async () => {
       const deleteObjects = await cleanupSMI(kc, testObjects.serviceEntityList)
-      expect(deleteObjects).toHaveLength(3)
-      expect(deleteObjects[0].name).toBe('nginx-service-trafficsplit')
-      expect(deleteObjects[1].name).toBe('nginx-service-green')
-      expect(deleteObjects[1].kind).toBe('Service')
-      expect(deleteObjects[2].name).toBe('nginx-service-stable')
-      expect(deleteObjects[2].kind).toBe('Service')
+      expect(deleteObjects).toHaveLength(1)
+      expect(deleteObjects[0].name).toBe('nginx-service-green')
+      expect(deleteObjects[0].kind).toBe('Service')
    })
 })
