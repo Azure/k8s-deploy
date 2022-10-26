@@ -198,7 +198,7 @@ def main():
 
     kind = parsedArgs[kindKey]
     name = parsedArgs[nameKey]
-    namespace = f"test-{parsedArgs[namespaceKey]}"
+    namespace = parsedArgs[namespaceKey]
     print('kubectl get '+kind+' '+name+' -n '+namespace+' -o json')
 
     try:
