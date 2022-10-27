@@ -24,7 +24,10 @@ jobs:
            run: |
               rm -rf node_modules/
               npm install
-              npm run build
+         - name: Install ncc
+           run: npm i -g @vercel/ncc
+         - name: Build
+           run: ncc build src/run.ts -o lib
 
          - uses: Azure/setup-kubectl@v3
            name: Install Kubectl
