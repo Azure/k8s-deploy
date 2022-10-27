@@ -28,7 +28,6 @@ jobs:
 
          - name: Install dependencies
            run: |
-              rm -rf node_modules/
               npm install
 
          - name: Install ncc
@@ -40,12 +39,20 @@ jobs:
            name: Install Kubectl
 
          - id: setup-minikube
-           name: Setup Minikube
+           name: Install Minikube
            uses: opsgang/ga-setup-minikube@v0.1.2
            with:
               minikube-version: 1.24.0
               k8s-version: 1.21.0
            timeout-minutes: 3
+         
+         - name: Set kube-context
+           run: |
+              minikube config set vm-driver docker
+              minikube config set kubernetes-version v1.15.1
+              minikube start
+              minikube update-context
+              kubectl cluster-info
 
          - name: Create namespace to run tests
            run: kubectl create ns ${{ env.NAMESPACE }}
