@@ -2,12 +2,10 @@ name: Minikube Integration Tests - basic
 on:
    pull_request:
       branches:
-         - master
          - main
          - 'releases/*'
    push:
       branches:
-         - master
          - main
          - 'releases/*'
    workflow_dispatch:
@@ -18,25 +16,17 @@ jobs:
       runs-on: ubuntu-latest
       env:
          KUBECONFIG: /home/runner/.kube/config
+         NAMESPACE: test-${{ github.run_id }}
       steps:
-         - uses: actions/checkout@v2
+         - uses: actions/checkout@v3
 
          - name: Install dependencies
            run: |
               rm -rf node_modules/
               npm install
+              npm run build
 
-         - name: Install ncc
-           run: npm i -g @vercel/ncc
-         - name: Build
-           run: ncc build src/run.ts -o lib
-
-         - name: Set name of ns
-           run: echo "::set-output name=name::$(echo `date +%Y%m%d%H%M%S`)"
-           shell: bash
-           id: ns
-
-         - uses: Azure/setup-kubectl@v1
+         - uses: Azure/setup-kubectl@v3
            name: Install Kubectl
 
          - id: setup-minikube
@@ -49,7 +39,7 @@ jobs:
            timeout-minutes: 3
 
          - name: Create namespace to run tests
-           run: kubectl create ns test-${{ steps.ns.outputs.name }}
+           run: kubectl create ns ${{ env.NAMESPACE }}
 
          - uses: actions/setup-python@v2
            name: Install Python
@@ -58,14 +48,14 @@ jobs:
 
          - name: Cleaning any previously created items
            run: |
-              python test/integration/k8s-deploy-delete.py 'Service' 'all' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-delete.py 'Deployment' 'all' ${{ steps.ns.outputs.name }}
-              python test/integration/k8s-deploy-delete.py 'Ingress' 'all' ${{ steps.ns.outputs.name }}
+              python test/integration/k8s-deploy-delete.py 'Service' 'all' ${{ env.NAMESPACE }}
+              python test/integration/k8s-deploy-delete.py 'Deployment' 'all' ${{ env.NAMESPACE }}
+              python test/integration/k8s-deploy-delete.py 'Ingress' 'all' ${{ env.NAMESPACE }}
 
          - name: Executing deploy action for pod
            uses: ./
            with:
-              namespace: test-${{ steps.ns.outputs.name }}
+              namespace: ${{ env.NAMESPACE }}
               images: nginx:1.14.2
               manifests: |
                  test/integration/manifests/test.yml
@@ -73,5 +63,5 @@ jobs:
 
          - name: Checking if deployments and services were created with canary labels and original tag
            run: |
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Deployment name=nginx-deployment containerName=nginx:1.14.2 labels=app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_basic selectorLabels=app:nginx
-              python test/integration/k8s-deploy-test.py namespace=${{ steps.ns.outputs.name }} kind=Service name=nginx-service labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_basic selectorLabels=app:nginx
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Deployment name=nginx-deployment containerName=nginx:1.14.2 labels=app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_basic selectorLabels=app:nginx
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Service name=nginx-service labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_basic selectorLabels=app:nginx

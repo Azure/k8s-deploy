@@ -4,14 +4,12 @@ import sys
 import json
 from unicodedata import name
 
-# Multiline comment here about
-# how tests work/how to format args
+# This integration test is used to confirm that k8s resources of a specified name, type, and configuration have been deployed.
+# Expected configurations are fed into the python script as command-line arguments and are compared to the configuration of resources that have been deployed.
+
 # args will be formatted like labels=testkey:testValue,otherKey=otherValue
 # or for singular ones, just with containerName=container
 
-# TODO - finish parsing, take out color entirely, reformat current tests to use new arg structure
-# then add extra deploy/promote/deploy step right before reject at the end for all of them, including
-# checks for TrafficSplits
 
 kindKey = "kind"
 nameKey = "name"
@@ -198,7 +196,7 @@ def main():
 
     kind = parsedArgs[kindKey]
     name = parsedArgs[nameKey]
-    namespace = f"test-{parsedArgs[namespaceKey]}"
+    namespace = parsedArgs[namespaceKey]
     print('kubectl get '+kind+' '+name+' -n '+namespace+' -o json')
 
     try:

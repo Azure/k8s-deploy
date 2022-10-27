@@ -213,7 +213,7 @@ async function annotateResources(
    }
    for (const file of files) {
       try {
-         const annotateResult = await kubectl.annotateFile(
+         const annotateResult = await kubectl.annotateFiles(
             file,
             annotationKeyValStr
          )

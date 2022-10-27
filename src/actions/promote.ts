@@ -65,6 +65,7 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
       core.getInput('traffic-split-method', {required: true})
    )
    let promoteResult: DeployResult
+   let filesToAnnotate: string[]
    if (trafficSplitMethod == TrafficSplitMethod.SMI) {
       includeServices = true
 
@@ -95,7 +96,10 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
             kubectl,
             manifests
          )
-      promoteResult.manifestFiles.push(...stableRedirectManifests)
+
+      filesToAnnotate = promoteResult.manifestFiles.concat(
+         stableRedirectManifests
+      )
 
       core.endGroup()
    } else {
@@ -105,6 +109,7 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
          kubectl,
          true
       )
+      filesToAnnotate = promoteResult.manifestFiles
       core.endGroup()
    }
 
@@ -131,17 +136,12 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
       core.debug(`Unable to parse pods: ${e}`)
    }
    const resources: Resource[] = getResources(
-      promoteResult.manifestFiles,
+      filesToAnnotate,
       models.DEPLOYMENT_TYPES.concat([
          models.DiscoveryAndLoadBalancerResource.SERVICE
       ])
    )
-   await annotateAndLabelResources(
-      promoteResult.manifestFiles,
-      kubectl,
-      resources,
-      allPods
-   )
+   await annotateAndLabelResources(filesToAnnotate, kubectl, resources, allPods)
    core.endGroup()
 }
 
