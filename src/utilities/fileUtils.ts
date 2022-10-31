@@ -1,8 +1,15 @@
 import * as fs from 'fs'
+import * as https from 'https'
 import * as path from 'path'
 import * as core from '@actions/core'
 import * as os from 'os'
+import * as yaml from 'js-yaml'
+import {Errorable, succeeded, failed, Failed} from '../types/errorable'
 import {getCurrentTime} from './timeUtils'
+import {isHttpUrl} from './githubUtils'
+import {K8sObject} from '../types/k8sObject'
+
+export const urlFileKind = 'urlfile'
 
 export function getTempDirectory(): string {
    return process.env['runner.tempDirectory'] || os.tmpdir()
@@ -62,12 +69,27 @@ function getManifestFileName(kind: string, name: string) {
    return path.join(tempDirectory, path.basename(filePath))
 }
 
-export function getFilesFromDirectories(filePaths: string[]): string[] {
+export async function getFilesFromDirectoriesAndURLs(
+   filePaths: string[]
+): Promise<string[]> {
    const fullPathSet: Set<string> = new Set<string>()
 
-   filePaths.forEach((fileName) => {
+   let fileCounter = 0
+   for (const fileName of filePaths) {
       try {
-         if (fs.lstatSync(fileName).isDirectory()) {
+         if (isHttpUrl(fileName)) {
+            try {
+               const tempFilePath: string = await writeYamlFromURLToFile(
+                  fileName,
+                  fileCounter++
+               )
+               fullPathSet.add(tempFilePath)
+            } catch (e) {
+               throw Error(
+                  `encountered error trying to pull YAML from URL ${fileName}: ${e}`
+               )
+            }
+         } else if (fs.lstatSync(fileName).isDirectory()) {
             recurisveManifestGetter(fileName).forEach((file) => {
                fullPathSet.add(file)
             })
@@ -86,9 +108,86 @@ export function getFilesFromDirectories(filePaths: string[]): string[] {
             `Exception occurred while reading the file ${fileName}: ${ex}`
          )
       }
-   })
+   }
 
-   return Array.from(fullPathSet)
+   const arr = Array.from(fullPathSet)
+   return arr
+}
+
+export async function writeYamlFromURLToFile(
+   url: string,
+   fileNumber: number
+): Promise<string> {
+   return new Promise((resolve, reject) => {
+      https
+         .get(url, async (response) => {
+            const code = response.statusCode ?? 0
+            if (code >= 400) {
+               reject(
+                  Error(
+                     `received response status ${response.statusMessage} from url ${url}`
+                  )
+               )
+            }
+
+            const targetPath = getManifestFileName(
+               urlFileKind,
+               fileNumber.toString()
+            )
+            // save the file to disk
+            const fileWriter = fs
+               .createWriteStream(targetPath)
+               .on('finish', () => {
+                  const verification = verifyYaml(targetPath, url)
+                  if (succeeded(verification)) {
+                     core.debug(
+                        `outputting YAML contents from ${url} to ${targetPath}: ${JSON.stringify(
+                           verification.result
+                        )}`
+                     )
+                     resolve(targetPath)
+                  } else {
+                     reject(verification.error)
+                  }
+               })
+
+            response.pipe(fileWriter)
+         })
+         .on('error', (error) => {
+            reject(error)
+         })
+   })
+}
+
+function verifyYaml(filepath: string, url: string): Errorable<K8sObject[]> {
+   const fileContents = fs.readFileSync(filepath).toString()
+   let inputObjects
+   try {
+      inputObjects = yaml.safeLoadAll(fileContents)
+   } catch (e) {
+      return {
+         succeeded: false,
+         error: `failed to parse manifest from url ${url}: ${e}`
+      }
+   }
+
+   if (!inputObjects || inputObjects.length == 0) {
+      return {
+         succeeded: false,
+         error: `failed to parse manifest from url ${url}: no objects detected in manifest`
+      }
+   }
+
+   for (const obj of inputObjects) {
+      if (!obj.kind || !obj.apiVersion || !obj.metadata) {
+         return {
+            succeeded: false,
+            error: `failed to parse manifest from ${url}: missing fields`
+         }
+      }
+   }
+
+   return {succeeded: true, result: inputObjects}
 }
 
 function recurisveManifestGetter(dirName: string): string[] {

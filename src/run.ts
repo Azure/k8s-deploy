@@ -5,7 +5,7 @@ import {promote} from './actions/promote'
 import {reject} from './actions/reject'
 import {Action, parseAction} from './types/action'
 import {parseDeploymentStrategy} from './types/deploymentStrategy'
-import {getFilesFromDirectories} from './utilities/fileUtils'
+import {getFilesFromDirectoriesAndURLs} from './utilities/fileUtils'
 import {PrivateKubectl} from './types/privatekubectl'
 
 export async function run() {
@@ -26,7 +26,9 @@ export async function run() {
       .map((manifest) => manifest.trim()) // remove surrounding whitespace
       .filter((manifest) => manifest.length > 0) // remove any blanks
 
-   const fullManifestFilePaths = getFilesFromDirectories(manifestFilePaths)
+   const fullManifestFilePaths = await getFilesFromDirectoriesAndURLs(
+      manifestFilePaths
+   )
    const kubectlPath = await getKubectlPath()
    const namespace = core.getInput('namespace') || 'default'
    const isPrivateCluster =
