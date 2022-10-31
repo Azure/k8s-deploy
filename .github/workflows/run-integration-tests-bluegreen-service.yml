@@ -163,9 +163,3 @@ jobs:
          - if: ${{ always() }}
            name: Delete created namespace
            run: kubectl delete ns ${{ env.NAMESPACE }}
-
-         - if: ${{ always() }}
-           name: Posting result back to PR
-           run: |
-              if [ '${{ steps.job-type.outputs.type }}' == 'pr' ]; then ruby postStatus.rb ${{github.event.client_payload.repository}} ${{github.event.client_payload.commit}} ${{secrets.L2_REPO_TOKEN}} ${{job.status}} ${{github.run_id}} ${{matrix.os}} false ${{ secrets.L2_REPO_USER }}; fi
-           shell: bash
