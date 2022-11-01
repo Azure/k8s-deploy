@@ -181,23 +181,7 @@ export async function cleanupSMI(
       deleteList.push({
          name: getBlueGreenResourceName(
             serviceObject.metadata.name,
-            TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX
-         ),
-         kind: TRAFFIC_SPLIT_OBJECT
-      })
-
-      deleteList.push({
-         name: getBlueGreenResourceName(
-            serviceObject.metadata.name,
             GREEN_SUFFIX
-         ),
-         kind: serviceObject.kind
-      })
-
-      deleteList.push({
-         name: getBlueGreenResourceName(
-            serviceObject.metadata.name,
-            STABLE_SUFFIX
          ),
          kind: serviceObject.kind
       })

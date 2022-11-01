@@ -1,0 +1,215 @@
+name: Minikube Integration Tests - canary SMI
+on:
+   pull_request:
+      branches:
+         - main
+         - 'releases/*'
+   push:
+      branches:
+         - main
+         - 'releases/*'
+   workflow_dispatch:
+
+jobs:
+   run-integration-test:
+      name: Run Minikube Integration Tests
+      runs-on: ubuntu-latest
+      env:
+         KUBECONFIG: /home/runner/.kube/config
+         NAMESPACE: test-${{ github.run_id }}
+      steps:
+         - uses: actions/checkout@v3
+
+         - name: Install dependencies
+           run: |
+              rm -rf node_modules/
+              npm install
+         - name: Install ncc
+           run: npm i -g @vercel/ncc
+         - name: Build
+           run: ncc build src/run.ts -o lib
+
+         - uses: Azure/setup-kubectl@v3
+           name: Install Kubectl
+
+         - id: setup-minikube
+           name: Setup Minikube
+           uses: manusa/actions-setup-minikube@v2.4.2
+           with:
+              minikube version: 'v1.24.0'
+              kubernetes version: 'v1.21.0'
+              driver: 'none'
+           timeout-minutes: 3
+
+         - name: Install linkerd and add controlplane to cluster
+           run: |
+              curl --proto '=https' --tlsv1.2 -sSfL https://run.linkerd.io/install | sh
+              curl -sL https://linkerd.github.io/linkerd-smi/install | sh
+              export PATH=$PATH:/home/runner/.linkerd2/bin
+
+              linkerd install --crds | kubectl apply -f -
+              linkerd install --set proxyInit.runAsRoot=true | kubectl apply -f -
+              linkerd smi install | kubectl apply -f -
+
+         - name: Create namespace to run tests
+           run: kubectl create ns ${{ env.NAMESPACE }}
+
+         - uses: actions/setup-python@v2
+           name: Install Python
+           with:
+              python-version: '3.x'
+
+         - name: Cleaning any previously created items
+           run: |
+              python test/integration/k8s-deploy-delete.py 'Service' 'all' ${{ env.NAMESPACE }}
+              python test/integration/k8s-deploy-delete.py 'Deployment' 'all' ${{ env.NAMESPACE }}
+              python test/integration/k8s-deploy-delete.py 'Ingress' 'all' ${{ env.NAMESPACE }}
+              python test/integration/k8s-deploy-delete.py 'TrafficSplit' 'all' ${{ env.NAMESPACE }}
+
+         - name: Executing deploy action for smi
+           uses: ./
+           with:
+              namespace: ${{ env.NAMESPACE }}
+              images: nginx:1.14.2
+              manifests: |
+                 test/integration/manifests/test.yml
+              strategy: canary
+              percentage: 50
+              traffic-split-method: smi
+              action: deploy
+
+         - name: Checking if deployments, services, and ts objects were created with canary labels and original tag
+           run: |
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Deployment name=nginx-deployment-canary containerName=nginx:1.14.2 labels=workflow/version:canary,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_SMI selectorLabels=app:nginx,workflow/version:canary
+
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Service name=nginx-service labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_SMI selectorLabels=app:nginx
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Service name=nginx-service-canary labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_SMI,workflow/version:canary selectorLabels=app:nginx,workflow/version:canary
+
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=TrafficSplit name=nginx-service-workflow-rollout tsServices=nginx-service-stable:0,nginx-service-canary:1000,nginx-service-baseline:0
+
+         - name: Executing promote action for smi
+           uses: ./
+           with:
+              namespace: ${{ env.NAMESPACE }}
+              images: nginx:1.14.2
+              manifests: |
+                 test/integration/manifests/test.yml
+              strategy: canary
+              percentage: 50
+              traffic-split-method: smi
+              action: promote
+
+         # another good place for anti-test - ensure old deps are deleted after promote
+         - name: Checking if deployments, services, and ts objects were created with stable labels after first promote
+           run: |
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Deployment name=nginx-deployment-stable containerName=nginx:1.14.2 labels=workflow/version:stable,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_SMI selectorLabels=app:nginx,workflow/version:stable
+
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Service name=nginx-service labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_SMI selectorLabels=app:nginx
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Service name=nginx-service-stable labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_SMI,workflow/version:stable selectorLabels=app:nginx,workflow/version:stable
+
+
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=TrafficSplit name=nginx-service-workflow-rollout tsServices=nginx-service-stable:1000,nginx-service-canary:0,nginx-service-baseline:0
+
+         - name: Executing second deploy action for smi with new tag
+           uses: ./
+           with:
+              namespace: ${{ env.NAMESPACE }}
+              images: nginx:latest
+              manifests: |
+                 test/integration/manifests/test.yml
+              strategy: canary
+              percentage: 50
+              traffic-split-method: smi
+              action: deploy
+
+         - name: Checking if deployments (with new tag) and services were created with canary labels after deploy, and old deployment persists
+           run: |
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Deployment name=nginx-deployment-stable containerName=nginx:1.14.2 labels=workflow/version:stable,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_SMI selectorLabels=app:nginx,workflow/version:stable
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Deployment name=nginx-deployment-canary containerName=nginx:latest labels=workflow/version:canary,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_SMI selectorLabels=app:nginx,workflow/version:canary
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Deployment name=nginx-deployment-baseline containerName=nginx:1.14.2 labels=workflow/version:baseline,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_SMI selectorLabels=app:nginx,workflow/version:baseline
+
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Service name=nginx-service labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_SMI selectorLabels=app:nginx
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Service name=nginx-service-stable labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_SMI,workflow/version:stable selectorLabels=app:nginx,workflow/version:stable
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Service name=nginx-service-canary labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_SMI,workflow/version:canary selectorLabels=app:nginx,workflow/version:canary
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Service name=nginx-service-baseline labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_SMI,workflow/version:baseline selectorLabels=app:nginx,workflow/version:baseline
+
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=TrafficSplit name=nginx-service-workflow-rollout tsServices=nginx-service-stable:500,nginx-service-canary:250,nginx-service-baseline:250
+
+         - name: Executing second promote action for smi now using new image tag
+           uses: ./
+           with:
+              namespace: ${{ env.NAMESPACE }}
+              images: nginx:latest
+              manifests: |
+                 test/integration/manifests/test.yml
+              strategy: canary
+              percentage: 50
+              traffic-split-method: smi
+              action: promote
+
+         - name: Checking if deployments and services were created with stable labels after promote for new tag, ts is stable
+           run: |
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Deployment name=nginx-deployment-stable containerName=nginx:latest labels=workflow/version:stable,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_SMI selectorLabels=app:nginx,workflow/version:stable
+
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Service name=nginx-service labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_SMI selectorLabels=app:nginx
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Service name=nginx-service-stable labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_SMI,workflow/version:stable selectorLabels=app:nginx,workflow/version:stable
+
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=TrafficSplit name=nginx-service-workflow-rollout tsServices=nginx-service-stable:1000,nginx-service-canary:0,nginx-service-baseline:0
+
+         - name: Executing deploy action for smi to be rejected using old tag
+           uses: ./
+           with:
+              namespace: ${{ env.NAMESPACE }}
+              images: nginx:1.14.2
+              manifests: |
+                 test/integration/manifests/test.yml
+              strategy: canary
+              percentage: 50
+              traffic-split-method: smi
+              action: deploy
+
+         - name: Checking if new deployments (with old tag) and services were created with canary and baseline labels after deploy, and stable deployment (with latest tag) persists
+           run: |
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Deployment name=nginx-deployment-canary containerName=nginx:1.14.2 labels=workflow/version:canary,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_SMI selectorLabels=app:nginx,workflow/version:canary
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Deployment name=nginx-deployment-baseline containerName=nginx:latest labels=workflow/version:baseline,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_SMI selectorLabels=app:nginx,workflow/version:baseline
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Deployment name=nginx-deployment-stable containerName=nginx:latest labels=workflow/version:stable,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_SMI selectorLabels=app:nginx,workflow/version:stable
+
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Service name=nginx-service labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_SMI selectorLabels=app:nginx
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Service name=nginx-service-stable labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_SMI,workflow/version:stable selectorLabels=app:nginx,workflow/version:stable
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Service name=nginx-service-baseline labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_SMI,workflow/version:baseline selectorLabels=app:nginx,workflow/version:baseline
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Service name=nginx-service-canary labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_SMI,workflow/version:canary selectorLabels=app:nginx,workflow/version:canary
+
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=TrafficSplit name=nginx-service-workflow-rollout tsServices=nginx-service-stable:500,nginx-service-canary:250,nginx-service-baseline:250
+
+         - name: Executing reject action for smi to reject new deployment with 1.14.2 tag
+           uses: ./
+           with:
+              namespace: ${{ env.NAMESPACE }}
+              images: nginx:1.14.2
+              manifests: |
+                 test/integration/manifests/test.yml
+              strategy: canary
+              percentage: 50
+              traffic-split-method: smi
+              action: reject
+
+         # MAY BE USEFUL TO ADD AN ANTI-CHECK - CHECK TO MAKE SURE CERTAIN OBJECTS DON'T EXIST
+         - name: Checking if deployments and services were created with stable labels and latest tag after reject
+           run: |
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Deployment name=nginx-deployment-stable containerName=nginx:latest labels=workflow/version:stable,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_SMI selectorLabels=app:nginx,workflow/version:stable
+
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Service name=nginx-service labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_SMI selectorLabels=app:nginx
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Service name=nginx-service-stable labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_canary_SMI,workflow/version:stable selectorLabels=app:nginx,workflow/version:stable
+
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=TrafficSplit name=nginx-service-workflow-rollout tsServices=nginx-service-stable:1000,nginx-service-canary:0,nginx-service-baseline:0
+
+         - name: Cleaning up current set up
+           run: |
+              python test/integration/k8s-deploy-delete.py 'Service' 'all' ${{ env.NAMESPACE }}
+              python test/integration/k8s-deploy-delete.py 'Deployment' 'all' ${{ env.NAMESPACE }}
+              python test/integration/k8s-deploy-delete.py 'Ingress' 'all' ${{ env.NAMESPACE }}
+              python test/integration/k8s-deploy-delete.py 'TrafficSplit' 'all' ${{ env.NAMESPACE }}
+
+         - if: ${{ always() }}
+           name: Delete created namespace
+           run: kubectl delete ns ${{ env.NAMESPACE }}

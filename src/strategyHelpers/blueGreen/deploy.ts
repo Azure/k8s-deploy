@@ -17,6 +17,7 @@ import {
 import {setupSMI} from './smiBlueGreenHelper'
 
 import {routeBlueGreenForDeploy} from './route'
+import {DeployResult} from '../../types/deployResult'
 
 export async function deployBlueGreen(
    kubectl: Kubectl,
@@ -35,9 +36,17 @@ export async function deployBlueGreen(
    })()
 
    core.startGroup('Routing blue green')
-   await routeBlueGreenForDeploy(kubectl, files, routeStrategy)
+   const routeDeployment = await routeBlueGreenForDeploy(
+      kubectl,
+      files,
+      routeStrategy
+   )
    core.endGroup()
 
+   blueGreenDeployment.objects.push(...routeDeployment.objects)
+   blueGreenDeployment.deployResult.manifestFiles.push(
+      ...routeDeployment.deployResult.manifestFiles
+   )
    return blueGreenDeployment
 }
 
@@ -56,10 +65,16 @@ export async function deployBlueGreenSMI(
       manifestObjects.unroutedServiceEntityList
    )
 
-   await deployObjects(kubectl, newObjectsList)
+   const otherObjDeployment: DeployResult = await deployObjects(
+      kubectl,
+      newObjectsList
+   )
 
    // make extraservices and trafficsplit
-   await setupSMI(kubectl, manifestObjects.serviceEntityList)
+   const smiAndSvcDeployment = await setupSMI(
+      kubectl,
+      manifestObjects.serviceEntityList
+   )
 
    // create new deloyments
    const blueGreenDeployment: BlueGreenDeployment = await deployWithLabel(
@@ -67,10 +82,18 @@ export async function deployBlueGreenSMI(
       manifestObjects.deploymentEntityList,
       GREEN_LABEL_VALUE
    )
-   return {
-      deployResult: blueGreenDeployment.deployResult,
-      objects: [].concat(blueGreenDeployment.objects, newObjectsList)
-   }
+
+   blueGreenDeployment.objects.push(...newObjectsList)
+   blueGreenDeployment.objects.push(...smiAndSvcDeployment.objects)
+
+   blueGreenDeployment.deployResult.manifestFiles.push(
+      ...otherObjDeployment.manifestFiles
+   )
+   blueGreenDeployment.deployResult.manifestFiles.push(
+      ...smiAndSvcDeployment.deployResult.manifestFiles
+   )
+
+   return blueGreenDeployment
 }
 
 export async function deployBlueGreenIngress(
