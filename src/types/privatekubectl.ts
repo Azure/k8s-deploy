@@ -7,6 +7,9 @@ import * as path from 'path'
 
 export class PrivateKubectl extends Kubectl {
    protected async execute(args: string[], silent: boolean = false) {
+      if (this.namespace) {
+         args = args.concat(['--namespace', this.namespace])
+      }
       args.unshift('kubectl')
       let kubectlCmd = args.join(' ')
       let addFileFlag = false
