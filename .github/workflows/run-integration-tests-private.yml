@@ -34,7 +34,7 @@ jobs:
             AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
             AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
            run: |
-              az login --service-principal -u ${{ env.AZURE_CLIENT_ID }} -p ${{ env.AZURE_CLIENT_SECRET }} --tenant ${{ env.AZURE_TENANT_ID }} --only-show-errors
+              az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID --only-show-errors
           
          - uses: Azure/setup-kubectl@v3
            name: Install Kubectl
