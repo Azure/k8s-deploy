@@ -169,7 +169,7 @@ export class Kubectl {
       if (this.ignoreSSLErrors) {
          args.push('--insecure-skip-tls-verify')
       }
-      if (this.namespace) {
+      if (this.namespace && this.namespace != 'default') {
          args = args.concat(['--namespace', this.namespace])
       }
       core.debug(`Kubectl run with command: ${this.kubectlPath} ${args}`)
