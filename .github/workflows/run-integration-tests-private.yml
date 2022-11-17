@@ -50,9 +50,8 @@ jobs:
            run: |
               set +x
               # create cluster
-              export UNIQUE_NAME=${{ env.NAMESPACE }}
-              az group create --location eastus --name $UNIQUE_NAME
-              az aks create --name $UNIQUE_NAME --resource-group $UNIQUE_NAME --enable-private-cluster --generate-ssh-keys
+              az group create --location eastus --name ${{ env.NAMESPACE }}
+              az aks create --name ${{ env.NAMESPACE }} --resource-group ${{ env.NAMESPACE }} --enable-private-cluster --generate-ssh-keys
               echo "getting assignee objectId..."
               export ASSIGNEE_OBJECT_ID="$(az ad sp show --id ${{ secrets.AZURE_CLIENT_ID }} --only-show-errors| jq -r '.objectId')"
               echo "::add-mask::${ASSIGNEE_OBJECT_ID}"
@@ -62,21 +61,16 @@ jobs:
                 echo "::add-mask::${ASSIGNEE_OBJECT_ID}"
               fi
               echo "assigning role to service principal..."
-              az aks get-credentials --resource-group $UNIQUE_NAME --name $UNIQUE_NAME
+              az aks get-credentials --resource-group ${{ env.NAMESPACE }} --name ${{ env.NAMESPACE }}
 
          - name: Create namespace to run tests
-           run: kubectl create ns ${{ env.NAMESPACE }}
+           run: |
+              az aks command invoke --resource-group ${{ env.NAMESPACE }} --name ${{ env.NAMESPACE }} --command "kubectl create ns ${{ env.NAMESPACE }}"
 
          - uses: actions/setup-python@v2
            name: Install Python
            with:
               python-version: '3.x'
-
-         - name: Cleaning any previously created items
-           run: |
-              python test/integration/k8s-deploy-delete.py 'Service' 'all' ${{ env.NAMESPACE }}
-              python test/integration/k8s-deploy-delete.py 'Deployment' 'all' ${{ env.NAMESPACE }}
-              python test/integration/k8s-deploy-delete.py 'Ingress' 'all' ${{ env.NAMESPACE }}
 
          - name: Executing deploy action for pod
            uses: ./
@@ -90,12 +84,18 @@ jobs:
 
          - name: Checking if deployments and services were created 
            run: |
-              python test/integration/k8s-deploy-test.py private=k8s-deploy-integration-test${{ env.NAMESPACE }} namespace=${{ env.NAMESPACE }} kind=Deployment name=nginx-deployment containerName=nginx:1.14.2 labels=app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_basic selectorLabels=app:nginx
-              python test/integration/k8s-deploy-test.py private=k8s-deploy-integration-test${{ env.NAMESPACE }} namespace=${{ env.NAMESPACE }} kind=Service name=nginx-service labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_basic selectorLabels=app:nginx
+              python test/integration/k8s-deploy-test.py private=${{ env.NAMESPACE }} namespace=${{ env.NAMESPACE }} kind=Deployment name=nginx-deployment containerName=nginx:1.14.2 labels=app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_basic selectorLabels=app:nginx
+              python test/integration/k8s-deploy-test.py private=${{ env.NAMESPACE }} namespace=${{ env.NAMESPACE }} kind=Service name=nginx-service labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_basic selectorLabels=app:nginx
          
          - name: Clean up AKS cluster
            run: |
-              export UNIQUE_NAME=${{ env.NAMESPACE }}
               echo "deleting AKS cluster and resource group"
-              az aks delete --yes --resource-group $UNIQUE_NAME --name $UNIQUE_NAME
+              az aks delete --yes --resource-group ${{ env.NAMESPACE }} --name ${{ env.NAMESPACE }}
+              az group delete --yes -n $RAND_NAME
+
+         - if: ${{ always() }}
+           name: Clean up AKS cluster
+           run: |
+              echo "deleting AKS cluster and resource group"
+              az aks delete --yes --resource-group ${{ env.NAMESPACE }} --name ${{ env.NAMESPACE }}
               az group delete --yes -n $RAND_NAME
