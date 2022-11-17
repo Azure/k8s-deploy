@@ -66,7 +66,9 @@ export class PrivateKubectl extends Kubectl {
          eo
       )
       core.debug(
-         `from kubectl private cluster command got run output ${runOutput.stdout}`
+         `from kubectl private cluster command got run output ${JSON.stringify(
+            runOutput
+         )}`
       )
       const runObj: {logs: string; exitCode: number} = JSON.parse(
          runOutput.stdout
