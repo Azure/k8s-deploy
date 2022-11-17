@@ -53,8 +53,6 @@ jobs:
               export UNIQUE_NAME=k8s-deploy-integration-test${{ env.NAMESPACE }}
               az group create --location eastus --name $UNIQUE_NAME
               az aks create --name $UNIQUE_NAME --resource-group $UNIQUE_NAME --enable-private-cluster
-              # create odic credentials
-              echo "creating oidc credentials for github..."
               echo "getting assignee objectId..."
               export ASSIGNEE_OBJECT_ID="$(az ad sp show --id ${{ secrets.AZURE_CLIENT_ID }} --only-show-errors| jq -r '.objectId')"
               echo "::add-mask::${ASSIGNEE_OBJECT_ID}"
@@ -63,7 +61,6 @@ jobs:
                 export ASSIGNEE_OBJECT_ID="$(az ad sp show --id ${{ secrets.AZURE_CLIENT_ID }} --only-show-errors| jq -r '.id')"
                 echo "::add-mask::${ASSIGNEE_OBJECT_ID}"
               fi
-
               echo "assigning role to service principal..."
               az role assignment create --role contributor --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }} --assignee-object-id  $ASSIGNEE_OBJECT_ID --assignee-principal-type ServicePrincipal --scope /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/$UNIQUE_NAME
               az aks get-credentials --resource-group $UNIQUE_NAME --name $UNIQUE_NAME
