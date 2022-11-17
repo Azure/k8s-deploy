@@ -33,9 +33,15 @@ jobs:
             AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
             AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
             AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-            RANDOM_VAR: testvar
            run: |
-              echo $RANDOM_VAR
+              echo  "::add-mask::${AZURE_CLIENT_ID}"
+              echo  "::add-mask::${AZURE_CLIENT_SECRET}"
+              echo  "::add-mask::${AZURE_TENANT_ID}"
+
+              if [ -z "$AZURE_TENANT_ID" ]
+              then
+                echo "it is empty"
+
               az login --service-principal -u $AZURE_CLIENT_ID -p $AZURE_CLIENT_SECRET --tenant $AZURE_TENANT_ID --only-show-errors
           
          - uses: Azure/setup-kubectl@v3
