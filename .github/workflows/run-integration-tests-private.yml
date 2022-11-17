@@ -1,0 +1,99 @@
+name: Minikube Integration Tests - private cluster
+on:
+   pull_request:
+      branches:
+         - main
+         - 'releases/*'
+   push:
+      branches:
+         - main
+         - 'releases/*'
+   workflow_dispatch:
+
+jobs:
+   run-integration-test:
+      name: Run Minikube Integration Tests
+      runs-on: ubuntu-latest
+      env:
+         KUBECONFIG: /home/runner/.kube/config
+         NAMESPACE: test-${{ github.run_id }}
+      steps:
+         - uses: actions/checkout@v3
+
+         - name: Install dependencies
+           run: |
+              rm -rf node_modules/
+              npm install
+         - name: Install ncc
+           run: npm i -g @vercel/ncc
+         - name: Build
+           run: ncc build src/run.ts -o lib
+
+         - uses: Azure/setup-kubectl@v3
+           name: Install Kubectl
+
+          # Logs in with Azure credentials
+         - name: Azure login
+           uses: azure/login@v1.4.3
+           with:
+              client-id: ${{ secrets.AZURE_CLIENT_ID }}
+              tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+              subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          
+         - name: Create private AKS cluster and set context
+           run: |
+              set +x
+              # create cluster
+              export UNIQUE_NAME=k8s-deploy-integration-test${{ env.NAMESPACE }}
+              az group create --location eastus --name $UNIQUE_NAME
+              az aks create --name $UNIQUE_NAME --resource-group $UNIQUE_NAME --enable-private-cluster
+              # create odic credentials
+              echo "creating oidc credentials for github..."
+              echo "getting assignee objectId..."
+              export ASSIGNEE_OBJECT_ID="$(az ad sp show --id ${{ secrets.AZURE_CLIENT_ID }} --only-show-errors| jq -r '.objectId')"
+              echo "::add-mask::${ASSIGNEE_OBJECT_ID}"
+              if [ $ASSIGNEE_OBJECT_ID = "null" ]
+              then
+                export ASSIGNEE_OBJECT_ID="$(az ad sp show --id ${{ secrets.AZURE_CLIENT_ID }} --only-show-errors| jq -r '.id')"
+                echo "::add-mask::${ASSIGNEE_OBJECT_ID}"
+              fi
+
+              echo "assigning role to service principal..."
+              az role assignment create --role contributor --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }} --assignee-object-id  $ASSIGNEE_OBJECT_ID --assignee-principal-type ServicePrincipal --scope /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/$UNIQUE_NAME
+              az aks get-credentials --resource-group $UNIQUE_NAME --name $UNIQUE_NAME
+
+         - name: Create namespace to run tests
+           run: kubectl create ns ${{ env.NAMESPACE }}
+
+         - uses: actions/setup-python@v2
+           name: Install Python
+           with:
+              python-version: '3.x'
+
+         - name: Cleaning any previously created items
+           run: |
+              python test/integration/k8s-deploy-delete.py 'Service' 'all' ${{ env.NAMESPACE }}
+              python test/integration/k8s-deploy-delete.py 'Deployment' 'all' ${{ env.NAMESPACE }}
+              python test/integration/k8s-deploy-delete.py 'Ingress' 'all' ${{ env.NAMESPACE }}
+
+         - name: Executing deploy action for pod
+           uses: ./
+           with:
+              namespace: ${{ env.NAMESPACE }}
+              images: nginx:1.14.2
+              manifests: |
+                 test/integration/manifests/test.yml
+              action: deploy
+              private-cluster: true
+
+         - name: Checking if deployments and services were created 
+           run: |
+              python test/integration/k8s-deploy-test.py private=k8s-deploy-integration-test${{ env.NAMESPACE }} namespace=${{ env.NAMESPACE }} kind=Deployment name=nginx-deployment containerName=nginx:1.14.2 labels=app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_basic selectorLabels=app:nginx
+              python test/integration/k8s-deploy-test.py private=k8s-deploy-integration-test${{ env.NAMESPACE }} namespace=${{ env.NAMESPACE }} kind=Service name=nginx-service labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_basic selectorLabels=app:nginx
+         
+         - name: Clean up AKS cluster
+           run: |
+              export UNIQUE_NAME=k8s-deploy-integration-test${{ env.NAMESPACE }}
+              echo "deleting AKS cluster and resource group"
+              az aks delete --yes --resource-group $UNIQUE_NAME --name $UNIQUE_NAME
+              az group delete --yes -n $RAND_NAME
