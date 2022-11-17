@@ -28,7 +28,9 @@ jobs:
            run: npm i -g @vercel/ncc
          - name: Build
            run: ncc build src/run.ts -o lib
-
+         - name: verify installation
+           run: |
+              az
           # Logs in with Azure credentials
          - name: Azure login
            uses: azure/login@v1.4.3
@@ -39,7 +41,7 @@ jobs:
           
          - uses: Azure/setup-kubectl@v3
            name: Install Kubectl
-           
+
          - name: Create private AKS cluster and set context
            run: |
               set +x
