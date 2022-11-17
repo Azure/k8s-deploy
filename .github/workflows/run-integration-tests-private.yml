@@ -50,7 +50,7 @@ jobs:
            run: |
               set +x
               # create cluster
-              export UNIQUE_NAME=k8s-deploy-integration-test${{ env.NAMESPACE }}
+              export UNIQUE_NAME=${{ env.NAMESPACE }}
               az group create --location eastus --name $UNIQUE_NAME
               az aks create --name $UNIQUE_NAME --resource-group $UNIQUE_NAME --enable-private-cluster --generate-ssh-keys
               echo "getting assignee objectId..."
@@ -95,7 +95,7 @@ jobs:
          
          - name: Clean up AKS cluster
            run: |
-              export UNIQUE_NAME=k8s-deploy-integration-test${{ env.NAMESPACE }}
+              export UNIQUE_NAME=${{ env.NAMESPACE }}
               echo "deleting AKS cluster and resource group"
               az aks delete --yes --resource-group $UNIQUE_NAME --name $UNIQUE_NAME
               az group delete --yes -n $RAND_NAME
