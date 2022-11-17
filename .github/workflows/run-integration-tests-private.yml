@@ -28,16 +28,15 @@ jobs:
            run: npm i -g @vercel/ncc
          - name: Build
            run: ncc build src/run.ts -o lib
-         - name: verify installation
-           run: |
-              az
+        #  - name: verify installation
+        #    run: |
+        #       az login --service-principal -u ${{ secrets.AZURE_CLIENT_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }} --tenant ${{ secrets.AZURE_TENANT_ID }} --only-show-errors
           # Logs in with Azure credentials
          - name: Azure login
            uses: azure/login@v1.4.3
            with:
               client-id: ${{ secrets.AZURE_CLIENT_ID }}
               tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-              subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
           
          - uses: Azure/setup-kubectl@v3
            name: Install Kubectl
