@@ -2,13 +2,10 @@ name: Cluster Integration Tests - private cluster
 on:
    pull_request:
       branches:
-         - main
          - 'releases/*'
    push:
       branches:
          - main
-         - 'releases/*'
-         - jkatariya/deploy-bug
    workflow_dispatch:
 
 jobs:
