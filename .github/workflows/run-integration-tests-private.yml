@@ -81,6 +81,8 @@ jobs:
                  test/integration/manifests/test.yml
               action: deploy
               private-cluster: true
+              resource-group: ${{ env.NAMESPACE }}
+              name: ${{ env.NAMESPACE }}
 
          - name: Checking if deployments and services were created 
            run: |
@@ -88,14 +90,8 @@ jobs:
               python test/integration/k8s-deploy-test.py private=${{ env.NAMESPACE }} namespace=${{ env.NAMESPACE }} kind=Service name=nginx-service labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_basic selectorLabels=app:nginx
          
          - name: Clean up AKS cluster
+           if: ${{ always() }}
            run: |
               echo "deleting AKS cluster and resource group"
               az aks delete --yes --resource-group ${{ env.NAMESPACE }} --name ${{ env.NAMESPACE }}
-              az group delete --resource-group $RAND_NAME --yes 
-
-         - if: ${{ always() }}
-           name: Clean up AKS cluster
-           run: |
-              echo "deleting AKS cluster and resource group"
-              az aks delete --yes --resource-group ${{ env.NAMESPACE }} --name ${{ env.NAMESPACE }}
-              az group delete --yes -n $RAND_NAME
+              az group delete --resource-group ${{ env.NAMESPACE }} --yes 

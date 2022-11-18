@@ -25,6 +25,13 @@ export class PrivateKubectl extends Kubectl {
          addFileFlag = true
       }
 
+      if (this.resourceGroup === '') {
+         throw Error('Resource group must be specified for private cluster')
+      }
+      if (this.name === '') {
+         throw Error('Cluster name must be specified for private cluster')
+      }
+
       const privateClusterArgs = [
          'aks',
          'command',
@@ -61,7 +68,7 @@ export class PrivateKubectl extends Kubectl {
       )
 
       const allArgs = [...privateClusterArgs, '-o', 'json']
-      core.debug(`full form of az command: 'az' ${allArgs.join(' ')}`)
+      core.debug(`full form of az command: az ${allArgs.join(' ')}`)
       const runOutput = await getExecOutput('az', allArgs, eo)
       core.debug(
          `from kubectl private cluster command got run output ${JSON.stringify(
