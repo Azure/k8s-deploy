@@ -20,6 +20,7 @@ selectorLabelsKey = "selectorLabels"
 namespaceKey = "namespace"
 ingressServicesKey = "ingressServices"
 tsServicesKey = "tsServices"
+privateKey = "private"
 
 
 def parseArgs(sysArgs):
@@ -197,18 +198,36 @@ def main():
     kind = parsedArgs[kindKey]
     name = parsedArgs[nameKey]
     namespace = parsedArgs[namespaceKey]
-    print('kubectl get '+kind+' '+name+' -n '+namespace+' -o json')
+    cmd = 'kubectl get '+kind + ' '+name+' -n '+namespace+' -o json'
 
+    k8s_object = None
+    azPrefix = ""
     try:
-        k8_object = json.load(os.popen('kubectl get '+kind +
-                              ' '+name+' -n '+namespace+' -o json'))
+        if privateKey in parsedArgs:
+            uniqueName = parsedArgs[privateKey]
+            azPrefix = f"az aks command invoke --resource-group {uniqueName} --name {uniqueName} --command "
+            cmd = azPrefix + "'" + cmd + "'"
+            outputString = os.popen(cmd).read()
+            successExit = "exitcode=0"
+            if successExit not in outputString:
+                raise ValueError(f"private cluster get failed for {kind} {name}")
+
+            objString = outputString.split(successExit)[1]
+            k8_object = json.loads(objString)
+
+        else:
+            k8_object = json.load(os.popen(cmd))
 
         if k8_object == None:
             raise ValueError(f"{kind} {name} was not found")
+    
     except:
         msg = kind+' '+name+' not created or not found'
-        foundObjects = json.load(
-            os.popen('kubectl get '+kind+' -n '+namespace+' -o json'))
+        getAllObjectsCmd = azPrefix + 'kubectl get '+kind+' -n '+namespace
+        if not azPrefix == "":
+            getAllObjectsCmd = azPrefix + "'{getAllObjectsCmd}'" # add extra set of quotes
+        cmd =  + "'" + cmd + "'"
+        foundObjects = os.popen().read()
         suffix = f"resources of type {kind}: {foundObjects}"
         sys.exit(msg + " " + suffix)
 
