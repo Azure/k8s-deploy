@@ -1,4 +1,4 @@
-name: Minikube Integration Tests - private cluster
+name: Cluster Integration Tests - private cluster
 on:
    pull_request:
       branches:

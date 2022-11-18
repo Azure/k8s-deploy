@@ -102,10 +102,12 @@ export class Kubectl {
       files: string | string[],
       annotation: string
    ): Promise<ExecOutput> {
+      const filesToAnnotate = createInlineArray(files)
+      core.debug(`annotating ${filesToAnnotate} with annotation ${annotation}`)
       const args = [
          'annotate',
          '-f',
-         createInlineArray(files),
+         filesToAnnotate,
          annotation,
          '--overwrite'
       ]
