@@ -16,8 +16,8 @@ jobs:
          KUBECONFIG: /home/runner/.kube/config
          NAMESPACE: test-${{ github.run_id }}
       permissions:
-        contents: read
-        id-token: write
+         contents: read
+         id-token: write
       steps:
          - uses: actions/checkout@v3
 
@@ -29,17 +29,17 @@ jobs:
            run: npm i -g @vercel/ncc
          - name: Build
            run: ncc build src/run.ts -o lib
-        #  - name: verify installation
-        #    run: |
-        #       az login --service-principal -u ${{ secrets.AZURE_CLIENT_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }} --tenant ${{ secrets.AZURE_TENANT_ID }} --only-show-errors
-          # Logs in with Azure credentials
+         #  - name: verify installation
+         #    run: |
+         #       az login --service-principal -u ${{ secrets.AZURE_CLIENT_ID }} -p ${{ secrets.AZURE_CLIENT_SECRET }} --tenant ${{ secrets.AZURE_TENANT_ID }} --only-show-errors
+         # Logs in with Azure credentials
          - name: Azure login
-           uses: azure/login@v1.4.3 
+           uses: azure/login@v1.4.3
            with:
               client-id: ${{ secrets.AZURE_CLIENT_ID }}
               tenant-id: ${{ secrets.AZURE_TENANT_ID }}
               subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          
+
          - uses: Azure/setup-kubectl@v3
            name: Install Kubectl
 
@@ -81,14 +81,14 @@ jobs:
               resource-group: ${{ env.NAMESPACE }}
               name: ${{ env.NAMESPACE }}
 
-         - name: Checking if deployments and services were created 
+         - name: Checking if deployments and services were created
            run: |
               python test/integration/k8s-deploy-test.py private=${{ env.NAMESPACE }} namespace=${{ env.NAMESPACE }} kind=Deployment name=nginx-deployment containerName=nginx:1.14.2 labels=app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Cluster_Integration_Tests_-_private_cluster selectorLabels=app:nginx
               python test/integration/k8s-deploy-test.py private=${{ env.NAMESPACE }} namespace=${{ env.NAMESPACE }} kind=Service name=nginx-service labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Cluster_Integration_Tests_-_private_cluster selectorLabels=app:nginx
-         
+
          - name: Clean up AKS cluster
            if: ${{ always() }}
            run: |
               echo "deleting AKS cluster and resource group"
               az aks delete --yes --resource-group ${{ env.NAMESPACE }} --name ${{ env.NAMESPACE }}
-              az group delete --resource-group ${{ env.NAMESPACE }} --yes 
+              az group delete --resource-group ${{ env.NAMESPACE }} --yes
