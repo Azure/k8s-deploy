@@ -45,15 +45,6 @@ jobs:
               # create cluster
               az group create --location eastus --name ${{ env.NAMESPACE }}
               az aks create --name ${{ env.NAMESPACE }} --resource-group ${{ env.NAMESPACE }} --enable-private-cluster --generate-ssh-keys
-              echo "getting assignee objectId..."
-              export ASSIGNEE_OBJECT_ID="$(az ad sp show --id ${{ secrets.AZURE_CLIENT_ID }} --only-show-errors| jq -r '.objectId')"
-              echo "::add-mask::${ASSIGNEE_OBJECT_ID}"
-              if [ $ASSIGNEE_OBJECT_ID = "null" ]
-              then
-                export ASSIGNEE_OBJECT_ID="$(az ad sp show --id ${{ secrets.AZURE_CLIENT_ID }} --only-show-errors| jq -r '.id')"
-                echo "::add-mask::${ASSIGNEE_OBJECT_ID}"
-              fi
-              echo "assigning role to service principal..."
               az aks get-credentials --resource-group ${{ env.NAMESPACE }} --name ${{ env.NAMESPACE }}
 
          - name: Create namespace to run tests

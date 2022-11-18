@@ -1,4 +1,5 @@
 import {Kubectl} from './kubectl'
+import * as minimist from 'minimist'
 import {ExecOptions, ExecOutput, getExecOutput} from '@actions/exec'
 import * as core from '@actions/core'
 import * as os from 'os'
@@ -107,31 +108,30 @@ export class PrivateKubectl extends Kubectl {
 
    public extractFilesnames(strToParse: string) {
       const fileNames: string[] = []
-      const argv = require('minimist')(strToParse.split(' '))
+      const argv = minimist(strToParse.split(' '))
       const fArg = 'f'
       const filenameArg = 'filename'
 
-      if (argv[fArg]) {
-         if (typeof argv[fArg] === 'string') {
-            fileNames.push(...argv[fArg].split(','))
-         } else {
-            for (const value of argv[fArg] as string[]) {
-               fileNames.push(...value.split(','))
-            }
-         }
-      }
-
-      if (argv[filenameArg]) {
-         if (typeof argv[filenameArg] === 'string') {
-            fileNames.push(...argv[filenameArg].split(','))
-         } else {
-            for (const value of argv[filenameArg] as string[]) {
-               fileNames.push(...value.split(','))
-            }
-         }
-      }
+      fileNames.push(...this.extractFilesFromMinimist(argv, fArg))
+      fileNames.push(...this.extractFilesFromMinimist(argv, filenameArg))
 
       return fileNames.join(' ')
+   }
+
+   private extractFilesFromMinimist(argv, arg: string): string[] {
+      if (!argv[arg]) {
+         return []
+      }
+      const toReturn: string[] = []
+      if (typeof argv[arg] === 'string') {
+         toReturn.push(...argv[arg].split(','))
+      } else {
+         for (const value of argv[arg] as string[]) {
+            toReturn.push(...value.split(','))
+         }
+      }
+
+      return toReturn
    }
 
    private containsFilenames(str: string) {
