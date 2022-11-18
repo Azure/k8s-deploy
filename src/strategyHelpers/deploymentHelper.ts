@@ -203,6 +203,7 @@ async function annotateResources(
       deploymentConfig
    )}`
 
+   core.debug(`annotations getting applied: ${annotationKeyValStr}`)
    const annotateNamespace = !(
       core.getInput('annotate-namespace').toLowerCase() === 'false'
    )

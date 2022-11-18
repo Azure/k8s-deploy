@@ -106,23 +106,32 @@ export class PrivateKubectl extends Kubectl {
    }
 
    public extractFilesnames(strToParse: string) {
-      let start = strToParse.indexOf('-filename')
-      let offset = 7
+      const fileNames: string[] = []
+      const argv = require('minimist')(strToParse.split(' '))
+      const fArg = 'f'
+      const filenameArg = 'filename'
 
-      if (start == -1) {
-         start = strToParse.indexOf('-f')
-
-         if (start == -1) {
-            return ''
+      if (argv[fArg]) {
+         if (typeof argv[fArg] === 'string') {
+            fileNames.push(...argv[fArg].split(','))
+         } else {
+            for (const value of argv[fArg] as string[]) {
+               fileNames.push(...value.split(','))
+            }
          }
-         offset = 0
       }
 
-      let temp = strToParse.substring(start + offset)
-      let end = temp.indexOf(' -')
+      if (argv[filenameArg]) {
+         if (typeof argv[filenameArg] === 'string') {
+            fileNames.push(...argv[filenameArg].split(','))
+         } else {
+            for (const value of argv[filenameArg] as string[]) {
+               fileNames.push(...value.split(','))
+            }
+         }
+      }
 
-      //End could be case where the -f flag was last, or -f is followed by some additonal flag and it's arguments
-      return temp.substring(3, end == -1 ? temp.length : end).trim()
+      return fileNames.join(' ')
    }
 
    private containsFilenames(str: string) {

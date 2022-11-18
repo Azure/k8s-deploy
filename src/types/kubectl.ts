@@ -111,6 +111,9 @@ export class Kubectl {
          annotation,
          '--overwrite'
       ]
+      core.debug(
+         `sending args from annotate to execute: ${JSON.stringify(args)}`
+      )
       return await this.execute(args)
    }
 
