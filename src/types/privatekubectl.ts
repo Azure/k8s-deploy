@@ -41,7 +41,7 @@ export class PrivateKubectl extends Kubectl {
          '--name',
          this.name,
          '--command',
-         `'${kubectlCmd}'`
+         `${kubectlCmd}`
       ]
 
       if (addFileFlag) {
