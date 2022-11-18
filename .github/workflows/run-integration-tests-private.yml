@@ -91,7 +91,7 @@ jobs:
            run: |
               echo "deleting AKS cluster and resource group"
               az aks delete --yes --resource-group ${{ env.NAMESPACE }} --name ${{ env.NAMESPACE }}
-              az group delete --yes -n $RAND_NAME
+              az group delete --resource-group $RAND_NAME --yes 
 
          - if: ${{ always() }}
            name: Clean up AKS cluster

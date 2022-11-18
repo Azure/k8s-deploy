@@ -60,11 +60,9 @@ export class PrivateKubectl extends Kubectl {
          `private cluster Kubectl run with invoke command: ${kubectlCmd}`
       )
 
-      const runOutput = await getExecOutput(
-         'az',
-         [...privateClusterArgs, '-o', 'json'],
-         eo
-      )
+      const allArgs = [...privateClusterArgs, '-o', 'json']
+      core.debug(`full form of az command: 'az' ${allArgs.join(' ')}`)
+      const runOutput = await getExecOutput('az', allArgs, eo)
       core.debug(
          `from kubectl private cluster command got run output ${JSON.stringify(
             runOutput
