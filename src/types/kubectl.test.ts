@@ -48,17 +48,6 @@ describe('Kubectl class', () => {
             return execReturn
          })
       })
-
-      describe('omits default namespace from commands', () => {
-         it('executes a command without appending --namespace arg', async () => {
-            // no args
-            const command = 'command'
-            expect(await kubectl.executeCommand(command)).toBe(execReturn)
-            expect(exec.getExecOutput).toBeCalledWith(kubectlPath, [command], {
-               silent: false
-            })
-         })
-      })
    })
 
    describe('with a success exec return in testNamespace', () => {
