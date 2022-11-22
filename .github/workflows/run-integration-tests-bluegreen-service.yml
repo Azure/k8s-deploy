@@ -26,18 +26,20 @@ jobs:
               npm install
          - name: Install ncc
            run: npm i -g @vercel/ncc
+         - name: Install conntrack
+           run: sudo apt-get install -y conntrack
          - name: Build
            run: ncc build src/run.ts -o lib
 
          - uses: Azure/setup-kubectl@v3
            name: Install Kubectl
-
+           
          - id: setup-minikube
            name: Setup Minikube
-           uses: manusa/actions-setup-minikube@v2.4.2
+           uses: medyagh/setup-minikube@latest
            with:
-              minikube version: 'v1.24.0'
-              kubernetes version: 'v1.21.0'
+              minikube-version: 1.24.0
+              kubernetes-version: 1.22.3
               driver: 'none'
            timeout-minutes: 3
 
