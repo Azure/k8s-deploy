@@ -44,9 +44,13 @@ spec:
            paths:
               - path: /testpath
                 backend:
-                   serviceName: nginx-service
-                   servicePort: 80
+                  service:
+                    name: nginx-service
+                    port:
+                      number: 80
               - path: /testpath2
                 backend:
-                   serviceName: unrouted-service
-                   servicePort: 80
+                   service:
+                     name: unrouted-service
+                     port:
+                       number: 80
