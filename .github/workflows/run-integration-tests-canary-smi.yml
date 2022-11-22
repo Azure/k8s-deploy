@@ -26,6 +26,8 @@ jobs:
               npm install
          - name: Install ncc
            run: npm i -g @vercel/ncc
+         - name: Install conntrack
+           run: sudo apt-get install -y conntrack
          - name: Build
            run: ncc build src/run.ts -o lib
 
