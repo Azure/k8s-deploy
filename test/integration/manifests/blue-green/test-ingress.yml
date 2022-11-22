@@ -45,14 +45,14 @@ spec:
               - path: /testpath
                 pathType: Prefix
                 backend:
-                  service:
-                    name: nginx-service
-                    port:
-                      number: 80
+                   service:
+                      name: nginx-service
+                      port:
+                         number: 80
               - path: /testpath2
                 pathType: Prefix
                 backend:
                    service:
-                     name: unrouted-service
-                     port:
-                       number: 80
+                      name: unrouted-service
+                      port:
+                         number: 80
