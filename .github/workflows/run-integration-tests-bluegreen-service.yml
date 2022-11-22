@@ -33,7 +33,7 @@ jobs:
 
          - uses: Azure/setup-kubectl@v3
            name: Install Kubectl
-           
+
          - id: setup-minikube
            name: Setup Minikube
            uses: medyagh/setup-minikube@latest
