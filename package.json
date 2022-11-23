@@ -4,7 +4,7 @@
    "author": "Deepak Sattiraju",
    "license": "MIT",
    "scripts": {
-      "build": "ncc build src/run.ts -o lib",
+      "build": "npx ncc build src/run.ts -o lib",
       "test": "jest",
       "coverage": "jest --coverage=true",
       "format": "prettier --write .",
@@ -25,6 +25,7 @@
       "@types/js-yaml": "^3.12.7",
       "@types/node": "^12.20.41",
       "jest": "^26.0.0",
+      "ncc": "^0.3.6",
       "prettier": "^2.7.1",
       "ts-jest": "^26.0.0",
       "typescript": "3.9.5"

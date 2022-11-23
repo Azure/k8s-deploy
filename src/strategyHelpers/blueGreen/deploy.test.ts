@@ -57,7 +57,7 @@ describe('deploy tests', () => {
          RouteStrategy.SMI
       )
 
-      expect(smiResult.objects.length).toBe(3)
+      expect(smiResult.objects.length).toBe(6)
    })
 
    test('correctly deploys blue/green ingress', async () => {

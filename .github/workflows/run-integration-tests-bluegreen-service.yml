@@ -1,0 +1,167 @@
+name: Minikube Integration Tests - blue-green service
+on:
+   pull_request:
+      branches:
+         - main
+         - 'releases/*'
+   push:
+      branches:
+         - main
+         - 'releases/*'
+   workflow_dispatch:
+
+jobs:
+   run-integration-test:
+      name: Run Minikube Integration Tests
+      runs-on: ubuntu-latest
+      env:
+         KUBECONFIG: /home/runner/.kube/config
+         NAMESPACE: test-${{ github.run_id }}
+      steps:
+         - uses: actions/checkout@v3
+
+         - name: Install dependencies
+           run: |
+              rm -rf node_modules/
+              npm install
+         - name: Install ncc
+           run: npm i -g @vercel/ncc
+         - name: Install conntrack
+           run: sudo apt-get install -y conntrack
+         - name: Build
+           run: ncc build src/run.ts -o lib
+
+         - uses: Azure/setup-kubectl@v3
+           name: Install Kubectl
+
+         - id: setup-minikube
+           name: Setup Minikube
+           uses: medyagh/setup-minikube@latest
+           with:
+              minikube-version: 1.24.0
+              kubernetes-version: 1.22.3
+              driver: 'none'
+           timeout-minutes: 3
+
+         - name: Create namespace to run tests
+           run: kubectl create ns ${{ env.NAMESPACE }}
+
+         - uses: actions/setup-python@v2
+           name: Install Python
+           with:
+              python-version: '3.x'
+
+         - name: Cleaning any previously created items
+           run: |
+              python test/integration/k8s-deploy-delete.py 'Service' 'all' ${{ env.NAMESPACE }}
+              python test/integration/k8s-deploy-delete.py 'Deployment' 'all' ${{ env.NAMESPACE }}
+              python test/integration/k8s-deploy-delete.py 'Ingress' 'all' ${{ env.NAMESPACE }}
+
+         - name: Executing deploy action for service
+           uses: ./
+           with:
+              namespace: ${{ env.NAMESPACE }}
+              images: nginx:1.14.2
+              manifests: |
+                 test/integration/manifests/blue-green/test-service.yml
+              strategy: blue-green
+              route-method: service
+              action: deploy
+
+         - name: Checking if deployments and services were created with green labels and original tag
+           run: |
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Deployment name=nginx-deployment-green containerName=nginx:1.14.2 labels=k8s.deploy.color:green,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_service selectorLabels=app:nginx,k8s.deploy.color:green
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Service name=nginx-service labels=k8s.deploy.color:green,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_service selectorLabels=app:nginx,k8s.deploy.color:green
+         - name: Executing promote action for service
+           uses: ./
+           with:
+              namespace: ${{ env.NAMESPACE }}
+              images: nginx:1.14.2
+              manifests: |
+                 test/integration/manifests/blue-green/test-service.yml
+              strategy: blue-green
+              route-method: service
+              action: promote
+
+         - name: Checking if deployments and services were created with none labels after first promote
+           run: |
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Deployment name=nginx-deployment containerName=nginx:1.14.2 labels=k8s.deploy.color:None,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_service selectorLabels=app:nginx,k8s.deploy.color:None
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Service name=nginx-service labels=k8s.deploy.color:None,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_service selectorLabels=app:nginx,k8s.deploy.color:None
+
+         - name: Executing second deploy action for service with new tag
+           uses: ./
+           with:
+              namespace: ${{ env.NAMESPACE }}
+              images: nginx:latest
+              manifests: |
+                 test/integration/manifests/blue-green/test-service.yml
+              strategy: blue-green
+              route-method: service
+              action: deploy
+
+         - name: Checking if deployments (with new tag) and services were created with green labels after deploy, and old deployment persists
+           run: |
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Deployment name=nginx-deployment-green containerName=nginx:latest labels=k8s.deploy.color:green,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_service selectorLabels=app:nginx,k8s.deploy.color:green
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Deployment name=nginx-deployment containerName=nginx:1.14.2 labels=k8s.deploy.color:None,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_service selectorLabels=app:nginx,k8s.deploy.color:None
+
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Service name=nginx-service labels=k8s.deploy.color:green,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_service selectorLabels=app:nginx,k8s.deploy.color:green
+
+         - name: Executing second promote action for service now using new image tag
+           uses: ./
+           with:
+              namespace: ${{ env.NAMESPACE }}
+              images: nginx:latest
+              manifests: |
+                 test/integration/manifests/blue-green/test-service.yml
+              strategy: blue-green
+              route-method: service
+              action: promote
+
+         - name: Checking if deployments and services were created with none labels after promote for new tag
+           run: |
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Deployment name=nginx-deployment containerName=nginx:latest labels=k8s.deploy.color:None,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_service selectorLabels=app:nginx,k8s.deploy.color:None
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Service name=nginx-service labels=k8s.deploy.color:None,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_service selectorLabels=app:nginx,k8s.deploy.color:None
+
+         - name: Executing deploy action for service to be rejected using old tag
+           uses: ./
+           with:
+              namespace: ${{ env.NAMESPACE }}
+              images: nginx:1.14.2
+              manifests: |
+                 test/integration/manifests/blue-green/test-service.yml
+              strategy: blue-green
+              route-method: service
+              action: deploy
+
+         - name: Checking if new deployments (with old tag) and services were created with green labels after deploy, and old deployment (with latest tag) persists
+           run: |
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Deployment name=nginx-deployment-green containerName=nginx:1.14.2 labels=k8s.deploy.color:green,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_service selectorLabels=app:nginx,k8s.deploy.color:green
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Deployment name=nginx-deployment containerName=nginx:latest labels=k8s.deploy.color:None,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_service selectorLabels=app:nginx,k8s.deploy.color:None
+
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Service name=nginx-service labels=k8s.deploy.color:green,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_service selectorLabels=app:nginx,k8s.deploy.color:green
+
+         - name: Executing reject action for service to reject new deployment with 1.14.2 tag
+           uses: ./
+           with:
+              namespace: ${{ env.NAMESPACE }}
+              images: nginx:1.14.2
+              manifests: |
+                 test/integration/manifests/blue-green/test-service.yml
+              strategy: blue-green
+              route-method: service
+              action: reject
+
+         # MAY BE USEFUL TO ADD AN ANTI-CHECK - CHECK TO MAKE SURE CERTAIN OBJECTS DON'T EXIST
+         - name: Checking if deployments and services were created with none labels and latest tag after reject
+           run: |
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Deployment name=nginx-deployment containerName=nginx:latest labels=k8s.deploy.color:None,app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_service selectorLabels=app:nginx,k8s.deploy.color:None
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Service name=nginx-service labels=k8s.deploy.color:None,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_blue-green_service selectorLabels=app:nginx,k8s.deploy.color:None
+
+         - name: Cleaning up current set up
+           run: |
+              python test/integration/k8s-deploy-delete.py 'Service' 'nginx-service' ${{ env.NAMESPACE }}
+              python test/integration/k8s-deploy-delete.py 'Deployment' 'nginx-deployment' ${{ env.NAMESPACE }}
+
+         - if: ${{ always() }}
+           name: Delete created namespace
+           run: kubectl delete ns ${{ env.NAMESPACE }}

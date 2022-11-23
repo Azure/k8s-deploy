@@ -102,13 +102,18 @@ export class Kubectl {
       files: string | string[],
       annotation: string
    ): Promise<ExecOutput> {
+      const filesToAnnotate = createInlineArray(files)
+      core.debug(`annotating ${filesToAnnotate} with annotation ${annotation}`)
       const args = [
          'annotate',
          '-f',
-         createInlineArray(files),
+         filesToAnnotate,
          annotation,
          '--overwrite'
       ]
+      core.debug(
+         `sending args from annotate to execute: ${JSON.stringify(args)}`
+      )
       return await this.execute(args)
    }
 
@@ -166,17 +171,24 @@ export class Kubectl {
    }
 
    protected async execute(args: string[], silent: boolean = false) {
-      if (this.ignoreSSLErrors) {
-         args.push('--insecure-skip-tls-verify')
-      }
-      if (this.namespace && this.namespace != 'default') {
-         args = args.concat(['--namespace', this.namespace])
-      }
+      args = args.concat(this.getExecuteFlags())
       core.debug(`Kubectl run with command: ${this.kubectlPath} ${args}`)
 
       return await getExecOutput(this.kubectlPath, args, {
          silent
       })
+   }
+
+   protected getExecuteFlags(): string[] {
+      const flags = []
+      if (this.ignoreSSLErrors) {
+         flags.push('--insecure-skip-tls-verify')
+      }
+      if (this.namespace) {
+         flags.push('--namespace', this.namespace)
+      }
+
+      return flags
    }
 }
 

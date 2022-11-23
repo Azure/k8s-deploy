@@ -6,6 +6,7 @@ inputs:
    namespace:
       description: 'Choose the target Kubernetes namespace. If the namespace is not provided, the commands will run in the default namespace.'
       required: false
+      default: default
    manifests:
       description: 'Path to the manifest files which will be used for deployment.'
       required: true
@@ -72,6 +73,9 @@ inputs:
    name:
       description: 'Resource group name - Only required if using private cluster'
       required: false
+   skip-tls-verify:
+      description: True if the insecure-skip-tls-verify option should be used. Input should be 'true' or 'false'.
+      default: false
 
 branding:
    color: 'green'

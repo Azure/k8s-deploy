@@ -48,17 +48,6 @@ describe('Kubectl class', () => {
             return execReturn
          })
       })
-
-      describe('omits default namespace from commands', () => {
-         it('executes a command without appending --namespace arg', async () => {
-            // no args
-            const command = 'command'
-            expect(await kubectl.executeCommand(command)).toBe(execReturn)
-            expect(exec.getExecOutput).toBeCalledWith(kubectlPath, [command], {
-               silent: false
-            })
-         })
-      })
    })
 
    describe('with a success exec return in testNamespace', () => {
@@ -363,5 +352,22 @@ describe('Kubectl class', () => {
       const deployment = 'deployment'
       const result = await kubectl.getNewReplicaSet(deployment)
       expect(result).toBe(name)
+   })
+
+   it('executes with constructor flags', async () => {
+      const skipTls = true
+      const kubectl = new Kubectl(kubectlPath, testNamespace, skipTls)
+
+      jest.spyOn(exec, 'getExecOutput').mockImplementation(async () => {
+         return {exitCode: 0, stderr: '', stdout: ''}
+      })
+
+      const command = 'command'
+      kubectl.executeCommand(command)
+      expect(exec.getExecOutput).toBeCalledWith(
+         kubectlPath,
+         [command, '--insecure-skip-tls-verify', '--namespace', testNamespace],
+         {silent: false}
+      )
    })
 })

@@ -7,12 +7,13 @@ import * as fileHelper from '../../utilities/fileUtils'
 import * as canaryDeploymentHelper from './canaryHelper'
 import {isDeploymentEntity} from '../../types/kubernetesTypes'
 import {getReplicaCount} from '../../utilities/manifestUpdateUtils'
+import {DeployResult} from '../../types/deployResult'
 
 export async function deployPodCanary(
    filePaths: string[],
    kubectl: Kubectl,
    onlyDeployStable: boolean = false
-) {
+): Promise<DeployResult> {
    const newObjectsList = []
    const percentage = parseInt(core.getInput('percentage', {required: true}))
 
@@ -71,8 +72,8 @@ export async function deployPodCanary(
    const manifestFiles = fileHelper.writeObjectsToFile(newObjectsList)
    const forceDeployment = core.getInput('force').toLowerCase() === 'true'
 
-   const result = await kubectl.apply(manifestFiles, forceDeployment)
-   return {result, newFilePaths: manifestFiles}
+   const execResult = await kubectl.apply(manifestFiles, forceDeployment)
+   return {execResult, manifestFiles}
 }
 
 export function calculateReplicaCountForCanary(

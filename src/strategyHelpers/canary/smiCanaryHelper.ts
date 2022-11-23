@@ -10,6 +10,7 @@ import * as podCanaryHelper from './podCanaryHelper'
 import {isDeploymentEntity, isServiceEntity} from '../../types/kubernetesTypes'
 import {checkForErrors} from '../../utilities/kubectlUtils'
 import {inputAnnotations} from '../../inputUtils'
+import {DeployResult} from '../../types/deployResult'
 
 const TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX = '-workflow-rollout'
 const TRAFFIC_SPLIT_OBJECT = 'TrafficSplit'
@@ -18,7 +19,7 @@ export async function deploySMICanary(
    filePaths: string[],
    kubectl: Kubectl,
    onlyDeployStable: boolean = false
-) {
+): Promise<DeployResult> {
    const canaryReplicasInput = core.getInput('baseline-and-canary-replicas')
    let canaryReplicaCount
    let calculateReplicas = true
@@ -97,11 +98,15 @@ export async function deploySMICanary(
    const newFilePaths = fileHelper.writeObjectsToFile(newObjectsList)
    const forceDeployment = core.getInput('force').toLowerCase() === 'true'
    const result = await kubectl.apply(newFilePaths, forceDeployment)
-   await createCanaryService(kubectl, filePaths)
-   return {result, newFilePaths}
+   const svcDeploymentFiles = await createCanaryService(kubectl, filePaths)
+   newFilePaths.push(...svcDeploymentFiles)
+   return {execResult: result, manifestFiles: newFilePaths}
 }
 
-async function createCanaryService(kubectl: Kubectl, filePaths: string[]) {
+async function createCanaryService(
+   kubectl: Kubectl,
+   filePaths: string[]
+): Promise<string[]> {
    const newObjectsList = []
    const trafficObjectsList: string[] = []
 
@@ -190,6 +195,7 @@ async function createCanaryService(kubectl: Kubectl, filePaths: string[]) {
 
    const result = await kubectl.apply(manifestFiles, forceDeployment)
    checkForErrors([result])
+   return manifestFiles
 }
 
 export async function redirectTrafficToCanaryDeployment(
@@ -202,8 +208,8 @@ export async function redirectTrafficToCanaryDeployment(
 export async function redirectTrafficToStableDeployment(
    kubectl: Kubectl,
    manifestFilePaths: string[]
-) {
-   await adjustTraffic(kubectl, manifestFilePaths, 1000, 0)
+): Promise<string[]> {
+   return await adjustTraffic(kubectl, manifestFilePaths, 1000, 0)
 }
 
 async function adjustTraffic(
@@ -245,6 +251,7 @@ async function adjustTraffic(
    const forceDeployment = core.getInput('force').toLowerCase() === 'true'
    const result = await kubectl.apply(trafficSplitManifests, forceDeployment)
    checkForErrors([result])
+   return trafficSplitManifests
 }
 
 async function updateTrafficSplitObject(

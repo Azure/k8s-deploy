@@ -29,12 +29,17 @@ export async function deleteCanaryDeployment(
    kubectl: Kubectl,
    manifestFilePaths: string[],
    includeServices: boolean
-) {
+): Promise<string[]> {
    if (manifestFilePaths == null || manifestFilePaths.length == 0) {
       throw new Error('Manifest files for deleting canary deployment not found')
    }
 
-   await cleanUpCanary(kubectl, manifestFilePaths, includeServices)
+   const deletedFiles = await cleanUpCanary(
+      kubectl,
+      manifestFilePaths,
+      includeServices
+   )
+   return deletedFiles
 }
 
 export function markResourceAsStable(inputObject: any): object {
@@ -189,7 +194,7 @@ async function cleanUpCanary(
    kubectl: Kubectl,
    files: string[],
    includeServices: boolean
-) {
+): Promise<string[]> {
    const deleteObject = async function (kind, name) {
       try {
          const result = await kubectl.delete([kind, name])
@@ -198,6 +203,8 @@ async function cleanUpCanary(
          // Ignore failures of delete if it doesn't exist
       }
    }
+
+   const deletedFiles: string[] = []
 
    for (const filePath of files) {
       const fileContents = fs.readFileSync(filePath).toString()
@@ -211,6 +218,7 @@ async function cleanUpCanary(
             isDeploymentEntity(kind) ||
             (includeServices && isServiceEntity(kind))
          ) {
+            deletedFiles.push(filePath)
             const canaryObjectName = getCanaryResourceName(name)
             const baselineObjectName = getBaselineResourceName(name)
 
@@ -219,4 +227,6 @@ async function cleanUpCanary(
          }
       }
    }
+
+   return deletedFiles
 }
