@@ -73,6 +73,9 @@ inputs:
    name:
       description: 'Resource group name - Only required if using private cluster'
       required: false
+   skip-tls-verify:
+      description: True if the insecure-skip-tls-verify option should be used. Input should be 'true' or 'false'.
+      default: false
 
 branding:
    color: 'green'

@@ -117,6 +117,10 @@ Following are the key capabilities of this action:
     <td>annotate-namespace</br></br>(Optional)</td>
     <td>Acceptable values: true/false</br>Default value: true</br>Switch whether to annotate the namespace resources object or not</td>
   </tr>
+  <tr>
+    <td>skip-tls-verify</br></br>(Optional)</td>
+    <td>Acceptable values: true/false</br>Default value: false</br>True if the insecure-skip-tls-verify option should be used</td>
+  </tr>
 </table>
 
 ## Usage Examples

@@ -353,4 +353,21 @@ describe('Kubectl class', () => {
       const result = await kubectl.getNewReplicaSet(deployment)
       expect(result).toBe(name)
    })
+
+   it('executes with constructor flags', async () => {
+      const skipTls = true
+      const kubectl = new Kubectl(kubectlPath, testNamespace, skipTls)
+
+      jest.spyOn(exec, 'getExecOutput').mockImplementation(async () => {
+         return {exitCode: 0, stderr: '', stdout: ''}
+      })
+
+      const command = 'command'
+      kubectl.executeCommand(command)
+      expect(exec.getExecOutput).toBeCalledWith(
+         kubectlPath,
+         [command, '--insecure-skip-tls-verify', '--namespace', testNamespace],
+         {silent: false}
+      )
+   })
 })

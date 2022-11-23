@@ -35,16 +35,17 @@ export async function run() {
       core.getInput('private-cluster').toLowerCase() === 'true'
    const resourceGroup = core.getInput('resource-group') || ''
    const resourceName = core.getInput('name') || ''
+   const skipTlsVerify = core.getBooleanInput('skip-tls-verify')
 
    const kubectl = isPrivateCluster
       ? new PrivateKubectl(
            kubectlPath,
            namespace,
-           true,
+           skipTlsVerify,
            resourceGroup,
            resourceName
         )
-      : new Kubectl(kubectlPath, namespace, true)
+      : new Kubectl(kubectlPath, namespace, skipTlsVerify)
 
    // run action
    switch (action) {
