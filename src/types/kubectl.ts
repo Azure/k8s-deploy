@@ -180,9 +180,9 @@ export class Kubectl {
    }
 
    protected getExecuteFlags(): string[] {
-      const flags= [];
+      const flags = []
       if (this.ignoreSSLErrors) {
-        flags.push('--insecure-skip-tls-verify') 
+         flags.push('--insecure-skip-tls-verify')
       }
       if (this.namespace) {
          flags.push('--namespace', this.namespace)
