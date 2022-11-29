@@ -258,7 +258,7 @@ async function labelResources(
    const labelResults = []
    for (const file of files) {
       try {
-         const labelResult = await kubectl.labelFiles(files, labels)
+         const labelResult = await kubectl.labelFiles(file, labels)
          labelResults.push(labelResult)
       } catch (e) {
          core.warning(`failed to annotate resource: ${e}`)
