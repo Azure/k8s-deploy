@@ -70,13 +70,20 @@ export class Kubectl {
       let newReplicaSet = ''
       if (result?.stdout) {
          const stdout = result.stdout.split('\n')
+         core.debug('stdout from getNewReplicaSet is ' + JSON.stringify(stdout))
          stdout.forEach((line: string) => {
             const newreplicaset = 'newreplicaset'
             if (line && line.toLowerCase().indexOf(newreplicaset) > -1)
-               newReplicaSet = line
-                  .substring(newreplicaset.length)
-                  .trim()
-                  .split(' ')[0]
+               core.debug(
+                  `found string of interest for replicaset, line is ${line}`
+               )
+            core.debug(
+               `substring is ${line.substring(newreplicaset.length).trim()}`
+            )
+            newReplicaSet = line
+               .substring(newreplicaset.length)
+               .trim()
+               .split(' ')[0]
          })
       }
 
