@@ -155,17 +155,25 @@ export async function annotateAndLabelResources(
 
    const deploymentConfig = await getDeploymentConfig()
    const annotationKeyLabel = getWorkflowAnnotationKeyLabel()
+   try {
+      await annotateResources(
+         files,
+         kubectl,
+         resourceTypes,
+         allPods,
+         annotationKeyLabel,
+         workflowFilePath,
+         deploymentConfig
+      )
+   } catch (ex) {
+      core.warning(`Failed to annotate resources: ${ex} `)
+   }
 
-   await annotateResources(
-      files,
-      kubectl,
-      resourceTypes,
-      allPods,
-      annotationKeyLabel,
-      workflowFilePath,
-      deploymentConfig
-   )
-   await labelResources(files, kubectl, annotationKeyLabel)
+   try {
+      await labelResources(files, kubectl, annotationKeyLabel)
+   } catch (ex) {
+      core.warning(`Failed to label resources: ${ex}`)
+   }
 }
 
 async function annotateResources(

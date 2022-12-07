@@ -241,6 +241,8 @@ def main():
         RESULT, msg = verifyIngress(k8_object, parsedArgs)
     if kind == "TrafficSplit":
         RESULT, msg = verifyTSObject(k8_object, parsedArgs)
+    if kind == "Pod":
+        RESULT, msg = verifyPod(k8_object, parsedArgs)
 
     if not RESULT:
         sys.exit(f"{kind} {name} failed check: {msg}")
