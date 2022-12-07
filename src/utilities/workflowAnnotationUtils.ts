@@ -43,5 +43,6 @@ export function cleanLabel(label: string): string {
       .replace(/[^-A-Za-z0-9_.]/gi, '')
 
    const regex = /([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9]/
-   return regex.exec(removedInvalidChars)[0] || ''
+   const regexResult = regex.exec(removedInvalidChars) || ['']
+   return regexResult[0]
 }
