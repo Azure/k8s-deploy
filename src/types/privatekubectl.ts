@@ -75,13 +75,17 @@ export class PrivateKubectl extends Kubectl {
             runOutput
          )}`
       )
+
+      if (runOutput.exitCode !== 0) {
+         throw Error(
+            `Call to private cluster failed. Command: '${kubectlCmd}', errormessage: ${runOutput.stderr}`
+         )
+      }
+
       const runObj: {logs: string; exitCode: number} = JSON.parse(
          runOutput.stdout
       )
       if (!silent) core.info(runObj.logs)
-      if (runOutput.exitCode !== 0 && runObj.exitCode !== 0) {
-         throw Error(`failed private cluster Kubectl command: ${kubectlCmd}`)
-      }
 
       return {
          exitCode: runObj.exitCode,
