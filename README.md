@@ -117,6 +117,10 @@ Following are the key capabilities of this action:
     <td>annotate-namespace</br></br>(Optional)</td>
     <td>Acceptable values: true/false</br>Default value: true</br>Switch whether to annotate the namespace resources object or not</td>
   </tr>
+  <tr>
+    <td>skip-tls-verify</br></br>(Optional)</td>
+    <td>Acceptable values: true/false</br>Default value: false</br>True if the insecure-skip-tls-verify option should be used</td>
+  </tr>
 </table>
 
 ## Usage Examples
@@ -124,7 +128,7 @@ Following are the key capabilities of this action:
 ### Basic deployment (without any deployment strategy)
 
 ```yaml
-- uses: Azure/k8s-deploy@v3.1
+- uses: Azure/k8s-deploy@v4
   with:
      namespace: 'myapp'
      manifests: |
@@ -158,7 +162,7 @@ Following are the key capabilities of this action:
 ### Canary deployment without service mesh
 
 ```yaml
-- uses: Azure/k8s-deploy@v3.1
+- uses: Azure/k8s-deploy@v4
   with:
      namespace: 'myapp'
      images: 'contoso.azurecr.io/myapp:${{ event.run_id }}'
@@ -177,7 +181,7 @@ Following are the key capabilities of this action:
 To promote/reject the canary created by the above snippet, the following YAML snippet could be used:
 
 ```yaml
-- uses: Azure/k8s-deploy@v3.1
+- uses: Azure/k8s-deploy@v4
   with:
      namespace: 'myapp'
      images: 'contoso.azurecr.io/myapp:${{ event.run_id }}'
@@ -195,7 +199,7 @@ To promote/reject the canary created by the above snippet, the following YAML sn
 ### Canary deployment based on Service Mesh Interface
 
 ```yaml
-- uses: Azure/k8s-deploy@v3.1
+- uses: Azure/k8s-deploy@v4
   with:
      namespace: 'myapp'
      images: 'contoso.azurecr.io/myapp:${{ event.run_id }}'
@@ -216,7 +220,7 @@ To promote/reject the canary created by the above snippet, the following YAML sn
 To promote/reject the canary created by the above snippet, the following YAML snippet could be used:
 
 ```yaml
-- uses: Azure/k8s-deploy@v3.1
+- uses: Azure/k8s-deploy@v4
   with:
      namespace: 'myapp'
      images: 'contoso.azurecr.io/myapp:${{ event.run_id }} '
@@ -235,7 +239,7 @@ To promote/reject the canary created by the above snippet, the following YAML sn
 ### Blue-Green deployment with different route methods
 
 ```yaml
-- uses: Azure/k8s-deploy@v3.1
+- uses: Azure/k8s-deploy@v4
   with:
      namespace: 'myapp'
      images: 'contoso.azurecr.io/myapp:${{ event.run_id }}'
@@ -255,7 +259,7 @@ To promote/reject the canary created by the above snippet, the following YAML sn
 To promote/reject the green workload created by the above snippet, the following YAML snippet could be used:
 
 ```yaml
-- uses: Azure/k8s-deploy@v3.1
+- uses: Azure/k8s-deploy@v4
   with:
      namespace: 'myapp'
      images: 'contoso.azurecr.io/myapp:${{ event.run_id }}'
@@ -312,7 +316,7 @@ jobs:
               container-registry-password: ${{ secrets.REGISTRY_PASSWORD }}
               secret-name: demo-k8s-secret
 
-         - uses: Azure/k8s-deploy@v3.1
+         - uses: Azure/k8s-deploy@v4
            with:
               action: deploy
               manifests: |
@@ -358,7 +362,7 @@ jobs:
               container-registry-password: ${{ secrets.REGISTRY_PASSWORD }}
               secret-name: demo-k8s-secret
 
-         - uses: Azure/k8s-deploy@v3.1
+         - uses: Azure/k8s-deploy@v4
            with:
               action: deploy
               manifests: |
