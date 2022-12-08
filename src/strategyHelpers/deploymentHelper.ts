@@ -150,8 +150,15 @@ export async function annotateAndLabelResources(
    resourceTypes: Resource[],
    allPods: any
 ) {
+   const defaultWorkflowFileName = 'k8s-deploy-failed-workflow-annotation'
    const githubToken = core.getInput('token')
-   const workflowFilePath = await getWorkflowFilePath(githubToken)
+   let workflowFilePath
+   try {
+      workflowFilePath = await getWorkflowFilePath(githubToken)
+   } catch (ex) {
+      core.warning(`Failed to extract workflow file name: ${ex}`)
+      workflowFilePath = defaultWorkflowFileName
+   }
 
    const deploymentConfig = await getDeploymentConfig()
    const annotationKeyLabel = getWorkflowAnnotationKeyLabel()
