@@ -70,4 +70,3 @@ jobs:
            run: |
               python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Deployment name=nginx-deployment containerName=nginx:1.14.2 labels=app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_basic selectorLabels=app:nginx
               python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Service name=nginx-service labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_basic selectorLabels=app:nginx
-              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Service name=nginx-service labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_basic selectorLabels=app:nginx
