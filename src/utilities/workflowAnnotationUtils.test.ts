@@ -18,7 +18,7 @@ describe('WorkflowAnnotationUtils', () => {
       })
       it('should return a blank string when regex fails (https://github.com/Azure/k8s-deploy/issues/266)', () => {
          const label = '持续部署'
-         expect(cleanLabel(label)).toEqual('')
+         expect(cleanLabel(label)).toEqual('github-workflow-file')
 
          let removedInvalidChars = label
             .replace(/\s/gi, '_')
