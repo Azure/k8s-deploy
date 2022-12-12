@@ -16,5 +16,18 @@ describe('WorkflowAnnotationUtils', () => {
             cleanLabel('Workflow Name / With Slashes / And Spaces')
          ).toEqual('Workflow_Name_-_With_Slashes_-_And_Spaces')
       })
+      it('should return a blank string when regex fails (https://github.com/Azure/k8s-deploy/issues/266)', () => {
+         const label = '持续部署'
+         expect(cleanLabel(label)).toEqual('')
+
+         let removedInvalidChars = label
+            .replace(/\s/gi, '_')
+            .replace(/[\/\\\|]/gi, '-')
+            .replace(/[^-A-Za-z0-9_.]/gi, '')
+
+         const regex = /([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9]/
+         const regexResult = regex.exec(removedInvalidChars)
+         expect(regexResult).toBe(null)
+      })
    })
 })
