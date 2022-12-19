@@ -1,4 +1,8 @@
-import {cleanLabel} from '../utilities/workflowAnnotationUtils'
+import {
+   cleanLabel,
+   removeInvalidLabelCharacters,
+   VALID_LABEL_REGEX
+} from '../utilities/workflowAnnotationUtils'
 
 describe('WorkflowAnnotationUtils', () => {
    describe('cleanLabel', () => {
@@ -20,13 +24,9 @@ describe('WorkflowAnnotationUtils', () => {
          const label = '持续部署'
          expect(cleanLabel(label)).toEqual('github-workflow-file')
 
-         let removedInvalidChars = label
-            .replace(/\s/gi, '_')
-            .replace(/[\/\\\|]/gi, '-')
-            .replace(/[^-A-Za-z0-9_.]/gi, '')
+         let removedInvalidChars = removeInvalidLabelCharacters(label)
 
-         const regex = /([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9]/
-         const regexResult = regex.exec(removedInvalidChars)
+         const regexResult = VALID_LABEL_REGEX.exec(removedInvalidChars)
          expect(regexResult).toBe(null)
       })
    })
