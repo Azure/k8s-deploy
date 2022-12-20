@@ -1,4 +1,8 @@
-import {cleanLabel} from '../utilities/workflowAnnotationUtils'
+import {
+   cleanLabel,
+   removeInvalidLabelCharacters,
+   VALID_LABEL_REGEX
+} from '../utilities/workflowAnnotationUtils'
 
 describe('WorkflowAnnotationUtils', () => {
    describe('cleanLabel', () => {
@@ -15,6 +19,15 @@ describe('WorkflowAnnotationUtils', () => {
          expect(
             cleanLabel('Workflow Name / With Slashes / And Spaces')
          ).toEqual('Workflow_Name_-_With_Slashes_-_And_Spaces')
+      })
+      it('should return a blank string when regex fails (https://github.com/Azure/k8s-deploy/issues/266)', () => {
+         const label = '持续部署'
+         expect(cleanLabel(label)).toEqual('github-workflow-file')
+
+         let removedInvalidChars = removeInvalidLabelCharacters(label)
+
+         const regexResult = VALID_LABEL_REGEX.exec(removedInvalidChars)
+         expect(regexResult).toBe(null)
       })
    })
 })
