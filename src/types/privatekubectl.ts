@@ -86,6 +86,9 @@ export class PrivateKubectl extends Kubectl {
          runOutput.stdout
       )
       if (!silent) core.info(runObj.logs)
+      if (runObj.exitCode !== 0) {
+         throw Error(`failed private cluster Kubectl command: ${kubectlCmd}`)
+      }
 
       return {
          exitCode: runObj.exitCode,
