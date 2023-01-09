@@ -2,6 +2,7 @@ export interface K8sObject {
    metadata: {
       name: string
       labels: Map<string, string>
+      namespace?: string
    }
    kind: string
    spec: any
@@ -16,6 +17,7 @@ export interface K8sServiceObject extends K8sObject {
 export interface K8sDeleteObject {
    name: string
    kind: string
+   namespace?: string
 }
 
 export interface K8sIngress extends K8sObject {

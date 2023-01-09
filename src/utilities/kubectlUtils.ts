@@ -30,7 +30,12 @@ export async function getLastSuccessfulRunSha(
    annotationKey: string
 ): Promise<string> {
    try {
-      const result = await kubectl.getResource('namespace', namespaceName)
+      const result = await kubectl.getResource(
+         'namespace',
+         namespaceName,
+         false,
+         namespaceName
+      )
       if (result?.stderr) {
          core.warning(result.stderr)
          return process.env.GITHUB_SHA
@@ -53,12 +58,13 @@ export async function annotateChildPods(
    kubectl: Kubectl,
    resourceType: string,
    resourceName: string,
+   namespace: string | undefined,
    annotationKeyValStr: string,
    allPods
 ): Promise<ExecOutput[]> {
    let owner = resourceName
    if (resourceType.toLowerCase().indexOf('deployment') > -1) {
-      owner = await kubectl.getNewReplicaSet(resourceName)
+      owner = await kubectl.getNewReplicaSet(resourceName, namespace)
    }
 
    const commandExecutionResults = []
@@ -72,7 +78,8 @@ export async function annotateChildPods(
                      kubectl.annotate(
                         'pod',
                         pod.metadata.name,
-                        annotationKeyValStr
+                        annotationKeyValStr,
+                        namespace
                      )
                   )
                   break

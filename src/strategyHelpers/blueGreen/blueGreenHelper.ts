@@ -38,7 +38,8 @@ export async function deleteGreenObjects(
    const resourcesToDelete: K8sDeleteObject[] = toDelete.map((obj) => {
       return {
          name: getBlueGreenResourceName(obj.metadata.name, GREEN_SUFFIX),
-         kind: obj.kind
+         kind: obj.kind,
+         namespace: obj.metadata.namespace
       }
    })
 
@@ -234,9 +235,10 @@ export function isServiceSelectorSubsetOfMatchLabel(
 export async function fetchResource(
    kubectl: Kubectl,
    kind: string,
-   name: string
+   name: string,
+   namespace?: string
 ): Promise<K8sObject> {
-   const result = await kubectl.getResource(kind, name)
+   const result = await kubectl.getResource(kind, name, false, namespace)
    if (result == null || !!result.stderr) {
       return null
    }
