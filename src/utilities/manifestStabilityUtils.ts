@@ -5,6 +5,7 @@ import {checkForErrors} from './kubectlUtils'
 import {sleep} from './timeUtils'
 
 const IS_SILENT = false
+const POD = 'pod'
 
 export async function checkManifestStability(
    kubectl: Kubectl,
@@ -90,7 +91,7 @@ export async function checkManifestStability(
 
 export async function checkPodStatus(
    kubectl: Kubectl,
-   resource: Resource
+   pod: Resource
 ): Promise<void> {
    const sleepTimeout = 10 * 1000 // 10 seconds
    const iterations = 60 // 60 * 10 seconds timeout = 10 minutes max timeout
@@ -100,8 +101,8 @@ export async function checkPodStatus(
    for (let i = 0; i < iterations; i++) {
       await sleep(sleepTimeout)
 
-      core.debug(`Polling for pod status: ${resource.name}`)
-      podStatus = await getPodStatus(kubectl, resource)
+      core.debug(`Polling for pod status: ${pod.name}`)
+      podStatus = await getPodStatus(kubectl, pod)
 
       if (
          podStatus &&
@@ -112,43 +113,38 @@ export async function checkPodStatus(
       }
    }
 
-   podStatus = await getPodStatus(kubectl, resource)
+   podStatus = await getPodStatus(kubectl, pod)
    switch (podStatus.phase) {
       case 'Succeeded':
       case 'Running':
          if (isPodReady(podStatus)) {
-            console.log(`pod/${resource.name} is successfully rolled out`)
+            console.log(`pod/${pod.name} is successfully rolled out`)
          } else {
             kubectlDescribeNeeded = true
          }
          break
       case 'Pending':
          if (!isPodReady(podStatus)) {
-            core.warning(`pod/${resource.name} rollout status check timed out`)
+            core.warning(`pod/${pod.name} rollout status check timed out`)
             kubectlDescribeNeeded = true
          }
          break
       case 'Failed':
-         core.error(`pod/${resource.name} rollout failed`)
+         core.error(`pod/${pod.name} rollout failed`)
          kubectlDescribeNeeded = true
          break
       default:
-         core.warning(`pod/${resource.name} rollout status: ${podStatus.phase}`)
+         core.warning(`pod/${pod.name} rollout status: ${podStatus.phase}`)
    }
 
    if (kubectlDescribeNeeded) {
-      await kubectl.describe(
-         'pod',
-         resource.name,
-         IS_SILENT,
-         resource.namespace
-      )
+      await kubectl.describe(POD, pod.name, IS_SILENT, pod.namespace)
    }
 }
 
 async function getPodStatus(kubectl: Kubectl, pod: Resource) {
    const podResult = await kubectl.getResource(
-      'pod',
+      POD,
       pod.name,
       IS_SILENT,
       pod.namespace

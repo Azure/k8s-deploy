@@ -2,6 +2,8 @@ import * as core from '@actions/core'
 import {ExecOutput} from '@actions/exec'
 import {Kubectl} from '../types/kubectl'
 
+const NAMESPACE = 'namespace'
+
 export function checkForErrors(
    execResults: ExecOutput[],
    warnIfError?: boolean
@@ -31,7 +33,7 @@ export async function getLastSuccessfulRunSha(
 ): Promise<string> {
    try {
       const result = await kubectl.getResource(
-         'namespace',
+         NAMESPACE,
          namespaceName,
          false,
          namespaceName
