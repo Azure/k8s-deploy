@@ -198,10 +198,10 @@ async function cleanUpCanary(
    const deleteObject = async function (
       kind: string,
       name: string,
-      ns: string
+      namespace: string | undefined
    ) {
       try {
-         const result = await kubectl.delete([kind, name])
+         const result = await kubectl.delete([kind, name], namespace)
          checkForErrors([result])
       } catch (ex) {
          // Ignore failures of delete if it doesn't exist
