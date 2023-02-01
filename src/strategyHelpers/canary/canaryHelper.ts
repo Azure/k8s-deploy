@@ -217,7 +217,7 @@ async function cleanUpCanary(
       for (const inputObject of parsedYaml) {
          const name = inputObject.metadata.name
          const kind = inputObject.kind
-         const ns = inputObject?.metadata?.namespace
+         const namespace = inputObject?.metadata?.namespace
 
          if (
             isDeploymentEntity(kind) ||
@@ -227,8 +227,8 @@ async function cleanUpCanary(
             const canaryObjectName = getCanaryResourceName(name)
             const baselineObjectName = getBaselineResourceName(name)
 
-            await deleteObject(kind, canaryObjectName, ns)
-            await deleteObject(kind, baselineObjectName, ns)
+            await deleteObject(kind, canaryObjectName, namespace)
+            await deleteObject(kind, baselineObjectName, namespace)
          }
       }
    }
