@@ -217,7 +217,7 @@ async function cleanUpCanary(
       for (const inputObject of parsedYaml) {
          const name = inputObject.metadata.name
          const kind = inputObject.kind
-         const namespace = inputObject?.metadata?.namespace
+         const namespace: string | undefined = inputObject?.metadata?.namespace
 
          if (
             isDeploymentEntity(kind) ||
