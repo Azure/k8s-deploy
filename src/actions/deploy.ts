@@ -56,7 +56,9 @@ export async function deploy(
    for (const ingressResource of ingressResources) {
       await kubectl.getResource(
          KubernetesConstants.DiscoveryAndLoadBalancerResource.INGRESS,
-         ingressResource.name
+         ingressResource.name,
+         false,
+         ingressResource.namespace
       )
    }
    core.endGroup()
