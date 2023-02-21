@@ -97,7 +97,8 @@ export async function validateIngresses(
          const existingIngress = await fetchResource(
             kubectl,
             inputObject.kind,
-            inputObject.metadata.name
+            inputObject.metadata.name,
+            inputObject?.metadata?.namespace
          )
 
          const isValid =

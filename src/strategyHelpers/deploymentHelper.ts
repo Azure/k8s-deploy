@@ -218,7 +218,12 @@ async function annotateResources(
    )
    if (annotateNamespace) {
       annotateResults.push(
-         await kubectl.annotate('namespace', namespace, annotationKeyValStr)
+         await kubectl.annotate(
+            'namespace',
+            namespace,
+            annotationKeyValStr,
+            namespace
+         )
       )
    }
    for (const file of files) {
@@ -243,6 +248,7 @@ async function annotateResources(
                kubectl,
                resource.type,
                resource.name,
+               resource.namespace,
                annotationKeyValStr,
                allPods
             )
