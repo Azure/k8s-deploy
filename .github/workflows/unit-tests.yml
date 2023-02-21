@@ -11,6 +11,7 @@ on: # rebuild any PRs and main branch changes
 
 jobs:
    build: # make sure build/ci works properly
+      name: Run Unit Tests
       runs-on: ubuntu-latest
       steps:
          - uses: actions/checkout@v1
