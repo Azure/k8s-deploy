@@ -142,7 +142,8 @@ export async function validateTrafficSplitsState(
       let trafficSplitObject = await fetchResource(
          kubectl,
          TRAFFIC_SPLIT_OBJECT,
-         getBlueGreenResourceName(name, TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX)
+         getBlueGreenResourceName(name, TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX),
+         serviceObject?.metadata?.namespace
       )
       core.debug(
          `ts object extracted was ${JSON.stringify(trafficSplitObject)}`
@@ -183,7 +184,8 @@ export async function cleanupSMI(
             serviceObject.metadata.name,
             GREEN_SUFFIX
          ),
-         kind: serviceObject.kind
+         kind: serviceObject.kind,
+         namespace: serviceObject?.metadata?.namespace
       })
    })
 
