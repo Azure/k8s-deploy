@@ -67,31 +67,25 @@ export async function deleteObjects(
 // other common functions
 export function getManifestObjects(filePaths: string[]): BlueGreenManifests {
    const deploymentEntityList: K8sObject[] = []
+   const serviceEntityList: K8sObject[] = []
    const routedServiceEntityList: K8sObject[] = []
    const unroutedServiceEntityList: K8sObject[] = []
    const ingressEntityList: K8sObject[] = []
    const otherEntitiesList: K8sObject[] = []
    const serviceNameMap = new Map<string, string>()
 
+   // Manifest objects per type. All resources should be parsed and
+   // organized before we can check if services are “routed” or not.
    filePaths.forEach((filePath: string) => {
       const fileContents = fs.readFileSync(filePath).toString()
       yaml.safeLoadAll(fileContents, (inputObject) => {
          if (!!inputObject) {
             const kind = inputObject.kind
-            const name = inputObject.metadata.name
 
             if (isDeploymentEntity(kind)) {
                deploymentEntityList.push(inputObject)
             } else if (isServiceEntity(kind)) {
-               if (isServiceRouted(inputObject, deploymentEntityList)) {
-                  routedServiceEntityList.push(inputObject)
-                  serviceNameMap.set(
-                     name,
-                     getBlueGreenResourceName(name, GREEN_SUFFIX)
-                  )
-               } else {
-                  unroutedServiceEntityList.push(inputObject)
-               }
+               serviceEntityList.push(inputObject)
             } else if (isIngressEntity(kind)) {
                ingressEntityList.push(inputObject)
             } else {
@@ -99,6 +93,16 @@ export function getManifestObjects(filePaths: string[]): BlueGreenManifests {
             }
          }
       })
+   })
+
+   serviceEntityList.forEach((inputObject: any) => {
+      if (isServiceRouted(inputObject, deploymentEntityList)) {
+         const name = inputObject.metadata.name
+         routedServiceEntityList.push(inputObject)
+         serviceNameMap.set(name, getBlueGreenResourceName(name, GREEN_SUFFIX))
+      } else {
+         unroutedServiceEntityList.push(inputObject)
+      }
    })
 
    return {
