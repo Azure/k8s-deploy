@@ -59,6 +59,10 @@ inputs:
       description: 'Github token'
       default: ${{ github.token }}
       required: true
+   annotate-resources:
+      description: 'Annotate all the resources'
+      required: false
+      default: true
    annotate-namespace:
       description: 'Annotate the target namespace'
       required: false
