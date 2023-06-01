@@ -64,17 +64,12 @@ export async function deploy(
    core.endGroup()
 
    // annotate resources
-   const annotateResources = !(
-       core.getInput('annotate-resources').toLowerCase() === 'false'
+   core.startGroup('Annotating resources')
+   await annotateAndLabelResources(
+       deployedManifestFiles,
+       kubectl,
+       resourceTypes,
    )
-   if (annotateResources) {
-      core.startGroup('Annotating resources')
-      await annotateAndLabelResources(
-          deployedManifestFiles,
-          kubectl,
-          resourceTypes,
-      )
-      core.endGroup()
-   }
+   core.endGroup()
 
 }
