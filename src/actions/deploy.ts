@@ -69,17 +69,10 @@ export async function deploy(
    )
    if (annotateResources) {
       core.startGroup('Annotating resources')
-      let allPods
-      try {
-         allPods = JSON.parse((await kubectl.getAllPods()).stdout)
-      } catch (e) {
-         core.debug(`Unable to parse pods: ${e}`)
-      }
       await annotateAndLabelResources(
           deployedManifestFiles,
           kubectl,
           resourceTypes,
-          allPods
       )
       core.endGroup()
    }

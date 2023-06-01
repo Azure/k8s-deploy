@@ -148,7 +148,6 @@ export async function annotateAndLabelResources(
    files: string[],
    kubectl: Kubectl,
    resourceTypes: Resource[],
-   allPods: any
 ) {
    const defaultWorkflowFileName = 'k8s-deploy-failed-workflow-annotation'
    const githubToken = core.getInput('token')
@@ -167,7 +166,6 @@ export async function annotateAndLabelResources(
       files,
       kubectl,
       resourceTypes,
-      allPods,
       annotationKeyLabel,
       workflowFilePath,
       deploymentConfig
@@ -182,7 +180,6 @@ async function annotateResources(
    files: string[],
    kubectl: Kubectl,
    resourceTypes: Resource[],
-   allPods: any,
    annotationKey: string,
    workflowFilePath: string,
    deploymentConfig: DeploymentConfig
@@ -250,7 +247,6 @@ async function annotateResources(
                resource.name,
                resource.namespace,
                annotationKeyValStr,
-               allPods
             )
          ).forEach((execResult) => annotateResults.push(execResult))
       }
