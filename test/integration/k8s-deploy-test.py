@@ -41,10 +41,6 @@ def parseArgs(sysArgs):
         argsDict[labelsKey] = stringListToDict(
             argsDict[labelsKey].split(","), ":")
 
-    if annotationsKey in argsDict:
-        argsDict[annotationsKey] = stringListToDict(
-            argsDict[annotationsKey].split(","), ":")
-
     if selectorLabelsKey in argsDict:
         argsDict[selectorLabelsKey] = stringListToDict(
             argsDict[selectorLabelsKey].split(","), ":")
@@ -59,6 +55,9 @@ def parseArgs(sysArgs):
     # reformat list-like parameters (eg, paramName=value1,value2,value3)
     if ingressServicesKey in argsDict:
         argsDict[ingressServicesKey] = argsDict[ingressServicesKey].split(",")
+
+    if annotationsKey in argsDict:
+        argsDict[annotationsKey] = argsDict[annotationsKey].split(",")
 
     return argsDict
 
@@ -98,13 +97,13 @@ def verifyDeployment(deployment, parsedArgs):
             return dictMatch, msg
 
     if annotationsKey in parsedArgs:
-        dictMatch, msg = compareDicts(
-            deployment['metadata']['annotations'], parsedArgs[annotationsKey], annotationsKey)
-        if not dictMatch:
-            return dictMatch, msg
+        if len(parsedArgs[annotationsKey]) != len(deployment['metadata']['annotations']):
+            return False, f"expected {len(parsedArgs[annotationsKey])} annotations but found {len(deployment['metadata']['annotations'])}"
+        for key in parsedArgs[annotationsKey]:
+            if key not in deployment['metadata']['annotations'].keys():
+                return False, f"expected annotation {key} not found in deployment annotations. \n actual annotation keys {','.join(deployment['metadata']['annotations'].keys())}"
 
     return True, ""
-
 
 def verifyService(service, parsedArgs):
     # test selector labels, labels, annotations
@@ -124,10 +123,9 @@ def verifyService(service, parsedArgs):
             return dictMatch, msg
 
     if annotationsKey in parsedArgs:
-        dictMatch, msg = compareDicts(
-            service['metadata']['annotations'], parsedArgs[annotationsKey], annotationsKey)
-        if not dictMatch:
-            return dictMatch, msg
+        for key in parsedArgs[annotationsKey]:
+            if key not in service['metadata']['annotations'].keys():
+                return False, f"expected annotation {key} not found in service annotations. \n actual annotation keys {','.join(service['metadata']['annotations'].keys())}"
 
     return True, ""
 
@@ -188,7 +186,6 @@ def compareDicts(actual: dict, expected: dict, paramName=""):
 
     return True, ""
 
-
 def main():
     parsedArgs: dict = parseArgs(sys.argv[1:])
     RESULT = False
@@ -220,7 +217,7 @@ def main():
 
         if k8_object == None:
             raise ValueError(f"{kind} {name} was not found")
-    
+
     except:
         msg = kind+' '+name+' not created or not found'
         getAllObjectsCmd = azPrefix + 'kubectl get '+kind+' -n '+namespace
