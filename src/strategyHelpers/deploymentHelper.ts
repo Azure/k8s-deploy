@@ -147,7 +147,7 @@ export async function checkManifestStability(
 export async function annotateAndLabelResources(
    files: string[],
    kubectl: Kubectl,
-   resourceTypes: Resource[],
+   resourceTypes: Resource[]
 ) {
    const defaultWorkflowFileName = 'k8s-deploy-failed-workflow-annotation'
    const githubToken = core.getInput('token')
@@ -163,20 +163,20 @@ export async function annotateAndLabelResources(
    const annotationKeyLabel = getWorkflowAnnotationKeyLabel()
 
    const shouldAnnotateResources = !(
-       core.getInput('annotate-resources').toLowerCase() === 'false'
+      core.getInput('annotate-resources').toLowerCase() === 'false'
    )
 
-   core.debug('shouldAnnotateResources: ' + shouldAnnotateResources);
-   core.debug('from core: ' + core.getInput('annotate-resources'));
+   core.debug('shouldAnnotateResources: ' + shouldAnnotateResources)
+   core.debug('from core: ' + core.getInput('annotate-resources'))
 
    if (shouldAnnotateResources) {
       await annotateResources(
-          files,
-          kubectl,
-          resourceTypes,
-          annotationKeyLabel,
-          workflowFilePath,
-          deploymentConfig
+         files,
+         kubectl,
+         resourceTypes,
+         annotationKeyLabel,
+         workflowFilePath,
+         deploymentConfig
       ).catch((err) => core.warning(`Failed to annotate resources: ${err} `))
    }
 
@@ -257,7 +257,7 @@ async function annotateResources(
                resource.type,
                resource.name,
                resource.namespace,
-               annotationKeyValStr,
+               annotationKeyValStr
             )
          ).forEach((execResult) => annotateResults.push(execResult))
       }

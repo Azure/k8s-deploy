@@ -61,7 +61,7 @@ export async function annotateChildPods(
    resourceType: string,
    resourceName: string,
    namespace: string | undefined,
-   annotationKeyValStr: string,
+   annotationKeyValStr: string
 ): Promise<ExecOutput[]> {
    let owner = resourceName
    if (resourceType.toLowerCase().indexOf('deployment') > -1) {

@@ -213,10 +213,6 @@ async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
 
    // annotate resources
    core.startGroup('Annotating resources')
-   await annotateAndLabelResources(
-      deployedManifestFiles,
-      kubectl,
-      resources,
-   )
+   await annotateAndLabelResources(deployedManifestFiles, kubectl, resources)
    core.endGroup()
 }
