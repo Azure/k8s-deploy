@@ -1,4 +1,4 @@
-name: Minikube Integration Tests - basic
+name: Minikube Integration Tests - resource annotation
 on:
    pull_request:
       branches:
