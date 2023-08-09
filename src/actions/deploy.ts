@@ -66,10 +66,9 @@ export async function deploy(
    // annotate resources
    core.startGroup('Annotating resources')
    await annotateAndLabelResources(
-       deployedManifestFiles,
-       kubectl,
-       resourceTypes,
+      deployedManifestFiles,
+      kubectl,
+      resourceTypes
    )
    core.endGroup()
-
 }
