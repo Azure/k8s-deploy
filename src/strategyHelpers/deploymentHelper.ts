@@ -166,9 +166,6 @@ export async function annotateAndLabelResources(
       core.getInput('annotate-resources').toLowerCase() === 'false'
    )
 
-   core.debug('shouldAnnotateResources: ' + shouldAnnotateResources)
-   core.debug('from core: ' + core.getInput('annotate-resources'))
-
    if (shouldAnnotateResources) {
       await annotateResources(
          files,
