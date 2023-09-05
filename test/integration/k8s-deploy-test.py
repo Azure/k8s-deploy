@@ -100,7 +100,7 @@ def verifyDeployment(deployment, parsedArgs):
         if len(parsedArgs[annotationsKey]) != len(deployment['metadata']['annotations']):
             return False, f"expected {len(parsedArgs[annotationsKey])} annotations but found {len(deployment['metadata']['annotations'])}"
         keysPresent, msg = validateKeyPresence(
-            deployment['metadata']['annotations'], parsedArgs[annotationsKey])
+            deployment['metadata']['annotations'].keys(), parsedArgs[annotationsKey])
         if not keysPresent:
             return keysPresent, msg
     return True, ""
@@ -124,7 +124,7 @@ def verifyService(service, parsedArgs):
 
     if annotationsKey in parsedArgs:
         keysPresent, msg = validateKeyPresence(
-            service['metadata']['annotations'], parsedArgs[annotationsKey])
+            service['metadata']['annotations'].keys(), parsedArgs[annotationsKey])
         if not keysPresent:
             return keysPresent, msg
 
@@ -187,10 +187,7 @@ def compareDicts(actual: dict, expected: dict, paramName=""):
 
     return True, ""
 
-def validateKeyPresence(actual: dict, expected: dict):
-    actualKeys = actual.keys()
-    expectedKeys = expected.keys()
-
+def validateKeyPresence(actualKeys: list, expectedKeys: list):
     for key in expectedKeys:
         if key not in actualKeys:
             return False, f"expected key {key} not found in actual dict. \n actual dict keys {','.join(actualKeys)}"
