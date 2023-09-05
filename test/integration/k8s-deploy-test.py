@@ -99,10 +99,10 @@ def verifyDeployment(deployment, parsedArgs):
     if annotationsKey in parsedArgs:
         if len(parsedArgs[annotationsKey]) != len(deployment['metadata']['annotations']):
             return False, f"expected {len(parsedArgs[annotationsKey])} annotations but found {len(deployment['metadata']['annotations'])}"
-        for key in parsedArgs[annotationsKey]:
-            if key not in deployment['metadata']['annotations'].keys():
-                return False, f"expected annotation {key} not found in deployment annotations. \n actual annotation keys {','.join(deployment['metadata']['annotations'].keys())}"
-
+        keysPresent, msg = validateKeyPresence(
+            service['metadata']['annotations'], parsedArgs[annotationsKey])
+        if not keysPresent:
+            return keysPresent, msg
     return True, ""
 
 def verifyService(service, parsedArgs):
@@ -123,9 +123,10 @@ def verifyService(service, parsedArgs):
             return dictMatch, msg
 
     if annotationsKey in parsedArgs:
-        for key in parsedArgs[annotationsKey]:
-            if key not in service['metadata']['annotations'].keys():
-                return False, f"expected annotation {key} not found in service annotations. \n actual annotation keys {','.join(service['metadata']['annotations'].keys())}"
+        keysPresent, msg = validateKeyPresence(
+            service['metadata']['annotations'], parsedArgs[annotationsKey])
+        if not keysPresent:
+            return keysPresent, msg
 
     return True, ""
 
@@ -183,6 +184,16 @@ def compareDicts(actual: dict, expected: dict, paramName=""):
             if not paramName == "":
                 msg = f"for param {paramName}, " + msg
             return False, msg
+
+    return True, ""
+
+def validateKeyPresence(actual: dict, expected: dict):
+    actualKeys = actual.keys()
+    expectedKeys = expected.keys()
+
+  for key in expectedKeys:
+    if key not in actualKeys:
+        return False, f"expected key {key} not found in actual dict. \n actual dict keys {','.join(actualKeys)}"
 
     return True, ""
 
