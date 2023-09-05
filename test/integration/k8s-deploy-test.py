@@ -100,7 +100,7 @@ def verifyDeployment(deployment, parsedArgs):
         if len(parsedArgs[annotationsKey]) != len(deployment['metadata']['annotations']):
             return False, f"expected {len(parsedArgs[annotationsKey])} annotations but found {len(deployment['metadata']['annotations'])}"
         keysPresent, msg = validateKeyPresence(
-            service['metadata']['annotations'], parsedArgs[annotationsKey])
+            deployment['metadata']['annotations'], parsedArgs[annotationsKey])
         if not keysPresent:
             return keysPresent, msg
     return True, ""
