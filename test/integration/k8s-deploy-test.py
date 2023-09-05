@@ -191,9 +191,9 @@ def validateKeyPresence(actual: dict, expected: dict):
     actualKeys = actual.keys()
     expectedKeys = expected.keys()
 
-  for key in expectedKeys:
-    if key not in actualKeys:
-        return False, f"expected key {key} not found in actual dict. \n actual dict keys {','.join(actualKeys)}"
+    for key in expectedKeys:
+        if key not in actualKeys:
+            return False, f"expected key {key} not found in actual dict. \n actual dict keys {','.join(actualKeys)}"
 
     return True, ""
 
