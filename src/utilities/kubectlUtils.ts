@@ -61,8 +61,7 @@ export async function annotateChildPods(
    resourceType: string,
    resourceName: string,
    namespace: string | undefined,
-   annotationKeyValStr: string,
-   allPods
+   annotationKeyValStr: string
 ): Promise<ExecOutput[]> {
    let owner = resourceName
    if (resourceType.toLowerCase().indexOf('deployment') > -1) {
@@ -70,6 +69,14 @@ export async function annotateChildPods(
    }
 
    const commandExecutionResults = []
+
+   let allPods
+   try {
+      allPods = JSON.parse((await kubectl.getAllPods()).stdout)
+   } catch (e) {
+      core.debug(`Unable to parse pods: ${e}`)
+   }
+
    if (allPods?.items && allPods.items?.length > 0) {
       allPods.items.forEach((pod) => {
          const owners = pod?.metadata?.ownerReferences
