@@ -10,6 +10,6 @@ on:
 
 jobs:
    release:
-      uses: OliverMKing/action-release-workflows/.github/workflows/release_js_project.yaml@main
+      uses: Azure/action-release-workflows/.github/workflows/release_js_project.yaml@12e20b8
       with:
          changelogPath: ./CHANGELOG.md
