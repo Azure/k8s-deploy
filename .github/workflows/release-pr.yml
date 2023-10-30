@@ -13,4 +13,3 @@ jobs:
       uses: OliverMKing/action-release-workflows/.github/workflows/release_js_project.yaml@main
       with:
          changelogPath: ./CHANGELOG.md
-    
