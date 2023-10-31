@@ -114,8 +114,12 @@ Following are the key capabilities of this action:
     <td>Deploy when a previous deployment already exists. If true then '--force' argument is added to the apply command. Using '--force' argument is not recommended in production.</td>
   </tr>
   <tr>
+    <td>annotate-resources</br></br>(Optional)</td>
+    <td>Acceptable values: true/false</br>Default value: true</br>Switch whether to annotate the resources or not. If set to false all annotations are skipped completely.</td>
+  </tr>
+  <tr>
     <td>annotate-namespace</br></br>(Optional)</td>
-    <td>Acceptable values: true/false</br>Default value: true</br>Switch whether to annotate the namespace resources object or not</td>
+    <td>Acceptable values: true/false</br>Default value: true</br>Switch whether to annotate the namespace resources object or not. Ignored when annotate-resources is set to false.</td>
   </tr>
   <tr>
     <td>skip-tls-verify</br></br>(Optional)</td>

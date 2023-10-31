@@ -7,7 +7,7 @@ def delete(kind, name, namespace):
         if (name == "all"):
             print('kubectl delete --all' + kind + ' -n ' + namespace)
             deletion = subprocess.Popen(
-                ['kubectl', 'delete', kind, name, '--namespace', namespace])
+                ['kubectl', 'delete', kind, '--all', '--namespace', namespace])
             result, err = deletion.communicate()
         else:
             print('kubectl delete ' + kind + ' ' + name + ' -n ' + namespace)
@@ -21,7 +21,7 @@ def delete(kind, name, namespace):
 def main():
     kind = sys.argv[1]
     name = sys.argv[2]
-    namespace = 'test-' + sys.argv[3]
+    namespace = sys.argv[3]
     delete(kind, name, namespace)
 
 

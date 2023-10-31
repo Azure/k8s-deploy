@@ -59,8 +59,12 @@ inputs:
       description: 'Github token'
       default: ${{ github.token }}
       required: true
+   annotate-resources:
+      description: 'Annotate the resources. If set to false all annotations are skipped completely.'
+      required: false
+      default: true
    annotate-namespace:
-      description: 'Annotate the target namespace'
+      description: 'Annotate the target namespace. Ignored when annotate-resources is set to false.'
       required: false
       default: true
    private-cluster:
