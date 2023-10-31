@@ -2,6 +2,8 @@ import * as core from '@actions/core'
 import {ExecOutput} from '@actions/exec'
 import {Kubectl} from '../types/kubectl'
 
+const NAMESPACE = 'namespace'
+
 export function checkForErrors(
    execResults: ExecOutput[],
    warnIfError?: boolean
@@ -30,7 +32,12 @@ export async function getLastSuccessfulRunSha(
    annotationKey: string
 ): Promise<string> {
    try {
-      const result = await kubectl.getResource('namespace', namespaceName)
+      const result = await kubectl.getResource(
+         NAMESPACE,
+         namespaceName,
+         false,
+         namespaceName
+      )
       if (result?.stderr) {
          core.warning(result.stderr)
          return process.env.GITHUB_SHA
@@ -53,15 +60,23 @@ export async function annotateChildPods(
    kubectl: Kubectl,
    resourceType: string,
    resourceName: string,
-   annotationKeyValStr: string,
-   allPods
+   namespace: string | undefined,
+   annotationKeyValStr: string
 ): Promise<ExecOutput[]> {
    let owner = resourceName
    if (resourceType.toLowerCase().indexOf('deployment') > -1) {
-      owner = await kubectl.getNewReplicaSet(resourceName)
+      owner = await kubectl.getNewReplicaSet(resourceName, namespace)
    }
 
    const commandExecutionResults = []
+
+   let allPods
+   try {
+      allPods = JSON.parse((await kubectl.getAllPods()).stdout)
+   } catch (e) {
+      core.debug(`Unable to parse pods: ${e}`)
+   }
+
    if (allPods?.items && allPods.items?.length > 0) {
       allPods.items.forEach((pod) => {
          const owners = pod?.metadata?.ownerReferences
@@ -72,7 +87,8 @@ export async function annotateChildPods(
                      kubectl.annotate(
                         'pod',
                         pod.metadata.name,
-                        annotationKeyValStr
+                        annotationKeyValStr,
+                        namespace
                      )
                   )
                   break

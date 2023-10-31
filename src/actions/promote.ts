@@ -129,19 +129,13 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
 
    // annotate resources
    core.startGroup('Annotating resources')
-   let allPods
-   try {
-      allPods = JSON.parse((await kubectl.getAllPods()).stdout)
-   } catch (e) {
-      core.debug(`Unable to parse pods: ${e}`)
-   }
    const resources: Resource[] = getResources(
       filesToAnnotate,
       models.DEPLOYMENT_TYPES.concat([
          models.DiscoveryAndLoadBalancerResource.SERVICE
       ])
    )
-   await annotateAndLabelResources(filesToAnnotate, kubectl, resources, allPods)
+   await annotateAndLabelResources(filesToAnnotate, kubectl, resources)
    core.endGroup()
 }
 
@@ -219,17 +213,6 @@ async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
 
    // annotate resources
    core.startGroup('Annotating resources')
-   let allPods
-   try {
-      allPods = JSON.parse((await kubectl.getAllPods()).stdout)
-   } catch (e) {
-      core.debug(`Unable to parse pods: ${e}`)
-   }
-   await annotateAndLabelResources(
-      deployedManifestFiles,
-      kubectl,
-      resources,
-      allPods
-   )
+   await annotateAndLabelResources(deployedManifestFiles, kubectl, resources)
    core.endGroup()
 }

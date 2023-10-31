@@ -195,9 +195,13 @@ async function cleanUpCanary(
    files: string[],
    includeServices: boolean
 ): Promise<string[]> {
-   const deleteObject = async function (kind, name) {
+   const deleteObject = async function (
+      kind: string,
+      name: string,
+      namespace: string | undefined
+   ) {
       try {
-         const result = await kubectl.delete([kind, name])
+         const result = await kubectl.delete([kind, name], namespace)
          checkForErrors([result])
       } catch (ex) {
          // Ignore failures of delete if it doesn't exist
@@ -213,6 +217,7 @@ async function cleanUpCanary(
       for (const inputObject of parsedYaml) {
          const name = inputObject.metadata.name
          const kind = inputObject.kind
+         const namespace: string | undefined = inputObject?.metadata?.namespace
 
          if (
             isDeploymentEntity(kind) ||
@@ -222,8 +227,8 @@ async function cleanUpCanary(
             const canaryObjectName = getCanaryResourceName(name)
             const baselineObjectName = getBaselineResourceName(name)
 
-            await deleteObject(kind, canaryObjectName)
-            await deleteObject(kind, baselineObjectName)
+            await deleteObject(kind, canaryObjectName, namespace)
+            await deleteObject(kind, baselineObjectName, namespace)
          }
       }
    }
