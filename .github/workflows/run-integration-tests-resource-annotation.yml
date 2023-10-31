@@ -1,0 +1,89 @@
+name: Minikube Integration Tests - resource annotation
+on:
+   pull_request:
+      branches:
+         - main
+         - 'releases/*'
+   push:
+      branches:
+         - main
+         - 'releases/*'
+   workflow_dispatch:
+
+jobs:
+   run-integration-test:
+      name: Run Minikube Integration Tests
+      runs-on: ubuntu-latest
+      env:
+         KUBECONFIG: /home/runner/.kube/config
+         NAMESPACE: test-${{ github.run_id }}
+      steps:
+         - uses: actions/checkout@v3
+
+         - name: Install dependencies
+           run: |
+              rm -rf node_modules/
+              npm install
+         - name: Install ncc
+           run: npm i -g @vercel/ncc
+         - name: Install conntrack
+           run: sudo apt-get install -y conntrack
+         - name: Build
+           run: ncc build src/run.ts -o lib
+
+         - uses: Azure/setup-kubectl@v3
+           name: Install Kubectl
+
+         - id: setup-minikube
+           name: Setup Minikube
+           uses: medyagh/setup-minikube@latest
+           with:
+              minikube-version: 1.24.0
+              kubernetes-version: 1.22.3
+              driver: 'none'
+           timeout-minutes: 3
+
+         - name: Create namespace to run tests
+           run: kubectl create ns ${{ env.NAMESPACE }}
+
+         - uses: actions/setup-python@v2
+           name: Install Python
+           with:
+              python-version: '3.x'
+
+         - name: Cleaning any previously created items
+           run: |
+              python test/integration/k8s-deploy-delete.py 'Service' 'all' ${{ env.NAMESPACE }}
+              python test/integration/k8s-deploy-delete.py 'Deployment' 'all' ${{ env.NAMESPACE }}
+              python test/integration/k8s-deploy-delete.py 'Ingress' 'all' ${{ env.NAMESPACE }}
+
+         - name: Executing deploy action for pod with resource annotation enabled by default
+           uses: ./
+           with:
+              namespace: ${{ env.NAMESPACE }}
+              images: nginx:1.14.2
+              manifests: |
+                 test/integration/manifests/test.yml
+              action: deploy
+
+         - name: Checking if deployments is created with additional resource annotation
+           run: |
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Deployment name=nginx-deployment containerName=nginx:1.14.2 labels=app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_resource_annotation selectorLabels=app:nginx annotations=actions.github.com/k8s-deploy,deployment.kubernetes.io/revision,kubectl.kubernetes.io/last-applied-configuration
+
+         - name: Cleaning previously created deployment
+           run: |
+              python test/integration/k8s-deploy-delete.py 'Deployment' 'all' ${{ env.NAMESPACE }}
+
+         - name: Executing deploy action for pod with resource annotation disabled
+           uses: ./
+           with:
+              namespace: ${{ env.NAMESPACE }}
+              images: nginx:1.14.2
+              manifests: |
+                 test/integration/manifests/test.yml
+              action: deploy
+              annotate-resources: false
+
+         - name: Checking if deployment is created without additional resource annotation
+           run: |
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Deployment name=nginx-deployment containerName=nginx:1.14.2 selectorLabels=app:nginx annotations=deployment.kubernetes.io/revision,kubectl.kubernetes.io/last-applied-configuration

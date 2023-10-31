@@ -38,7 +38,7 @@ jobs:
            name: Setup Minikube
            uses: medyagh/setup-minikube@latest
            with:
-              minikube-version: 1.24.0
+              minikube-version: 1.31.2
               kubernetes-version: 1.22.3
               driver: 'none'
            timeout-minutes: 3

@@ -8,8 +8,6 @@ import * as path from 'path'
 
 export class PrivateKubectl extends Kubectl {
    protected async execute(args: string[], silent: boolean = false) {
-      args = args.concat(this.getExecuteFlags())
-
       args.unshift('kubectl')
       let kubectlCmd = args.join(' ')
       let addFileFlag = false
