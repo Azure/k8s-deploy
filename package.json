@@ -18,7 +18,8 @@
       "@octokit/core": "^3.5.1",
       "@octokit/plugin-retry": "^3.0.9",
       "@types/minipass": "^3.1.2",
-      "js-yaml": "3.13.1"
+      "js-yaml": "3.13.1",
+      "ncc": "^0.3.6"
    },
    "devDependencies": {
       "@types/jest": "^26.0.0",
