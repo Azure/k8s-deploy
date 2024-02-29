@@ -55,6 +55,10 @@ inputs:
       description: 'Deploy when a previous deployment already exists. If true then --force argument is added to the apply command'
       required: false
       default: false
+   server-side:
+      description: 'The apply command runs in the server instead of the client. If true then --server-side argument is added to the apply command.'
+      required: false
+      default: false
    token:
       description: 'Github token'
       default: ${{ github.token }}
