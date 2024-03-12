@@ -1,6 +1,13 @@
 # Changelog
 
-## [v4.10.0] - 2023-10-30
+## [5.0.0] - 2024-03-12
+
+### Changed
+
+- Updated to Node20
+- Upgraded release workflows to @v1 tag
+
+## [4.10.0] - 2023-10-30
 
 ### Added
 
