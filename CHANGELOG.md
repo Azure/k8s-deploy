@@ -4,8 +4,7 @@
 
 ### Changed
 
-- #309 Updated to Node20
-- #309 Upgraded release workflows to @v1 tag
+- #309 Updated to Node20 and upgraded release workflows to @v1 tag
 
 ## [4.10.0] - 2023-10-30
 
