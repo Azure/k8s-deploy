@@ -1,4 +1,4 @@
-name: release Project
+name: Release Project
 
 on:
    push:
@@ -10,6 +10,9 @@ on:
 
 jobs:
    release:
-      uses: Azure/action-release-workflows/.github/workflows/release_js_project.yaml@e4a1a0385530d6861c9a9b7262058ad33b10c769
+      permissions:
+         actions: read
+         contents: write
+      uses: Azure/action-release-workflows/.github/workflows/release_js_project.yaml@v1
       with:
          changelogPath: ./CHANGELOG.md
