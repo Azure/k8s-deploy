@@ -6,13 +6,16 @@
 
 -  #309 Updated to Node20 and upgraded release workflows to @v1 tag
 -  #306 update release workflow to use new prefix, remove deprecated release
--  #304 add v prefix for version tagging
 -  #303 fix: ensure imageNames are not empty strings
--  #302 adding ncc to build
--  #301 adding release workflow artifact fix
 -  #299 bump release workflow sha
 -  #298 bump minikube to fix runner deps
 -  #297 update release workflow
+
+### Added
+
+-  #304 add v prefix for version tagging
+-  #302 adding ncc to build
+-  #301 adding release workflow artifact fix
 
 ## [4.10.0] - 2023-10-30
 
