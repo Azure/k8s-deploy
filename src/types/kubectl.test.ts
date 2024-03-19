@@ -90,7 +90,7 @@ describe('Kubectl class', () => {
 
       it('applies a configuration with force when specified', async () => {
          const configPaths = ['configPath1', 'configPath2', 'configPath3']
-         const result = await kubectl.apply(configPaths, true)
+         const result = await kubectl.apply(configPaths, true, false)
          expect(result).toBe(execReturn)
          expect(exec.getExecOutput).toBeCalledWith(
             kubectlPath,
@@ -99,6 +99,24 @@ describe('Kubectl class', () => {
                '-f',
                configPaths[0] + ',' + configPaths[1] + ',' + configPaths[2],
                '--force',
+               '--namespace',
+               testNamespace
+            ],
+            {silent: false}
+         )
+      })
+
+      it('applies a configuration with server-side when specified', async () => {
+         const configPaths = ['configPath1', 'configPath2', 'configPath3']
+         const result = await kubectl.apply(configPaths, false, true)
+         expect(result).toBe(execReturn)
+         expect(exec.getExecOutput).toBeCalledWith(
+            kubectlPath,
+            [
+               'apply',
+               '-f',
+               configPaths[0] + ',' + configPaths[1] + ',' + configPaths[2],
+               '--server-side',
                '--namespace',
                testNamespace
             ],
