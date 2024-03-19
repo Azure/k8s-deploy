@@ -4,7 +4,7 @@
    "author": "Deepak Sattiraju",
    "license": "MIT",
    "scripts": {
-      "prebuild": "npm i @ncc/vercel",
+      "prebuild": "npm i @vercel/ncc",
       "build": "ncc build src/run.ts -o lib",
       "test": "jest",
       "coverage": "jest --coverage=true",
