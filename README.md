@@ -132,7 +132,7 @@ Following are the key capabilities of this action:
 ### Basic deployment (without any deployment strategy)
 
 ```yaml
-- uses: Azure/k8s-deploy@v4
+- uses: Azure/k8s-deploy@v5
   with:
      namespace: 'myapp'
      manifests: |
@@ -146,7 +146,7 @@ Following are the key capabilities of this action:
 ### Private cluster deployment
 
 ```yaml
-- uses: Azure/k8s-deploy@v4
+- uses: Azure/k8s-deploy@v5
   with:
      resource-group: yourResourceGroup
      name: yourClusterName
@@ -166,7 +166,7 @@ Following are the key capabilities of this action:
 ### Canary deployment without service mesh
 
 ```yaml
-- uses: Azure/k8s-deploy@v4
+- uses: Azure/k8s-deploy@v5
   with:
      namespace: 'myapp'
      images: 'contoso.azurecr.io/myapp:${{ event.run_id }}'
@@ -185,7 +185,7 @@ Following are the key capabilities of this action:
 To promote/reject the canary created by the above snippet, the following YAML snippet could be used:
 
 ```yaml
-- uses: Azure/k8s-deploy@v4
+- uses: Azure/k8s-deploy@v5
   with:
      namespace: 'myapp'
      images: 'contoso.azurecr.io/myapp:${{ event.run_id }}'
@@ -203,7 +203,7 @@ To promote/reject the canary created by the above snippet, the following YAML sn
 ### Canary deployment based on Service Mesh Interface
 
 ```yaml
-- uses: Azure/k8s-deploy@v4
+- uses: Azure/k8s-deploy@v5
   with:
      namespace: 'myapp'
      images: 'contoso.azurecr.io/myapp:${{ event.run_id }}'
@@ -224,7 +224,7 @@ To promote/reject the canary created by the above snippet, the following YAML sn
 To promote/reject the canary created by the above snippet, the following YAML snippet could be used:
 
 ```yaml
-- uses: Azure/k8s-deploy@v4
+- uses: Azure/k8s-deploy@v5
   with:
      namespace: 'myapp'
      images: 'contoso.azurecr.io/myapp:${{ event.run_id }} '
@@ -243,7 +243,7 @@ To promote/reject the canary created by the above snippet, the following YAML sn
 ### Blue-Green deployment with different route methods
 
 ```yaml
-- uses: Azure/k8s-deploy@v4
+- uses: Azure/k8s-deploy@v5
   with:
      namespace: 'myapp'
      images: 'contoso.azurecr.io/myapp:${{ event.run_id }}'
@@ -263,7 +263,7 @@ To promote/reject the canary created by the above snippet, the following YAML sn
 To promote/reject the green workload created by the above snippet, the following YAML snippet could be used:
 
 ```yaml
-- uses: Azure/k8s-deploy@v4
+- uses: Azure/k8s-deploy@v5
   with:
      namespace: 'myapp'
      images: 'contoso.azurecr.io/myapp:${{ event.run_id }}'
@@ -292,7 +292,7 @@ jobs:
    build:
       runs-on: ubuntu-latest
       steps:
-         - uses: actions/checkout@master
+         - uses: actions/checkout@v4
 
          - uses: Azure/docker-login@v1
            with:
@@ -304,23 +304,23 @@ jobs:
               docker build . -t contoso.azurecr.io/k8sdemo:${{ github.sha }}
               docker push contoso.azurecr.io/k8sdemo:${{ github.sha }}
 
-         - uses: azure/setup-kubectl@v2.0
+         - uses: azure/setup-kubectl@v4
 
          # Set the target AKS cluster.
-         - uses: Azure/aks-set-context@v1
+         - uses: Azure/aks-set-context@v4
            with:
               creds: '${{ secrets.AZURE_CREDENTIALS }}'
               cluster-name: contoso
               resource-group: contoso-rg
 
-         - uses: Azure/k8s-create-secret@v1.1
+         - uses: Azure/k8s-create-secret@v4
            with:
               container-registry-url: contoso.azurecr.io
               container-registry-username: ${{ secrets.REGISTRY_USERNAME }}
               container-registry-password: ${{ secrets.REGISTRY_PASSWORD }}
               secret-name: demo-k8s-secret
 
-         - uses: Azure/k8s-deploy@v4
+         - uses: Azure/k8s-deploy@v5
            with:
               action: deploy
               manifests: |
@@ -341,7 +341,7 @@ jobs:
    build:
       runs-on: ubuntu-latest
       steps:
-         - uses: actions/checkout@master
+         - uses: actions/checkout@v4
 
          - uses: Azure/docker-login@v1
            with:
@@ -353,13 +353,13 @@ jobs:
               docker build . -t contoso.azurecr.io/k8sdemo:${{ github.sha }}
               docker push contoso.azurecr.io/k8sdemo:${{ github.sha }}
 
-         - uses: azure/setup-kubectl@v2.0
+         - uses: azure/setup-kubectl@v4
 
-         - uses: Azure/k8s-set-context@v2
+         - uses: Azure/k8s-set-context@v4
            with:
               kubeconfig: ${{ secrets.KUBE_CONFIG }}
 
-         - uses: Azure/k8s-create-secret@v1.1
+         - uses: Azure/k8s-create-secret@v4
            with:
               container-registry-url: contoso.azurecr.io
               container-registry-username: ${{ secrets.REGISTRY_USERNAME }}
@@ -391,7 +391,7 @@ jobs:
    build:
       runs-on: ubuntu-latest
       steps:
-         - uses: actions/checkout@master
+         - uses: actions/checkout@v4
 
          - uses: Azure/docker-login@v1
            with:
@@ -423,16 +423,16 @@ jobs:
               username: ${{ secrets.REGISTRY_USERNAME }}
               password: ${{ secrets.REGISTRY_PASSWORD }}
 
-         - uses: azure/setup-kubectl@v2.0
+         - uses: azure/setup-kubectl@v4
 
          # Set the target AKS cluster.
-         - uses: Azure/aks-set-context@v1
+         - uses: Azure/aks-set-context@v4
            with:
               creds: '${{ secrets.AZURE_CREDENTIALS }}'
               cluster-name: contoso
               resource-group: contoso-rg
 
-         - uses: Azure/k8s-create-secret@v1.1
+         - uses: Azure/k8s-create-secret@v4
            with:
               namespace: ${{ env.NAMESPACE  }}
               container-registry-url: contoso.azurecr.io
@@ -440,7 +440,7 @@ jobs:
               container-registry-password: ${{ secrets.REGISTRY_PASSWORD }}
               secret-name: demo-k8s-secret
 
-         - uses: azure/k8s-bake@v2
+         - uses: azure/k8s-bake@v3
            with:
               renderEngine: 'helm'
               helmChart: './aks-helloworld/'
@@ -450,7 +450,7 @@ jobs:
               helm-version: 'latest'
            id: bake
 
-         - uses: Azure/k8s-deploy@v1.2
+         - uses: Azure/k8s-deploy@v5
            with:
               action: deploy
               manifests: ${{ steps.bake.outputs.manifestsBundle }}
