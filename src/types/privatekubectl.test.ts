@@ -17,6 +17,13 @@ describe('Private kubectl', () => {
       )
    })
 
+   it('should replace filenames with basenames correctly', () => {
+      const testString = `kubectl apply -f /tmp/test.yaml,/tmp/test2.yaml,/tmp/test3.yaml`
+      expect(mockKube.replaceFilnamesWithBasenames(testString)).toEqual(
+         `kubectl apply -f test.yaml,test2.yaml,test3.yaml`
+      )
+   })
+
    test('Should throw well defined Error on error from Azure', async () => {
       const errorMsg = 'An error message'
       jest.spyOn(exec, 'getExecOutput').mockImplementation(async () => {

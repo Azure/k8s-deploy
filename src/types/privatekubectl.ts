@@ -95,7 +95,7 @@ export class PrivateKubectl extends Kubectl {
       } as ExecOutput
    }
 
-   private replaceFilnamesWithBasenames(kubectlCmd: string) {
+   public replaceFilnamesWithBasenames(kubectlCmd: string) {
       let exFilenames = this.extractFilesnames(kubectlCmd)
       let filenames = exFilenames.split(' ')
       let filenamesArr = filenames[0].split(',')
@@ -119,7 +119,7 @@ export class PrivateKubectl extends Kubectl {
       fileNames.push(...this.extractFilesFromMinimist(argv, fArg))
       fileNames.push(...this.extractFilesFromMinimist(argv, filenameArg))
 
-      return fileNames.join(' ')
+      return fileNames.join()
    }
 
    private extractFilesFromMinimist(argv, arg: string): string[] {
