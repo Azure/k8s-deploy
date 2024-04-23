@@ -35,7 +35,7 @@ export class Kubectl {
    public async apply(
       configurationPaths: string | string[],
       force: boolean = false,
-      serverSide: boolean= false,
+      serverSide: boolean = false,
    ): Promise<ExecOutput> {
       try {
          if (!configurationPaths || configurationPaths?.length === 0)
