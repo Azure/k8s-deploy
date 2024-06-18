@@ -88,5 +88,5 @@ inputs:
 branding:
    color: 'green'
 runs:
-   using: 'node16'
+   using: 'node20'
    main: 'lib/index.js'
