@@ -1,6 +1,6 @@
-import { Kubectl } from './kubectl'
+import {Kubectl} from './kubectl'
 import * as minimist from 'minimist'
-import { ExecOptions, ExecOutput, getExecOutput } from '@actions/exec'
+import {ExecOptions, ExecOutput, getExecOutput} from '@actions/exec'
 import * as core from '@actions/core'
 import * as os from 'os'
 import * as fs from 'fs'
@@ -54,7 +54,9 @@ export class PrivateKubectl extends Kubectl {
             try {
                this.moveFileToTempManifestDir(filename)
             } catch (e) {
-               core.debug(`Error moving file ${filename} to temp directory: ${e}`)
+               core.debug(
+                  `Error moving file ${filename} to temp directory: ${e}`
+               )
             }
          }
       }
@@ -78,7 +80,7 @@ export class PrivateKubectl extends Kubectl {
          )
       }
 
-      const runObj: { logs: string; exitCode: number } = JSON.parse(
+      const runObj: {logs: string; exitCode: number} = JSON.parse(
          runOutput.stdout
       )
       if (!silent) core.info(runObj.logs)
@@ -93,7 +95,6 @@ export class PrivateKubectl extends Kubectl {
       } as ExecOutput
    }
 
-
    private containsFilenames(str: string) {
       return str.includes('-f ') || str.includes('filename ')
    }
@@ -101,7 +102,7 @@ export class PrivateKubectl extends Kubectl {
    private createTempManifestsDirectory() {
       const manifestsDir = '/tmp/manifests'
       if (!fs.existsSync('/tmp/manifests')) {
-         fs.mkdirSync('/tmp/manifests', { recursive: true })
+         fs.mkdirSync('/tmp/manifests', {recursive: true})
       }
    }
 
@@ -110,8 +111,8 @@ export class PrivateKubectl extends Kubectl {
       if (!fs.existsSync('/tmp/' + file)) {
          core.debug(
             '/tmp/' +
-            file +
-            ' does not exist, and therefore cannot be moved to the manifest directory'
+               file +
+               ' does not exist, and therefore cannot be moved to the manifest directory'
          )
       }
 
@@ -119,20 +120,20 @@ export class PrivateKubectl extends Kubectl {
          if (err) {
             core.debug(
                'Could not rename ' +
-               '/tmp/' +
-               file +
-               ' to  ' +
-               '/tmp/manifests/' +
-               file +
-               ' ERROR: ' +
-               err
+                  '/tmp/' +
+                  file +
+                  ' to  ' +
+                  '/tmp/manifests/' +
+                  file +
+                  ' ERROR: ' +
+                  err
             )
             return
          }
          core.debug(
             "Successfully moved file '" +
-            file +
-            "' from /tmp to /tmp/manifest directory"
+               file +
+               "' from /tmp to /tmp/manifest directory"
          )
       })
    }
@@ -144,7 +145,13 @@ export function replaceFileNamesWithBaseNames(kubectlCmd: string) {
 
    let result = kubectlCmd
    if (filenames.length != basenames.length) {
-      throw Error('replacing filenames with basenames, ' + filenames.length + ' filenames != ' + basenames.length + 'basenames')
+      throw Error(
+         'replacing filenames with basenames, ' +
+            filenames.length +
+            ' filenames != ' +
+            basenames.length +
+            'basenames'
+      )
    }
    for (let index = 0; index < filenames.length; index++) {
       result = result.replace(filenames[index], basenames[index])

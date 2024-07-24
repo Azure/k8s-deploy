@@ -1,4 +1,8 @@
-import { PrivateKubectl, extractFileNames, replaceFileNamesWithBaseNames } from './privatekubectl'
+import {
+   PrivateKubectl,
+   extractFileNames,
+   replaceFileNamesWithBaseNames
+} from './privatekubectl'
 import * as exec from '@actions/exec'
 
 describe('Private kubectl', () => {
@@ -12,9 +16,13 @@ describe('Private kubectl', () => {
    )
 
    it('should extract filenames correctly', () => {
-      expect(extractFileNames(testString)).toEqual(
-         ['testdir/test.yml', 'test2.yml', 'testdir/subdir/test3.yml', 'test4.yml', 'test5.yml']
-      )
+      expect(extractFileNames(testString)).toEqual([
+         'testdir/test.yml',
+         'test2.yml',
+         'testdir/subdir/test3.yml',
+         'test4.yml',
+         'test5.yml'
+      ])
    })
 
    it('should replace filenames with basenames correctly', () => {
@@ -26,7 +34,7 @@ describe('Private kubectl', () => {
    test('Should throw well defined Error on error from Azure', async () => {
       const errorMsg = 'An error message'
       jest.spyOn(exec, 'getExecOutput').mockImplementation(async () => {
-         return { exitCode: 1, stdout: '', stderr: errorMsg }
+         return {exitCode: 1, stdout: '', stderr: errorMsg}
       })
 
       await expect(mockKube.executeCommand('az', 'test')).rejects.toThrow(
