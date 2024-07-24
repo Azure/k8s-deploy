@@ -8,8 +8,6 @@ import * as path from 'path'
 
 export class PrivateKubectl extends Kubectl {
    protected async execute(args: string[], silent: boolean = false) {
-      args = args.concat(this.getExecuteFlags())
-
       args.unshift('kubectl')
       let kubectlCmd = args.join(' ')
       let addFileFlag = false
@@ -75,11 +73,18 @@ export class PrivateKubectl extends Kubectl {
             runOutput
          )}`
       )
+
+      if (runOutput.exitCode !== 0) {
+         throw Error(
+            `Call to private cluster failed. Command: '${kubectlCmd}', errormessage: ${runOutput.stderr}`
+         )
+      }
+
       const runObj: {logs: string; exitCode: number} = JSON.parse(
          runOutput.stdout
       )
       if (!silent) core.info(runObj.logs)
-      if (runOutput.exitCode !== 0 && runObj.exitCode !== 0) {
+      if (runObj.exitCode !== 0) {
          throw Error(`failed private cluster Kubectl command: ${kubectlCmd}`)
       }
 

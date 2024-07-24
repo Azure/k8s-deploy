@@ -31,7 +31,8 @@ export async function validateServicesState(
       const existingService = await fetchResource(
          kubectl,
          serviceObject.kind,
-         serviceObject.metadata.name
+         serviceObject.metadata.name,
+         serviceObject?.metadata?.namespace
       )
 
       let isServiceGreen =

@@ -147,8 +147,7 @@ export async function checkManifestStability(
 export async function annotateAndLabelResources(
    files: string[],
    kubectl: Kubectl,
-   resourceTypes: Resource[],
-   allPods: any
+   resourceTypes: Resource[]
 ) {
    const defaultWorkflowFileName = 'k8s-deploy-failed-workflow-annotation'
    const githubToken = core.getInput('token')
@@ -163,15 +162,20 @@ export async function annotateAndLabelResources(
    const deploymentConfig = await getDeploymentConfig()
    const annotationKeyLabel = getWorkflowAnnotationKeyLabel()
 
-   await annotateResources(
-      files,
-      kubectl,
-      resourceTypes,
-      allPods,
-      annotationKeyLabel,
-      workflowFilePath,
-      deploymentConfig
-   ).catch((err) => core.warning(`Failed to annotate resources: ${err} `))
+   const shouldAnnotateResources = !(
+      core.getInput('annotate-resources').toLowerCase() === 'false'
+   )
+
+   if (shouldAnnotateResources) {
+      await annotateResources(
+         files,
+         kubectl,
+         resourceTypes,
+         annotationKeyLabel,
+         workflowFilePath,
+         deploymentConfig
+      ).catch((err) => core.warning(`Failed to annotate resources: ${err} `))
+   }
 
    await labelResources(files, kubectl, annotationKeyLabel).catch((err) =>
       core.warning(`Failed to label resources: ${err}`)
@@ -182,7 +186,6 @@ async function annotateResources(
    files: string[],
    kubectl: Kubectl,
    resourceTypes: Resource[],
-   allPods: any,
    annotationKey: string,
    workflowFilePath: string,
    deploymentConfig: DeploymentConfig
@@ -218,14 +221,21 @@ async function annotateResources(
    )
    if (annotateNamespace) {
       annotateResults.push(
-         await kubectl.annotate('namespace', namespace, annotationKeyValStr)
+         await kubectl.annotate(
+            'namespace',
+            namespace,
+            annotationKeyValStr,
+            namespace
+         )
       )
    }
+
    for (const file of files) {
       try {
          const annotateResult = await kubectl.annotateFiles(
             file,
-            annotationKeyValStr
+            annotationKeyValStr,
+            namespace
          )
          annotateResults.push(annotateResult)
       } catch (e) {
@@ -243,8 +253,8 @@ async function annotateResources(
                kubectl,
                resource.type,
                resource.name,
-               annotationKeyValStr,
-               allPods
+               resource.namespace,
+               annotationKeyValStr
             )
          ).forEach((execResult) => annotateResults.push(execResult))
       }

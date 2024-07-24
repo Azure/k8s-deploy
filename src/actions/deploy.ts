@@ -56,24 +56,19 @@ export async function deploy(
    for (const ingressResource of ingressResources) {
       await kubectl.getResource(
          KubernetesConstants.DiscoveryAndLoadBalancerResource.INGRESS,
-         ingressResource.name
+         ingressResource.name,
+         false,
+         ingressResource.namespace
       )
    }
    core.endGroup()
 
    // annotate resources
    core.startGroup('Annotating resources')
-   let allPods
-   try {
-      allPods = JSON.parse((await kubectl.getAllPods()).stdout)
-   } catch (e) {
-      core.debug(`Unable to parse pods: ${e}`)
-   }
    await annotateAndLabelResources(
       deployedManifestFiles,
       kubectl,
-      resourceTypes,
-      allPods
+      resourceTypes
    )
    core.endGroup()
 }

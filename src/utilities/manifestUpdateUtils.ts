@@ -280,7 +280,8 @@ export function getResources(
          ) {
             resources.push({
                type: inputObject.kind,
-               name: inputObject.metadata.name
+               name: inputObject.metadata.name,
+               namespace: inputObject?.metadata?.namespace
             })
          }
       })
