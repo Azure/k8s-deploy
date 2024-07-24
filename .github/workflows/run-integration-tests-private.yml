@@ -74,7 +74,7 @@ jobs:
               python test/integration/k8s-deploy-test.py private=${{ env.NAMESPACE }} namespace=${{ env.NAMESPACE }} kind=Deployment name=nginx-deployment containerName=nginx:1.14.2 labels=app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Cluster_Integration_Tests_-_private_cluster selectorLabels=app:nginx
               python test/integration/k8s-deploy-test.py private=${{ env.NAMESPACE }} namespace=${{ env.NAMESPACE }} kind=Service name=nginx-service labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Cluster_Integration_Tests_-_private_cluster selectorLabels=app:nginx
 
-              python test/integration/k8s-deploy-test.py private=${{ env.NAMESPACE }} namespace=${{ env.NAMESPACE }} kind=Deployment name=nginx-deployment2 containerName=nginx:1.14.2 labels=app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Cluster_Integration_Tests_-_private_cluster selectorLabels=app:nginx2
+              python test/integration/k8s-deploy-test.py private=${{ env.NAMESPACE }} namespace=${{ env.NAMESPACE }} kind=Deployment name=nginx-deployment2 containerName=nginx:1.14.2 labels=app:nginx2,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Cluster_Integration_Tests_-_private_cluster selectorLabels=app:nginx2
               python test/integration/k8s-deploy-test.py private=${{ env.NAMESPACE }} namespace=${{ env.NAMESPACE }} kind=Service name=nginx-service2 labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Cluster_Integration_Tests_-_private_cluster selectorLabels=app:nginx2
 
          - name: Clean up AKS cluster
