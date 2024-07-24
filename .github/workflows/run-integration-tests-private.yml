@@ -63,6 +63,7 @@ jobs:
               images: nginx:1.14.2
               manifests: |
                  test/integration/manifests/test.yml
+                 test/integration/manifests/test2.yml
               action: deploy
               private-cluster: true
               resource-group: ${{ env.NAMESPACE }}
