@@ -1,14 +1,18 @@
-name: Create release PR
+name: Release Project
 
 on:
+   push:
+      branches:
+         - main
+      paths:
+         - CHANGELOG.md
    workflow_dispatch:
-      inputs:
-         release:
-            description: 'Define release version (ex: v1, v2, v3)'
-            required: true
 
 jobs:
-   release-pr:
-      uses: OliverMKing/javascript-release-workflow/.github/workflows/release-pr.yml@main
+   release:
+      permissions:
+         actions: read
+         contents: write
+      uses: Azure/action-release-workflows/.github/workflows/release_js_project.yaml@v1
       with:
-         release: ${{ github.event.inputs.release }}
+         changelogPath: ./CHANGELOG.md

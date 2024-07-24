@@ -1,10 +1,11 @@
 {
    "name": "k8s-deploy-action",
-   "version": "0.0.0",
+   "version": "5.0.0",
    "author": "Deepak Sattiraju",
    "license": "MIT",
    "scripts": {
-      "build": "npx ncc build src/run.ts -o lib",
+      "prebuild": "npm i @vercel/ncc",
+      "build": "ncc build src/run.ts -o lib",
       "test": "jest",
       "coverage": "jest --coverage=true",
       "format": "prettier --write .",
