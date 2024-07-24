@@ -43,7 +43,7 @@ jobs:
            run: |
               set +x
               # create cluster
-              az group create --location eastus --name ${{ env.NAMESPACE }}
+              az group create --location eastus2 --name ${{ env.NAMESPACE }}
               az aks create --name ${{ env.NAMESPACE }} --resource-group ${{ env.NAMESPACE }} --enable-private-cluster --generate-ssh-keys
               az aks get-credentials --resource-group ${{ env.NAMESPACE }} --name ${{ env.NAMESPACE }}
 
@@ -63,6 +63,7 @@ jobs:
               images: nginx:1.14.2
               manifests: |
                  test/integration/manifests/test.yml
+                 test/integration/manifests/test2.yml
               action: deploy
               private-cluster: true
               resource-group: ${{ env.NAMESPACE }}
@@ -72,6 +73,9 @@ jobs:
            run: |
               python test/integration/k8s-deploy-test.py private=${{ env.NAMESPACE }} namespace=${{ env.NAMESPACE }} kind=Deployment name=nginx-deployment containerName=nginx:1.14.2 labels=app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Cluster_Integration_Tests_-_private_cluster selectorLabels=app:nginx
               python test/integration/k8s-deploy-test.py private=${{ env.NAMESPACE }} namespace=${{ env.NAMESPACE }} kind=Service name=nginx-service labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Cluster_Integration_Tests_-_private_cluster selectorLabels=app:nginx
+
+              python test/integration/k8s-deploy-test.py private=${{ env.NAMESPACE }} namespace=${{ env.NAMESPACE }} kind=Deployment name=nginx-deployment2 containerName=nginx:1.14.2 labels=app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Cluster_Integration_Tests_-_private_cluster selectorLabels=app:nginx2
+              python test/integration/k8s-deploy-test.py private=${{ env.NAMESPACE }} namespace=${{ env.NAMESPACE }} kind=Service name=nginx-service2 labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Cluster_Integration_Tests_-_private_cluster selectorLabels=app:nginx2
 
          - name: Clean up AKS cluster
            if: ${{ always() }}
