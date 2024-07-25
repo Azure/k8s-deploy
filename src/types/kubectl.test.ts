@@ -1,4 +1,4 @@
-import {getKubectlPath, Kubectl} from './kubectl'
+import { getKubectlPath, Kubectl } from './kubectl'
 import * as exec from '@actions/exec'
 import * as io from '@actions/io'
 import * as core from '@actions/core'
@@ -39,20 +39,10 @@ const testNamespace = 'testNamespace'
 const defaultNamespace = 'default'
 const otherNamespace = 'otherns'
 describe('Kubectl class', () => {
-   describe('default namespace behavior', () => {
-      const kubectl = new Kubectl(kubectlPath, defaultNamespace)
-      const execReturn = {exitCode: 0, stdout: 'Output', stderr: ''}
-
-      beforeEach(() => {
-         jest.spyOn(exec, 'getExecOutput').mockImplementation(async () => {
-            return execReturn
-         })
-      })
-   })
 
    describe('with a success exec return in testNamespace', () => {
       const kubectl = new Kubectl(kubectlPath, testNamespace)
-      const execReturn = {exitCode: 0, stdout: 'Output', stderr: ''}
+      const execReturn = { exitCode: 0, stdout: 'Output', stderr: '' }
 
       beforeEach(() => {
          jest.spyOn(exec, 'getExecOutput').mockImplementation(async () => {
@@ -67,7 +57,7 @@ describe('Kubectl class', () => {
          expect(exec.getExecOutput).toBeCalledWith(
             kubectlPath,
             ['apply', '-f', configPaths, '--namespace', testNamespace],
-            {silent: false}
+            { silent: false }
          )
       })
 
@@ -84,7 +74,7 @@ describe('Kubectl class', () => {
                '--namespace',
                testNamespace
             ],
-            {silent: false}
+            { silent: false }
          )
       })
 
@@ -102,7 +92,7 @@ describe('Kubectl class', () => {
                '--namespace',
                testNamespace
             ],
-            {silent: false}
+            { silent: false }
          )
       })
 
@@ -120,7 +110,7 @@ describe('Kubectl class', () => {
                '--namespace',
                testNamespace
             ],
-            {silent: false}
+            { silent: false }
          )
 
          // overrided ns
@@ -140,7 +130,7 @@ describe('Kubectl class', () => {
                '--namespace',
                otherNamespace
             ],
-            {silent}
+            { silent }
          )
       })
 
@@ -158,7 +148,7 @@ describe('Kubectl class', () => {
                '--namespace',
                testNamespace
             ],
-            {silent: true}
+            { silent: true }
          )
 
          // overrided ns
@@ -178,7 +168,7 @@ describe('Kubectl class', () => {
                '--namespace',
                otherNamespace
             ],
-            {silent}
+            { silent }
          )
       })
 
@@ -203,7 +193,7 @@ describe('Kubectl class', () => {
                '--namespace',
                testNamespace
             ],
-            {silent: false}
+            { silent: false }
          )
 
          // override ns
@@ -224,7 +214,7 @@ describe('Kubectl class', () => {
                '--namespace',
                otherNamespace
             ],
-            {silent: false}
+            { silent: false }
          )
       })
 
@@ -244,7 +234,7 @@ describe('Kubectl class', () => {
                '--namespace',
                testNamespace
             ],
-            {silent: false}
+            { silent: false }
          )
 
          // override ns
@@ -260,7 +250,7 @@ describe('Kubectl class', () => {
                '--namespace',
                otherNamespace
             ],
-            {silent: false}
+            { silent: false }
          )
       })
 
@@ -280,7 +270,7 @@ describe('Kubectl class', () => {
                '--namespace',
                testNamespace
             ],
-            {silent: false}
+            { silent: false }
          )
 
          // override ns
@@ -296,7 +286,7 @@ describe('Kubectl class', () => {
                '--namespace',
                otherNamespace
             ],
-            {silent: false}
+            { silent: false }
          )
       })
 
@@ -316,7 +306,7 @@ describe('Kubectl class', () => {
                '--namespace',
                testNamespace
             ],
-            {silent: false}
+            { silent: false }
          )
 
          await kubectl.labelFiles(file, labels, otherNamespace)
@@ -331,7 +321,7 @@ describe('Kubectl class', () => {
                '--namespace',
                otherNamespace
             ],
-            {silent: false}
+            { silent: false }
          )
       })
 
@@ -351,7 +341,7 @@ describe('Kubectl class', () => {
                '--namespace',
                testNamespace
             ],
-            {silent: false}
+            { silent: false }
          )
 
          await kubectl.labelFiles(files, labels, otherNamespace)
@@ -366,7 +356,7 @@ describe('Kubectl class', () => {
                '--namespace',
                otherNamespace
             ],
-            {silent: false}
+            { silent: false }
          )
       })
 
@@ -375,7 +365,7 @@ describe('Kubectl class', () => {
          expect(exec.getExecOutput).toBeCalledWith(
             kubectlPath,
             ['get', 'pods', '-o', 'json', '--namespace', testNamespace],
-            {silent: true}
+            { silent: true }
          )
       })
 
@@ -394,7 +384,7 @@ describe('Kubectl class', () => {
                '--namespace',
                testNamespace
             ],
-            {silent: false}
+            { silent: false }
          )
 
          // override ns
@@ -408,7 +398,7 @@ describe('Kubectl class', () => {
                '--namespace',
                otherNamespace
             ],
-            {silent: false}
+            { silent: false }
          )
       })
 
@@ -426,7 +416,7 @@ describe('Kubectl class', () => {
                '--namespace',
                testNamespace
             ],
-            {silent: false}
+            { silent: false }
          )
 
          // override ns
@@ -442,7 +432,7 @@ describe('Kubectl class', () => {
                '--namespace',
                otherNamespace
             ],
-            {silent}
+            { silent }
          )
       })
 
@@ -453,7 +443,7 @@ describe('Kubectl class', () => {
          expect(exec.getExecOutput).toBeCalledWith(
             kubectlPath,
             [command, '--namespace', testNamespace],
-            {silent: false}
+            { silent: false }
          )
 
          // with args
@@ -462,7 +452,7 @@ describe('Kubectl class', () => {
          expect(exec.getExecOutput).toBeCalledWith(
             kubectlPath,
             [command, args, '--namespace', testNamespace],
-            {silent: false}
+            { silent: false }
          )
       })
 
@@ -472,7 +462,7 @@ describe('Kubectl class', () => {
          expect(exec.getExecOutput).toBeCalledWith(
             kubectlPath,
             ['delete', arg, '--namespace', testNamespace],
-            {silent: false}
+            { silent: false }
          )
 
          // override ns
@@ -480,7 +470,7 @@ describe('Kubectl class', () => {
          expect(exec.getExecOutput).toBeCalledWith(
             kubectlPath,
             ['delete', arg, '--namespace', otherNamespace],
-            {silent: false}
+            { silent: false }
          )
       })
 
@@ -490,7 +480,7 @@ describe('Kubectl class', () => {
          expect(exec.getExecOutput).toBeCalledWith(
             kubectlPath,
             ['delete', ...args, '--namespace', testNamespace],
-            {silent: false}
+            { silent: false }
          )
 
          // override ns
@@ -498,7 +488,7 @@ describe('Kubectl class', () => {
          expect(exec.getExecOutput).toBeCalledWith(
             kubectlPath,
             ['delete', ...args, '--namespace', otherNamespace],
-            {silent: false}
+            { silent: false }
          )
       })
    })
@@ -528,7 +518,7 @@ describe('Kubectl class', () => {
       const kubectl = new Kubectl(kubectlPath, testNamespace, skipTls)
 
       jest.spyOn(exec, 'getExecOutput').mockImplementation(async () => {
-         return {exitCode: 0, stderr: '', stdout: ''}
+         return { exitCode: 0, stderr: '', stdout: '' }
       })
 
       const command = 'command'
@@ -536,7 +526,7 @@ describe('Kubectl class', () => {
       expect(exec.getExecOutput).toBeCalledWith(
          kubectlPath,
          [command, '--insecure-skip-tls-verify', '--namespace', testNamespace],
-         {silent: false}
+         { silent: false }
       )
 
       const kubectlNoFlags = new Kubectl(kubectlPath)
