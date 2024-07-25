@@ -19,7 +19,7 @@ export class PrivateKubectl extends Kubectl {
 
       if (this.containsFilenames(kubectlCmd)) {
          // For private clusters, files will referenced solely by their basename
-         kubectlCmd = this.replaceFilnamesWithBasenames(kubectlCmd)
+         kubectlCmd = replaceFileNamesWithBaseNames(kubectlCmd)
          addFileFlag = true
       }
 
@@ -43,21 +43,21 @@ export class PrivateKubectl extends Kubectl {
       ]
 
       if (addFileFlag) {
-         const filenames = this.extractFilesnames(kubectlCmd).split(' ')
+         const filenames = extractFileNames(kubectlCmd)
 
          const tempDirectory =
             process.env['runner.tempDirectory'] || os.tmpdir() + '/manifests'
          eo.cwd = tempDirectory
          privateClusterArgs.push(...['--file', '.'])
 
-         let filenamesArr = filenames[0].split(',')
-         for (let index = 0; index < filenamesArr.length; index++) {
-            const file = filenamesArr[index]
-
-            if (!file) {
-               continue
+         for (const filename of filenames) {
+            try {
+               this.moveFileToTempManifestDir(filename)
+            } catch (e) {
+               core.debug(
+                  `Error moving file ${filename} to temp directory: ${e}`
+               )
             }
-            this.moveFileToTempManifestDir(file)
          }
       }
 
@@ -93,49 +93,6 @@ export class PrivateKubectl extends Kubectl {
          stdout: runObj.logs,
          stderr: ''
       } as ExecOutput
-   }
-
-   private replaceFilnamesWithBasenames(kubectlCmd: string) {
-      let exFilenames = this.extractFilesnames(kubectlCmd)
-      let filenames = exFilenames.split(' ')
-      let filenamesArr = filenames[0].split(',')
-
-      for (let index = 0; index < filenamesArr.length; index++) {
-         filenamesArr[index] = path.basename(filenamesArr[index])
-      }
-
-      let baseFilenames = filenamesArr.join()
-
-      let result = kubectlCmd.replace(exFilenames, baseFilenames)
-      return result
-   }
-
-   public extractFilesnames(strToParse: string) {
-      const fileNames: string[] = []
-      const argv = minimist(strToParse.split(' '))
-      const fArg = 'f'
-      const filenameArg = 'filename'
-
-      fileNames.push(...this.extractFilesFromMinimist(argv, fArg))
-      fileNames.push(...this.extractFilesFromMinimist(argv, filenameArg))
-
-      return fileNames.join(' ')
-   }
-
-   private extractFilesFromMinimist(argv, arg: string): string[] {
-      if (!argv[arg]) {
-         return []
-      }
-      const toReturn: string[] = []
-      if (typeof argv[arg] === 'string') {
-         toReturn.push(...argv[arg].split(','))
-      } else {
-         for (const value of argv[arg] as string[]) {
-            toReturn.push(...value.split(','))
-         }
-      }
-
-      return toReturn
    }
 
    private containsFilenames(str: string) {
@@ -180,4 +137,52 @@ export class PrivateKubectl extends Kubectl {
          )
       })
    }
+}
+
+export function replaceFileNamesWithBaseNames(kubectlCmd: string) {
+   let filenames = extractFileNames(kubectlCmd)
+   let basenames = filenames.map((filename) => path.basename(filename))
+
+   let result = kubectlCmd
+   if (filenames.length != basenames.length) {
+      throw Error(
+         'replacing filenames with basenames, ' +
+            filenames.length +
+            ' filenames != ' +
+            basenames.length +
+            'basenames'
+      )
+   }
+   for (let index = 0; index < filenames.length; index++) {
+      result = result.replace(filenames[index], basenames[index])
+   }
+   return result
+}
+
+export function extractFileNames(strToParse: string) {
+   const fileNames: string[] = []
+   const argv = minimist(strToParse.split(' '))
+   const fArg = 'f'
+   const filenameArg = 'filename'
+
+   fileNames.push(...extractFilesFromMinimist(argv, fArg))
+   fileNames.push(...extractFilesFromMinimist(argv, filenameArg))
+
+   return fileNames
+}
+
+export function extractFilesFromMinimist(argv, arg: string): string[] {
+   if (!argv[arg]) {
+      return []
+   }
+   const toReturn: string[] = []
+   if (typeof argv[arg] === 'string') {
+      toReturn.push(...argv[arg].split(','))
+   } else {
+      for (const value of argv[arg] as string[]) {
+         toReturn.push(...value.split(','))
+      }
+   }
+
+   return toReturn
 }
