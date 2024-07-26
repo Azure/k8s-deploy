@@ -8,7 +8,6 @@ import {
 import * as yaml from 'js-yaml'
 import * as fs from 'fs'
 import * as path from 'path'
-import {succeeded} from '../types/errorable'
 
 const sampleYamlUrl =
    'https://raw.githubusercontent.com/kubernetes/website/main/content/en/examples/controllers/nginx-deployment.yaml'
