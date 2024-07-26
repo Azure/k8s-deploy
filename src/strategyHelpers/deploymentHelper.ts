@@ -39,7 +39,6 @@ import {
    normalizeWorkflowStrLabel
 } from '../utilities/githubUtils'
 import {getDeploymentConfig} from '../utilities/dockerUtils'
-import {deploy} from '../actions/deploy'
 import {DeployResult} from '../types/deployResult'
 
 export async function deployManifests(

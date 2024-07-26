@@ -34,7 +34,7 @@ describe('File utils', () => {
       ).rejects.toThrow()
    })
 
-   it('detects files in nested directories and ignores non-manifest files and empty dirs', async () => {
+   it('detects files in nested directories with the same name and ignores non-manifest files and empty dirs', async () => {
       const testPath = path.join('test', 'unit', 'manifests')
       const testSearch: string[] = await getFilesFromDirectoriesAndURLs([
          testPath,
@@ -42,15 +42,14 @@ describe('File utils', () => {
       ])
 
       const expectedManifests = [
-         'test/unit/manifests/manifest_test_dir/another_layer/deep-ingress.yaml',
-         'test/unit/manifests/manifest_test_dir/another_layer/deep-service.yaml',
+         'test/unit/manifests/manifest_test_dir/another_layer/test-ingress.yaml',
+         'test/unit/manifests/manifest_test_dir/another_layer/nested-test-service.yaml',
          'test/unit/manifests/manifest_test_dir/nested-test-service.yaml',
          'test/unit/manifests/test-ingress.yml',
          'test/unit/manifests/test-ingress-new.yml',
          'test/unit/manifests/test-service.yml'
       ]
 
-      // is there a more efficient way to test equality w random order?
       expect(testSearch).toHaveLength(8)
       expectedManifests.forEach((fileName) => {
          if (fileName.startsWith('test/unit')) {
