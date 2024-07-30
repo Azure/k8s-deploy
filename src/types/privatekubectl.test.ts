@@ -16,9 +16,11 @@ describe('Private kubectl', () => {
       'resourceName'
    )
 
-   jest.spyOn(fileUtils, 'getTempDirectory').mockImplementation(() => {
-      return '/tmp'
-   })
+   const spy = jest
+      .spyOn(fileUtils, 'getTempDirectory')
+      .mockImplementation(() => {
+         return '/tmp'
+      })
 
    it('should extract filenames correctly', () => {
       expect(extractFileNames(testString)).toEqual([

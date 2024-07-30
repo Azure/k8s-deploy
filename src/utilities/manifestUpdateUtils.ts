@@ -3,7 +3,7 @@ import * as fs from 'fs'
 import * as yaml from 'js-yaml'
 import * as path from 'path'
 import * as fileHelper from './fileUtils'
-import {getTempDirectory} from './fileUtils'
+import {getTempDirectory, moveFileToTmpDir} from './fileUtils'
 import {
    InputObjectKindNotDefinedError,
    InputObjectMetadataNotDefinedError,
@@ -26,10 +26,16 @@ export function updateManifestFiles(manifestFilePaths: string[]) {
       throw new Error('Manifest files not provided')
    }
 
+   // move original set of input files to tmp dir
+   const manifestFilesInTempDir = manifestFilePaths.map((filename) => {
+      return moveFileToTmpDir(filename)
+   })
+
    // update container images
    const containers: string[] = core.getInput('images').split('\n')
+
    const manifestFiles = updateContainerImagesInManifestFiles(
-      manifestFilePaths,
+      manifestFilesInTempDir,
       containers
    )
 
@@ -70,12 +76,9 @@ function updateContainerImagesInManifestFiles(
 ): string[] {
    if (filePaths?.length <= 0) return filePaths
 
-   const newFilePaths = []
-
    // update container images
    filePaths.forEach((filePath: string) => {
       let contents = fs.readFileSync(filePath).toString()
-
       containers.forEach((container: string) => {
          let [imageName] = container.split(':')
          if (imageName.indexOf('@') > 0) {
@@ -91,13 +94,10 @@ function updateContainerImagesInManifestFiles(
       })
 
       // write updated files
-      const tempDirectory = getTempDirectory()
-      const fileName = path.join(tempDirectory, path.basename(filePath))
-      fs.writeFileSync(path.join(fileName), contents)
-      newFilePaths.push(fileName)
+      fs.writeFileSync(path.join(filePath), contents)
    })
 
-   return newFilePaths
+   return filePaths
 }
 
 /*

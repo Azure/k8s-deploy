@@ -23,7 +23,7 @@ export function writeObjectsToFile(inputObjects: any[]): string[] {
          const inputObjectString = JSON.stringify(inputObject)
 
          if (inputObject?.metadata?.name) {
-            const fileName = getManifestFileName(
+            const fileName = getNewTempManifestFileName(
                inputObject.kind,
                inputObject.metadata.name
             )
@@ -52,7 +52,7 @@ export function writeManifestToFile(
 ): string {
    if (inputObjectString) {
       try {
-         const fileName = getManifestFileName(kind, name)
+         const fileName = getNewTempManifestFileName(kind, name)
          fs.writeFileSync(path.join(fileName), inputObjectString)
          return fileName
       } catch (ex) {
@@ -63,7 +63,17 @@ export function writeManifestToFile(
    }
 }
 
-function getManifestFileName(kind: string, name: string) {
+export function moveFileToTmpDir(originalFilepath: string) {
+   const tempDirectory = getTempDirectory()
+   const newPath = path.join(tempDirectory, originalFilepath)
+
+   const contents = fs.readFileSync(originalFilepath).toString()
+   fs.writeFileSync(path.join(newPath), contents)
+
+   return newPath
+}
+
+function getNewTempManifestFileName(kind: string, name: string) {
    const filePath = `${kind}_${name}_${getCurrentTime().toString()}`
    const tempDirectory = getTempDirectory()
    return path.join(tempDirectory, filePath)
@@ -130,7 +140,7 @@ export async function writeYamlFromURLToFile(
                )
             }
 
-            const targetPath = getManifestFileName(
+            const targetPath = getNewTempManifestFileName(
                urlFileKind,
                fileNumber.toString()
             )
