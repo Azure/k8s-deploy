@@ -147,7 +147,7 @@ export function replaceFileNamesWithNamesRelativeToTemp(kubectlCmd: string) {
    let result = kubectlCmd
    if (filenames.length != relativeNames.length) {
       throw Error(
-         'replacing filenames with relative from temp dir, ' +
+         'replacing filenames with relative path from temp dir, ' +
             filenames.length +
             ' filenames != ' +
             relativeNames.length +
