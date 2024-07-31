@@ -13,9 +13,9 @@ export class PrivateKubectl extends Kubectl {
       let kubectlCmd = args.join(' ')
       let addFileFlag = false
       let eo = <ExecOptions>{
-         silent: true,
+         silent: false,
          failOnStdErr: false,
-         ignoreReturnCode: true
+         ignoreReturnCode: false
       }
 
       if (this.containsFilenames(kubectlCmd)) {
