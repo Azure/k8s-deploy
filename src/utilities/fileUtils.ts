@@ -85,7 +85,7 @@ export function moveFileToTmpDir(originalFilepath: string) {
 function getNewTempManifestFileName(kind: string, name: string) {
    const filePath = `${kind}_${name}_${getCurrentTime().toString()}`
    const tempDirectory = getTempDirectory()
-   return path.join(tempDirectory, filePath)
+   return path.join(tempDirectory, path.basename(filePath))
 }
 
 export async function getFilesFromDirectoriesAndURLs(
