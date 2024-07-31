@@ -3,7 +3,7 @@ import * as fs from 'fs'
 import * as yaml from 'js-yaml'
 import * as path from 'path'
 import * as fileHelper from './fileUtils'
-import {getTempDirectory, moveFileToTmpDir} from './fileUtils'
+import {moveFileToTmpDir} from './fileUtils'
 import {
    InputObjectKindNotDefinedError,
    InputObjectMetadataNotDefinedError,
@@ -27,9 +27,7 @@ export function updateManifestFiles(manifestFilePaths: string[]) {
    }
 
    // move original set of input files to tmp dir
-   const manifestFilesInTempDir = manifestFilePaths.map((filename) => {
-      return moveFileToTmpDir(filename)
-   })
+   const manifestFilesInTempDir = moveFilesToTmpDir(manifestFilePaths)
 
    // update container images
    const containers: string[] = core.getInput('images').split('\n')
@@ -45,6 +43,12 @@ export function updateManifestFiles(manifestFilePaths: string[]) {
       .split('\n')
       .filter((secret) => secret.trim().length > 0)
    return updateImagePullSecretsInManifestFiles(manifestFiles, imagePullSecrets)
+}
+
+export function moveFilesToTmpDir(filepaths: string[]): string[] {
+   return filepaths.map((filename) => {
+      return moveFileToTmpDir(filename)
+   })
 }
 
 export function UnsetClusterSpecificDetails(resource: any) {

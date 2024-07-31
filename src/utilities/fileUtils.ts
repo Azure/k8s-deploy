@@ -67,8 +67,10 @@ export function moveFileToTmpDir(originalFilepath: string) {
    const tempDirectory = getTempDirectory()
    const newPath = path.join(tempDirectory, originalFilepath)
 
+   core.debug(`reading original contents from path: ${originalFilepath}`)
    const contents = fs.readFileSync(originalFilepath).toString()
    fs.writeFileSync(path.join(newPath), contents)
+   core.debug(`moved contents from ${originalFilepath} to ${newPath}`)
 
    return newPath
 }
