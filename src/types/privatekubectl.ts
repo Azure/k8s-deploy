@@ -13,13 +13,14 @@ export class PrivateKubectl extends Kubectl {
       let kubectlCmd = args.join(' ')
       let addFileFlag = false
       let eo = <ExecOptions>{
-         silent: false,
+         silent: true,
          failOnStdErr: false,
-         ignoreReturnCode: false
+         ignoreReturnCode: true
       }
 
       if (this.containsFilenames(kubectlCmd)) {
-         kubectlCmd = replaceFileNamesWithNamesRelativeToTemp(kubectlCmd)
+         // For private clusters, files will referenced solely by their basename
+         kubectlCmd = replaceFileNamesWithBaseNames(kubectlCmd)
          addFileFlag = true
       }
 
@@ -48,6 +49,16 @@ export class PrivateKubectl extends Kubectl {
          const tempDirectory = getTempDirectory()
          eo.cwd = tempDirectory
          privateClusterArgs.push(...['--file', '.'])
+
+         for (const filename of filenames) {
+            try {
+               this.moveFileToTempManifestDir(filename)
+            } catch (e) {
+               core.debug(
+                  `Error moving file ${filename} to temp directory: ${e}`
+               )
+            }
+         }
       }
 
       core.debug(
@@ -89,7 +100,6 @@ export class PrivateKubectl extends Kubectl {
    }
 
    private createTempManifestsDirectory() {
-      const manifestsDir = '/tmp/manifests'
       if (!fs.existsSync('/tmp/manifests')) {
          fs.mkdirSync('/tmp/manifests', {recursive: true})
       }
@@ -128,24 +138,22 @@ export class PrivateKubectl extends Kubectl {
    }
 }
 
-export function replaceFileNamesWithNamesRelativeToTemp(kubectlCmd: string) {
+export function replaceFileNamesWithBaseNames(kubectlCmd: string) {
    let filenames = extractFileNames(kubectlCmd)
-   let relativeNames = filenames.map((filename) =>
-      path.relative(getTempDirectory(), filename)
-   )
+   let basenames = filenames.map((filename) => path.basename(filename))
 
    let result = kubectlCmd
-   if (filenames.length != relativeNames.length) {
+   if (filenames.length != basenames.length) {
       throw Error(
-         'replacing filenames with relative path from temp dir, ' +
+         'replacing filenames with basenames, ' +
             filenames.length +
             ' filenames != ' +
-            relativeNames.length +
+            basenames.length +
             'basenames'
       )
    }
    for (let index = 0; index < filenames.length; index++) {
-      result = result.replace(filenames[index], relativeNames[index])
+      result = result.replace(filenames[index], basenames[index])
    }
    return result
 }
