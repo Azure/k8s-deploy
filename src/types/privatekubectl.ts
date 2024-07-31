@@ -48,16 +48,6 @@ export class PrivateKubectl extends Kubectl {
          const tempDirectory = getTempDirectory()
          eo.cwd = tempDirectory
          privateClusterArgs.push(...['--file', '.'])
-
-         for (const filename of filenames) {
-            try {
-               this.moveFileToTempManifestDir(filename)
-            } catch (e) {
-               core.debug(
-                  `Error moving file ${filename} to temp directory: ${e}`
-               )
-            }
-         }
       }
 
       core.debug(

@@ -1,9 +1,14 @@
 import * as fileUtils from './fileUtils'
 import * as manifestUpdateUtils from './manifestUpdateUtils'
+import * as fs from 'fs'
 
 describe('manifestUpdateUtils', () => {
    jest.spyOn(fileUtils, 'getTempDirectory').mockImplementation(() => {
       return '/tmp'
+   })
+   jest.spyOn(fs, 'writeFileSync').mockImplementation(() => {})
+   jest.spyOn(fs, 'readFileSync').mockImplementation((filename) => {
+      return 'test contents'
    })
 
    it('should place all files within the temp dir with the same path that they have in the repo', () => {

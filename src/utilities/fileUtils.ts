@@ -69,6 +69,13 @@ export function moveFileToTmpDir(originalFilepath: string) {
 
    core.debug(`reading original contents from path: ${originalFilepath}`)
    const contents = fs.readFileSync(originalFilepath).toString()
+
+   const dirName = path.dirname(newPath)
+   if (!fs.existsSync(dirName)) {
+      core.debug(`path ${dirName} doesn't exist yet, making new dir...`)
+      fs.mkdirSync(dirName, {recursive: true})
+   }
+   core.debug(`writing contents to new path ${newPath}`)
    fs.writeFileSync(path.join(newPath), contents)
    core.debug(`moved contents from ${originalFilepath} to ${newPath}`)
 
