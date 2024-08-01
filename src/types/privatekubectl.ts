@@ -19,7 +19,7 @@ export class PrivateKubectl extends Kubectl {
       }
 
       if (this.containsFilenames(kubectlCmd)) {
-         kubectlCmd = replaceFileNamesWithNamesRelativeToTemp(kubectlCmd)
+         kubectlCmd = replaceFileNamesWithShallowNamesRelativeToTemp(kubectlCmd)
          addFileFlag = true
       }
 
@@ -125,25 +125,29 @@ export class PrivateKubectl extends Kubectl {
    }
 }
 
-export function replaceFileNamesWithNamesRelativeToTemp(kubectlCmd: string) {
+export function replaceFileNamesWithShallowNamesRelativeToTemp(
+   kubectlCmd: string
+) {
    let filenames = extractFileNames(kubectlCmd)
    core.debug(`filenames originally provided in kubectl command: ${filenames}`)
-   let relativeNames = filenames.map((filename) =>
-      path.relative(getTempDirectory(), filename)
-   )
+   let relativeShallowNames = filenames.map((filename) => {
+      const relativeName = path.relative(getTempDirectory(), filename)
+      const shallowName = relativeName.replace(/\//g, '-')
+      return shallowName
+   })
 
    let result = kubectlCmd
-   if (filenames.length != relativeNames.length) {
+   if (filenames.length != relativeShallowNames.length) {
       throw Error(
          'replacing filenames with relative path from temp dir, ' +
             filenames.length +
             ' filenames != ' +
-            relativeNames.length +
+            relativeShallowNames.length +
             'basenames'
       )
    }
    for (let index = 0; index < filenames.length; index++) {
-      result = result.replace(filenames[index], relativeNames[index])
+      result = result.replace(filenames[index], relativeShallowNames[index])
    }
    return result
 }

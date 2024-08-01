@@ -77,6 +77,7 @@ export function moveFileToTmpDir(originalFilepath: string) {
    }
    core.debug(`writing contents to new path ${newPath}`)
    fs.writeFileSync(path.join(newPath), contents)
+
    core.debug(`moved contents from ${originalFilepath} to ${newPath}`)
 
    return newPath
