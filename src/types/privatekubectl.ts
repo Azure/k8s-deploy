@@ -133,6 +133,18 @@ export function replaceFileNamesWithShallowNamesRelativeToTemp(
    let relativeShallowNames = filenames.map((filename) => {
       const relativeName = path.relative(getTempDirectory(), filename)
       const shallowName = relativeName.replace(/\//g, '-')
+
+      const shallowPath = path.join(getTempDirectory(), shallowName)
+      core.debug(
+         `moving contents from ${filename} to shallow location at ${shallowPath}`
+      )
+
+      core.debug(`reading contents from ${filename}`)
+      const contents = fs.readFileSync(filename).toString()
+
+      core.debug(`writing contents to new path ${shallowPath}`)
+      fs.writeFileSync(shallowPath, contents)
+
       return shallowName
    })
 
