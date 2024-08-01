@@ -19,8 +19,7 @@ export class PrivateKubectl extends Kubectl {
       }
 
       if (this.containsFilenames(kubectlCmd)) {
-         // For private clusters, files will referenced solely by their basename
-         kubectlCmd = replaceFileNamesWithBaseNames(kubectlCmd)
+         kubectlCmd = replaceFileNamesWithNamesRelativeToTemp(kubectlCmd)
          addFileFlag = true
       }
 
@@ -44,21 +43,9 @@ export class PrivateKubectl extends Kubectl {
       ]
 
       if (addFileFlag) {
-         const filenames = extractFileNames(kubectlCmd)
-
          const tempDirectory = getTempDirectory()
          eo.cwd = tempDirectory
          privateClusterArgs.push(...['--file', '.'])
-
-         for (const filename of filenames) {
-            try {
-               this.moveFileToTempManifestDir(filename)
-            } catch (e) {
-               core.debug(
-                  `Error moving file ${filename} to temp directory: ${e}`
-               )
-            }
-         }
       }
 
       core.debug(
@@ -138,22 +125,25 @@ export class PrivateKubectl extends Kubectl {
    }
 }
 
-export function replaceFileNamesWithBaseNames(kubectlCmd: string) {
+export function replaceFileNamesWithNamesRelativeToTemp(kubectlCmd: string) {
    let filenames = extractFileNames(kubectlCmd)
-   let basenames = filenames.map((filename) => path.basename(filename))
+   core.debug(`filenames originally provided in kubectl command: ${filenames}`)
+   let relativeNames = filenames.map((filename) =>
+      path.relative(getTempDirectory(), filename)
+   )
 
    let result = kubectlCmd
-   if (filenames.length != basenames.length) {
+   if (filenames.length != relativeNames.length) {
       throw Error(
-         'replacing filenames with basenames, ' +
+         'replacing filenames with relative path from temp dir, ' +
             filenames.length +
             ' filenames != ' +
-            basenames.length +
+            relativeNames.length +
             'basenames'
       )
    }
    for (let index = 0; index < filenames.length; index++) {
-      result = result.replace(filenames[index], basenames[index])
+      result = result.replace(filenames[index], relativeNames[index])
    }
    return result
 }

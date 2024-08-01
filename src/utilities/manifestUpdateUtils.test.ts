@@ -1,10 +1,11 @@
 import * as fileUtils from './fileUtils'
 import * as manifestUpdateUtils from './manifestUpdateUtils'
+import * as path from 'path'
 import * as fs from 'fs'
 
 describe('manifestUpdateUtils', () => {
-   jest.spyOn(fileUtils, 'getTempDirectory').mockImplementation(() => {
-      return '/tmp'
+   jest.spyOn(fileUtils, 'moveFileToTmpDir').mockImplementation((filename) => {
+      return path.join('/tmp', filename)
    })
    jest.spyOn(fs, 'writeFileSync').mockImplementation(() => {})
    jest.spyOn(fs, 'readFileSync').mockImplementation((filename) => {
