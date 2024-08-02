@@ -85,38 +85,6 @@ export class PrivateKubectl extends Kubectl {
    private containsFilenames(str: string) {
       return str.includes('-f ') || str.includes('filename ')
    }
-
-   private moveFileToTempManifestDir(file: string) {
-      createTempManifestsDirectory()
-      if (!fs.existsSync('/tmp/' + file)) {
-         core.debug(
-            '/tmp/' +
-               file +
-               ' does not exist, and therefore cannot be moved to the manifest directory'
-         )
-      }
-
-      fs.copyFile('/tmp/' + file, '/tmp/manifests/' + file, function (err) {
-         if (err) {
-            core.debug(
-               'Could not rename ' +
-                  '/tmp/' +
-                  file +
-                  ' to  ' +
-                  '/tmp/manifests/' +
-                  file +
-                  ' ERROR: ' +
-                  err
-            )
-            return
-         }
-         core.debug(
-            "Successfully moved file '" +
-               file +
-               "' from /tmp to /tmp/manifest directory"
-         )
-      })
-   }
 }
 
 function createTempManifestsDirectory(): string {
