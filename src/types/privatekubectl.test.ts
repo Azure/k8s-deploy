@@ -1,4 +1,5 @@
 import * as fileUtils from '../utilities/fileUtils'
+import * as fs from 'fs'
 import {
    PrivateKubectl,
    extractFileNames,
@@ -21,6 +22,11 @@ describe('Private kubectl', () => {
       .mockImplementation(() => {
          return '/tmp'
       })
+
+   jest.spyOn(fs, 'writeFileSync').mockImplementation(() => {})
+   jest.spyOn(fs, 'readFileSync').mockImplementation((filename) => {
+      return 'test contents'
+   })
 
    it('should extract filenames correctly', () => {
       expect(extractFileNames(testString)).toEqual([

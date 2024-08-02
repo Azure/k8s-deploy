@@ -44,8 +44,7 @@ export class PrivateKubectl extends Kubectl {
 
       if (addFileFlag) {
          const tempDirectory = getTempDirectory()
-         eo.cwd = tempDirectory
-         privateClusterArgs.push(...['--file', '.'])
+         privateClusterArgs.push(...['--file', tempDirectory])
       }
 
       core.debug(
