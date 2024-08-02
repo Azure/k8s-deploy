@@ -44,7 +44,8 @@ export class PrivateKubectl extends Kubectl {
 
       if (addFileFlag) {
          const tempDirectory = getTempDirectory()
-         privateClusterArgs.push(...['--file', tempDirectory])
+         eo.cwd = path.join(tempDirectory, 'manifests')
+         privateClusterArgs.push(...['--file', '.'])
       }
 
       core.debug(
@@ -85,14 +86,8 @@ export class PrivateKubectl extends Kubectl {
       return str.includes('-f ') || str.includes('filename ')
    }
 
-   private createTempManifestsDirectory() {
-      if (!fs.existsSync('/tmp/manifests')) {
-         fs.mkdirSync('/tmp/manifests', {recursive: true})
-      }
-   }
-
    private moveFileToTempManifestDir(file: string) {
-      this.createTempManifestsDirectory()
+      createTempManifestsDirectory()
       if (!fs.existsSync('/tmp/' + file)) {
          core.debug(
             '/tmp/' +
@@ -124,6 +119,15 @@ export class PrivateKubectl extends Kubectl {
    }
 }
 
+function createTempManifestsDirectory(): string {
+   const manifestsDirPath = path.join(getTempDirectory(), 'manifests')
+   if (!fs.existsSync(manifestsDirPath)) {
+      fs.mkdirSync(manifestsDirPath, {recursive: true})
+   }
+
+   return manifestsDirPath
+}
+
 export function replaceFileNamesWithShallowNamesRelativeToTemp(
    kubectlCmd: string
 ) {
@@ -133,7 +137,10 @@ export function replaceFileNamesWithShallowNamesRelativeToTemp(
       const relativeName = path.relative(getTempDirectory(), filename)
       const shallowName = relativeName.replace(/\//g, '-')
 
-      const shallowPath = path.join(getTempDirectory(), shallowName)
+      // make manifests dir in temp if it doesn't already exist
+      const manifestsTempDir = createTempManifestsDirectory()
+
+      const shallowPath = path.join(manifestsTempDir, shallowName)
       core.debug(
          `moving contents from ${filename} to shallow location at ${shallowPath}`
       )
