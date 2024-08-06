@@ -103,7 +103,10 @@ export function replaceFileNamesWithShallowNamesRelativeToTemp(
    core.debug(`filenames originally provided in kubectl command: ${filenames}`)
    let relativeShallowNames = filenames.map((filename) => {
       const relativeName = path.relative(getTempDirectory(), filename)
-      const shallowName = relativeName.replace(/\//g, '-')
+
+      const relativePathElements = relativeName.split(path.sep)
+
+      const shallowName = relativePathElements.join('-')
 
       // make manifests dir in temp if it doesn't already exist
       const manifestsTempDir = createTempManifestsDirectory()
