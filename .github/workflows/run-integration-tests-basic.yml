@@ -18,7 +18,7 @@ jobs:
          KUBECONFIG: /home/runner/.kube/config
          NAMESPACE: test-${{ github.run_id }}
       steps:
-         - uses: actions/checkout@v3
+         - uses: actions/checkout@v4
 
          - name: Install dependencies
            run: |
@@ -31,7 +31,7 @@ jobs:
          - name: Build
            run: ncc build src/run.ts -o lib
 
-         - uses: Azure/setup-kubectl@v3
+         - uses: Azure/setup-kubectl@v4
            name: Install Kubectl
 
          - id: setup-minikube
@@ -46,7 +46,7 @@ jobs:
          - name: Create namespace to run tests
            run: kubectl create ns ${{ env.NAMESPACE }}
 
-         - uses: actions/setup-python@v2
+         - uses: actions/setup-python@v5
            name: Install Python
            with:
               python-version: '3.x'
