@@ -20,6 +20,7 @@ import {
    setImagePullSecrets
 } from './manifestPullSecretUtils'
 import {Resource} from '../types/kubectl'
+import { K8sObject } from '../types/k8sObject';
 
 export function updateManifestFiles(manifestFilePaths: string[]) {
    if (manifestFilePaths?.length === 0) {
@@ -275,7 +276,8 @@ export function getResources(
    const resources: Resource[] = []
    filePaths.forEach((filePath: string) => {
       const fileContents = fs.readFileSync(filePath).toString()
-      yaml.safeLoadAll(fileContents, (inputObject) => {
+      const inputObjects: K8sObject[] = yaml.loadAll(fileContents) as K8sObject[]
+      inputObjects.forEach((inputObject) => {
          const inputObjectKind = inputObject?.kind || ''
          if (
             filterResourceTypes.filter(
@@ -303,7 +305,7 @@ function updateImagePullSecretsInManifestFiles(
    const newObjectsList = []
    filePaths.forEach((filePath: string) => {
       const fileContents = fs.readFileSync(filePath).toString()
-      yaml.safeLoadAll(fileContents, (inputObject: any) => {
+      yaml.loadAll(fileContents, (inputObject: any) => {
          if (inputObject?.kind) {
             const {kind} = inputObject
             if (isWorkloadEntity(kind)) {

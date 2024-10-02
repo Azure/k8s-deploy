@@ -22,7 +22,7 @@ export async function deployPodCanary(
 
    for (const filePath of filePaths) {
       const fileContents = fs.readFileSync(filePath).toString()
-      const parsedYaml = yaml.safeLoadAll(fileContents)
+      const parsedYaml = yaml.loadAll(fileContents)
       for (const inputObject of parsedYaml) {
          const name = inputObject.metadata.name
          const kind = inputObject.kind

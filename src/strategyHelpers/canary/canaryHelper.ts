@@ -213,7 +213,7 @@ async function cleanUpCanary(
    for (const filePath of files) {
       const fileContents = fs.readFileSync(filePath).toString()
 
-      const parsedYaml = yaml.safeLoadAll(fileContents)
+      const parsedYaml: any[] = yaml.loadAll(fileContents)
       for (const inputObject of parsedYaml) {
          const name = inputObject.metadata.name
          const kind = inputObject.kind

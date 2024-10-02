@@ -112,7 +112,7 @@ function appendStableVersionLabelToResource(files: string[]): string[] {
    files.forEach((filePath: string) => {
       const fileContents = fs.readFileSync(filePath).toString()
 
-      yaml.safeLoadAll(fileContents, function (inputObject) {
+      yaml.loadAll(fileContents, function (inputObject) {
          const {kind} = inputObject
 
          if (isDeploymentEntity(kind)) {
@@ -197,7 +197,7 @@ async function annotateResources(
       for (const filePath of files) {
          core.debug('printing objects getting annotated...')
          const fileContents = fs.readFileSync(filePath).toString()
-         const inputObjects = yaml.safeLoadAll(fileContents)
+         const inputObjects = yaml.loadAll(fileContents)
          for (const inputObject of inputObjects) {
             core.debug(`object: ${JSON.stringify(inputObject)}`)
          }

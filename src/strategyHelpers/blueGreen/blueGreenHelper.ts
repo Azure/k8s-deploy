@@ -78,7 +78,7 @@ export function getManifestObjects(filePaths: string[]): BlueGreenManifests {
    // organized before we can check if services are “routed” or not.
    filePaths.forEach((filePath: string) => {
       const fileContents = fs.readFileSync(filePath).toString()
-      yaml.safeLoadAll(fileContents, (inputObject) => {
+      yaml.loadAll(fileContents, (inputObject: any) => {
          if (!!inputObject) {
             const kind = inputObject.kind
 

@@ -11,6 +11,7 @@ import {isDeploymentEntity, isServiceEntity} from '../../types/kubernetesTypes'
 import {checkForErrors} from '../../utilities/kubectlUtils'
 import {inputAnnotations} from '../../inputUtils'
 import {DeployResult} from '../../types/deployResult'
+import { K8sObject } from '../../types/k8sObject'
 
 const TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX = '-workflow-rollout'
 const TRAFFIC_SPLIT_OBJECT = 'TrafficSplit'
@@ -37,7 +38,7 @@ export async function deploySMICanary(
    const newObjectsList = []
    for await (const filePath of filePaths) {
       const fileContents = fs.readFileSync(filePath).toString()
-      const inputObjects = yaml.safeLoadAll(fileContents)
+      const inputObjects: K8sObject[] = yaml.loadAll(fileContents) as K8sObject[]
       for (const inputObject of inputObjects) {
          const name = inputObject.metadata.name
          const kind = inputObject.kind
@@ -112,7 +113,7 @@ async function createCanaryService(
 
    for (const filePath of filePaths) {
       const fileContents = fs.readFileSync(filePath).toString()
-      const parsedYaml = yaml.safeLoadAll(fileContents)
+      const parsedYaml = yaml.loadAll(fileContents)
       for (const inputObject of parsedYaml) {
          const name = inputObject.metadata.name
          const kind = inputObject.kind
@@ -225,7 +226,7 @@ async function adjustTraffic(
    const trafficSplitManifests = []
    for (const filePath of manifestFilePaths) {
       const fileContents = fs.readFileSync(filePath).toString()
-      const parsedYaml = yaml.safeLoadAll(fileContents)
+      const parsedYaml = yaml.loadAll(fileContents)
       for (const inputObject of parsedYaml) {
          const name = inputObject.metadata.name
          const kind = inputObject.kind
