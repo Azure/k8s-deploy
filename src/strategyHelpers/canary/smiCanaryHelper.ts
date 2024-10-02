@@ -113,7 +113,8 @@ async function createCanaryService(
 
    for (const filePath of filePaths) {
       const fileContents = fs.readFileSync(filePath).toString()
-      const parsedYaml = yaml.loadAll(fileContents)
+      const parsedYaml: K8sObject[] = yaml.loadAll(fileContents) as K8sObject[];
+
       for (const inputObject of parsedYaml) {
          const name = inputObject.metadata.name
          const kind = inputObject.kind
@@ -226,7 +227,8 @@ async function adjustTraffic(
    const trafficSplitManifests = []
    for (const filePath of manifestFilePaths) {
       const fileContents = fs.readFileSync(filePath).toString()
-      const parsedYaml = yaml.loadAll(fileContents)
+      const parsedYaml: K8sObject[] = yaml.loadAll(fileContents) as K8sObject[];
+
       for (const inputObject of parsedYaml) {
          const name = inputObject.metadata.name
          const kind = inputObject.kind

@@ -11,8 +11,7 @@ describe('File utils', () => {
    test('correctly parses a yaml file from a URL', async () => {
       const tempFile = await fileUtils.writeYamlFromURLToFile(sampleYamlUrl, 0)
       const fileContents = fs.readFileSync(tempFile).toString()
-      const inputObjects: K8sObject[] = yaml.loadAll(fileContents) as K8sObject[]; // Type assertion here
-
+      const inputObjects: K8sObject[] = yaml.loadAll(fileContents) as K8sObject[];
       expect(inputObjects).toHaveLength(1)
 
       for (const obj of inputObjects) {

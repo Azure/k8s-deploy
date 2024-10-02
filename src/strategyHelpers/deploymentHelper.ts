@@ -113,7 +113,7 @@ function appendStableVersionLabelToResource(files: string[]): string[] {
       const fileContents = fs.readFileSync(filePath).toString()
 
       yaml.loadAll(fileContents, function (inputObject) {
-         const {kind} = inputObject
+         const kind = (inputObject as { kind: string }).kind;
 
          if (isDeploymentEntity(kind)) {
             const updatedObject =
@@ -130,6 +130,7 @@ function appendStableVersionLabelToResource(files: string[]): string[] {
 
    return manifestFiles
 }
+
 
 export async function checkManifestStability(
    kubectl: Kubectl,
