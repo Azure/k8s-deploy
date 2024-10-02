@@ -20,7 +20,7 @@ import {
    setImagePullSecrets
 } from './manifestPullSecretUtils'
 import {Resource} from '../types/kubectl'
-import { K8sObject } from '../types/k8sObject';
+import {K8sObject} from '../types/k8sObject'
 
 export function updateManifestFiles(manifestFilePaths: string[]) {
    if (manifestFilePaths?.length === 0) {
@@ -276,7 +276,9 @@ export function getResources(
    const resources: Resource[] = []
    filePaths.forEach((filePath: string) => {
       const fileContents = fs.readFileSync(filePath).toString()
-      const inputObjects: K8sObject[] = yaml.loadAll(fileContents) as K8sObject[]
+      const inputObjects: K8sObject[] = yaml.loadAll(
+         fileContents
+      ) as K8sObject[]
       inputObjects.forEach((inputObject) => {
          const inputObjectKind = inputObject?.kind || ''
          if (

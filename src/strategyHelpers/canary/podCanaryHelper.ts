@@ -24,9 +24,14 @@ export async function deployPodCanary(
       const fileContents = fs.readFileSync(filePath, 'utf8')
       const parsedYaml = yaml.loadAll(fileContents)
       for (const inputObject of parsedYaml) {
-         if (inputObject && typeof inputObject === 'object' && 'metadata' in inputObject && 'kind' in inputObject) {
-            const name = (inputObject as any).metadata?.name;
-            const kind = (inputObject as any).kind;
+         if (
+            inputObject &&
+            typeof inputObject === 'object' &&
+            'metadata' in inputObject &&
+            'kind' in inputObject
+         ) {
+            const name = (inputObject as any).metadata?.name
+            const kind = (inputObject as any).kind
 
             if (!onlyDeployStable && isDeploymentEntity(kind)) {
                core.debug('Calculating replica count for canary')
@@ -36,10 +41,11 @@ export async function deployPodCanary(
                )
                core.debug('Replica count is ' + canaryReplicaCount)
 
-               const newCanaryObject = canaryDeploymentHelper.getNewCanaryResource(
-                  inputObject,
-                  canaryReplicaCount
-               )
+               const newCanaryObject =
+                  canaryDeploymentHelper.getNewCanaryResource(
+                     inputObject,
+                     canaryReplicaCount
+                  )
                newObjectsList.push(newCanaryObject)
 
                // if there's already a stable object, deploy baseline as well

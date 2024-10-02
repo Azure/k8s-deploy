@@ -3,7 +3,7 @@ import * as fileUtils from './fileUtils'
 import * as yaml from 'js-yaml'
 import * as fs from 'fs'
 import * as path from 'path'
-import { K8sObject } from '../types/k8sObject';
+import {K8sObject} from '../types/k8sObject'
 
 const sampleYamlUrl =
    'https://raw.githubusercontent.com/kubernetes/website/main/content/en/examples/controllers/nginx-deployment.yaml'
@@ -11,7 +11,9 @@ describe('File utils', () => {
    test('correctly parses a yaml file from a URL', async () => {
       const tempFile = await fileUtils.writeYamlFromURLToFile(sampleYamlUrl, 0)
       const fileContents = fs.readFileSync(tempFile).toString()
-      const inputObjects: K8sObject[] = yaml.loadAll(fileContents) as K8sObject[];
+      const inputObjects: K8sObject[] = yaml.loadAll(
+         fileContents
+      ) as K8sObject[]
       expect(inputObjects).toHaveLength(1)
 
       for (const obj of inputObjects) {

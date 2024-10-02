@@ -11,7 +11,7 @@ import {isDeploymentEntity, isServiceEntity} from '../../types/kubernetesTypes'
 import {checkForErrors} from '../../utilities/kubectlUtils'
 import {inputAnnotations} from '../../inputUtils'
 import {DeployResult} from '../../types/deployResult'
-import { K8sObject } from '../../types/k8sObject'
+import {K8sObject} from '../../types/k8sObject'
 
 const TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX = '-workflow-rollout'
 const TRAFFIC_SPLIT_OBJECT = 'TrafficSplit'
@@ -38,7 +38,9 @@ export async function deploySMICanary(
    const newObjectsList = []
    for await (const filePath of filePaths) {
       const fileContents = fs.readFileSync(filePath).toString()
-      const inputObjects: K8sObject[] = yaml.loadAll(fileContents) as K8sObject[]
+      const inputObjects: K8sObject[] = yaml.loadAll(
+         fileContents
+      ) as K8sObject[]
       for (const inputObject of inputObjects) {
          const name = inputObject.metadata.name
          const kind = inputObject.kind
@@ -113,7 +115,7 @@ async function createCanaryService(
 
    for (const filePath of filePaths) {
       const fileContents = fs.readFileSync(filePath).toString()
-      const parsedYaml: K8sObject[] = yaml.loadAll(fileContents) as K8sObject[];
+      const parsedYaml: K8sObject[] = yaml.loadAll(fileContents) as K8sObject[]
 
       for (const inputObject of parsedYaml) {
          const name = inputObject.metadata.name
@@ -227,7 +229,7 @@ async function adjustTraffic(
    const trafficSplitManifests = []
    for (const filePath of manifestFilePaths) {
       const fileContents = fs.readFileSync(filePath).toString()
-      const parsedYaml: K8sObject[] = yaml.loadAll(fileContents) as K8sObject[];
+      const parsedYaml: K8sObject[] = yaml.loadAll(fileContents) as K8sObject[]
 
       for (const inputObject of parsedYaml) {
          const name = inputObject.metadata.name
@@ -324,9 +326,8 @@ async function getTrafficSplitObject(
 ): Promise<string> {
    // cached version
    if (!trafficSplitAPIVersion) {
-      trafficSplitAPIVersion = await kubectlUtils.getTrafficSplitAPIVersion(
-         kubectl
-      )
+      trafficSplitAPIVersion =
+         await kubectlUtils.getTrafficSplitAPIVersion(kubectl)
    }
 
    return JSON.stringify({
