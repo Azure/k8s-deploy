@@ -33,6 +33,7 @@ export async function deployPodCanary(
                'kind' in inputObject &&
                'spec' in inputObject &&
                 typeof inputObject.metadata === 'object' &&
+                'name' in inputObject.metadata &&
                 typeof inputObject.metadata.name === 'string' &&
                 typeof inputObject.kind === 'string'
             ) {
