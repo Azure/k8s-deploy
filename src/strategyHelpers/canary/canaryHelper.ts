@@ -211,25 +211,31 @@ async function cleanUpCanary(
    const deletedFiles: string[] = []
 
    for (const filePath of files) {
-      const fileContents = fs.readFileSync(filePath).toString()
+      try {
+         const fileContents = fs.readFileSync(filePath).toString()
 
-      const parsedYaml: any[] = yaml.loadAll(fileContents)
-      for (const inputObject of parsedYaml) {
-         const name = inputObject.metadata.name
-         const kind = inputObject.kind
-         const namespace: string | undefined = inputObject?.metadata?.namespace
+         const parsedYaml: any[] = yaml.loadAll(fileContents)
+         for (const inputObject of parsedYaml) {
+            const name = inputObject.metadata.name
+            const kind = inputObject.kind
+            const namespace: string | undefined =
+               inputObject?.metadata?.namespace
 
-         if (
-            isDeploymentEntity(kind) ||
-            (includeServices && isServiceEntity(kind))
-         ) {
-            deletedFiles.push(filePath)
-            const canaryObjectName = getCanaryResourceName(name)
-            const baselineObjectName = getBaselineResourceName(name)
+            if (
+               isDeploymentEntity(kind) ||
+               (includeServices && isServiceEntity(kind))
+            ) {
+               deletedFiles.push(filePath)
+               const canaryObjectName = getCanaryResourceName(name)
+               const baselineObjectName = getBaselineResourceName(name)
 
-            await deleteObject(kind, canaryObjectName, namespace)
-            await deleteObject(kind, baselineObjectName, namespace)
+               await deleteObject(kind, canaryObjectName, namespace)
+               await deleteObject(kind, baselineObjectName, namespace)
+            }
          }
+      } catch (error) {
+         core.error(`Failed to process file ${filePath}: ${error.message}`)
+         throw error
       }
    }
 

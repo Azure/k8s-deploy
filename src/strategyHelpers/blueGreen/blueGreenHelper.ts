@@ -77,22 +77,26 @@ export function getManifestObjects(filePaths: string[]): BlueGreenManifests {
    // Manifest objects per type. All resources should be parsed and
    // organized before we can check if services are “routed” or not.
    filePaths.forEach((filePath: string) => {
-      const fileContents = fs.readFileSync(filePath).toString()
-      yaml.loadAll(fileContents, (inputObject: any) => {
-         if (!!inputObject) {
-            const kind = inputObject.kind
-
-            if (isDeploymentEntity(kind)) {
-               deploymentEntityList.push(inputObject)
-            } else if (isServiceEntity(kind)) {
-               serviceEntityList.push(inputObject)
-            } else if (isIngressEntity(kind)) {
-               ingressEntityList.push(inputObject)
-            } else {
-               otherEntitiesList.push(inputObject)
+      try {
+         const fileContents = fs.readFileSync(filePath).toString()
+         yaml.loadAll(fileContents, (inputObject: any) => {
+            if (!!inputObject) {
+               const kind = inputObject.kind
+               if (isDeploymentEntity(kind)) {
+                  deploymentEntityList.push(inputObject)
+               } else if (isServiceEntity(kind)) {
+                  serviceEntityList.push(inputObject)
+               } else if (isIngressEntity(kind)) {
+                  ingressEntityList.push(inputObject)
+               } else {
+                  otherEntitiesList.push(inputObject)
+               }
             }
-         }
-      })
+         })
+      } catch (error) {
+         core.error(`Error processing file ${filePath}: ${error.message}`)
+         throw error
+      }
    })
 
    serviceEntityList.forEach((inputObject: any) => {

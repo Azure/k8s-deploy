@@ -275,24 +275,29 @@ export function getResources(
 
    const resources: Resource[] = []
    filePaths.forEach((filePath: string) => {
-      const fileContents = fs.readFileSync(filePath).toString()
-      const inputObjects: K8sObject[] = yaml.loadAll(
-         fileContents
-      ) as K8sObject[]
-      inputObjects.forEach((inputObject) => {
-         const inputObjectKind = inputObject?.kind || ''
-         if (
-            filterResourceTypes.filter(
-               (type) => inputObjectKind.toLowerCase() === type.toLowerCase()
-            ).length > 0
-         ) {
-            resources.push({
-               type: inputObject.kind,
-               name: inputObject.metadata.name,
-               namespace: inputObject?.metadata?.namespace
-            })
-         }
-      })
+      try {
+         const fileContents = fs.readFileSync(filePath).toString()
+         const inputObjects: K8sObject[] = yaml.loadAll(
+            fileContents
+         ) as K8sObject[]
+         inputObjects.forEach((inputObject) => {
+            const inputObjectKind = inputObject?.kind || ''
+            if (
+               filterResourceTypes.filter(
+                  (type) => inputObjectKind.toLowerCase() === type.toLowerCase()
+               ).length > 0
+            ) {
+               resources.push({
+                  type: inputObject.kind,
+                  name: inputObject.metadata.name,
+                  namespace: inputObject?.metadata?.namespace
+               })
+            }
+         })
+      } catch (error) {
+         core.error(`Failed to process file at ${filePath}: ${error.message}`)
+         throw error
+      }
    })
 
    return resources
@@ -306,16 +311,21 @@ function updateImagePullSecretsInManifestFiles(
 
    const newObjectsList = []
    filePaths.forEach((filePath: string) => {
-      const fileContents = fs.readFileSync(filePath).toString()
-      yaml.loadAll(fileContents, (inputObject: any) => {
-         if (inputObject?.kind) {
-            const {kind} = inputObject
-            if (isWorkloadEntity(kind)) {
-               updateImagePullSecrets(inputObject, imagePullSecrets)
+      try {
+         const fileContents = fs.readFileSync(filePath).toString()
+         yaml.loadAll(fileContents, (inputObject: any) => {
+            if (inputObject?.kind) {
+               const {kind} = inputObject
+               if (isWorkloadEntity(kind)) {
+                  updateImagePullSecrets(inputObject, imagePullSecrets)
+               }
+               newObjectsList.push(inputObject)
             }
-            newObjectsList.push(inputObject)
-         }
-      })
+         })
+      } catch (error) {
+         core.error(`Failed to process file at ${filePath}: ${error.message}`)
+         throw error
+      }
    })
 
    return fileHelper.writeObjectsToFile(newObjectsList)

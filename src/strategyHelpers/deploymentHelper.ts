@@ -110,19 +110,24 @@ function appendStableVersionLabelToResource(files: string[]): string[] {
    const newObjectsList = []
 
    files.forEach((filePath: string) => {
-      const fileContents = fs.readFileSync(filePath).toString()
+      try {
+         const fileContents = fs.readFileSync(filePath).toString()
 
-      yaml.loadAll(fileContents, function (inputObject) {
-         const kind = (inputObject as {kind: string}).kind
+         yaml.loadAll(fileContents, function (inputObject) {
+            const kind = (inputObject as {kind: string}).kind
 
-         if (isDeploymentEntity(kind)) {
-            const updatedObject =
-               canaryDeploymentHelper.markResourceAsStable(inputObject)
-            newObjectsList.push(updatedObject)
-         } else {
-            manifestFiles.push(filePath)
-         }
-      })
+            if (isDeploymentEntity(kind)) {
+               const updatedObject =
+                  canaryDeploymentHelper.markResourceAsStable(inputObject)
+               newObjectsList.push(updatedObject)
+            } else {
+               manifestFiles.push(filePath)
+            }
+         })
+      } catch (error) {
+         core.error(`Failed to parse file at ${filePath}: ${error.message}`)
+         throw error
+      }
    })
 
    const updatedManifestFiles = fileHelper.writeObjectsToFile(newObjectsList)
@@ -193,14 +198,19 @@ async function annotateResources(
    )
 
    if (core.isDebug()) {
-      core.debug(`files getting annotated are ${JSON.stringify(files)}`)
-      for (const filePath of files) {
-         core.debug('printing objects getting annotated...')
-         const fileContents = fs.readFileSync(filePath).toString()
-         const inputObjects = yaml.loadAll(fileContents)
-         for (const inputObject of inputObjects) {
-            core.debug(`object: ${JSON.stringify(inputObject)}`)
+      try {
+         core.debug(`files getting annotated are ${JSON.stringify(files)}`)
+         for (const filePath of files) {
+            core.debug('printing objects getting annotated...')
+            const fileContents = fs.readFileSync(filePath).toString()
+            const inputObjects = yaml.loadAll(fileContents)
+            for (const inputObject of inputObjects) {
+               core.debug(`object: ${JSON.stringify(inputObject)}`)
+            }
          }
+      } catch (error) {
+         core.error(`Failed to load and parse files: ${error.message}`)
+         throw error
       }
    }
 
