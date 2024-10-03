@@ -11,6 +11,7 @@ import {isDeploymentEntity, isServiceEntity} from '../../types/kubernetesTypes'
 import {checkForErrors} from '../../utilities/kubectlUtils'
 import {inputAnnotations} from '../../inputUtils'
 import {DeployResult} from '../../types/deployResult'
+import {K8sObject} from '../../types/k8sObject'
 
 const TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX = '-workflow-rollout'
 const TRAFFIC_SPLIT_OBJECT = 'TrafficSplit'
@@ -36,60 +37,68 @@ export async function deploySMICanary(
 
    const newObjectsList = []
    for await (const filePath of filePaths) {
-      const fileContents = fs.readFileSync(filePath).toString()
-      const inputObjects = yaml.safeLoadAll(fileContents)
-      for (const inputObject of inputObjects) {
-         const name = inputObject.metadata.name
-         const kind = inputObject.kind
+      try {
+         const fileContents = fs.readFileSync(filePath).toString()
+         const inputObjects: K8sObject[] = yaml.loadAll(
+            fileContents
+         ) as K8sObject[]
+         for (const inputObject of inputObjects) {
+            const name = inputObject.metadata.name
+            const kind = inputObject.kind
 
-         if (!onlyDeployStable && isDeploymentEntity(kind)) {
-            if (calculateReplicas) {
-               // calculate for each object
-               const percentage = parseInt(
-                  core.getInput('percentage', {required: true})
-               )
-               canaryReplicaCount =
-                  podCanaryHelper.calculateReplicaCountForCanary(
-                     inputObject,
-                     percentage
+            if (!onlyDeployStable && isDeploymentEntity(kind)) {
+               if (calculateReplicas) {
+                  // calculate for each object
+                  const percentage = parseInt(
+                     core.getInput('percentage', {required: true})
                   )
-               core.debug(`calculated replica count ${canaryReplicaCount}`)
-            }
+                  canaryReplicaCount =
+                     podCanaryHelper.calculateReplicaCountForCanary(
+                        inputObject,
+                        percentage
+                     )
+                  core.debug(`calculated replica count ${canaryReplicaCount}`)
+               }
 
-            core.debug('Creating canary object')
-            const newCanaryObject = canaryDeploymentHelper.getNewCanaryResource(
-               inputObject,
-               canaryReplicaCount
-            )
-            newObjectsList.push(newCanaryObject)
-
-            const stableObject = await canaryDeploymentHelper.fetchResource(
-               kubectl,
-               kind,
-               canaryDeploymentHelper.getStableResourceName(name)
-            )
-            if (stableObject) {
-               core.debug(
-                  `Stable object found for ${kind} ${name}. Creating baseline objects`
-               )
-               const newBaselineObject =
-                  canaryDeploymentHelper.getBaselineDeploymentFromStableDeployment(
-                     stableObject,
+               core.debug('Creating canary object')
+               const newCanaryObject =
+                  canaryDeploymentHelper.getNewCanaryResource(
+                     inputObject,
                      canaryReplicaCount
                   )
-               newObjectsList.push(newBaselineObject)
+               newObjectsList.push(newCanaryObject)
+
+               const stableObject = await canaryDeploymentHelper.fetchResource(
+                  kubectl,
+                  kind,
+                  canaryDeploymentHelper.getStableResourceName(name)
+               )
+               if (stableObject) {
+                  core.debug(
+                     `Stable object found for ${kind} ${name}. Creating baseline objects`
+                  )
+                  const newBaselineObject =
+                     canaryDeploymentHelper.getBaselineDeploymentFromStableDeployment(
+                        stableObject,
+                        canaryReplicaCount
+                     )
+                  newObjectsList.push(newBaselineObject)
+               }
+            } else if (isDeploymentEntity(kind)) {
+               core.debug(
+                  `creating stable deployment with ${inputObject.spec.replicas} replicas`
+               )
+               const stableDeployment =
+                  canaryDeploymentHelper.getStableResource(inputObject)
+               newObjectsList.push(stableDeployment)
+            } else {
+               // Update non deployment entity or stable deployment as it is
+               newObjectsList.push(inputObject)
             }
-         } else if (isDeploymentEntity(kind)) {
-            core.debug(
-               `creating stable deployment with ${inputObject.spec.replicas} replicas`
-            )
-            const stableDeployment =
-               canaryDeploymentHelper.getStableResource(inputObject)
-            newObjectsList.push(stableDeployment)
-         } else {
-            // Update non deployment entity or stable deployment as it is
-            newObjectsList.push(inputObject)
          }
+      } catch (error) {
+         core.error(`Failed to process file at ${filePath}: ${error.message}`)
+         throw error
       }
    }
    core.debug(
@@ -111,81 +120,90 @@ async function createCanaryService(
    const trafficObjectsList: string[] = []
 
    for (const filePath of filePaths) {
-      const fileContents = fs.readFileSync(filePath).toString()
-      const parsedYaml = yaml.safeLoadAll(fileContents)
-      for (const inputObject of parsedYaml) {
-         const name = inputObject.metadata.name
-         const kind = inputObject.kind
+      try {
+         const fileContents = fs.readFileSync(filePath).toString()
+         const parsedYaml: K8sObject[] = yaml.loadAll(
+            fileContents
+         ) as K8sObject[]
 
-         if (isServiceEntity(kind)) {
-            core.debug(`Creating services for ${kind} ${name}`)
-            const newCanaryServiceObject =
-               canaryDeploymentHelper.getNewCanaryResource(inputObject)
-            newObjectsList.push(newCanaryServiceObject)
+         for (const inputObject of parsedYaml) {
+            const name = inputObject.metadata.name
+            const kind = inputObject.kind
 
-            const newBaselineServiceObject =
-               canaryDeploymentHelper.getNewBaselineResource(inputObject)
-            newObjectsList.push(newBaselineServiceObject)
+            if (isServiceEntity(kind)) {
+               core.debug(`Creating services for ${kind} ${name}`)
+               const newCanaryServiceObject =
+                  canaryDeploymentHelper.getNewCanaryResource(inputObject)
+               newObjectsList.push(newCanaryServiceObject)
 
-            const stableObject = await canaryDeploymentHelper.fetchResource(
-               kubectl,
-               kind,
-               canaryDeploymentHelper.getStableResourceName(name)
-            )
-            if (!stableObject) {
-               const newStableServiceObject =
-                  canaryDeploymentHelper.getStableResource(inputObject)
-               newObjectsList.push(newStableServiceObject)
+               const newBaselineServiceObject =
+                  canaryDeploymentHelper.getNewBaselineResource(inputObject)
+               newObjectsList.push(newBaselineServiceObject)
 
-               core.debug('Creating the traffic object for service: ' + name)
-               const trafficObject = await createTrafficSplitManifestFile(
+               const stableObject = await canaryDeploymentHelper.fetchResource(
                   kubectl,
-                  name,
-                  0,
-                  0,
-                  1000
+                  kind,
+                  canaryDeploymentHelper.getStableResourceName(name)
                )
+               if (!stableObject) {
+                  const newStableServiceObject =
+                     canaryDeploymentHelper.getStableResource(inputObject)
+                  newObjectsList.push(newStableServiceObject)
 
-               trafficObjectsList.push(trafficObject)
-            } else {
-               let updateTrafficObject = true
-               const trafficObject = await canaryDeploymentHelper.fetchResource(
-                  kubectl,
-                  TRAFFIC_SPLIT_OBJECT,
-                  getTrafficSplitResourceName(name)
-               )
-
-               if (trafficObject) {
-                  const trafficJObject = JSON.parse(
-                     JSON.stringify(trafficObject)
+                  core.debug('Creating the traffic object for service: ' + name)
+                  const trafficObject = await createTrafficSplitManifestFile(
+                     kubectl,
+                     name,
+                     0,
+                     0,
+                     1000
                   )
-                  if (trafficJObject?.spec?.backends) {
-                     trafficJObject.spec.backends.forEach((s) => {
-                        if (
-                           s.service ===
-                              canaryDeploymentHelper.getCanaryResourceName(
-                                 name
-                              ) &&
-                           s.weight === '1000m'
-                        ) {
-                           core.debug('Update traffic objcet not required')
-                           updateTrafficObject = false
-                        }
-                     })
+
+                  trafficObjectsList.push(trafficObject)
+               } else {
+                  let updateTrafficObject = true
+                  const trafficObject =
+                     await canaryDeploymentHelper.fetchResource(
+                        kubectl,
+                        TRAFFIC_SPLIT_OBJECT,
+                        getTrafficSplitResourceName(name)
+                     )
+
+                  if (trafficObject) {
+                     const trafficJObject = JSON.parse(
+                        JSON.stringify(trafficObject)
+                     )
+                     if (trafficJObject?.spec?.backends) {
+                        trafficJObject.spec.backends.forEach((s) => {
+                           if (
+                              s.service ===
+                                 canaryDeploymentHelper.getCanaryResourceName(
+                                    name
+                                 ) &&
+                              s.weight === '1000m'
+                           ) {
+                              core.debug('Update traffic objcet not required')
+                              updateTrafficObject = false
+                           }
+                        })
+                     }
                   }
-               }
 
-               if (updateTrafficObject) {
-                  core.debug(
-                     'Stable service object present so updating the traffic object for service: ' +
-                        name
-                  )
-                  trafficObjectsList.push(
-                     await updateTrafficSplitObject(kubectl, name)
-                  )
+                  if (updateTrafficObject) {
+                     core.debug(
+                        'Stable service object present so updating the traffic object for service: ' +
+                           name
+                     )
+                     trafficObjectsList.push(
+                        await updateTrafficSplitObject(kubectl, name)
+                     )
+                  }
                }
             }
          }
+      } catch (error) {
+         core.error(`Failed to process file at ${filePath}: ${error.message}`)
+         throw error
       }
    }
 
@@ -224,23 +242,31 @@ async function adjustTraffic(
 
    const trafficSplitManifests = []
    for (const filePath of manifestFilePaths) {
-      const fileContents = fs.readFileSync(filePath).toString()
-      const parsedYaml = yaml.safeLoadAll(fileContents)
-      for (const inputObject of parsedYaml) {
-         const name = inputObject.metadata.name
-         const kind = inputObject.kind
+      try {
+         const fileContents = fs.readFileSync(filePath).toString()
+         const parsedYaml: K8sObject[] = yaml.loadAll(
+            fileContents
+         ) as K8sObject[]
 
-         if (isServiceEntity(kind)) {
-            trafficSplitManifests.push(
-               await createTrafficSplitManifestFile(
-                  kubectl,
-                  name,
-                  stableWeight,
-                  0,
-                  canaryWeight
+         for (const inputObject of parsedYaml) {
+            const name = inputObject.metadata.name
+            const kind = inputObject.kind
+
+            if (isServiceEntity(kind)) {
+               trafficSplitManifests.push(
+                  await createTrafficSplitManifestFile(
+                     kubectl,
+                     name,
+                     stableWeight,
+                     0,
+                     canaryWeight
+                  )
                )
-            )
+            }
          }
+      } catch (error) {
+         core.error(`Failed to process file at ${filePath}: ${error.message}`)
+         throw error
       }
    }
 

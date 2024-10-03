@@ -183,7 +183,7 @@ function verifyYaml(filepath: string, url: string): Errorable<K8sObject[]> {
    const fileContents = fs.readFileSync(filepath).toString()
    let inputObjects
    try {
-      inputObjects = yaml.safeLoadAll(fileContents)
+      inputObjects = yaml.loadAll(fileContents)
    } catch (e) {
       return {
          succeeded: false,
