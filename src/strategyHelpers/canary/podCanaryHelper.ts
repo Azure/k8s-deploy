@@ -31,7 +31,10 @@ export async function deployPodCanary(
                typeof inputObject === 'object' &&
                'metadata' in inputObject &&
                'kind' in inputObject &&
-               'spec' in inputObject
+               'spec' in inputObject &&
+                typeof inputObject.metadata === 'object' &&
+                typeof inputObject.metadata.name === 'string' &&
+                typeof inputObject.kind === 'string'
             ) {
                const obj = inputObject as K8sObject
                const name = obj.metadata.name
