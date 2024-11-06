@@ -1,11 +1,11 @@
-import {Kubectl} from './kubectl'
+import { Kubectl } from './kubectl'
 import * as minimist from 'minimist'
-import {ExecOptions, ExecOutput, getExecOutput} from '@actions/exec'
+import { ExecOptions, ExecOutput, getExecOutput } from '@actions/exec'
 import * as core from '@actions/core'
 import * as os from 'os'
 import * as fs from 'fs'
 import * as path from 'path'
-import {getTempDirectory} from '../utilities/fileUtils'
+import { getTempDirectory } from '../utilities/fileUtils'
 
 export class PrivateKubectl extends Kubectl {
    protected async execute(args: string[], silent: boolean = false) {
@@ -67,7 +67,7 @@ export class PrivateKubectl extends Kubectl {
          )
       }
 
-      const runObj: {logs: string; exitCode: number} = JSON.parse(
+      const runObj: { logs: string; exitCode: number } = JSON.parse(
          runOutput.stdout
       )
       if (!silent) core.info(runObj.logs)
@@ -90,7 +90,7 @@ export class PrivateKubectl extends Kubectl {
 function createTempManifestsDirectory(): string {
    const manifestsDirPath = path.join(getTempDirectory(), 'manifests')
    if (!fs.existsSync(manifestsDirPath)) {
-      fs.mkdirSync(manifestsDirPath, {recursive: true})
+      fs.mkdirSync(manifestsDirPath, { recursive: true })
    }
 
    return manifestsDirPath
@@ -129,10 +129,10 @@ export function replaceFileNamesWithShallowNamesRelativeToTemp(
    if (filenames.length != relativeShallowNames.length) {
       throw Error(
          'replacing filenames with relative path from temp dir, ' +
-            filenames.length +
-            ' filenames != ' +
-            relativeShallowNames.length +
-            'basenames'
+         filenames.length +
+         ' filenames != ' +
+         relativeShallowNames.length +
+         'basenames'
       )
    }
    for (let index = 0; index < filenames.length; index++) {
