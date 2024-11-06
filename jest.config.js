@@ -3,18 +3,18 @@ module.exports = {
    testEnvironment: 'node',
    testMatch: ['**/*.test.ts'],
    transform: {
-      "\\.[jt]sx?$": "babel-jest",
+      '\\.[jt]sx?$': 'babel-jest'
    },
    transformIgnorePatterns: [
-    'node_modules/(?!' + 
-        [
+      'node_modules/(?!' +
+         [
             '@octokit',
             'universal-user-agent',
             'before-after-hook',
             'minimist'
-        ].join('|') +
-    ')',
-],
+         ].join('|') +
+         ')'
+   ],
    verbose: true,
    testTimeout: 9000
 }

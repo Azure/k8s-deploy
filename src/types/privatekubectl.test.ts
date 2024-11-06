@@ -23,7 +23,7 @@ describe('Private kubectl', () => {
          return '/tmp'
       })
 
-   jest.spyOn(fs, 'writeFileSync').mockImplementation(() => { })
+   jest.spyOn(fs, 'writeFileSync').mockImplementation(() => {})
    jest.spyOn(fs, 'readFileSync').mockImplementation((filename) => {
       return 'test contents'
    })
@@ -39,7 +39,6 @@ describe('Private kubectl', () => {
    })
 
    it('should replace filenames with shallow names for relative locations in tmp correctly', () => {
-
       expect(
          replaceFileNamesWithShallowNamesRelativeToTemp(testString)
       ).toEqual(
@@ -50,7 +49,7 @@ describe('Private kubectl', () => {
    test('Should throw well defined Error on error from Azure', async () => {
       const errorMsg = 'An error message'
       jest.spyOn(exec, 'getExecOutput').mockImplementation(async () => {
-         return { exitCode: 1, stdout: '', stderr: errorMsg }
+         return {exitCode: 1, stdout: '', stderr: errorMsg}
       })
 
       await expect(mockKube.executeCommand('az', 'test')).rejects.toThrow(
