@@ -1,13 +1,13 @@
-import * as fs from 'fs'
+import fs from 'node:fs'
 import * as https from 'https'
 import * as path from 'path'
 import * as core from '@actions/core'
 import * as os from 'os'
 import * as yaml from 'js-yaml'
-import {Errorable, succeeded, failed, Failed} from '../types/errorable'
-import {getCurrentTime} from './timeUtils'
-import {isHttpUrl} from './githubUtils'
-import {K8sObject} from '../types/k8sObject'
+import { Errorable, succeeded, failed, Failed } from '../types/errorable'
+import { getCurrentTime } from './timeUtils'
+import { isHttpUrl } from './githubUtils'
+import { K8sObject } from '../types/k8sObject'
 
 export const urlFileKind = 'urlfile'
 
@@ -32,7 +32,7 @@ export function writeObjectsToFile(inputObjects: any[]): string[] {
          } else {
             core.debug(
                'Input object is not proper K8s resource object. Object: ' +
-                  inputObjectString
+               inputObjectString
             )
          }
       } catch (ex) {
@@ -73,7 +73,7 @@ export function moveFileToTmpDir(originalFilepath: string) {
    const dirName = path.dirname(newPath)
    if (!fs.existsSync(dirName)) {
       core.debug(`path ${dirName} doesn't exist yet, making new dir...`)
-      fs.mkdirSync(dirName, {recursive: true})
+      fs.mkdirSync(dirName, { recursive: true })
    }
    core.debug(`writing contents to new path ${newPath}`)
    fs.writeFileSync(path.join(newPath), contents)
@@ -207,7 +207,7 @@ function verifyYaml(filepath: string, url: string): Errorable<K8sObject[]> {
       }
    }
 
-   return {succeeded: true, result: inputObjects}
+   return { succeeded: true, result: inputObjects }
 }
 
 function recurisveManifestGetter(dirName: string): string[] {

@@ -1,9 +1,8 @@
 import { Kubectl } from './kubectl'
-import * as minimist from 'minimist'
+import minimist from 'minimist'
 import { ExecOptions, ExecOutput, getExecOutput } from '@actions/exec'
 import * as core from '@actions/core'
-import * as os from 'os'
-import * as fs from 'fs'
+import fs from 'node:fs'
 import * as path from 'path'
 import { getTempDirectory } from '../utilities/fileUtils'
 
