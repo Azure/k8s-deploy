@@ -11,8 +11,8 @@ jobs:
       steps:
          - name: Checkout Repository
            uses: actions/checkout@v4
+         - name: install deps
+           run: npm install
 
          - name: Enforce Prettier
-           uses: actionsx/prettier@v3
-           with:
-              args: --check .
+           run: npm run format-check
