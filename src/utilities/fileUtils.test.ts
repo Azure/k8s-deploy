@@ -3,7 +3,7 @@ import * as fileUtils from './fileUtils'
 import * as yaml from 'js-yaml'
 import fs from 'node:fs'
 import * as path from 'path'
-import { K8sObject } from '../types/k8sObject'
+import {K8sObject} from '../types/k8sObject'
 
 const sampleYamlUrl =
    'https://raw.githubusercontent.com/kubernetes/website/main/content/en/examples/controllers/nginx-deployment.yaml'
@@ -107,7 +107,7 @@ describe('File utils', () => {
 
 describe('moving files to temp', () => {
    it('correctly moves the contents of a file to the temporary directory', () => {
-      jest.spyOn(fs, 'writeFileSync').mockImplementation(() => { })
+      jest.spyOn(fs, 'writeFileSync').mockImplementation(() => {})
       jest.spyOn(fs, 'readFileSync').mockImplementation((filename) => {
          return 'test contents'
       })
