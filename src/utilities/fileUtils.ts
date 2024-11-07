@@ -1,4 +1,4 @@
-import * as fs from 'fs'
+import fs from 'node:fs'
 import * as https from 'https'
 import * as path from 'path'
 import * as core from '@actions/core'

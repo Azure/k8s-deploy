@@ -1,7 +1,7 @@
 import * as fileUtils from './fileUtils'
 
 import * as yaml from 'js-yaml'
-import * as fs from 'fs'
+import fs from 'node:fs'
 import * as path from 'path'
 import {K8sObject} from '../types/k8sObject'
 

@@ -1,5 +1,5 @@
 import * as fileUtils from '../utilities/fileUtils'
-import * as fs from 'fs'
+import fs from 'node:fs'
 import {
    PrivateKubectl,
    extractFileNames,
