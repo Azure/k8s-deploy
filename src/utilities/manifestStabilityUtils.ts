@@ -9,7 +9,8 @@ const POD = 'pod'
 
 export async function checkManifestStability(
    kubectl: Kubectl,
-   resources: Resource[]
+   resources: Resource[],
+   timeout?: string
 ): Promise<void> {
    let rolloutStatusHasErrors = false
    for (let i = 0; i < resources.length; i++) {
@@ -24,7 +25,8 @@ export async function checkManifestStability(
             const result = await kubectl.checkRolloutStatus(
                resource.type,
                resource.name,
-               resource.namespace
+               resource.namespace,
+               timeout
             )
             checkForErrors([result])
          } catch (ex) {

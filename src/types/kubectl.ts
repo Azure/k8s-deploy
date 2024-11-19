@@ -157,13 +157,16 @@ export class Kubectl {
    public async checkRolloutStatus(
       resourceType: string,
       name: string,
-      namespace?: string
+      namespace?: string,
+      timeout?: string
    ): Promise<ExecOutput> {
-      return await this.execute(
-         ['rollout', 'status', `${resourceType}/${name}`].concat(
-            this.getFlags(namespace)
-         )
+      const command = ['rollout', 'status', `${resourceType}/${name}`].concat(
+         this.getFlags(namespace)
       )
+      if (timeout) {
+         command.push(`--timeout=${timeout}`)
+      }
+      return await this.execute(command)
    }
 
    public async getResource(

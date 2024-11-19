@@ -371,6 +371,7 @@ describe('Kubectl class', () => {
       it('checks rollout status', async () => {
          const resourceType = 'type'
          const name = 'name'
+         const timeout = '60s'
          expect(await kubectl.checkRolloutStatus(resourceType, name)).toBe(
             execReturn
          )
@@ -396,6 +397,46 @@ describe('Kubectl class', () => {
                `${resourceType}/${name}`,
                '--namespace',
                otherNamespace
+            ],
+            {silent: false}
+         )
+
+         // with timeout
+         await kubectl.checkRolloutStatus(
+            resourceType,
+            name,
+            testNamespace,
+            timeout
+         )
+         expect(exec.getExecOutput).toBeCalledWith(
+            kubectlPath,
+            [
+               'rollout',
+               'status',
+               `${resourceType}/${name}`,
+               '--namespace',
+               testNamespace,
+               `--timeout=${timeout}`
+            ],
+            {silent: false}
+         )
+
+         // overridden ns and timeout
+         await kubectl.checkRolloutStatus(
+            resourceType,
+            name,
+            otherNamespace,
+            timeout
+         )
+         expect(exec.getExecOutput).toBeCalledWith(
+            kubectlPath,
+            [
+               'rollout',
+               'status',
+               `${resourceType}/${name}`,
+               '--namespace',
+               otherNamespace,
+               `--timeout=${timeout}`
             ],
             {silent: false}
          )
