@@ -45,8 +45,8 @@ export async function deploy(
          KubernetesConstants.DiscoveryAndLoadBalancerResource.SERVICE
       ])
    )
-   const fleetName = core.getInput('fleet-name') || ''
-   if (!fleetName) {
+   const resourceType = core.getInput('resource-type') || ''
+   if (resourceType.toLowerCase() != 'Microsoft.ContainerService/fleets') {
       await checkManifestStability(kubectl, resourceTypes)
    }
    core.endGroup()
