@@ -45,7 +45,10 @@ export async function deploy(
          KubernetesConstants.DiscoveryAndLoadBalancerResource.SERVICE
       ])
    )
-   await checkManifestStability(kubectl, resourceTypes)
+   const fleetName = core.getInput('fleet-name') || ''
+   if (!fleetName) {
+      await checkManifestStability(kubectl, resourceTypes)
+   }
    core.endGroup()
 
    // print ingresses
