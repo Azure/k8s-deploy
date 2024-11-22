@@ -78,9 +78,8 @@ export async function createTrafficSplitObject(
 ): Promise<TrafficSplitObject> {
    // cache traffic split api version
    if (!trafficSplitAPIVersion)
-      trafficSplitAPIVersion = await kubectlUtils.getTrafficSplitAPIVersion(
-         kubectl
-      )
+      trafficSplitAPIVersion =
+         await kubectlUtils.getTrafficSplitAPIVersion(kubectl)
 
    // retrieve annotations for TS object
    const annotations = inputAnnotations
