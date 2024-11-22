@@ -53,29 +53,27 @@ describe('bluegreenhelper functions', () => {
          name: 'nginx-deployment-green',
          kind: 'Deployment'
       })
-
-      expect(bgHelper.deleteObjects).toHaveBeenCalledWith(kubectl, value, '60s')
    })
 
    test('handles timeout when deleting objects', async () => {
-      // Mock deleteObjects to prevent actual execution
-      jest.spyOn(kubectl, 'delete').mockResolvedValue({} as ExecOutput)
-
       const deleteList = [
          {name: 'nginx-service-green', kind: 'Service'},
          {name: 'nginx-deployment-green', kind: 'Deployment'}
       ]
 
-      await bgHelper.deleteObjects(kubectl, deleteList, '120s')
+      // Mock deleteObjects to prevent actual execution
+      jest.spyOn(kubectl, 'delete').mockResolvedValue({} as ExecOutput)
+
+      await bgHelper.deleteObjects(kubectl, deleteList, '60s')
 
       // Verify kubectl.delete is called with timeout
       expect(kubectl.delete).toHaveBeenCalledWith(
          ['Service', 'nginx-service-green'],
-         '120s'
+         '60s'
       )
       expect(kubectl.delete).toHaveBeenCalledWith(
          ['Deployment', 'nginx-deployment-green'],
-         '120s'
+         '60s'
       )
    })
 

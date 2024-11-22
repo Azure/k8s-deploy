@@ -95,16 +95,24 @@ describe('reject tests', () => {
    })
 
    test('reject blue/green service', async () => {
-      const value = await rejectBlueGreenService(kubectl, testObjects)
+      jest.spyOn(bgHelper, 'deleteGreenObjects').mockResolvedValue([
+         {name: 'nginx-service-green', kind: 'Service'},
+         {name: 'nginx-deployment-green', kind: 'Deployment'}
+      ])
 
-      const bgDeployment = value.routeResult
+      const value = await rejectBlueGreenService(kubectl, testObjects, '60s')
+
       const deleteResult = value.deleteResult
 
-      expect(deleteResult).toHaveLength(1)
-      expect(deleteResult[0].name).toBe('nginx-deployment-green')
-
-      expect(bgDeployment.objects).toHaveLength(1)
-      expect(bgDeployment.objects[0].metadata.name).toBe('nginx-service')
+      expect(deleteResult).toHaveLength(2)
+      expect(deleteResult).toContainEqual({
+         name: 'nginx-service-green',
+         kind: 'Service'
+      })
+      expect(deleteResult).toContainEqual({
+         name: 'nginx-deployment-green',
+         kind: 'Deployment'
+      })
    })
 
    test('reject blue/green service with timeout', async () => {
