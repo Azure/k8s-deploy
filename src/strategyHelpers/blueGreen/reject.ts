@@ -12,14 +12,16 @@ import {routeBlueGreenIngressUnchanged, routeBlueGreenService} from './route'
 
 export async function rejectBlueGreenIngress(
    kubectl: Kubectl,
-   manifestObjects: BlueGreenManifests
+   manifestObjects: BlueGreenManifests,
+   timeout?: string
 ): Promise<BlueGreenRejectResult> {
    // get all kubernetes objects defined in manifest files
    // route ingress to stables services
    const routeResult = await routeBlueGreenIngressUnchanged(
       kubectl,
       manifestObjects.serviceNameMap,
-      manifestObjects.ingressEntityList
+      manifestObjects.ingressEntityList,
+      timeout
    )
 
    // delete green services and deployments
@@ -28,7 +30,8 @@ export async function rejectBlueGreenIngress(
       [].concat(
          manifestObjects.deploymentEntityList,
          manifestObjects.serviceEntityList
-      )
+      ),
+      timeout
    )
 
    return {routeResult, deleteResult}
@@ -36,19 +39,22 @@ export async function rejectBlueGreenIngress(
 
 export async function rejectBlueGreenService(
    kubectl: Kubectl,
-   manifestObjects: BlueGreenManifests
+   manifestObjects: BlueGreenManifests,
+   timeout?: string
 ): Promise<BlueGreenRejectResult> {
    // route to stable objects
    const routeResult = await routeBlueGreenService(
       kubectl,
       NONE_LABEL_VALUE,
-      manifestObjects.serviceEntityList
+      manifestObjects.serviceEntityList,
+      timeout
    )
 
    // delete new deployments with green suffix
    const deleteResult = await deleteGreenObjects(
       kubectl,
-      manifestObjects.deploymentEntityList
+      manifestObjects.deploymentEntityList,
+      timeout
    )
 
    return {routeResult, deleteResult}
@@ -56,25 +62,29 @@ export async function rejectBlueGreenService(
 
 export async function rejectBlueGreenSMI(
    kubectl: Kubectl,
-   manifestObjects: BlueGreenManifests
+   manifestObjects: BlueGreenManifests,
+   timeout?: string
 ): Promise<BlueGreenRejectResult> {
    // route trafficsplit to stable deployments
    const routeResult = await routeBlueGreenSMI(
       kubectl,
       NONE_LABEL_VALUE,
-      manifestObjects.serviceEntityList
+      manifestObjects.serviceEntityList,
+      timeout
    )
 
    // delete rejected new bluegreen deployments
    const deletedObjects = await deleteGreenObjects(
       kubectl,
-      manifestObjects.deploymentEntityList
+      manifestObjects.deploymentEntityList,
+      timeout
    )
 
    // delete trafficsplit and extra services
    const cleanupResult = await cleanupSMI(
       kubectl,
-      manifestObjects.serviceEntityList
+      manifestObjects.serviceEntityList,
+      timeout
    )
 
    return {routeResult, deleteResult: [].concat(deletedObjects, cleanupResult)}

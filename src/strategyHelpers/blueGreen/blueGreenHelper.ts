@@ -32,7 +32,8 @@ export const STABLE_SUFFIX = '-stable'
 
 export async function deleteGreenObjects(
    kubectl: Kubectl,
-   toDelete: K8sObject[]
+   toDelete: K8sObject[],
+   timeout?: string
 ): Promise<K8sDeleteObject[]> {
    // const resourcesToDelete: K8sDeleteObject[] = []
    const resourcesToDelete: K8sDeleteObject[] = toDelete.map((obj) => {
@@ -45,18 +46,22 @@ export async function deleteGreenObjects(
 
    core.debug(`deleting green objects: ${JSON.stringify(resourcesToDelete)}`)
 
-   await deleteObjects(kubectl, resourcesToDelete)
+   await deleteObjects(kubectl, resourcesToDelete, timeout)
    return resourcesToDelete
 }
 
 export async function deleteObjects(
    kubectl: Kubectl,
-   deleteList: K8sDeleteObject[]
+   deleteList: K8sDeleteObject[],
+   timeout?: string
 ) {
    // delete services and deployments
    for (const delObject of deleteList) {
       try {
-         const result = await kubectl.delete([delObject.kind, delObject.name])
+         const result = await kubectl.delete(
+            [delObject.kind, delObject.name],
+            timeout
+         )
          checkForErrors([result])
       } catch (ex) {
          core.debug(`failed to delete object ${delObject.name}: ${ex}`)

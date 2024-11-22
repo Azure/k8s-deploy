@@ -17,7 +17,8 @@ import {parseTrafficSplitMethod} from '../types/trafficSplitMethod'
 export async function deploy(
    kubectl: Kubectl,
    manifestFilePaths: string[],
-   deploymentStrategy: DeploymentStrategy
+   deploymentStrategy: DeploymentStrategy,
+   timeout?: string
 ) {
    // update manifests
    const inputManifestFiles: string[] = updateManifestFiles(manifestFilePaths)
@@ -45,7 +46,7 @@ export async function deploy(
          KubernetesConstants.DiscoveryAndLoadBalancerResource.SERVICE
       ])
    )
-   await checkManifestStability(kubectl, resourceTypes)
+   await checkManifestStability(kubectl, resourceTypes, timeout)
    core.endGroup()
 
    // print ingresses

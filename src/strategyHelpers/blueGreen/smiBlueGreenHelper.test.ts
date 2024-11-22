@@ -191,10 +191,32 @@ describe('SMI Helper tests', () => {
       expect(valResult).toBe(false)
    })
 
-   test('cleanupSMI test', async () => {
+   test('cleanupSMI test without timeout', async () => {
       const deleteObjects = await cleanupSMI(kc, testObjects.serviceEntityList)
       expect(deleteObjects).toHaveLength(1)
       expect(deleteObjects[0].name).toBe('nginx-service-green')
       expect(deleteObjects[0].kind).toBe('Service')
+   })
+
+   test('cleanupSMI test with timeout', async () => {
+      jest.spyOn(bgHelper, 'deleteObjects').mockResolvedValue()
+
+      // Call cleanupSMI with a timeout
+      const deleteObjects = await cleanupSMI(
+         kc,
+         testObjects.serviceEntityList,
+         '120s'
+      )
+
+      // Assertions for returned delete list
+      expect(deleteObjects).toHaveLength(1)
+      expect(deleteObjects[0].name).toBe('nginx-service-green')
+      expect(deleteObjects[0].kind).toBe('Service')
+
+      expect(bgHelper.deleteObjects).toHaveBeenCalledWith(
+         kc,
+         deleteObjects,
+         '120s'
+      )
    })
 })

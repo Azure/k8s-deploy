@@ -138,9 +138,14 @@ function appendStableVersionLabelToResource(files: string[]): string[] {
 
 export async function checkManifestStability(
    kubectl: Kubectl,
-   resources: Resource[]
+   resources: Resource[],
+   timeout?: string
 ): Promise<void> {
-   await KubernetesManifestUtility.checkManifestStability(kubectl, resources)
+   await KubernetesManifestUtility.checkManifestStability(
+      kubectl,
+      resources,
+      timeout
+   )
 }
 
 export async function annotateAndLabelResources(

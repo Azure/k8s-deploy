@@ -80,6 +80,10 @@ inputs:
    skip-tls-verify:
       description: True if the insecure-skip-tls-verify option should be used. Input should be 'true' or 'false'.
       default: false
+   timeout:
+      description: 'Timeout for the rollout status'
+      required: false
+      default: 10m
 
 branding:
    color: 'green'

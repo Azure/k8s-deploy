@@ -26,8 +26,9 @@ export async function run() {
       .map((manifest) => manifest.trim()) // remove surrounding whitespace
       .filter((manifest) => manifest.length > 0) // remove any blanks
 
-   const fullManifestFilePaths =
-      await getFilesFromDirectoriesAndURLs(manifestFilePaths)
+   const fullManifestFilePaths = await getFilesFromDirectoriesAndURLs(
+      manifestFilePaths
+   )
    const kubectlPath = await getKubectlPath()
    const namespace = core.getInput('namespace') || 'default'
    const isPrivateCluster =
@@ -35,6 +36,7 @@ export async function run() {
    const resourceGroup = core.getInput('resource-group') || ''
    const resourceName = core.getInput('name') || ''
    const skipTlsVerify = core.getBooleanInput('skip-tls-verify')
+   const timeout = core.getInput('timeout') || '10m'
 
    const kubectl = isPrivateCluster
       ? new PrivateKubectl(
@@ -49,15 +51,15 @@ export async function run() {
    // run action
    switch (action) {
       case Action.DEPLOY: {
-         await deploy(kubectl, fullManifestFilePaths, strategy)
+         await deploy(kubectl, fullManifestFilePaths, strategy, timeout)
          break
       }
       case Action.PROMOTE: {
-         await promote(kubectl, fullManifestFilePaths, strategy)
+         await promote(kubectl, fullManifestFilePaths, strategy, timeout)
          break
       }
       case Action.REJECT: {
-         await reject(kubectl, fullManifestFilePaths, strategy)
+         await reject(kubectl, fullManifestFilePaths, strategy, timeout)
          break
       }
       default: {

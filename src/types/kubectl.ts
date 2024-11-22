@@ -173,7 +173,8 @@ export class Kubectl {
       resourceType: string,
       name: string,
       silentFailure: boolean = false,
-      namespace?: string
+      namespace?: string,
+      timeout?: string
    ): Promise<ExecOutput> {
       core.debug(
          'fetching resource of type ' + resourceType + ' and name ' + name
@@ -182,24 +183,54 @@ export class Kubectl {
          ['get', `${resourceType}/${name}`, '-o', 'json'].concat(
             this.getFlags(namespace)
          ),
-         silentFailure
+         silentFailure,
+         timeout
       )
    }
 
-   public executeCommand(command: string, args?: string) {
+   public executeCommand(command: string, args?: string, timeout?: string) {
       if (!command) throw new Error('Command must be defined')
       const a = args ? [args] : []
-      return this.execute([command, ...a.concat(this.getFlags())])
+      return this.execute(
+         [command, ...a.concat(this.getFlags())],
+         false,
+         timeout
+      )
    }
 
-   public delete(args: string | string[], namespace?: string) {
+   public delete(
+      args: string | string[],
+      namespace?: string,
+      timeout?: string
+   ) {
       if (typeof args === 'string')
-         return this.execute(['delete', args].concat(this.getFlags(namespace)))
-      return this.execute(['delete', ...args.concat(this.getFlags(namespace))])
+         return this.execute(
+            ['delete', args].concat(this.getFlags(namespace)),
+            false,
+            timeout
+         )
+      return this.execute(
+         ['delete', ...args.concat(this.getFlags(namespace))],
+         false,
+         timeout
+      )
    }
 
-   protected async execute(args: string[], silent: boolean = false) {
-      core.debug(`Kubectl run with command: ${this.kubectlPath} ${args}`)
+   protected async execute(
+      args: string[],
+      silent: boolean = false,
+      timeout?: string
+   ) {
+      // core.debug(`Kubectl run with command: ${this.kubectlPath} ${args}`)
+      core.debug(
+         `Kubectl run with command: ${this.kubectlPath} ${args.join(' ')}`
+      )
+
+      if (timeout) {
+         args.push(`--timeout=${timeout}`)
+      }
+
+      console.log('Final command args:', args)
 
       return await getExecOutput(this.kubectlPath, args, {
          silent

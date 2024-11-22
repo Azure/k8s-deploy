@@ -77,8 +77,9 @@ export async function createTrafficSplitObject(
 ): Promise<TrafficSplitObject> {
    // cache traffic split api version
    if (!trafficSplitAPIVersion)
-      trafficSplitAPIVersion =
-         await kubectlUtils.getTrafficSplitAPIVersion(kubectl)
+      trafficSplitAPIVersion = await kubectlUtils.getTrafficSplitAPIVersion(
+         kubectl
+      )
 
    // retrieve annotations for TS object
    const annotations = inputAnnotations
@@ -173,7 +174,8 @@ export async function validateTrafficSplitsState(
 
 export async function cleanupSMI(
    kubectl: Kubectl,
-   serviceEntityList: any[]
+   serviceEntityList: any[],
+   timeout?: string
 ): Promise<K8sDeleteObject[]> {
    const deleteList: K8sDeleteObject[] = []
 
@@ -189,7 +191,7 @@ export async function cleanupSMI(
    })
 
    // delete all objects
-   await deleteObjects(kubectl, deleteList)
+   await deleteObjects(kubectl, deleteList, timeout)
 
    return deleteList
 }
