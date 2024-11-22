@@ -42,21 +42,26 @@ import {parseRouteStrategy, RouteStrategy} from '../types/routeStrategy'
 export async function promote(
    kubectl: Kubectl,
    manifests: string[],
-   deploymentStrategy: DeploymentStrategy
+   deploymentStrategy: DeploymentStrategy,
+   timeout?: string
 ) {
    switch (deploymentStrategy) {
       case DeploymentStrategy.CANARY:
-         await promoteCanary(kubectl, manifests)
+         await promoteCanary(kubectl, manifests, timeout)
          break
       case DeploymentStrategy.BLUE_GREEN:
-         await promoteBlueGreen(kubectl, manifests)
+         await promoteBlueGreen(kubectl, manifests, timeout)
          break
       default:
          throw Error('Invalid promote deployment strategy')
    }
 }
 
-async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
+async function promoteCanary(
+   kubectl: Kubectl,
+   manifests: string[],
+   timeout?: string
+) {
    let includeServices = false
 
    const manifestFilesForDeployment: string[] = updateManifestFiles(manifests)
@@ -85,7 +90,8 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
       promoteResult = await SMICanaryDeploymentHelper.deploySMICanary(
          manifestFilesForDeployment,
          kubectl,
-         true
+         true,
+         timeout
       )
 
       core.endGroup()
@@ -94,7 +100,8 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
       const stableRedirectManifests =
          await SMICanaryDeploymentHelper.redirectTrafficToStableDeployment(
             kubectl,
-            manifests
+            manifests,
+            timeout
          )
 
       filesToAnnotate = promoteResult.manifestFiles.concat(
@@ -107,7 +114,8 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
       promoteResult = await PodCanaryHelper.deployPodCanary(
          manifestFilesForDeployment,
          kubectl,
-         true
+         true,
+         timeout
       )
       filesToAnnotate = promoteResult.manifestFiles
       core.endGroup()
@@ -139,7 +147,11 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
    core.endGroup()
 }
 
-async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
+async function promoteBlueGreen(
+   kubectl: Kubectl,
+   manifests: string[],
+   timeout?: string
+) {
    // update container images and pull secrets
    const inputManifestFiles: string[] = updateManifestFiles(manifests)
    const manifestObjects: BlueGreenManifests =
@@ -173,7 +185,11 @@ async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
          models.DiscoveryAndLoadBalancerResource.SERVICE
       ])
    )
-   await KubernetesManifestUtility.checkManifestStability(kubectl, resources)
+   await KubernetesManifestUtility.checkManifestStability(
+      kubectl,
+      resources,
+      timeout
+   )
    core.endGroup()
 
    core.startGroup(

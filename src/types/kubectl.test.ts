@@ -41,18 +41,18 @@ const otherNamespace = 'otherns'
 describe('Kubectl class', () => {
    describe('with a success exec return in testNamespace', () => {
       const kubectl = new Kubectl(kubectlPath, testNamespace)
-      const execReturn = {exitCode: 0, stdout: 'Output', stderr: ''}
+      const mockExecReturn = {exitCode: 0, stdout: 'Output', stderr: ''}
 
       beforeEach(() => {
          jest.spyOn(exec, 'getExecOutput').mockImplementation(async () => {
-            return execReturn
+            return mockExecReturn
          })
       })
 
       it('applies a configuration with a single config path', async () => {
          const configPaths = 'configPaths'
          const result = await kubectl.apply(configPaths)
-         expect(result).toBe(execReturn)
+         expect(result).toBe(mockExecReturn)
          expect(exec.getExecOutput).toBeCalledWith(
             kubectlPath,
             ['apply', '-f', configPaths, '--namespace', testNamespace],
@@ -63,7 +63,7 @@ describe('Kubectl class', () => {
       it('applies a configuration with multiple config paths', async () => {
          const configPaths = ['configPath1', 'configPath2', 'configPath3']
          const result = await kubectl.apply(configPaths)
-         expect(result).toBe(execReturn)
+         expect(result).toBe(mockExecReturn)
          expect(exec.getExecOutput).toBeCalledWith(
             kubectlPath,
             [
@@ -80,7 +80,7 @@ describe('Kubectl class', () => {
       it('applies a configuration with force when specified', async () => {
          const configPaths = ['configPath1', 'configPath2', 'configPath3']
          const result = await kubectl.apply(configPaths, true)
-         expect(result).toBe(execReturn)
+         expect(result).toBe(mockExecReturn)
          expect(exec.getExecOutput).toBeCalledWith(
             kubectlPath,
             [
@@ -95,11 +95,50 @@ describe('Kubectl class', () => {
          )
       })
 
+      it('applies a configuration with timeout when specified', async () => {
+         const configPaths = ['configPath1', 'configPath2', 'configPath3']
+         const timeout = '120s'
+         const result = await kubectl.apply(configPaths, false, timeout)
+         expect(result).toBe(mockExecReturn)
+         expect(exec.getExecOutput).toBeCalledWith(
+            kubectlPath,
+            [
+               'apply',
+               '-f',
+               configPaths[0] + ',' + configPaths[1] + ',' + configPaths[2],
+               `--timeout=${timeout}`,
+               '--namespace',
+               testNamespace
+            ],
+            {silent: false}
+         )
+      })
+
+      it('applies a configuration with force and timeout when specified', async () => {
+         const configPaths = ['configPath1', 'configPath2', 'configPath3']
+         const timeout = '120s'
+         const result = await kubectl.apply(configPaths, true, timeout)
+         expect(result).toBe(mockExecReturn)
+         expect(exec.getExecOutput).toBeCalledWith(
+            kubectlPath,
+            [
+               'apply',
+               '-f',
+               configPaths[0] + ',' + configPaths[1] + ',' + configPaths[2],
+               '--force',
+               `--timeout=${timeout}`,
+               '--namespace',
+               testNamespace
+            ],
+            {silent: false}
+         )
+      })
+
       it('describes a resource', async () => {
          const resourceType = 'type'
          const resourceName = 'name'
          const result = await kubectl.describe(resourceType, resourceName)
-         expect(result).toBe(execReturn)
+         expect(result).toBe(mockExecReturn)
          expect(exec.getExecOutput).toBeCalledWith(
             kubectlPath,
             [
@@ -137,7 +176,7 @@ describe('Kubectl class', () => {
          const resourceType = 'type'
          const resourceName = 'name'
          const result = await kubectl.describe(resourceType, resourceName, true)
-         expect(result).toBe(execReturn)
+         expect(result).toBe(mockExecReturn)
          expect(exec.getExecOutput).toBeCalledWith(
             kubectlPath,
             [
@@ -180,7 +219,7 @@ describe('Kubectl class', () => {
             resourceName,
             annotation
          )
-         expect(result).toBe(execReturn)
+         expect(result).toBe(mockExecReturn)
          expect(exec.getExecOutput).toBeCalledWith(
             kubectlPath,
             [
@@ -221,7 +260,7 @@ describe('Kubectl class', () => {
          const file = 'file'
          const annotation = 'annotation'
          const result = await kubectl.annotateFiles(file, annotation)
-         expect(result).toBe(execReturn)
+         expect(result).toBe(mockExecReturn)
          expect(exec.getExecOutput).toBeCalledWith(
             kubectlPath,
             [
@@ -257,7 +296,7 @@ describe('Kubectl class', () => {
          const files = ['file1', 'file2', 'file3']
          const annotation = 'annotation'
          const result = await kubectl.annotateFiles(files, annotation)
-         expect(result).toBe(execReturn)
+         expect(result).toBe(mockExecReturn)
          expect(exec.getExecOutput).toBeCalledWith(
             kubectlPath,
             [
@@ -293,7 +332,7 @@ describe('Kubectl class', () => {
          const file = 'file'
          const labels = ['label1', 'label2']
          const result = await kubectl.labelFiles(file, labels)
-         expect(result).toBe(execReturn)
+         expect(result).toBe(mockExecReturn)
          expect(exec.getExecOutput).toBeCalledWith(
             kubectlPath,
             [
@@ -328,7 +367,7 @@ describe('Kubectl class', () => {
          const files = ['file1', 'file2', 'file3']
          const labels = ['label1', 'label2']
          const result = await kubectl.labelFiles(files, labels)
-         expect(result).toBe(execReturn)
+         expect(result).toBe(mockExecReturn)
          expect(exec.getExecOutput).toBeCalledWith(
             kubectlPath,
             [
@@ -360,7 +399,7 @@ describe('Kubectl class', () => {
       })
 
       it('gets all pods', async () => {
-         expect(await kubectl.getAllPods()).toBe(execReturn)
+         expect(await kubectl.getAllPods()).toBe(mockExecReturn)
          expect(exec.getExecOutput).toBeCalledWith(
             kubectlPath,
             ['get', 'pods', '-o', 'json', '--namespace', testNamespace],
@@ -371,8 +410,9 @@ describe('Kubectl class', () => {
       it('checks rollout status', async () => {
          const resourceType = 'type'
          const name = 'name'
+         const timeout = '60s'
          expect(await kubectl.checkRolloutStatus(resourceType, name)).toBe(
-            execReturn
+            mockExecReturn
          )
          expect(exec.getExecOutput).toBeCalledWith(
             kubectlPath,
@@ -399,12 +439,54 @@ describe('Kubectl class', () => {
             ],
             {silent: false}
          )
+
+         // with timeout
+         await kubectl.checkRolloutStatus(
+            resourceType,
+            name,
+            testNamespace,
+            timeout
+         )
+         expect(exec.getExecOutput).toBeCalledWith(
+            kubectlPath,
+            [
+               'rollout',
+               'status',
+               `${resourceType}/${name}`,
+               '--namespace',
+               testNamespace,
+               `--timeout=${timeout}`
+            ],
+            {silent: false}
+         )
+
+         // overridden ns and timeout
+         await kubectl.checkRolloutStatus(
+            resourceType,
+            name,
+            otherNamespace,
+            timeout
+         )
+         expect(exec.getExecOutput).toBeCalledWith(
+            kubectlPath,
+            [
+               'rollout',
+               'status',
+               `${resourceType}/${name}`,
+               '--namespace',
+               otherNamespace,
+               `--timeout=${timeout}`
+            ],
+            {silent: false}
+         )
       })
 
       it('gets resource', async () => {
          const resourceType = 'type'
          const name = 'name'
-         expect(await kubectl.getResource(resourceType, name)).toBe(execReturn)
+         expect(await kubectl.getResource(resourceType, name)).toBe(
+            mockExecReturn
+         )
          expect(exec.getExecOutput).toBeCalledWith(
             kubectlPath,
             [
@@ -438,7 +520,7 @@ describe('Kubectl class', () => {
       it('executes a command', async () => {
          // no args
          const command = 'command'
-         expect(await kubectl.executeCommand(command)).toBe(execReturn)
+         expect(await kubectl.executeCommand(command)).toBe(mockExecReturn)
          expect(exec.getExecOutput).toBeCalledWith(
             kubectlPath,
             [command, '--namespace', testNamespace],
@@ -447,17 +529,37 @@ describe('Kubectl class', () => {
 
          // with args
          const args = 'args'
-         expect(await kubectl.executeCommand(command, args)).toBe(execReturn)
+         expect(await kubectl.executeCommand(command, args)).toBe(
+            mockExecReturn
+         )
          expect(exec.getExecOutput).toBeCalledWith(
             kubectlPath,
             [command, args, '--namespace', testNamespace],
+            {silent: false}
+         )
+
+         // with args and timeout
+         const timeout = '60s'
+         console.log('Testing executeCommand with timeout:', timeout)
+         expect(await kubectl.executeCommand(command, args, timeout)).toBe(
+            mockExecReturn
+         )
+         expect(exec.getExecOutput).toHaveBeenCalledWith(
+            kubectlPath,
+            [
+               'command',
+               'args',
+               '--namespace',
+               testNamespace,
+               `--timeout=${timeout}`
+            ],
             {silent: false}
          )
       })
 
       it('deletes with single argument', async () => {
          const arg = 'argument'
-         expect(await kubectl.delete(arg)).toBe(execReturn)
+         expect(await kubectl.delete(arg)).toBe(mockExecReturn)
          expect(exec.getExecOutput).toBeCalledWith(
             kubectlPath,
             ['delete', arg, '--namespace', testNamespace],
@@ -475,7 +577,7 @@ describe('Kubectl class', () => {
 
       it('deletes with multiple arguments', async () => {
          const args = ['argument1', 'argument2', 'argument3']
-         expect(await kubectl.delete(args)).toBe(execReturn)
+         expect(await kubectl.delete(args)).toBe(mockExecReturn)
          expect(exec.getExecOutput).toBeCalledWith(
             kubectlPath,
             ['delete', ...args, '--namespace', testNamespace],
