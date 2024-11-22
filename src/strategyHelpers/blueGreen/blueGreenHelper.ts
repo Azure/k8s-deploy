@@ -272,10 +272,11 @@ export async function fetchResource(
 
 export async function deployObjects(
    kubectl: Kubectl,
-   objectsList: any[]
+   objectsList: any[],
+   timeout?: string
 ): Promise<DeployResult> {
    const manifestFiles = fileHelper.writeObjectsToFile(objectsList)
-   const execResult = await kubectl.apply(manifestFiles)
+   const execResult = await kubectl.apply(manifestFiles, false, timeout)
 
    return {execResult, manifestFiles}
 }

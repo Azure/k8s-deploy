@@ -114,30 +114,54 @@ describe('SMI Helper tests', () => {
          testObjects.serviceEntityList[0].metadata.name,
          NONE_LABEL_VALUE
       )
-      expect(noneTsObject.metadata.name).toBe('nginx-service-trafficsplit')
-      for (let be of noneTsObject.spec.backends) {
-         if (be.service === 'nginx-service-stable') {
-            expect(be.weight).toBe(MAX_VAL)
-         }
-         if (be.service === 'nginx-service-green') {
-            expect(be.weight).toBe(MIN_VAL)
-         }
-      }
+      validateTrafficSplitObject(
+         noneTsObject,
+         'nginx-service-trafficsplit',
+         MAX_VAL,
+         MIN_VAL
+      )
 
       const greenTsObject: TrafficSplitObject = await createTrafficSplitObject(
          kc,
          testObjects.serviceEntityList[0].metadata.name,
          GREEN_LABEL_VALUE
       )
-      expect(greenTsObject.metadata.name).toBe('nginx-service-trafficsplit')
-      for (const be of greenTsObject.spec.backends) {
-         if (be.service === 'nginx-service-stable') {
-            expect(be.weight).toBe(MIN_VAL)
-         }
-         if (be.service === 'nginx-service-green') {
-            expect(be.weight).toBe(MAX_VAL)
-         }
-      }
+      validateTrafficSplitObject(
+         greenTsObject,
+         'nginx-service-trafficsplit',
+         MIN_VAL,
+         MAX_VAL
+      )
+   })
+
+   test('createTrafficSplitObject tests with timeout', async () => {
+      const timeout = '60s'
+
+      const noneTsObject: TrafficSplitObject = await createTrafficSplitObject(
+         kc,
+         testObjects.serviceEntityList[0].metadata.name,
+         NONE_LABEL_VALUE,
+         timeout
+      )
+      validateTrafficSplitObject(
+         noneTsObject,
+         'nginx-service-trafficsplit',
+         MAX_VAL,
+         MIN_VAL
+      )
+
+      const greenTsObject: TrafficSplitObject = await createTrafficSplitObject(
+         kc,
+         testObjects.serviceEntityList[0].metadata.name,
+         GREEN_LABEL_VALUE,
+         timeout
+      )
+      validateTrafficSplitObject(
+         greenTsObject,
+         'nginx-service-trafficsplit',
+         MIN_VAL,
+         MAX_VAL
+      )
    })
 
    test('getSMIServiceResource test', () => {
@@ -220,3 +244,20 @@ describe('SMI Helper tests', () => {
       )
    })
 })
+
+function validateTrafficSplitObject(
+   tsObject: TrafficSplitObject,
+   expectedName: string,
+   expectedStableWeight: number,
+   expectedGreenWeight: number
+) {
+   expect(tsObject.metadata.name).toBe(expectedName)
+   for (const be of tsObject.spec.backends) {
+      if (be.service === 'nginx-service-stable') {
+         expect(be.weight).toBe(expectedStableWeight)
+      }
+      if (be.service === 'nginx-service-green') {
+         expect(be.weight).toBe(expectedGreenWeight)
+      }
+   }
+}

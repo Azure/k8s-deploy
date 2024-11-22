@@ -34,7 +34,8 @@ export class Kubectl {
 
    public async apply(
       configurationPaths: string | string[],
-      force: boolean = false
+      force: boolean = false,
+      timeout?: string
    ): Promise<ExecOutput> {
       try {
          if (!configurationPaths || configurationPaths?.length === 0)
@@ -46,10 +47,12 @@ export class Kubectl {
             createInlineArray(configurationPaths)
          ]
          if (force) applyArgs.push('--force')
+         if (timeout) applyArgs.push(`--timeout=${timeout}`)
 
          return await this.execute(applyArgs.concat(this.getFlags()))
       } catch (err) {
          core.debug('Kubectl apply failed:' + err)
+         throw err
       }
    }
 
@@ -229,8 +232,6 @@ export class Kubectl {
       if (timeout) {
          args.push(`--timeout=${timeout}`)
       }
-
-      console.log('Final command args:', args)
 
       return await getExecOutput(this.kubectlPath, args, {
          silent

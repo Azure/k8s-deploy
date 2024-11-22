@@ -95,6 +95,45 @@ describe('Kubectl class', () => {
          )
       })
 
+      it('applies a configuration with timeout when specified', async () => {
+         const configPaths = ['configPath1', 'configPath2', 'configPath3']
+         const timeout = '120s'
+         const result = await kubectl.apply(configPaths, false, timeout)
+         expect(result).toBe(mockExecReturn)
+         expect(exec.getExecOutput).toBeCalledWith(
+            kubectlPath,
+            [
+               'apply',
+               '-f',
+               configPaths[0] + ',' + configPaths[1] + ',' + configPaths[2],
+               `--timeout=${timeout}`,
+               '--namespace',
+               testNamespace
+            ],
+            {silent: false}
+         )
+      })
+
+      it('applies a configuration with force and timeout when specified', async () => {
+         const configPaths = ['configPath1', 'configPath2', 'configPath3']
+         const timeout = '120s'
+         const result = await kubectl.apply(configPaths, true, timeout)
+         expect(result).toBe(mockExecReturn)
+         expect(exec.getExecOutput).toBeCalledWith(
+            kubectlPath,
+            [
+               'apply',
+               '-f',
+               configPaths[0] + ',' + configPaths[1] + ',' + configPaths[2],
+               '--force',
+               `--timeout=${timeout}`,
+               '--namespace',
+               testNamespace
+            ],
+            {silent: false}
+         )
+      })
+
       it('describes a resource', async () => {
          const resourceType = 'type'
          const resourceName = 'name'
