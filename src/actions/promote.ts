@@ -176,7 +176,11 @@ async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
          models.DiscoveryAndLoadBalancerResource.SERVICE
       ])
    )
-   await KubernetesManifestUtility.checkManifestStability(kubectl, resources, resourceType)
+   await KubernetesManifestUtility.checkManifestStability(
+      kubectl,
+      resources,
+      resourceType
+   )
    core.endGroup()
 
    core.startGroup(
