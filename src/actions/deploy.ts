@@ -46,7 +46,7 @@ export async function deploy(
       ])
    )
    const resourceType = core.getInput('resource-type') || ''
-   if (resourceType.toLowerCase() != 'Microsoft.ContainerService/fleets') {
+   if (resourceType.toLowerCase() != 'microsoft.containerservice/fleets') {
       await checkManifestStability(kubectl, resourceTypes)
    }
    core.endGroup()
