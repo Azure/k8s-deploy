@@ -141,7 +141,11 @@ export async function checkManifestStability(
    resources: Resource[],
    resourceType: string
 ): Promise<void> {
-   await KubernetesManifestUtility.checkManifestStability(kubectl, resources, resourceType)
+   await KubernetesManifestUtility.checkManifestStability(
+      kubectl,
+      resources,
+      resourceType
+   )
 }
 
 export async function annotateAndLabelResources(

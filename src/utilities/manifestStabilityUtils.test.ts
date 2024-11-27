@@ -15,7 +15,11 @@ describe('manifestStabilityUtils', () => {
    it('should return immediately if the resource type is microsoft.containerservice/fleets', async () => {
       const spy = jest.spyOn(manifestStabilityUtils, 'checkManifestStability')
       const checkRolloutStatusSpy = jest.spyOn(kc, 'checkRolloutStatus')
-      await manifestStabilityUtils.checkManifestStability(kc, resources, resourceType)
+      await manifestStabilityUtils.checkManifestStability(
+         kc,
+         resources,
+         resourceType
+      )
 
       expect(checkRolloutStatusSpy).not.toHaveBeenCalled()
       expect(spy).toHaveReturned()

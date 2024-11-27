@@ -12,9 +12,11 @@ export async function checkManifestStability(
    resources: Resource[],
    resourceType: string
 ): Promise<void> {
-    // Skip if resource type is microsoft.containerservice/fleets
-   if (resourceType.toLowerCase()=== 'microsoft.containerservice/fleets') {
-      core.info('Skipping checkManifestStability for microsoft.containerservice/fleets')
+   // Skip if resource type is microsoft.containerservice/fleets
+   if (resourceType.toLowerCase() === 'microsoft.containerservice/fleets') {
+      core.info(
+         'Skipping checkManifestStability for microsoft.containerservice/fleets'
+      )
       return
    }
    let rolloutStatusHasErrors = false
