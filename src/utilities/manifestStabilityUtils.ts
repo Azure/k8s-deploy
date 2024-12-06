@@ -9,8 +9,16 @@ const POD = 'pod'
 
 export async function checkManifestStability(
    kubectl: Kubectl,
-   resources: Resource[]
+   resources: Resource[],
+   resourceType: string
 ): Promise<void> {
+   // Skip if resource type is microsoft.containerservice/fleets
+   if (resourceType === 'microsoft.containerservice/fleets') {
+      core.info(
+         'Skipping checkManifestStability for microsoft.containerservice/fleets'
+      )
+      return
+   }
    let rolloutStatusHasErrors = false
    for (let i = 0; i < resources.length; i++) {
       const resource = resources[i]

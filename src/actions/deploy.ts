@@ -39,13 +39,17 @@ export async function deploy(
 
    // check manifest stability
    core.startGroup('Checking manifest stability')
+   const resourceType = (
+      core.getInput('resource-type') ||
+      'Microsoft.ContainerService/managedClusters'
+   ).toLowerCase()
    const resourceTypes: Resource[] = getResources(
       deployedManifestFiles,
       models.DEPLOYMENT_TYPES.concat([
          KubernetesConstants.DiscoveryAndLoadBalancerResource.SERVICE
       ])
    )
-   await checkManifestStability(kubectl, resourceTypes)
+   await checkManifestStability(kubectl, resourceTypes, resourceType)
    core.endGroup()
 
    // print ingresses

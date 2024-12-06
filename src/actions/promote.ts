@@ -166,6 +166,10 @@ async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
 
    // checking stability of newly created deployments
    core.startGroup('Checking manifest stability')
+   const resourceType = (
+      core.getInput('resource-type') ||
+      'Microsoft.ContainerService/managedClusters'
+   ).toLowerCase()
    const deployedManifestFiles = deployResult.manifestFiles
    const resources: Resource[] = getResources(
       deployedManifestFiles,
@@ -173,7 +177,11 @@ async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
          models.DiscoveryAndLoadBalancerResource.SERVICE
       ])
    )
-   await KubernetesManifestUtility.checkManifestStability(kubectl, resources)
+   await KubernetesManifestUtility.checkManifestStability(
+      kubectl,
+      resources,
+      resourceType
+   )
    core.endGroup()
 
    core.startGroup(
