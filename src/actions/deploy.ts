@@ -1,7 +1,7 @@
 import * as core from '@actions/core'
 import * as models from '../types/kubernetesTypes'
 import * as KubernetesConstants from '../types/kubernetesTypes'
-import {Kubectl, Resource} from '../types/kubectl'
+import { Kubectl, Resource } from '../types/kubectl'
 import {
    getResources,
    updateManifestFiles
@@ -11,8 +11,11 @@ import {
    checkManifestStability,
    deployManifests
 } from '../strategyHelpers/deploymentHelper'
-import {DeploymentStrategy} from '../types/deploymentStrategy'
-import {parseTrafficSplitMethod} from '../types/trafficSplitMethod'
+import { DeploymentStrategy } from '../types/deploymentStrategy'
+import { parseTrafficSplitMethod } from '../types/trafficSplitMethod'
+export const ResourceTypeManagedCluster = 'Microsoft.ContainerService/managedClusters'
+export const ResourceTypeFleet = 'Microsoft.ContainerService/fleets'
+export type ClusterType = typeof ResourceTypeManagedCluster | typeof ResourceTypeFleet
 
 export async function deploy(
    kubectl: Kubectl,
@@ -26,7 +29,7 @@ export async function deploy(
    // deploy manifests
    core.startGroup('Deploying manifests')
    const trafficSplitMethod = parseTrafficSplitMethod(
-      core.getInput('traffic-split-method', {required: true})
+      core.getInput('traffic-split-method', { required: true })
    )
    const deployedManifestFiles = await deployManifests(
       inputManifestFiles,
@@ -39,16 +42,22 @@ export async function deploy(
 
    // check manifest stability
    core.startGroup('Checking manifest stability')
-   const resourceType = (
-      core.getInput('resource-type') ||
-      'Microsoft.ContainerService/managedClusters'
-   ).toLowerCase()
+   const resourceTypeInput = (
+      core.getInput('resource-type') || ResourceTypeManagedCluster
+   )
    const resourceTypes: Resource[] = getResources(
       deployedManifestFiles,
       models.DEPLOYMENT_TYPES.concat([
          KubernetesConstants.DiscoveryAndLoadBalancerResource.SERVICE
       ])
    )
+   if (resourceTypeInput !== ResourceTypeManagedCluster && resourceTypeInput !== ResourceTypeFleet) {
+      core.setFailed(
+         `Invalid resource type: ${resourceTypeInput}. Supported resource types are: ${ResourceTypeManagedCluster} (default), ${ResourceTypeFleet}`
+      )
+   }
+   const resourceType: ClusterType = resourceTypeInput as ClusterType
+
    await checkManifestStability(kubectl, resourceTypes, resourceType)
    core.endGroup()
 
