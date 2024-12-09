@@ -6,7 +6,7 @@ import {
    getResources,
    updateManifestFiles
 } from '../utilities/manifestUpdateUtils'
-import { annotateAndLabelResources } from '../strategyHelpers/deploymentHelper'
+import {annotateAndLabelResources} from '../strategyHelpers/deploymentHelper'
 import * as models from '../types/kubernetesTypes'
 import * as KubernetesManifestUtility from '../utilities/manifestStabilityUtils'
 import {
@@ -15,8 +15,8 @@ import {
    NONE_LABEL_VALUE
 } from '../strategyHelpers/blueGreen/blueGreenHelper'
 
-import { BlueGreenManifests } from '../types/blueGreenTypes'
-import { DeployResult } from '../types/deployResult'
+import {BlueGreenManifests} from '../types/blueGreenTypes'
+import {DeployResult} from '../types/deployResult'
 
 import {
    promoteBlueGreenIngress,
@@ -30,15 +30,15 @@ import {
    routeBlueGreenSMI
 } from '../strategyHelpers/blueGreen/route'
 
-import { cleanupSMI } from '../strategyHelpers/blueGreen/smiBlueGreenHelper'
-import { Kubectl, Resource } from '../types/kubectl'
-import { DeploymentStrategy } from '../types/deploymentStrategy'
+import {cleanupSMI} from '../strategyHelpers/blueGreen/smiBlueGreenHelper'
+import {Kubectl, Resource} from '../types/kubectl'
+import {DeploymentStrategy} from '../types/deploymentStrategy'
 import {
    parseTrafficSplitMethod,
    TrafficSplitMethod
 } from '../types/trafficSplitMethod'
-import { parseRouteStrategy, RouteStrategy } from '../types/routeStrategy'
-import { ResourceTypeFleet, ResourceTypeManagedCluster } from './deploy'
+import {parseRouteStrategy, RouteStrategy} from '../types/routeStrategy'
+import {ResourceTypeFleet, ResourceTypeManagedCluster} from './deploy'
 
 export async function promote(
    kubectl: Kubectl,
@@ -63,7 +63,7 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
    const manifestFilesForDeployment: string[] = updateManifestFiles(manifests)
 
    const trafficSplitMethod = parseTrafficSplitMethod(
-      core.getInput('traffic-split-method', { required: true })
+      core.getInput('traffic-split-method', {required: true})
    )
    let promoteResult: DeployResult
    let filesToAnnotate: string[]
@@ -147,12 +147,12 @@ async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
       getManifestObjects(inputManifestFiles)
 
    const routeStrategy = parseRouteStrategy(
-      core.getInput('route-method', { required: true })
+      core.getInput('route-method', {required: true})
    )
 
    core.startGroup('Deleting old deployment and making new stable deployment')
 
-   const { deployResult } = await (async () => {
+   const {deployResult} = await (async () => {
       switch (routeStrategy) {
          case RouteStrategy.INGRESS:
             return await promoteBlueGreenIngress(kubectl, manifestObjects)
