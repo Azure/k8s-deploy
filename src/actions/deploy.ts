@@ -13,6 +13,12 @@ import {
 } from '../strategyHelpers/deploymentHelper'
 import {DeploymentStrategy} from '../types/deploymentStrategy'
 import {parseTrafficSplitMethod} from '../types/trafficSplitMethod'
+export const ResourceTypeManagedCluster =
+   'Microsoft.ContainerService/managedClusters'
+export const ResourceTypeFleet = 'Microsoft.ContainerService/fleets'
+export type ClusterType =
+   | typeof ResourceTypeManagedCluster
+   | typeof ResourceTypeFleet
 
 export async function deploy(
    kubectl: Kubectl,
@@ -39,17 +45,25 @@ export async function deploy(
 
    // check manifest stability
    core.startGroup('Checking manifest stability')
-   const resourceType = (
-      core.getInput('resource-type') ||
-      'Microsoft.ContainerService/managedClusters'
-   ).toLowerCase()
+   const resourceTypeInput =
+      core.getInput('resource-type') || ResourceTypeManagedCluster
    const resourceTypes: Resource[] = getResources(
       deployedManifestFiles,
       models.DEPLOYMENT_TYPES.concat([
          KubernetesConstants.DiscoveryAndLoadBalancerResource.SERVICE
       ])
    )
-   await checkManifestStability(kubectl, resourceTypes, resourceType)
+
+   if (
+      resourceTypeInput !== ResourceTypeManagedCluster &&
+      resourceTypeInput !== ResourceTypeFleet
+   ) {
+      let errMsg = `Invalid resource type: ${resourceTypeInput}. Supported resource types are: ${ResourceTypeManagedCluster} (default), ${ResourceTypeFleet}`
+      core.setFailed(errMsg)
+      throw new Error(errMsg)
+   }
+
+   await checkManifestStability(kubectl, resourceTypes, resourceTypeInput)
    core.endGroup()
 
    // print ingresses

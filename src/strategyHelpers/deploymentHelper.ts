@@ -35,6 +35,7 @@ import {
 } from '../utilities/githubUtils'
 import {getDeploymentConfig} from '../utilities/dockerUtils'
 import {DeployResult} from '../types/deployResult'
+import {ClusterType} from '../actions/deploy'
 
 export async function deployManifests(
    files: string[],
@@ -139,7 +140,7 @@ function appendStableVersionLabelToResource(files: string[]): string[] {
 export async function checkManifestStability(
    kubectl: Kubectl,
    resources: Resource[],
-   resourceType: string
+   resourceType: ClusterType
 ): Promise<void> {
    await KubernetesManifestUtility.checkManifestStability(
       kubectl,
