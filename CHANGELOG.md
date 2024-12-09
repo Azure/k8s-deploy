@@ -4,7 +4,7 @@
 
 ### Added
 
-- #356 Add fleet support
+-  #356 Add fleet support
 
 ## [5.0.0] - 2024-03-12
 

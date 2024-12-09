@@ -1,8 +1,8 @@
 import * as manifestStabilityUtils from './manifestStabilityUtils'
-import { Kubectl } from '../types/kubectl'
-import { ResourceTypeFleet, ResourceTypeManagedCluster } from '../actions/deploy'
-import { ExecOutput } from '@actions/exec'
-import { exitCode, stdout } from 'process'
+import {Kubectl} from '../types/kubectl'
+import {ResourceTypeFleet, ResourceTypeManagedCluster} from '../actions/deploy'
+import {ExecOutput} from '@actions/exec'
+import {exitCode, stdout} from 'process'
 
 describe('manifestStabilityUtils', () => {
    const kc = new Kubectl('')
@@ -29,15 +29,17 @@ describe('manifestStabilityUtils', () => {
 
    it('should run fully if the resource type is managedCluster', async () => {
       const spy = jest.spyOn(manifestStabilityUtils, 'checkManifestStability')
-      const checkRolloutStatusSpy = jest.spyOn(kc, 'checkRolloutStatus').mockImplementation(() => {
-         return new Promise<ExecOutput>((resolve, reject) => {
-            resolve({
-               exitCode: 0,
-               stderr: '',
-               stdout: ''
+      const checkRolloutStatusSpy = jest
+         .spyOn(kc, 'checkRolloutStatus')
+         .mockImplementation(() => {
+            return new Promise<ExecOutput>((resolve, reject) => {
+               resolve({
+                  exitCode: 0,
+                  stderr: '',
+                  stdout: ''
+               })
             })
          })
-      })
       await manifestStabilityUtils.checkManifestStability(
          kc,
          resources,
