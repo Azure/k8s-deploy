@@ -2,23 +2,23 @@ import * as fs from 'fs'
 import * as yaml from 'js-yaml'
 import * as canaryDeploymentHelper from './canary/canaryHelper'
 import * as models from '../types/kubernetesTypes'
-import { isDeploymentEntity } from '../types/kubernetesTypes'
+import {isDeploymentEntity} from '../types/kubernetesTypes'
 import * as fileHelper from '../utilities/fileUtils'
 import * as KubernetesManifestUtility from '../utilities/manifestStabilityUtils'
-import { Kubectl, Resource } from '../types/kubectl'
+import {Kubectl, Resource} from '../types/kubectl'
 
-import { deployPodCanary } from './canary/podCanaryHelper'
-import { deploySMICanary } from './canary/smiCanaryHelper'
-import { DeploymentConfig } from '../types/deploymentConfig'
-import { deployBlueGreen } from './blueGreen/deploy'
-import { DeploymentStrategy } from '../types/deploymentStrategy'
+import {deployPodCanary} from './canary/podCanaryHelper'
+import {deploySMICanary} from './canary/smiCanaryHelper'
+import {DeploymentConfig} from '../types/deploymentConfig'
+import {deployBlueGreen} from './blueGreen/deploy'
+import {DeploymentStrategy} from '../types/deploymentStrategy'
 import * as core from '@actions/core'
 import {
    parseTrafficSplitMethod,
    TrafficSplitMethod
 } from '../types/trafficSplitMethod'
-import { parseRouteStrategy } from '../types/routeStrategy'
-import { ExecOutput } from '@actions/exec'
+import {parseRouteStrategy} from '../types/routeStrategy'
+import {ExecOutput} from '@actions/exec'
 import {
    getWorkflowAnnotationKeyLabel,
    getWorkflowAnnotations,
@@ -33,9 +33,9 @@ import {
    getWorkflowFilePath,
    normalizeWorkflowStrLabel
 } from '../utilities/githubUtils'
-import { getDeploymentConfig } from '../utilities/dockerUtils'
-import { DeployResult } from '../types/deployResult'
-import { ClusterType } from '../actions/deploy'
+import {getDeploymentConfig} from '../utilities/dockerUtils'
+import {DeployResult} from '../types/deployResult'
+import {ClusterType} from '../actions/deploy'
 
 export async function deployManifests(
    files: string[],
@@ -56,7 +56,7 @@ export async function deployManifests(
 
       case DeploymentStrategy.BLUE_GREEN: {
          const routeStrategy = parseRouteStrategy(
-            core.getInput('route-method', { required: true })
+            core.getInput('route-method', {required: true})
          )
          const blueGreenDeployment = await deployBlueGreen(
             kubectl,
@@ -80,7 +80,7 @@ export async function deployManifests(
 
       case DeploymentStrategy.BASIC: {
          const trafficSplitMethod = parseTrafficSplitMethod(
-            core.getInput('traffic-split-method', { required: true })
+            core.getInput('traffic-split-method', {required: true})
          )
 
          const forceDeployment = core.getInput('force').toLowerCase() === 'true'
@@ -115,7 +115,7 @@ function appendStableVersionLabelToResource(files: string[]): string[] {
          const fileContents = fs.readFileSync(filePath).toString()
 
          yaml.loadAll(fileContents, function (inputObject) {
-            const kind = (inputObject as { kind: string }).kind
+            const kind = (inputObject as {kind: string}).kind
 
             if (isDeploymentEntity(kind)) {
                const updatedObject =
@@ -258,7 +258,7 @@ async function annotateResources(
          resource.type.toLowerCase() !==
          models.KubernetesWorkload.POD.toLowerCase()
       ) {
-         ; (
+         ;(
             await annotateChildPods(
                kubectl,
                resource.type,
