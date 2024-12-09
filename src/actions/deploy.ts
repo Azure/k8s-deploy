@@ -1,7 +1,7 @@
 import * as core from '@actions/core'
 import * as models from '../types/kubernetesTypes'
 import * as KubernetesConstants from '../types/kubernetesTypes'
-import {Kubectl, Resource} from '../types/kubectl'
+import { Kubectl, Resource } from '../types/kubectl'
 import {
    getResources,
    updateManifestFiles
@@ -11,8 +11,8 @@ import {
    checkManifestStability,
    deployManifests
 } from '../strategyHelpers/deploymentHelper'
-import {DeploymentStrategy} from '../types/deploymentStrategy'
-import {parseTrafficSplitMethod} from '../types/trafficSplitMethod'
+import { DeploymentStrategy } from '../types/deploymentStrategy'
+import { parseTrafficSplitMethod } from '../types/trafficSplitMethod'
 export const ResourceTypeManagedCluster =
    'Microsoft.ContainerService/managedClusters'
 export const ResourceTypeFleet = 'Microsoft.ContainerService/fleets'
@@ -32,7 +32,7 @@ export async function deploy(
    // deploy manifests
    core.startGroup('Deploying manifests')
    const trafficSplitMethod = parseTrafficSplitMethod(
-      core.getInput('traffic-split-method', {required: true})
+      core.getInput('traffic-split-method', { required: true })
    )
    const deployedManifestFiles = await deployManifests(
       inputManifestFiles,
@@ -53,17 +53,17 @@ export async function deploy(
          KubernetesConstants.DiscoveryAndLoadBalancerResource.SERVICE
       ])
    )
+
    if (
       resourceTypeInput !== ResourceTypeManagedCluster &&
       resourceTypeInput !== ResourceTypeFleet
    ) {
-      core.setFailed(
-         `Invalid resource type: ${resourceTypeInput}. Supported resource types are: ${ResourceTypeManagedCluster} (default), ${ResourceTypeFleet}`
-      )
+      let errMsg = `Invalid resource type: ${resourceTypeInput}. Supported resource types are: ${ResourceTypeManagedCluster} (default), ${ResourceTypeFleet}`
+      core.setFailed(errMsg)
+      throw new Error(errMsg)
    }
-   const resourceType: ClusterType = resourceTypeInput as ClusterType
 
-   await checkManifestStability(kubectl, resourceTypes, resourceType)
+   await checkManifestStability(kubectl, resourceTypes, resourceTypeInput)
    core.endGroup()
 
    // print ingresses
