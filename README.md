@@ -126,8 +126,8 @@ Following are the key capabilities of this action:
     <td>Acceptable values: true/false</br>Default value: false</br>True if the insecure-skip-tls-verify option should be used</td>
   </tr>
   <tr>
-  <td>resource-type</td>
-  <td>Acceptable values: `Microsoft.ContainerService/managedClusters` (default), 'Microsoft.ContainerService/fleets'</td>
+    <td>resource-type (Optional)</td>
+    <td>Acceptable values: `Microsoft.ContainerService/managedClusters` (default), 'Microsoft.ContainerService/fleets'</td>
   </tr>
 </table>
 
