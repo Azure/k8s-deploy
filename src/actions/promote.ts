@@ -6,7 +6,7 @@ import {
    getResources,
    updateManifestFiles
 } from '../utilities/manifestUpdateUtils'
-import {annotateAndLabelResources} from '../strategyHelpers/deploymentHelper'
+import { annotateAndLabelResources } from '../strategyHelpers/deploymentHelper'
 import * as models from '../types/kubernetesTypes'
 import * as KubernetesManifestUtility from '../utilities/manifestStabilityUtils'
 import {
@@ -15,8 +15,8 @@ import {
    NONE_LABEL_VALUE
 } from '../strategyHelpers/blueGreen/blueGreenHelper'
 
-import {BlueGreenManifests} from '../types/blueGreenTypes'
-import {DeployResult} from '../types/deployResult'
+import { BlueGreenManifests } from '../types/blueGreenTypes'
+import { DeployResult } from '../types/deployResult'
 
 import {
    promoteBlueGreenIngress,
@@ -30,14 +30,15 @@ import {
    routeBlueGreenSMI
 } from '../strategyHelpers/blueGreen/route'
 
-import {cleanupSMI} from '../strategyHelpers/blueGreen/smiBlueGreenHelper'
-import {Kubectl, Resource} from '../types/kubectl'
-import {DeploymentStrategy} from '../types/deploymentStrategy'
+import { cleanupSMI } from '../strategyHelpers/blueGreen/smiBlueGreenHelper'
+import { Kubectl, Resource } from '../types/kubectl'
+import { DeploymentStrategy } from '../types/deploymentStrategy'
 import {
    parseTrafficSplitMethod,
    TrafficSplitMethod
 } from '../types/trafficSplitMethod'
-import {parseRouteStrategy, RouteStrategy} from '../types/routeStrategy'
+import { parseRouteStrategy, RouteStrategy } from '../types/routeStrategy'
+import { ResourceTypeManagedCluster } from './deploy'
 
 export async function promote(
    kubectl: Kubectl,
@@ -62,7 +63,7 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
    const manifestFilesForDeployment: string[] = updateManifestFiles(manifests)
 
    const trafficSplitMethod = parseTrafficSplitMethod(
-      core.getInput('traffic-split-method', {required: true})
+      core.getInput('traffic-split-method', { required: true })
    )
    let promoteResult: DeployResult
    let filesToAnnotate: string[]
@@ -146,12 +147,12 @@ async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
       getManifestObjects(inputManifestFiles)
 
    const routeStrategy = parseRouteStrategy(
-      core.getInput('route-method', {required: true})
+      core.getInput('route-method', { required: true })
    )
 
    core.startGroup('Deleting old deployment and making new stable deployment')
 
-   const {deployResult} = await (async () => {
+   const { deployResult } = await (async () => {
       switch (routeStrategy) {
          case RouteStrategy.INGRESS:
             return await promoteBlueGreenIngress(kubectl, manifestObjects)
@@ -167,8 +168,7 @@ async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
    // checking stability of newly created deployments
    core.startGroup('Checking manifest stability')
    const resourceType = (
-      core.getInput('resource-type') ||
-      'Microsoft.ContainerService/managedClusters'
+      core.getInput('resource-type') || ResourceTypeManagedCluster
    ).toLowerCase()
    const deployedManifestFiles = deployResult.manifestFiles
    const resources: Resource[] = getResources(
@@ -177,6 +177,14 @@ async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
          models.DiscoveryAndLoadBalancerResource.SERVICE
       ])
    )
+   if (
+      resourceType !== ResourceTypeManagedCluster &&
+      resourceType !== 'fleet'
+   ) {
+      const errMsg = `Invalid resource type: ${resourceType}. Supported resource types are: ${ResourceTypeManagedCluster} (default), fleet`
+      core.setFailed(errMsg)
+      throw new Error(errMsg)
+   }
    await KubernetesManifestUtility.checkManifestStability(
       kubectl,
       resources,
