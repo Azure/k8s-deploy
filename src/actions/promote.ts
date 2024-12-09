@@ -167,9 +167,8 @@ async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
 
    // checking stability of newly created deployments
    core.startGroup('Checking manifest stability')
-   const resourceType = (
+   const resourceType =
       core.getInput('resource-type') || ResourceTypeManagedCluster
-   ).toLowerCase()
    const deployedManifestFiles = deployResult.manifestFiles
    const resources: Resource[] = getResources(
       deployedManifestFiles,
