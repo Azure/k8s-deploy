@@ -1,5 +1,11 @@
 # Changelog
 
+## [5.0.1] - 2024-03-12
+
+### Added
+
+- #356 Add fleet support
+
 ## [5.0.0] - 2024-03-12
 
 ### Changed
