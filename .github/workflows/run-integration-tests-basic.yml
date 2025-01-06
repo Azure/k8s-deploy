@@ -18,7 +18,7 @@ jobs:
          KUBECONFIG: /home/runner/.kube/config
          NAMESPACE: test-${{ github.run_id }}
       steps:
-         - uses: actions/checkout@v3
+         - uses: actions/checkout@v4
 
          - name: Install dependencies
            run: |
@@ -31,7 +31,7 @@ jobs:
          - name: Build
            run: ncc build src/run.ts -o lib
 
-         - uses: Azure/setup-kubectl@v3
+         - uses: Azure/setup-kubectl@v4
            name: Install Kubectl
 
          - id: setup-minikube
@@ -46,7 +46,7 @@ jobs:
          - name: Create namespace to run tests
            run: kubectl create ns ${{ env.NAMESPACE }}
 
-         - uses: actions/setup-python@v2
+         - uses: actions/setup-python@v5
            name: Install Python
            with:
               python-version: '3.x'
@@ -64,9 +64,13 @@ jobs:
               images: nginx:1.14.2
               manifests: |
                  test/integration/manifests/test.yml
+                 test/integration/manifests/manifest_test_dir/test.yml
               action: deploy
 
          - name: Checking if deployments and services were created
            run: |
               python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Deployment name=nginx-deployment containerName=nginx:1.14.2 labels=app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_basic selectorLabels=app:nginx
               python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Service name=nginx-service labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_basic selectorLabels=app:nginx
+
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Deployment name=nginx-deployment3 containerName=nginx:1.14.2 labels=app:nginx3,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_basic selectorLabels=app:nginx3
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE }} kind=Service name=nginx-service3 labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_basic selectorLabels=app:nginx3

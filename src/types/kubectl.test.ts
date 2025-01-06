@@ -39,17 +39,6 @@ const testNamespace = 'testNamespace'
 const defaultNamespace = 'default'
 const otherNamespace = 'otherns'
 describe('Kubectl class', () => {
-   describe('default namespace behavior', () => {
-      const kubectl = new Kubectl(kubectlPath, defaultNamespace)
-      const execReturn = {exitCode: 0, stdout: 'Output', stderr: ''}
-
-      beforeEach(() => {
-         jest.spyOn(exec, 'getExecOutput').mockImplementation(async () => {
-            return execReturn
-         })
-      })
-   })
-
    describe('with a success exec return in testNamespace', () => {
       const kubectl = new Kubectl(kubectlPath, testNamespace)
       const execReturn = {exitCode: 0, stdout: 'Output', stderr: ''}

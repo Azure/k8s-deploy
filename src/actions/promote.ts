@@ -38,6 +38,7 @@ import {
    TrafficSplitMethod
 } from '../types/trafficSplitMethod'
 import {parseRouteStrategy, RouteStrategy} from '../types/routeStrategy'
+import {ResourceTypeFleet, ResourceTypeManagedCluster} from './deploy'
 
 export async function promote(
    kubectl: Kubectl,
@@ -166,6 +167,8 @@ async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
 
    // checking stability of newly created deployments
    core.startGroup('Checking manifest stability')
+   const resourceType =
+      core.getInput('resource-type') || ResourceTypeManagedCluster
    const deployedManifestFiles = deployResult.manifestFiles
    const resources: Resource[] = getResources(
       deployedManifestFiles,
@@ -173,7 +176,19 @@ async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
          models.DiscoveryAndLoadBalancerResource.SERVICE
       ])
    )
-   await KubernetesManifestUtility.checkManifestStability(kubectl, resources)
+   if (
+      resourceType !== ResourceTypeManagedCluster &&
+      resourceType !== ResourceTypeFleet
+   ) {
+      const errMsg = `Invalid resource type: ${resourceType}. Supported resource types are: ${ResourceTypeManagedCluster} (default), fleet`
+      core.setFailed(errMsg)
+      throw new Error(errMsg)
+   }
+   await KubernetesManifestUtility.checkManifestStability(
+      kubectl,
+      resources,
+      resourceType
+   )
    core.endGroup()
 
    core.startGroup(
