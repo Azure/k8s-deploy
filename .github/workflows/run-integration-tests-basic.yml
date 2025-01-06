@@ -13,7 +13,7 @@ on:
 jobs:
    run-integration-test:
       name: Run Minikube Integration Tests
-      runs-on: ubuntu-latest
+      runs-on: ubuntu-22.04
       env:
          KUBECONFIG: /home/runner/.kube/config
          NAMESPACE: test-${{ github.run_id }}
