@@ -45,9 +45,9 @@ jobs:
 
          - name: Install linkerd and add controlplane to cluster
            run: |
-              curl --proto '=https' --tlsv1.2 -sSfL https://run.linkerd.io/install | sh
-              curl -sL https://linkerd.github.io/linkerd-smi/install | sh
+              curl --proto '=https' --tlsv1.2 -sSfL https://run.linkerd.io/install-edge | sh
               export PATH=$PATH:/home/runner/.linkerd2/bin
+              kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.0/standard-install.yaml
 
               linkerd install --crds | kubectl apply -f -
               linkerd install --set proxyInit.runAsRoot=true | kubectl apply -f -
