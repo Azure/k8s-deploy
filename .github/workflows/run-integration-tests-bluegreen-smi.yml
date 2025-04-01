@@ -47,6 +47,7 @@ jobs:
            run: |
               curl --proto '=https' --tlsv1.2 -sSfL https://run.linkerd.io/install-edge | sh
               export PATH=$PATH:/home/runner/.linkerd2/bin
+              curl -sL https://linkerd.github.io/linkerd-smi/install | sh
               kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.0/standard-install.yaml
 
               linkerd install --crds | kubectl apply -f -
