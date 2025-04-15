@@ -80,6 +80,10 @@ inputs:
    skip-tls-verify:
       description: True if the insecure-skip-tls-verify option should be used. Input should be 'true' or 'false'.
       default: false
+   resource-type:
+      description: Either Microsoft.ContainerService/managedClusters or Microsoft.ContainerService/fleets'.
+      required: false
+      default: 'Microsoft.ContainerService/managedClusters'
 
 branding:
    color: 'green'
