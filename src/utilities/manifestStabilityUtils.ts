@@ -11,10 +11,10 @@ const POD = 'pod'
 export async function checkManifestStability(
    kubectl: Kubectl,
    resources: Resource[],
-   clusterTyper: ClusterType
+   clusterType: ClusterType
 ): Promise<void> {
    // Skip if resource type is microsoft.containerservice/fleets
-   if (clusterTyper === ResourceTypeFleet) {
+   if (clusterType === ResourceTypeFleet) {
       core.info(`Skipping checkManifestStability for ${ResourceTypeFleet}`)
       return
    }

@@ -23,7 +23,8 @@ export type ClusterType =
 export async function deploy(
    kubectl: Kubectl,
    manifestFilePaths: string[],
-   deploymentStrategy: DeploymentStrategy
+   deploymentStrategy: DeploymentStrategy,
+   clusterType: ClusterType
 ) {
    // update manifests
    const inputManifestFiles: string[] = updateManifestFiles(manifestFilePaths)
@@ -45,8 +46,6 @@ export async function deploy(
 
    // check manifest stability
    core.startGroup('Checking manifest stability')
-   const resourceTypeInput =
-      core.getInput('resource-type') || ResourceTypeManagedCluster
    const resourceTypes: Resource[] = getResources(
       deployedManifestFiles,
       models.DEPLOYMENT_TYPES.concat([
@@ -54,16 +53,7 @@ export async function deploy(
       ])
    )
 
-   if (
-      resourceTypeInput !== ResourceTypeManagedCluster &&
-      resourceTypeInput !== ResourceTypeFleet
-   ) {
-      let errMsg = `Invalid resource type: ${resourceTypeInput}. Supported resource types are: ${ResourceTypeManagedCluster} (default), ${ResourceTypeFleet}`
-      core.setFailed(errMsg)
-      throw new Error(errMsg)
-   }
-
-   await checkManifestStability(kubectl, resourceTypes, resourceTypeInput)
+   await checkManifestStability(kubectl, resourceTypes, clusterType)
    core.endGroup()
 
    // print ingresses
