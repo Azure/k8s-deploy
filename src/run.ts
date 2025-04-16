@@ -1,18 +1,18 @@
 import * as core from '@actions/core'
-import { getKubectlPath, Kubectl } from './types/kubectl'
+import {getKubectlPath, Kubectl} from './types/kubectl'
 import {
    ClusterType,
    deploy,
    ResourceTypeFleet,
    ResourceTypeManagedCluster
 } from './actions/deploy'
-import { promote } from './actions/promote'
-import { reject } from './actions/reject'
-import { Action, parseAction } from './types/action'
-import { parseDeploymentStrategy } from './types/deploymentStrategy'
-import { getFilesFromDirectoriesAndURLs } from './utilities/fileUtils'
-import { PrivateKubectl } from './types/privatekubectl'
-import { parseResourceTypeInput } from './inputUtils'
+import {promote} from './actions/promote'
+import {reject} from './actions/reject'
+import {Action, parseAction} from './types/action'
+import {parseDeploymentStrategy} from './types/deploymentStrategy'
+import {getFilesFromDirectoriesAndURLs} from './utilities/fileUtils'
+import {PrivateKubectl} from './types/privatekubectl'
+import {parseResourceTypeInput} from './inputUtils'
 
 export async function run() {
    // verify kubeconfig is set
@@ -23,10 +23,10 @@ export async function run() {
 
    // get inputs
    const action: Action | undefined = parseAction(
-      core.getInput('action', { required: true })
+      core.getInput('action', {required: true})
    )
    const strategy = parseDeploymentStrategy(core.getInput('strategy'))
-   const manifestsInput = core.getInput('manifests', { required: true })
+   const manifestsInput = core.getInput('manifests', {required: true})
    const manifestFilePaths = manifestsInput
       .split(/[\n,;]+/) // split into each individual manifest
       .map((manifest) => manifest.trim()) // remove surrounding whitespace
@@ -47,12 +47,12 @@ export async function run() {
 
    const kubectl = isPrivateCluster
       ? new PrivateKubectl(
-         kubectlPath,
-         namespace,
-         skipTlsVerify,
-         resourceGroup,
-         resourceName
-      )
+           kubectlPath,
+           namespace,
+           skipTlsVerify,
+           resourceGroup,
+           resourceName
+        )
       : new Kubectl(kubectlPath, namespace, skipTlsVerify)
 
    // run action
