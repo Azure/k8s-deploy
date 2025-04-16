@@ -4,7 +4,7 @@
 
 ### Added
 
-- #398 case-insensitive resource type 
+- #398 case-insensitive resource type
 
 ## [5.0.2] - 2025-04-15
 
