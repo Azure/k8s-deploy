@@ -3,7 +3,8 @@ import * as KubernetesConstants from '../types/kubernetesTypes'
 import {Kubectl, Resource} from '../types/kubectl'
 import {checkForErrors} from './kubectlUtils'
 import {sleep} from './timeUtils'
-import {ClusterType, ResourceTypeFleet} from '../actions/deploy'
+import {ResourceTypeFleet} from '../actions/deploy'
+import {ClusterType} from '../inputUtils'
 
 const IS_SILENT = false
 const POD = 'pod'
@@ -11,10 +12,10 @@ const POD = 'pod'
 export async function checkManifestStability(
    kubectl: Kubectl,
    resources: Resource[],
-   clusterType: ClusterType
+   resourceType: ClusterType
 ): Promise<void> {
    // Skip if resource type is microsoft.containerservice/fleets
-   if (clusterType === ResourceTypeFleet) {
+   if (resourceType === ResourceTypeFleet) {
       core.info(`Skipping checkManifestStability for ${ResourceTypeFleet}`)
       return
    }

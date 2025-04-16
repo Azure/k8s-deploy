@@ -1,13 +1,9 @@
 import * as core from '@actions/core'
-import { parseAnnotations } from './types/annotations'
-import {
-   ClusterType,
-   ResourceTypeFleet,
-   ResourceTypeManagedCluster
-} from './actions/deploy'
+import {parseAnnotations} from './types/annotations'
+import {ResourceTypeFleet, ResourceTypeManagedCluster} from './actions/deploy'
 
 export const inputAnnotations = parseAnnotations(
-   core.getInput('annotations', { required: false })
+   core.getInput('annotations', {required: false})
 )
 
 export function getBufferTime(): number {
@@ -31,3 +27,6 @@ export function parseResourceTypeInput(rawInput: string): ClusterType {
       `Invalid resource type: ${rawInput}. Supported resource types are: ${ResourceTypeManagedCluster} (default), ${ResourceTypeFleet}`
    )
 }
+export type ClusterType =
+   | typeof ResourceTypeManagedCluster
+   | typeof ResourceTypeFleet

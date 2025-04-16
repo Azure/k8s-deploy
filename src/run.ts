@@ -1,11 +1,11 @@
 import * as core from '@actions/core'
 import {getKubectlPath, Kubectl} from './types/kubectl'
 import {
-   ClusterType,
    deploy,
    ResourceTypeFleet,
    ResourceTypeManagedCluster
 } from './actions/deploy'
+import {ClusterType} from './inputUtils'
 import {promote} from './actions/promote'
 import {reject} from './actions/reject'
 import {Action, parseAction} from './types/action'

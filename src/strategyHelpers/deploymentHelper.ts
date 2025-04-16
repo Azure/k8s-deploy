@@ -35,7 +35,7 @@ import {
 } from '../utilities/githubUtils'
 import {getDeploymentConfig} from '../utilities/dockerUtils'
 import {DeployResult} from '../types/deployResult'
-import {ClusterType} from '../actions/deploy'
+import {ClusterType} from '../inputUtils'
 
 export async function deployManifests(
    files: string[],
