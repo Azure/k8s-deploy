@@ -42,9 +42,10 @@ export async function run() {
    const resourceName = core.getInput('name') || ''
    const skipTlsVerify = core.getBooleanInput('skip-tls-verify')
 
-   const resourceTypeInput = core.getInput('resource-type')
    let resourceType: ClusterType
    try {
+      // included in the trycatch to allow raw input to go out of scope after parsing
+      const resourceTypeInput = core.getInput('resource-type')
       resourceType = parseResourceTypeInput(resourceTypeInput)
    } catch (e) {
       core.setFailed(e)
