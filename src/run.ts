@@ -43,7 +43,13 @@ export async function run() {
    const skipTlsVerify = core.getBooleanInput('skip-tls-verify')
 
    const resourceTypeInput = core.getInput('resource-type')
-   const resourceType = parseResourceTypeInput(resourceTypeInput)
+   let resourceType: ClusterType
+   try {
+      resourceType = parseResourceTypeInput(resourceTypeInput)
+   } catch (e) {
+      core.setFailed(e)
+      return
+   }
 
    const kubectl = isPrivateCluster
       ? new PrivateKubectl(
@@ -62,7 +68,7 @@ export async function run() {
          break
       }
       case Action.PROMOTE: {
-         await promote(kubectl, fullManifestFilePaths, strategy)
+         await promote(kubectl, fullManifestFilePaths, strategy, resourceType)
          break
       }
       case Action.REJECT: {
