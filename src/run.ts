@@ -1,12 +1,18 @@
 import * as core from '@actions/core'
 import {getKubectlPath, Kubectl} from './types/kubectl'
-import {deploy} from './actions/deploy'
+import {
+   deploy,
+   ResourceTypeFleet,
+   ResourceTypeManagedCluster
+} from './actions/deploy'
+import {ClusterType} from './inputUtils'
 import {promote} from './actions/promote'
 import {reject} from './actions/reject'
 import {Action, parseAction} from './types/action'
 import {parseDeploymentStrategy} from './types/deploymentStrategy'
 import {getFilesFromDirectoriesAndURLs} from './utilities/fileUtils'
 import {PrivateKubectl} from './types/privatekubectl'
+import {parseResourceTypeInput} from './inputUtils'
 
 export async function run() {
    // verify kubeconfig is set
@@ -36,6 +42,16 @@ export async function run() {
    const resourceName = core.getInput('name') || ''
    const skipTlsVerify = core.getBooleanInput('skip-tls-verify')
 
+   let resourceType: ClusterType
+   try {
+      // included in the trycatch to allow raw input to go out of scope after parsing
+      const resourceTypeInput = core.getInput('resource-type')
+      resourceType = parseResourceTypeInput(resourceTypeInput)
+   } catch (e) {
+      core.setFailed(e)
+      return
+   }
+
    const kubectl = isPrivateCluster
       ? new PrivateKubectl(
            kubectlPath,
@@ -49,11 +65,11 @@ export async function run() {
    // run action
    switch (action) {
       case Action.DEPLOY: {
-         await deploy(kubectl, fullManifestFilePaths, strategy)
+         await deploy(kubectl, fullManifestFilePaths, strategy, resourceType)
          break
       }
       case Action.PROMOTE: {
-         await promote(kubectl, fullManifestFilePaths, strategy)
+         await promote(kubectl, fullManifestFilePaths, strategy, resourceType)
          break
       }
       case Action.REJECT: {

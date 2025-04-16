@@ -1,5 +1,17 @@
 # Changelog
 
+## [5.0.3] - 2025-04-16
+
+### Added
+
+- #398 case-insensitive resource type
+
+## [5.0.2] - 2025-04-15
+
+### Added
+
+- #396 Update new resource-type input for action
+
 ## [5.0.1] - 2024-03-12
 
 ### Added

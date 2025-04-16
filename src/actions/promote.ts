@@ -38,19 +38,20 @@ import {
    TrafficSplitMethod
 } from '../types/trafficSplitMethod'
 import {parseRouteStrategy, RouteStrategy} from '../types/routeStrategy'
-import {ResourceTypeFleet, ResourceTypeManagedCluster} from './deploy'
+import {ClusterType} from '../inputUtils'
 
 export async function promote(
    kubectl: Kubectl,
    manifests: string[],
-   deploymentStrategy: DeploymentStrategy
+   deploymentStrategy: DeploymentStrategy,
+   resourceType: ClusterType
 ) {
    switch (deploymentStrategy) {
       case DeploymentStrategy.CANARY:
          await promoteCanary(kubectl, manifests)
          break
       case DeploymentStrategy.BLUE_GREEN:
-         await promoteBlueGreen(kubectl, manifests)
+         await promoteBlueGreen(kubectl, manifests, resourceType)
          break
       default:
          throw Error('Invalid promote deployment strategy')
@@ -140,7 +141,11 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
    core.endGroup()
 }
 
-async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
+async function promoteBlueGreen(
+   kubectl: Kubectl,
+   manifests: string[],
+   resourceType: ClusterType
+) {
    // update container images and pull secrets
    const inputManifestFiles: string[] = updateManifestFiles(manifests)
    const manifestObjects: BlueGreenManifests =
@@ -167,8 +172,6 @@ async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
 
    // checking stability of newly created deployments
    core.startGroup('Checking manifest stability')
-   const resourceType =
-      core.getInput('resource-type') || ResourceTypeManagedCluster
    const deployedManifestFiles = deployResult.manifestFiles
    const resources: Resource[] = getResources(
       deployedManifestFiles,
@@ -176,14 +179,6 @@ async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
          models.DiscoveryAndLoadBalancerResource.SERVICE
       ])
    )
-   if (
-      resourceType !== ResourceTypeManagedCluster &&
-      resourceType !== ResourceTypeFleet
-   ) {
-      const errMsg = `Invalid resource type: ${resourceType}. Supported resource types are: ${ResourceTypeManagedCluster} (default), fleet`
-      core.setFailed(errMsg)
-      throw new Error(errMsg)
-   }
    await KubernetesManifestUtility.checkManifestStability(
       kubectl,
       resources,
