@@ -75,7 +75,7 @@ inputs:
       description: 'Name of resource group - Only required if using private cluster'
       required: false
    name:
-      description: 'Resource group name - Only required if using private cluster'
+      description: 'Name of the private cluster - Only required if using private cluster'
       required: false
    skip-tls-verify:
       description: True if the insecure-skip-tls-verify option should be used. Input should be 'true' or 'false'.
