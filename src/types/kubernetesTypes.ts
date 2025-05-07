@@ -32,6 +32,7 @@ export const WORKLOAD_TYPES: string[] = [
    'replicaset',
    'daemonset',
    'pod',
+   'scaledjob',
    'statefulset',
    'job',
    'cronjob'
