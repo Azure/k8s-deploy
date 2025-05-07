@@ -106,7 +106,8 @@ export async function deploySMICanary(
    )
    const newFilePaths = fileHelper.writeObjectsToFile(newObjectsList)
    const forceDeployment = core.getInput('force').toLowerCase() === 'true'
-   const result = await kubectl.apply(newFilePaths, forceDeployment)
+   const serverSideDeployment = core.getInput('server-side').toLowerCase() === 'true'
+   const result = await kubectl.apply(newFilePaths, forceDeployment, serverSideDeployment)
    const svcDeploymentFiles = await createCanaryService(kubectl, filePaths)
    newFilePaths.push(...svcDeploymentFiles)
    return {execResult: result, manifestFiles: newFilePaths}
@@ -210,8 +211,9 @@ async function createCanaryService(
    const manifestFiles = fileHelper.writeObjectsToFile(newObjectsList)
    manifestFiles.push(...trafficObjectsList)
    const forceDeployment = core.getInput('force').toLowerCase() === 'true'
+   const serverSideDeployment = core.getInput('server-side').toLowerCase() === 'true'
 
-   const result = await kubectl.apply(manifestFiles, forceDeployment)
+   const result = await kubectl.apply(manifestFiles, forceDeployment, server-side)
    checkForErrors([result])
    return manifestFiles
 }
@@ -275,7 +277,8 @@ async function adjustTraffic(
    }
 
    const forceDeployment = core.getInput('force').toLowerCase() === 'true'
-   const result = await kubectl.apply(trafficSplitManifests, forceDeployment)
+   const serverSideDeployment = core.getInput('server-side').toLowerCase() === 'true'
+   const result = await kubectl.apply(trafficSplitManifests, forceDeployment, serverSideDeployment)
    checkForErrors([result])
    return trafficSplitManifests
 }
