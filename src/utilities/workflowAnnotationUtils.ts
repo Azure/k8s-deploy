@@ -2,6 +2,8 @@ import {DeploymentConfig} from '../types/deploymentConfig'
 
 const ANNOTATION_PREFIX = 'actions.github.com'
 
+export const VALID_LABEL_REGEX = /([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9]/
+
 export function getWorkflowAnnotations(
    lastSuccessRunSha: string,
    workflowFilePath: string,
@@ -37,11 +39,17 @@ export function getWorkflowAnnotationKeyLabel(): string {
  * @returns cleaned label
  */
 export function cleanLabel(label: string): string {
-   let removedInvalidChars = label
+   let removedInvalidChars = removeInvalidLabelCharacters(label)
+
+   const regexResult = VALID_LABEL_REGEX.exec(removedInvalidChars) || [
+      'github-workflow-file'
+   ]
+   return regexResult[0]
+}
+
+export function removeInvalidLabelCharacters(label: string): string {
+   return label
       .replace(/\s/gi, '_')
       .replace(/[\/\\\|]/gi, '-')
       .replace(/[^-A-Za-z0-9_.]/gi, '')
-
-   const regex = /([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9]/
-   return regex.exec(removedInvalidChars)[0] || ''
 }

@@ -38,7 +38,8 @@ export async function deleteGreenObjects(
    const resourcesToDelete: K8sDeleteObject[] = toDelete.map((obj) => {
       return {
          name: getBlueGreenResourceName(obj.metadata.name, GREEN_SUFFIX),
-         kind: obj.kind
+         kind: obj.kind,
+         namespace: obj.metadata.namespace
       }
    })
 
@@ -66,38 +67,46 @@ export async function deleteObjects(
 // other common functions
 export function getManifestObjects(filePaths: string[]): BlueGreenManifests {
    const deploymentEntityList: K8sObject[] = []
+   const serviceEntityList: K8sObject[] = []
    const routedServiceEntityList: K8sObject[] = []
    const unroutedServiceEntityList: K8sObject[] = []
    const ingressEntityList: K8sObject[] = []
    const otherEntitiesList: K8sObject[] = []
    const serviceNameMap = new Map<string, string>()
 
+   // Manifest objects per type. All resources should be parsed and
+   // organized before we can check if services are “routed” or not.
    filePaths.forEach((filePath: string) => {
-      const fileContents = fs.readFileSync(filePath).toString()
-      yaml.safeLoadAll(fileContents, (inputObject) => {
-         if (!!inputObject) {
-            const kind = inputObject.kind
-            const name = inputObject.metadata.name
-
-            if (isDeploymentEntity(kind)) {
-               deploymentEntityList.push(inputObject)
-            } else if (isServiceEntity(kind)) {
-               if (isServiceRouted(inputObject, deploymentEntityList)) {
-                  routedServiceEntityList.push(inputObject)
-                  serviceNameMap.set(
-                     name,
-                     getBlueGreenResourceName(name, GREEN_SUFFIX)
-                  )
+      try {
+         const fileContents = fs.readFileSync(filePath).toString()
+         yaml.loadAll(fileContents, (inputObject: any) => {
+            if (!!inputObject) {
+               const kind = inputObject.kind
+               if (isDeploymentEntity(kind)) {
+                  deploymentEntityList.push(inputObject)
+               } else if (isServiceEntity(kind)) {
+                  serviceEntityList.push(inputObject)
+               } else if (isIngressEntity(kind)) {
+                  ingressEntityList.push(inputObject)
                } else {
-                  unroutedServiceEntityList.push(inputObject)
+                  otherEntitiesList.push(inputObject)
                }
-            } else if (isIngressEntity(kind)) {
-               ingressEntityList.push(inputObject)
-            } else {
-               otherEntitiesList.push(inputObject)
             }
-         }
-      })
+         })
+      } catch (error) {
+         core.error(`Error processing file ${filePath}: ${error.message}`)
+         throw error
+      }
+   })
+
+   serviceEntityList.forEach((inputObject: any) => {
+      if (isServiceRouted(inputObject, deploymentEntityList)) {
+         const name = inputObject.metadata.name
+         routedServiceEntityList.push(inputObject)
+         serviceNameMap.set(name, getBlueGreenResourceName(name, GREEN_SUFFIX))
+      } else {
+         unroutedServiceEntityList.push(inputObject)
+      }
    })
 
    return {
@@ -234,9 +243,10 @@ export function isServiceSelectorSubsetOfMatchLabel(
 export async function fetchResource(
    kubectl: Kubectl,
    kind: string,
-   name: string
+   name: string,
+   namespace?: string
 ): Promise<K8sObject> {
-   const result = await kubectl.getResource(kind, name)
+   const result = await kubectl.getResource(kind, name, false, namespace)
    if (result == null || !!result.stderr) {
       return null
    }

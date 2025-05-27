@@ -23,7 +23,11 @@ export async function getDeploymentConfig(): Promise<DeploymentConfig> {
       )
    }
 
-   const imageNames = core.getInput('images').split('\n') || []
+   const imageNames =
+      core
+         .getInput('images')
+         .split('\n')
+         .filter((image) => image.length > 0) || []
    const imageDockerfilePathMap: {[id: string]: string} = {}
 
    const pullImages = !(core.getInput('pull-images').toLowerCase() === 'false')

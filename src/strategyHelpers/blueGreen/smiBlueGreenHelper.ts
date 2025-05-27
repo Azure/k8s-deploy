@@ -77,9 +77,8 @@ export async function createTrafficSplitObject(
 ): Promise<TrafficSplitObject> {
    // cache traffic split api version
    if (!trafficSplitAPIVersion)
-      trafficSplitAPIVersion = await kubectlUtils.getTrafficSplitAPIVersion(
-         kubectl
-      )
+      trafficSplitAPIVersion =
+         await kubectlUtils.getTrafficSplitAPIVersion(kubectl)
 
    // retrieve annotations for TS object
    const annotations = inputAnnotations
@@ -142,7 +141,8 @@ export async function validateTrafficSplitsState(
       let trafficSplitObject = await fetchResource(
          kubectl,
          TRAFFIC_SPLIT_OBJECT,
-         getBlueGreenResourceName(name, TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX)
+         getBlueGreenResourceName(name, TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX),
+         serviceObject?.metadata?.namespace
       )
       core.debug(
          `ts object extracted was ${JSON.stringify(trafficSplitObject)}`
@@ -181,25 +181,10 @@ export async function cleanupSMI(
       deleteList.push({
          name: getBlueGreenResourceName(
             serviceObject.metadata.name,
-            TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX
-         ),
-         kind: TRAFFIC_SPLIT_OBJECT
-      })
-
-      deleteList.push({
-         name: getBlueGreenResourceName(
-            serviceObject.metadata.name,
             GREEN_SUFFIX
          ),
-         kind: serviceObject.kind
-      })
-
-      deleteList.push({
-         name: getBlueGreenResourceName(
-            serviceObject.metadata.name,
-            STABLE_SUFFIX
-         ),
-         kind: serviceObject.kind
+         kind: serviceObject.kind,
+         namespace: serviceObject?.metadata?.namespace
       })
    })
 

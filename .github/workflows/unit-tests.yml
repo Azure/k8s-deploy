@@ -11,9 +11,10 @@ on: # rebuild any PRs and main branch changes
 
 jobs:
    build: # make sure build/ci works properly
+      name: Run Unit Tests
       runs-on: ubuntu-latest
       steps:
-         - uses: actions/checkout@v1
+         - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
          - run: |
               npm install
               npm test

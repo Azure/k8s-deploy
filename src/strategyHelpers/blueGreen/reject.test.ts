@@ -61,6 +61,6 @@ describe('reject tests', () => {
          .spyOn(TSutils, 'getTrafficSplitAPIVersion')
          .mockImplementation(() => Promise.resolve('v1alpha3'))
       const rejectResult = await rejectBlueGreenSMI(kubectl, testObjects)
-      expect(rejectResult.deleteResult).toHaveLength(4)
+      expect(rejectResult.deleteResult).toHaveLength(2)
    })
 })

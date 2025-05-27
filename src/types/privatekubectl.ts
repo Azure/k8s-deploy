@@ -1,21 +1,32 @@
 import {Kubectl} from './kubectl'
+import minimist from 'minimist'
 import {ExecOptions, ExecOutput, getExecOutput} from '@actions/exec'
 import * as core from '@actions/core'
-import * as os from 'os'
-import * as fs from 'fs'
+import fs from 'node:fs'
 import * as path from 'path'
+import {getTempDirectory} from '../utilities/fileUtils'
 
 export class PrivateKubectl extends Kubectl {
    protected async execute(args: string[], silent: boolean = false) {
       args.unshift('kubectl')
       let kubectlCmd = args.join(' ')
       let addFileFlag = false
-      let eo = <ExecOptions>{silent}
+      let eo = <ExecOptions>{
+         silent: true,
+         failOnStdErr: false,
+         ignoreReturnCode: true
+      }
 
       if (this.containsFilenames(kubectlCmd)) {
-         // For private clusters, files will referenced solely by their basename
-         kubectlCmd = this.replaceFilnamesWithBasenames(kubectlCmd)
+         kubectlCmd = replaceFileNamesWithShallowNamesRelativeToTemp(kubectlCmd)
          addFileFlag = true
+      }
+
+      if (this.resourceGroup === '') {
+         throw Error('Resource group must be specified for private cluster')
+      }
+      if (this.name === '') {
+         throw Error('Cluster name must be specified for private cluster')
       }
 
       const privateClusterArgs = [
@@ -27,109 +38,132 @@ export class PrivateKubectl extends Kubectl {
          '--name',
          this.name,
          '--command',
-         kubectlCmd
+         `${kubectlCmd}`
       ]
 
       if (addFileFlag) {
-         const filenames = this.extractFilesnames(kubectlCmd).split(' ')
-
-         const tempDirectory =
-            process.env['runner.tempDirectory'] || os.tmpdir() + '/manifests'
-         eo.cwd = tempDirectory
+         const tempDirectory = getTempDirectory()
+         eo.cwd = path.join(tempDirectory, 'manifests')
          privateClusterArgs.push(...['--file', '.'])
-
-         let filenamesArr = filenames[0].split(',')
-         for (let index = 0; index < filenamesArr.length; index++) {
-            const file = filenamesArr[index]
-
-            if (!file) {
-               continue
-            }
-            this.moveFileToTempManifestDir(file)
-         }
       }
 
       core.debug(
          `private cluster Kubectl run with invoke command: ${kubectlCmd}`
       )
-      return await getExecOutput('az', privateClusterArgs, eo)
-   }
 
-   private replaceFilnamesWithBasenames(kubectlCmd: string) {
-      let exFilenames = this.extractFilesnames(kubectlCmd)
-      let filenames = exFilenames.split(' ')
-      let filenamesArr = filenames[0].split(',')
+      const allArgs = [...privateClusterArgs, '-o', 'json']
+      core.debug(`full form of az command: az ${allArgs.join(' ')}`)
+      const runOutput = await getExecOutput('az', allArgs, eo)
+      core.debug(
+         `from kubectl private cluster command got run output ${JSON.stringify(
+            runOutput
+         )}`
+      )
 
-      for (let index = 0; index < filenamesArr.length; index++) {
-         filenamesArr[index] = path.basename(filenamesArr[index])
+      if (runOutput.exitCode !== 0) {
+         throw Error(
+            `Call to private cluster failed. Command: '${kubectlCmd}', errormessage: ${runOutput.stderr}`
+         )
       }
 
-      let baseFilenames = filenamesArr.join()
-
-      let result = kubectlCmd.replace(exFilenames, baseFilenames)
-      return result
-   }
-
-   public extractFilesnames(strToParse: string) {
-      let start = strToParse.indexOf('-filename')
-      let offset = 7
-
-      if (start == -1) {
-         start = strToParse.indexOf('-f')
-
-         if (start == -1) {
-            return ''
-         }
-         offset = 0
+      const runObj: {logs: string; exitCode: number} = JSON.parse(
+         runOutput.stdout
+      )
+      if (!silent) core.info(runObj.logs)
+      if (runObj.exitCode !== 0) {
+         throw Error(`failed private cluster Kubectl command: ${kubectlCmd}`)
       }
 
-      let temp = strToParse.substring(start + offset)
-      let end = temp.indexOf(' -')
-
-      //End could be case where the -f flag was last, or -f is followed by some additonal flag and it's arguments
-      return temp.substring(3, end == -1 ? temp.length : end).trim()
+      return {
+         exitCode: runObj.exitCode,
+         stdout: runObj.logs,
+         stderr: ''
+      } as ExecOutput
    }
 
    private containsFilenames(str: string) {
       return str.includes('-f ') || str.includes('filename ')
    }
+}
 
-   private createTempManifestsDirectory() {
-      const manifestsDir = '/tmp/manifests'
-      if (!fs.existsSync('/tmp/manifests')) {
-         fs.mkdirSync('/tmp/manifests', {recursive: true})
+function createTempManifestsDirectory(): string {
+   const manifestsDirPath = path.join(getTempDirectory(), 'manifests')
+   if (!fs.existsSync(manifestsDirPath)) {
+      fs.mkdirSync(manifestsDirPath, {recursive: true})
+   }
+
+   return manifestsDirPath
+}
+
+export function replaceFileNamesWithShallowNamesRelativeToTemp(
+   kubectlCmd: string
+) {
+   let filenames = extractFileNames(kubectlCmd)
+   core.debug(`filenames originally provided in kubectl command: ${filenames}`)
+   let relativeShallowNames = filenames.map((filename) => {
+      const relativeName = path.relative(getTempDirectory(), filename)
+
+      const relativePathElements = relativeName.split(path.sep)
+
+      const shallowName = relativePathElements.join('-')
+
+      // make manifests dir in temp if it doesn't already exist
+      const manifestsTempDir = createTempManifestsDirectory()
+
+      const shallowPath = path.join(manifestsTempDir, shallowName)
+      core.debug(
+         `moving contents from ${filename} to shallow location at ${shallowPath}`
+      )
+
+      core.debug(`reading contents from ${filename}`)
+      const contents = fs.readFileSync(filename).toString()
+
+      core.debug(`writing contents to new path ${shallowPath}`)
+      fs.writeFileSync(shallowPath, contents)
+
+      return shallowName
+   })
+
+   let result = kubectlCmd
+   if (filenames.length != relativeShallowNames.length) {
+      throw Error(
+         'replacing filenames with relative path from temp dir, ' +
+            filenames.length +
+            ' filenames != ' +
+            relativeShallowNames.length +
+            'basenames'
+      )
+   }
+   for (let index = 0; index < filenames.length; index++) {
+      result = result.replace(filenames[index], relativeShallowNames[index])
+   }
+   return result
+}
+
+export function extractFileNames(strToParse: string) {
+   const fileNames: string[] = []
+   const argv = minimist(strToParse.split(' '))
+   const fArg = 'f'
+   const filenameArg = 'filename'
+
+   fileNames.push(...extractFilesFromMinimist(argv, fArg))
+   fileNames.push(...extractFilesFromMinimist(argv, filenameArg))
+
+   return fileNames
+}
+
+export function extractFilesFromMinimist(argv, arg: string): string[] {
+   if (!argv[arg]) {
+      return []
+   }
+   const toReturn: string[] = []
+   if (typeof argv[arg] === 'string') {
+      toReturn.push(...argv[arg].split(','))
+   } else {
+      for (const value of argv[arg] as string[]) {
+         toReturn.push(...value.split(','))
       }
    }
 
-   private moveFileToTempManifestDir(file: string) {
-      this.createTempManifestsDirectory()
-      if (!fs.existsSync('/tmp/' + file)) {
-         core.debug(
-            '/tmp/' +
-               file +
-               ' does not exist, and therefore cannot be moved to the manifest directory'
-         )
-      }
-
-      fs.copyFile('/tmp/' + file, '/tmp/manifests/' + file, function (err) {
-         if (err) {
-            core.debug(
-               'Could not rename ' +
-                  '/tmp/' +
-                  file +
-                  ' to  ' +
-                  '/tmp/manifests/' +
-                  file +
-                  ' ERROR: ' +
-                  err
-            )
-            return
-         }
-         core.debug(
-            "Successfully moved file '" +
-               file +
-               "' from /tmp to /tmp/manifest directory"
-         )
-      })
-   }
+   return toReturn
 }

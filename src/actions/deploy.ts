@@ -13,11 +13,15 @@ import {
 } from '../strategyHelpers/deploymentHelper'
 import {DeploymentStrategy} from '../types/deploymentStrategy'
 import {parseTrafficSplitMethod} from '../types/trafficSplitMethod'
-
+import {ClusterType} from '../inputUtils'
+export const ResourceTypeManagedCluster =
+   'Microsoft.ContainerService/managedClusters'
+export const ResourceTypeFleet = 'Microsoft.ContainerService/fleets'
 export async function deploy(
    kubectl: Kubectl,
    manifestFilePaths: string[],
-   deploymentStrategy: DeploymentStrategy
+   deploymentStrategy: DeploymentStrategy,
+   resourceType: ClusterType
 ) {
    // update manifests
    const inputManifestFiles: string[] = updateManifestFiles(manifestFilePaths)
@@ -45,7 +49,8 @@ export async function deploy(
          KubernetesConstants.DiscoveryAndLoadBalancerResource.SERVICE
       ])
    )
-   await checkManifestStability(kubectl, resourceTypes)
+
+   await checkManifestStability(kubectl, resourceTypes, resourceType)
    core.endGroup()
 
    // print ingresses
@@ -56,24 +61,19 @@ export async function deploy(
    for (const ingressResource of ingressResources) {
       await kubectl.getResource(
          KubernetesConstants.DiscoveryAndLoadBalancerResource.INGRESS,
-         ingressResource.name
+         ingressResource.name,
+         false,
+         ingressResource.namespace
       )
    }
    core.endGroup()
 
    // annotate resources
    core.startGroup('Annotating resources')
-   let allPods
-   try {
-      allPods = JSON.parse((await kubectl.getAllPods()).stdout)
-   } catch (e) {
-      core.debug(`Unable to parse pods: ${e}`)
-   }
    await annotateAndLabelResources(
       deployedManifestFiles,
       kubectl,
-      resourceTypes,
-      allPods
+      resourceTypes
    )
    core.endGroup()
 }

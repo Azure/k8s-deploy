@@ -1,11 +1,12 @@
 import * as core from '@actions/core'
-import * as deploy from './deploy'
 import * as canaryDeploymentHelper from '../strategyHelpers/canary/canaryHelper'
 import * as SMICanaryDeploymentHelper from '../strategyHelpers/canary/smiCanaryHelper'
+import * as PodCanaryHelper from '../strategyHelpers/canary/podCanaryHelper'
 import {
    getResources,
    updateManifestFiles
 } from '../utilities/manifestUpdateUtils'
+import {annotateAndLabelResources} from '../strategyHelpers/deploymentHelper'
 import * as models from '../types/kubernetesTypes'
 import * as KubernetesManifestUtility from '../utilities/manifestStabilityUtils'
 import {
@@ -15,6 +16,7 @@ import {
 } from '../strategyHelpers/blueGreen/blueGreenHelper'
 
 import {BlueGreenManifests} from '../types/blueGreenTypes'
+import {DeployResult} from '../types/deployResult'
 
 import {
    promoteBlueGreenIngress,
@@ -36,18 +38,20 @@ import {
    TrafficSplitMethod
 } from '../types/trafficSplitMethod'
 import {parseRouteStrategy, RouteStrategy} from '../types/routeStrategy'
+import {ClusterType} from '../inputUtils'
 
 export async function promote(
    kubectl: Kubectl,
    manifests: string[],
-   deploymentStrategy: DeploymentStrategy
+   deploymentStrategy: DeploymentStrategy,
+   resourceType: ClusterType
 ) {
    switch (deploymentStrategy) {
       case DeploymentStrategy.CANARY:
          await promoteCanary(kubectl, manifests)
          break
       case DeploymentStrategy.BLUE_GREEN:
-         await promoteBlueGreen(kubectl, manifests)
+         await promoteBlueGreen(kubectl, manifests, resourceType)
          break
       default:
          throw Error('Invalid promote deployment strategy')
@@ -57,9 +61,13 @@ export async function promote(
 async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
    let includeServices = false
 
+   const manifestFilesForDeployment: string[] = updateManifestFiles(manifests)
+
    const trafficSplitMethod = parseTrafficSplitMethod(
       core.getInput('traffic-split-method', {required: true})
    )
+   let promoteResult: DeployResult
+   let filesToAnnotate: string[]
    if (trafficSplitMethod == TrafficSplitMethod.SMI) {
       includeServices = true
 
@@ -72,19 +80,38 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
       )
       core.endGroup()
 
-      core.startGroup('Deploying input manifests with SMI canary strategy')
-      await deploy.deploy(kubectl, manifests, DeploymentStrategy.CANARY)
+      core.startGroup(
+         'Deploying input manifests with SMI canary strategy from promote'
+      )
+
+      promoteResult = await SMICanaryDeploymentHelper.deploySMICanary(
+         manifestFilesForDeployment,
+         kubectl,
+         true
+      )
+
       core.endGroup()
 
       core.startGroup('Redirecting traffic to stable deployment')
-      await SMICanaryDeploymentHelper.redirectTrafficToStableDeployment(
-         kubectl,
-         manifests
+      const stableRedirectManifests =
+         await SMICanaryDeploymentHelper.redirectTrafficToStableDeployment(
+            kubectl,
+            manifests
+         )
+
+      filesToAnnotate = promoteResult.manifestFiles.concat(
+         stableRedirectManifests
       )
+
       core.endGroup()
    } else {
-      core.startGroup('Deploying input manifests')
-      await deploy.deploy(kubectl, manifests, DeploymentStrategy.CANARY)
+      core.startGroup('Deploying input manifests from promote')
+      promoteResult = await PodCanaryHelper.deployPodCanary(
+         manifestFilesForDeployment,
+         kubectl,
+         true
+      )
+      filesToAnnotate = promoteResult.manifestFiles
       core.endGroup()
    }
 
@@ -101,9 +128,24 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
       )
    }
    core.endGroup()
+
+   // annotate resources
+   core.startGroup('Annotating resources')
+   const resources: Resource[] = getResources(
+      filesToAnnotate,
+      models.DEPLOYMENT_TYPES.concat([
+         models.DiscoveryAndLoadBalancerResource.SERVICE
+      ])
+   )
+   await annotateAndLabelResources(filesToAnnotate, kubectl, resources)
+   core.endGroup()
 }
 
-async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
+async function promoteBlueGreen(
+   kubectl: Kubectl,
+   manifests: string[],
+   resourceType: ClusterType
+) {
    // update container images and pull secrets
    const inputManifestFiles: string[] = updateManifestFiles(manifests)
    const manifestObjects: BlueGreenManifests =
@@ -137,7 +179,11 @@ async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
          models.DiscoveryAndLoadBalancerResource.SERVICE
       ])
    )
-   await KubernetesManifestUtility.checkManifestStability(kubectl, resources)
+   await KubernetesManifestUtility.checkManifestStability(
+      kubectl,
+      resources,
+      resourceType
+   )
    core.endGroup()
 
    core.startGroup(
@@ -173,5 +219,10 @@ async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
       )
       await deleteGreenObjects(kubectl, manifestObjects.deploymentEntityList)
    }
+   core.endGroup()
+
+   // annotate resources
+   core.startGroup('Annotating resources')
+   await annotateAndLabelResources(deployedManifestFiles, kubectl, resources)
    core.endGroup()
 }

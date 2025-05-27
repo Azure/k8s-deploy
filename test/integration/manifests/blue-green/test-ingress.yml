@@ -16,7 +16,7 @@ spec:
       spec:
          containers:
             - name: nginx
-              image: nginx:1.14.2
+              image: nginx
               ports:
                  - containerPort: 80
 ---
@@ -32,7 +32,7 @@ spec:
         port: 80
         targetPort: 80
 ---
-apiVersion: networking.k8s.io/v1beta1
+apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
    name: nginx-ingress
@@ -43,10 +43,16 @@ spec:
       - http:
            paths:
               - path: /testpath
+                pathType: Prefix
                 backend:
-                   serviceName: nginx-service
-                   servicePort: 80
+                   service:
+                      name: nginx-service
+                      port:
+                         number: 80
               - path: /testpath2
+                pathType: Prefix
                 backend:
-                   serviceName: unrouted-service
-                   servicePort: 80
+                   service:
+                      name: unrouted-service
+                      port:
+                         number: 80

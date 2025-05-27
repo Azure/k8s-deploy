@@ -7,6 +7,7 @@ import * as io from '@actions/io'
 export interface Resource {
    name: string
    type: string
+   namespace?: string
 }
 
 export class Kubectl {
@@ -19,7 +20,7 @@ export class Kubectl {
 
    constructor(
       kubectlPath: string,
-      namespace: string = 'default',
+      namespace: string = '',
       ignoreSSLErrors: boolean = false,
       resourceGroup: string = '',
       name: string = ''
@@ -46,7 +47,7 @@ export class Kubectl {
          ]
          if (force) applyArgs.push('--force')
 
-         return await this.execute(applyArgs)
+         return await this.execute(applyArgs.concat(this.getFlags()))
       } catch (err) {
          core.debug('Kubectl apply failed:' + err)
       }
@@ -55,27 +56,43 @@ export class Kubectl {
    public async describe(
       resourceType: string,
       resourceName: string,
-      silent: boolean = false
+      silent: boolean = false,
+      namespace?: string
    ): Promise<ExecOutput> {
       return await this.execute(
-         ['describe', resourceType, resourceName],
+         ['describe', resourceType, resourceName].concat(
+            this.getFlags(namespace)
+         ),
          silent
       )
    }
 
-   public async getNewReplicaSet(deployment: string) {
-      const result = await this.describe('deployment', deployment, true)
+   public async getNewReplicaSet(deployment: string, namespace?: string) {
+      const result = await this.describe(
+         'deployment',
+         deployment,
+         true,
+         namespace
+      )
 
       let newReplicaSet = ''
       if (result?.stdout) {
          const stdout = result.stdout.split('\n')
+         core.debug('stdout from getNewReplicaSet is ' + JSON.stringify(stdout))
          stdout.forEach((line: string) => {
             const newreplicaset = 'newreplicaset'
-            if (line && line.toLowerCase().indexOf(newreplicaset) > -1)
+            if (line && line.toLowerCase().indexOf(newreplicaset) > -1) {
+               core.debug(
+                  `found string of interest for replicaset, line is ${line}`
+               )
+               core.debug(
+                  `substring is ${line.substring(newreplicaset.length).trim()}`
+               )
                newReplicaSet = line
                   .substring(newreplicaset.length)
                   .trim()
                   .split(' ')[0]
+            }
          })
       }
 
@@ -85,7 +102,8 @@ export class Kubectl {
    public async annotate(
       resourceType: string,
       resourceName: string,
-      annotation: string
+      annotation: string,
+      namespace?: string
    ): Promise<ExecOutput> {
       const args = [
          'annotate',
@@ -93,27 +111,31 @@ export class Kubectl {
          resourceName,
          annotation,
          '--overwrite'
-      ]
+      ].concat(this.getFlags(namespace))
       return await this.execute(args)
    }
 
    public async annotateFiles(
       files: string | string[],
-      annotation: string
+      annotation: string,
+      namespace?: string
    ): Promise<ExecOutput> {
+      const filesToAnnotate = createInlineArray(files)
+      core.debug(`annotating ${filesToAnnotate} with annotation ${annotation}`)
       const args = [
          'annotate',
          '-f',
-         createInlineArray(files),
+         filesToAnnotate,
          annotation,
          '--overwrite'
-      ]
+      ].concat(this.getFlags(namespace))
       return await this.execute(args)
    }
 
    public async labelFiles(
       files: string | string[],
-      labels: string[]
+      labels: string[],
+      namespace?: string
    ): Promise<ExecOutput> {
       const args = [
          'label',
@@ -121,56 +143,78 @@ export class Kubectl {
          createInlineArray(files),
          ...labels,
          '--overwrite'
-      ]
+      ].concat(this.getFlags(namespace))
       return await this.execute(args)
    }
 
    public async getAllPods(): Promise<ExecOutput> {
-      return await this.execute(['get', 'pods', '-o', 'json'], true)
+      return await this.execute(
+         ['get', 'pods', '-o', 'json'].concat(this.getFlags()),
+         true
+      )
    }
 
    public async checkRolloutStatus(
       resourceType: string,
-      name: string
+      name: string,
+      namespace?: string
    ): Promise<ExecOutput> {
-      return await this.execute([
-         'rollout',
-         'status',
-         `${resourceType}/${name}`
-      ])
+      return await this.execute(
+         ['rollout', 'status', `${resourceType}/${name}`].concat(
+            this.getFlags(namespace)
+         )
+      )
    }
 
    public async getResource(
       resourceType: string,
-      name: string
+      name: string,
+      silentFailure: boolean = false,
+      namespace?: string
    ): Promise<ExecOutput> {
-      return await this.execute([
-         'get',
-         `${resourceType}/${name}`,
-         '-o',
-         'json'
-      ])
+      core.debug(
+         'fetching resource of type ' + resourceType + ' and name ' + name
+      )
+      return await this.execute(
+         ['get', `${resourceType}/${name}`, '-o', 'json'].concat(
+            this.getFlags(namespace)
+         ),
+         silentFailure
+      )
    }
 
    public executeCommand(command: string, args?: string) {
       if (!command) throw new Error('Command must be defined')
-      return args ? this.execute([command, args]) : this.execute([command])
+      const a = args ? [args] : []
+      return this.execute([command, ...a.concat(this.getFlags())])
    }
 
-   public delete(args: string | string[]) {
-      if (typeof args === 'string') return this.execute(['delete', args])
-      return this.execute(['delete', ...args])
+   public delete(args: string | string[], namespace?: string) {
+      if (typeof args === 'string')
+         return this.execute(['delete', args].concat(this.getFlags(namespace)))
+      return this.execute(['delete', ...args.concat(this.getFlags(namespace))])
    }
 
    protected async execute(args: string[], silent: boolean = false) {
-      if (this.ignoreSSLErrors) {
-         args.push('--insecure-skip-tls-verify')
-      }
-      if (this.namespace && this.namespace != 'default') {
-         args = args.concat(['--namespace', this.namespace])
-      }
       core.debug(`Kubectl run with command: ${this.kubectlPath} ${args}`)
-      return await getExecOutput(this.kubectlPath, args, {silent})
+
+      return await getExecOutput(this.kubectlPath, args, {
+         silent
+      })
+   }
+
+   protected getFlags(namespaceOverride?: string): string[] {
+      const flags = []
+      if (this.ignoreSSLErrors) {
+         flags.push('--insecure-skip-tls-verify')
+      }
+
+      const ns = namespaceOverride || this.namespace
+      if (ns) {
+         flags.push('--namespace', ns)
+      }
+
+      return flags
    }
 }
 
