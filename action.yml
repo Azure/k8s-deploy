@@ -4,9 +4,8 @@ inputs:
    # Please ensure you have used either azure/k8s-actions/aks-set-context or azure/k8s-actions/k8s-set-context in the workflow before this action
    # You also need to have kubectl installed (azure/setup-kubectl)
    namespace:
-      description: 'Choose the target Kubernetes namespace. If the namespace is not provided, the commands will run in the default namespace.'
+      description: 'Namespace to be added to all kubectl commands.'
       required: false
-      default: default
    manifests:
       description: 'Path to the manifest files which will be used for deployment.'
       required: true
@@ -64,7 +63,7 @@ inputs:
       required: false
       default: true
    annotate-namespace:
-      description: 'Annotate the target namespace. Ignored when annotate-resources is set to false.'
+      description: 'Annotate the target namespace. Ignored when annotate-resources is set to false or no namespace is provided'
       required: false
       default: true
    private-cluster:

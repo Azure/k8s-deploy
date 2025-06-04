@@ -196,7 +196,7 @@ async function annotateResources(
    deploymentConfig: DeploymentConfig
 ) {
    const annotateResults: ExecOutput[] = []
-   const namespace = core.getInput('namespace') || 'default'
+   const namespace = core.getInput('namespace') || ''
    const lastSuccessSha = await getLastSuccessfulRunSha(
       kubectl,
       namespace,
@@ -227,7 +227,7 @@ async function annotateResources(
    )}`
 
    const annotateNamespace = !(
-      core.getInput('annotate-namespace').toLowerCase() === 'false'
+      namespace === '' || core.getInput('annotate-namespace').toLowerCase() === 'false'
    )
    if (annotateNamespace) {
       annotateResults.push(
