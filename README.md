@@ -122,6 +122,10 @@ Following are the key capabilities of this action:
     <td>Deploy when a previous deployment already exists. If true then '--force' argument is added to the apply command. Using '--force' argument is not recommended in production.</td>
   </tr>
   <tr>
+    <td>server-side </br></br>(Optional)</td>
+    <td>The apply command runs in the server instead of the client. If true then '--server-side' argument is added to the apply command.</td>
+  </tr>
+  <tr>
     <td>annotate-resources</br></br>(Optional)</td>
     <td>Acceptable values: true/false</br>Default value: true</br>Switch whether to annotate the resources or not. If set to false all annotations are skipped completely.</td>
   </tr>
