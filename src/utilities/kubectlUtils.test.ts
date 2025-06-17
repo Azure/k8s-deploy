@@ -42,20 +42,20 @@ describe('Kubectl utils', () => {
       jest.spyOn(core, 'warning').mockImplementation(() => {})
       let warningCalls = 0
       expect(() => checkForErrors([success], true)).not.toThrow()
-      expect(core.warning).toBeCalledTimes(warningCalls)
+      expect(core.warning).toHaveBeenCalledTimes(warningCalls)
 
       expect(() => checkForErrors([successWithStderr], true)).not.toThrow()
-      expect(core.warning).toBeCalledTimes(++warningCalls)
+      expect(core.warning).toHaveBeenCalledTimes(++warningCalls)
 
       expect(() =>
          checkForErrors([success, successWithStderr], true)
       ).not.toThrow()
-      expect(core.warning).toBeCalledTimes(++warningCalls)
+      expect(core.warning).toHaveBeenCalledTimes(++warningCalls)
 
       expect(() => checkForErrors([failWithExitCode], true)).not.toThrow()
-      expect(core.warning).toBeCalledTimes(++warningCalls)
+      expect(core.warning).toHaveBeenCalledTimes(++warningCalls)
 
       expect(() => checkForErrors([failWithExitWithStderr], true)).not.toThrow()
-      expect(core.warning).toBeCalledTimes(++warningCalls)
+      expect(core.warning).toHaveBeenCalledTimes(++warningCalls)
    })
 })

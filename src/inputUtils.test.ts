@@ -1,6 +1,5 @@
 import {parseResourceTypeInput} from './inputUtils'
 import {
-   ClusterType,
    ResourceTypeFleet,
    ResourceTypeManagedCluster
 } from './actions/deploy'
