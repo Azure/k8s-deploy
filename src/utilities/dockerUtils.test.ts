@@ -9,7 +9,9 @@ describe('docker utilities', () => {
       expect(() => checkDockerPath()).not.toThrow()
 
       // docker not installed
-      jest.spyOn(io, 'which').mockImplementationOnce(async () => { throw new Error('not found') })
+      jest.spyOn(io, 'which').mockImplementationOnce(async () => {
+         throw new Error('not found')
+      })
       await expect(() => checkDockerPath()).rejects.toThrow()
    })
 })
