@@ -1,9 +1,5 @@
 import {parseResourceTypeInput} from './inputUtils'
-import {
-   ClusterType,
-   ResourceTypeFleet,
-   ResourceTypeManagedCluster
-} from './actions/deploy'
+import {ResourceTypeFleet, ResourceTypeManagedCluster} from './actions/deploy'
 
 describe('InputUtils', () => {
    describe('parseResourceTypeInput', () => {

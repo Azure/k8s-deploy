@@ -9,7 +9,7 @@ describe('Kubectl path', () => {
    const path = 'path'
 
    it('gets the kubectl path', async () => {
-      jest.spyOn(core, 'getInput').mockImplementationOnce(() => undefined)
+      jest.spyOn(core, 'getInput').mockImplementationOnce(() => '')
       jest.spyOn(io, 'which').mockImplementationOnce(async () => path)
 
       expect(await getKubectlPath()).toBe(path)
@@ -24,12 +24,12 @@ describe('Kubectl path', () => {
 
    it('throws if kubectl not found', async () => {
       // without version
-      jest.spyOn(io, 'which').mockImplementationOnce(async () => undefined)
+      jest.spyOn(io, 'which').mockImplementationOnce(async () => '')
       await expect(() => getKubectlPath()).rejects.toThrow()
 
       // with verision
-      jest.spyOn(core, 'getInput').mockImplementationOnce(() => undefined)
-      jest.spyOn(io, 'which').mockImplementationOnce(async () => undefined)
+      jest.spyOn(core, 'getInput').mockImplementationOnce(() => '')
+      jest.spyOn(io, 'which').mockImplementationOnce(async () => '')
       await expect(() => getKubectlPath()).rejects.toThrow()
    })
 })
@@ -53,7 +53,7 @@ describe('Kubectl class', () => {
          const configPaths = 'configPaths'
          const result = await kubectl.apply(configPaths)
          expect(result).toBe(execReturn)
-         expect(exec.getExecOutput).toBeCalledWith(
+         expect(exec.getExecOutput).toHaveBeenCalledWith(
             kubectlPath,
             ['apply', '-f', configPaths, '--namespace', testNamespace],
             {silent: false}
@@ -64,7 +64,7 @@ describe('Kubectl class', () => {
          const configPaths = ['configPath1', 'configPath2', 'configPath3']
          const result = await kubectl.apply(configPaths)
          expect(result).toBe(execReturn)
-         expect(exec.getExecOutput).toBeCalledWith(
+         expect(exec.getExecOutput).toHaveBeenCalledWith(
             kubectlPath,
             [
                'apply',
@@ -81,7 +81,7 @@ describe('Kubectl class', () => {
          const configPaths = ['configPath1', 'configPath2', 'configPath3']
          const result = await kubectl.apply(configPaths, true)
          expect(result).toBe(execReturn)
-         expect(exec.getExecOutput).toBeCalledWith(
+         expect(exec.getExecOutput).toHaveBeenCalledWith(
             kubectlPath,
             [
                'apply',
@@ -100,7 +100,7 @@ describe('Kubectl class', () => {
          const resourceName = 'name'
          const result = await kubectl.describe(resourceType, resourceName)
          expect(result).toBe(execReturn)
-         expect(exec.getExecOutput).toBeCalledWith(
+         expect(exec.getExecOutput).toHaveBeenCalledWith(
             kubectlPath,
             [
                'describe',
@@ -120,7 +120,7 @@ describe('Kubectl class', () => {
             silent,
             otherNamespace
          )
-         expect(exec.getExecOutput).toBeCalledWith(
+         expect(exec.getExecOutput).toHaveBeenCalledWith(
             kubectlPath,
             [
                'describe',
@@ -138,7 +138,7 @@ describe('Kubectl class', () => {
          const resourceName = 'name'
          const result = await kubectl.describe(resourceType, resourceName, true)
          expect(result).toBe(execReturn)
-         expect(exec.getExecOutput).toBeCalledWith(
+         expect(exec.getExecOutput).toHaveBeenCalledWith(
             kubectlPath,
             [
                'describe',
@@ -158,7 +158,7 @@ describe('Kubectl class', () => {
             silent,
             otherNamespace
          )
-         expect(exec.getExecOutput).toBeCalledWith(
+         expect(exec.getExecOutput).toHaveBeenCalledWith(
             kubectlPath,
             [
                'describe',
@@ -181,7 +181,7 @@ describe('Kubectl class', () => {
             annotation
          )
          expect(result).toBe(execReturn)
-         expect(exec.getExecOutput).toBeCalledWith(
+         expect(exec.getExecOutput).toHaveBeenCalledWith(
             kubectlPath,
             [
                'annotate',
@@ -202,7 +202,7 @@ describe('Kubectl class', () => {
             annotation,
             otherNamespace
          )
-         expect(exec.getExecOutput).toBeCalledWith(
+         expect(exec.getExecOutput).toHaveBeenCalledWith(
             kubectlPath,
             [
                'annotate',
@@ -222,7 +222,7 @@ describe('Kubectl class', () => {
          const annotation = 'annotation'
          const result = await kubectl.annotateFiles(file, annotation)
          expect(result).toBe(execReturn)
-         expect(exec.getExecOutput).toBeCalledWith(
+         expect(exec.getExecOutput).toHaveBeenCalledWith(
             kubectlPath,
             [
                'annotate',
@@ -238,7 +238,7 @@ describe('Kubectl class', () => {
 
          // override ns
          await kubectl.annotateFiles(file, annotation, otherNamespace)
-         expect(exec.getExecOutput).toBeCalledWith(
+         expect(exec.getExecOutput).toHaveBeenCalledWith(
             kubectlPath,
             [
                'annotate',
@@ -258,7 +258,7 @@ describe('Kubectl class', () => {
          const annotation = 'annotation'
          const result = await kubectl.annotateFiles(files, annotation)
          expect(result).toBe(execReturn)
-         expect(exec.getExecOutput).toBeCalledWith(
+         expect(exec.getExecOutput).toHaveBeenCalledWith(
             kubectlPath,
             [
                'annotate',
@@ -274,7 +274,7 @@ describe('Kubectl class', () => {
 
          // override ns
          await kubectl.annotateFiles(files, annotation, otherNamespace)
-         expect(exec.getExecOutput).toBeCalledWith(
+         expect(exec.getExecOutput).toHaveBeenCalledWith(
             kubectlPath,
             [
                'annotate',
@@ -294,7 +294,7 @@ describe('Kubectl class', () => {
          const labels = ['label1', 'label2']
          const result = await kubectl.labelFiles(file, labels)
          expect(result).toBe(execReturn)
-         expect(exec.getExecOutput).toBeCalledWith(
+         expect(exec.getExecOutput).toHaveBeenCalledWith(
             kubectlPath,
             [
                'label',
@@ -309,7 +309,7 @@ describe('Kubectl class', () => {
          )
 
          await kubectl.labelFiles(file, labels, otherNamespace)
-         expect(exec.getExecOutput).toBeCalledWith(
+         expect(exec.getExecOutput).toHaveBeenCalledWith(
             kubectlPath,
             [
                'label',
@@ -329,7 +329,7 @@ describe('Kubectl class', () => {
          const labels = ['label1', 'label2']
          const result = await kubectl.labelFiles(files, labels)
          expect(result).toBe(execReturn)
-         expect(exec.getExecOutput).toBeCalledWith(
+         expect(exec.getExecOutput).toHaveBeenCalledWith(
             kubectlPath,
             [
                'label',
@@ -344,7 +344,7 @@ describe('Kubectl class', () => {
          )
 
          await kubectl.labelFiles(files, labels, otherNamespace)
-         expect(exec.getExecOutput).toBeCalledWith(
+         expect(exec.getExecOutput).toHaveBeenCalledWith(
             kubectlPath,
             [
                'label',
@@ -361,7 +361,7 @@ describe('Kubectl class', () => {
 
       it('gets all pods', async () => {
          expect(await kubectl.getAllPods()).toBe(execReturn)
-         expect(exec.getExecOutput).toBeCalledWith(
+         expect(exec.getExecOutput).toHaveBeenCalledWith(
             kubectlPath,
             ['get', 'pods', '-o', 'json', '--namespace', testNamespace],
             {silent: true}
@@ -374,7 +374,7 @@ describe('Kubectl class', () => {
          expect(await kubectl.checkRolloutStatus(resourceType, name)).toBe(
             execReturn
          )
-         expect(exec.getExecOutput).toBeCalledWith(
+         expect(exec.getExecOutput).toHaveBeenCalledWith(
             kubectlPath,
             [
                'rollout',
@@ -388,7 +388,7 @@ describe('Kubectl class', () => {
 
          // override ns
          await kubectl.checkRolloutStatus(resourceType, name, otherNamespace)
-         expect(exec.getExecOutput).toBeCalledWith(
+         expect(exec.getExecOutput).toHaveBeenCalledWith(
             kubectlPath,
             [
                'rollout',
@@ -405,7 +405,7 @@ describe('Kubectl class', () => {
          const resourceType = 'type'
          const name = 'name'
          expect(await kubectl.getResource(resourceType, name)).toBe(execReturn)
-         expect(exec.getExecOutput).toBeCalledWith(
+         expect(exec.getExecOutput).toHaveBeenCalledWith(
             kubectlPath,
             [
                'get',
@@ -421,7 +421,7 @@ describe('Kubectl class', () => {
          // override ns
          const silent = true
          await kubectl.getResource(resourceType, name, silent, otherNamespace)
-         expect(exec.getExecOutput).toBeCalledWith(
+         expect(exec.getExecOutput).toHaveBeenCalledWith(
             kubectlPath,
             [
                'get',
@@ -439,7 +439,7 @@ describe('Kubectl class', () => {
          // no args
          const command = 'command'
          expect(await kubectl.executeCommand(command)).toBe(execReturn)
-         expect(exec.getExecOutput).toBeCalledWith(
+         expect(exec.getExecOutput).toHaveBeenCalledWith(
             kubectlPath,
             [command, '--namespace', testNamespace],
             {silent: false}
@@ -448,7 +448,7 @@ describe('Kubectl class', () => {
          // with args
          const args = 'args'
          expect(await kubectl.executeCommand(command, args)).toBe(execReturn)
-         expect(exec.getExecOutput).toBeCalledWith(
+         expect(exec.getExecOutput).toHaveBeenCalledWith(
             kubectlPath,
             [command, args, '--namespace', testNamespace],
             {silent: false}
@@ -458,7 +458,7 @@ describe('Kubectl class', () => {
       it('deletes with single argument', async () => {
          const arg = 'argument'
          expect(await kubectl.delete(arg)).toBe(execReturn)
-         expect(exec.getExecOutput).toBeCalledWith(
+         expect(exec.getExecOutput).toHaveBeenCalledWith(
             kubectlPath,
             ['delete', arg, '--namespace', testNamespace],
             {silent: false}
@@ -466,7 +466,7 @@ describe('Kubectl class', () => {
 
          // override ns
          await kubectl.delete(arg, otherNamespace)
-         expect(exec.getExecOutput).toBeCalledWith(
+         expect(exec.getExecOutput).toHaveBeenCalledWith(
             kubectlPath,
             ['delete', arg, '--namespace', otherNamespace],
             {silent: false}
@@ -476,7 +476,7 @@ describe('Kubectl class', () => {
       it('deletes with multiple arguments', async () => {
          const args = ['argument1', 'argument2', 'argument3']
          expect(await kubectl.delete(args)).toBe(execReturn)
-         expect(exec.getExecOutput).toBeCalledWith(
+         expect(exec.getExecOutput).toHaveBeenCalledWith(
             kubectlPath,
             ['delete', ...args, '--namespace', testNamespace],
             {silent: false}
@@ -484,7 +484,7 @@ describe('Kubectl class', () => {
 
          // override ns
          await kubectl.delete(args, otherNamespace)
-         expect(exec.getExecOutput).toBeCalledWith(
+         expect(exec.getExecOutput).toHaveBeenCalledWith(
             kubectlPath,
             ['delete', ...args, '--namespace', otherNamespace],
             {silent: false}
@@ -522,7 +522,7 @@ describe('Kubectl class', () => {
 
       const command = 'command'
       kubectl.executeCommand(command)
-      expect(exec.getExecOutput).toBeCalledWith(
+      expect(exec.getExecOutput).toHaveBeenCalledWith(
          kubectlPath,
          [command, '--insecure-skip-tls-verify', '--namespace', testNamespace],
          {silent: false}
@@ -530,7 +530,7 @@ describe('Kubectl class', () => {
 
       const kubectlNoFlags = new Kubectl(kubectlPath)
       kubectlNoFlags.executeCommand(command)
-      expect(exec.getExecOutput).toBeCalledWith(kubectlPath, [command], {
+      expect(exec.getExecOutput).toHaveBeenCalledWith(kubectlPath, [command], {
          silent: false
       })
    })
