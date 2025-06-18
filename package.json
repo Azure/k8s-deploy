@@ -25,14 +25,14 @@
       "minimist": "^1.2.8"
    },
    "devDependencies": {
-      "@types/jest": "^29.5.14",
+      "@types/jest": "^30.0.0",
       "@types/js-yaml": "^4.0.9",
       "@types/minimist": "^1.2.5",
-      "@types/node": "^22.15.30",
+      "@types/node": "^24.0.3",
       "@vercel/ncc": "^0.38.3",
-      "jest": "^29.7.0",
+      "jest": "^30.0.0",
       "prettier": "^3.5.3",
-      "ts-jest": "^29.3.4",
+      "ts-jest": "^29.4.0",
       "typescript": "5.8.3"
    }
 }

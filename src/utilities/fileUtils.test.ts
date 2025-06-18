@@ -70,7 +70,7 @@ describe('File utils', () => {
 
       expect(
          fileUtils.getFilesFromDirectoriesAndURLs([badPath, goodPath])
-      ).rejects.toThrowError()
+      ).rejects.toThrow()
    })
 
    it("doesn't duplicate files when nested dir included", async () => {
