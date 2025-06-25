@@ -537,69 +537,69 @@ describe('Kubectl class', () => {
 })
 
 describe('Kubectl namespace handling', () => {
-   const kubectlPath = 'kubectlPath';
-   const testNamespace = 'testNamespace';
-   const execReturn = { exitCode: 0, stdout: 'Output', stderr: '' };
+   const kubectlPath = 'kubectlPath'
+   const testNamespace = 'testNamespace'
+   const execReturn = {exitCode: 0, stdout: 'Output', stderr: ''}
 
    beforeEach(() => {
       jest.spyOn(exec, 'getExecOutput').mockImplementation(async () => {
-         return execReturn;
-      });
-   });
+         return execReturn
+      })
+   })
 
    it('does not include namespace flag when namespace is omitted', async () => {
-      const kubectl = new Kubectl(kubectlPath); // No namespace provided
+      const kubectl = new Kubectl(kubectlPath) // No namespace provided
 
-      const configPaths = 'configPaths';
-      const result = await kubectl.apply(configPaths);
+      const configPaths = 'configPaths'
+      const result = await kubectl.apply(configPaths)
 
-      expect(result).toBe(execReturn);
+      expect(result).toBe(execReturn)
       expect(exec.getExecOutput).toHaveBeenCalledWith(
          kubectlPath,
          ['apply', '-f', configPaths], // No --namespace flag
-         { silent: false }
-      );
-   });
+         {silent: false}
+      )
+   })
 
    it('includes namespace flag when namespace is provided', async () => {
-      const kubectl = new Kubectl(kubectlPath, testNamespace); // Namespace provided
+      const kubectl = new Kubectl(kubectlPath, testNamespace) // Namespace provided
 
-      const configPaths = 'configPaths';
-      const result = await kubectl.apply(configPaths);
+      const configPaths = 'configPaths'
+      const result = await kubectl.apply(configPaths)
 
-      expect(result).toBe(execReturn);
+      expect(result).toBe(execReturn)
       expect(exec.getExecOutput).toHaveBeenCalledWith(
          kubectlPath,
          ['apply', '-f', configPaths, '--namespace', testNamespace], // Includes --namespace flag
-         { silent: false }
-      );
-   });
+         {silent: false}
+      )
+   })
 
    it('handles default namespace when namespace is omitted', async () => {
-      const kubectl = new Kubectl(kubectlPath); // No namespace provided
+      const kubectl = new Kubectl(kubectlPath) // No namespace provided
 
-      const resourceType = 'type';
-      const resourceName = 'name';
-      const result = await kubectl.describe(resourceType, resourceName);
+      const resourceType = 'type'
+      const resourceName = 'name'
+      const result = await kubectl.describe(resourceType, resourceName)
 
-      expect(result).toBe(execReturn);
+      expect(result).toBe(execReturn)
       expect(exec.getExecOutput).toHaveBeenCalledWith(
          kubectlPath,
          ['describe', resourceType, resourceName], // No --namespace flag
-         { silent: false }
-      );
+         {silent: false}
+      )
 
       // Simulate kubectl defaulting to "default" namespace
       const defaultNamespaceResult = {
          exitCode: 0,
          stdout: 'Namespace: default',
          stderr: ''
-      };
+      }
       jest.spyOn(exec, 'getExecOutput').mockImplementationOnce(async () => {
-         return defaultNamespaceResult;
-      });
+         return defaultNamespaceResult
+      })
 
-      const describeResult = await kubectl.describe(resourceType, resourceName);
-      expect(describeResult.stdout).toContain('Namespace: default');
-   });
-});
+      const describeResult = await kubectl.describe(resourceType, resourceName)
+      expect(describeResult.stdout).toContain('Namespace: default')
+   })
+})
