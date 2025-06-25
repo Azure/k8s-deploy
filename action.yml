@@ -6,7 +6,7 @@ inputs:
    namespace:
       description: 'Choose the target Kubernetes namespace. If the namespace is not provided, the commands will run in the default namespace.'
       required: false
-      default: default
+      default: ''
    manifests:
       description: 'Path to the manifest files which will be used for deployment.'
       required: true

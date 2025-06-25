@@ -35,7 +35,7 @@ export async function run() {
    const fullManifestFilePaths =
       await getFilesFromDirectoriesAndURLs(manifestFilePaths)
    const kubectlPath = await getKubectlPath()
-   const namespace = core.getInput('namespace') || 'default'
+   const namespace = core.getInput('namespace') || ''
    const isPrivateCluster =
       core.getInput('private-cluster').toLowerCase() === 'true'
    const resourceGroup = core.getInput('resource-group') || ''
