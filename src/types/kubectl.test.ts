@@ -575,6 +575,20 @@ describe('Kubectl namespace handling', () => {
       )
    })
 
+   it('does not include namespace flag when namespace is explicitly set to an empty string', async () => {
+      const kubectl = new Kubectl(kubectlPath, '') // Empty namespace provided
+
+      const configPaths = 'configPaths'
+      const result = await kubectl.apply(configPaths)
+
+      expect(result).toBe(execReturn)
+      expect(exec.getExecOutput).toHaveBeenCalledWith(
+         kubectlPath,
+         ['apply', '-f', configPaths], // No --namespace flag
+         {silent: false}
+      )
+   })
+
    it('handles default namespace when namespace is omitted', async () => {
       const kubectl = new Kubectl(kubectlPath) // No namespace provided
 
@@ -601,5 +615,30 @@ describe('Kubectl namespace handling', () => {
 
       const describeResult = await kubectl.describe(resourceType, resourceName)
       expect(describeResult.stdout).toContain('Namespace: default')
+   })
+})
+
+describe('Kubectl integration test without namespace', () => {
+   const kubectlPath = 'kubectlPath'
+   const execReturn = {exitCode: 0, stdout: 'Output', stderr: ''}
+
+   beforeEach(() => {
+      jest.spyOn(exec, 'getExecOutput').mockImplementation(async () => {
+         return execReturn
+      })
+   })
+
+   it('executes a command without namespace', async () => {
+      const kubectl = new Kubectl(kubectlPath) // No namespace provided
+
+      const command = 'get pods'
+      const result = await kubectl.executeCommand(command)
+
+      expect(result).toBe(execReturn)
+      expect(exec.getExecOutput).toHaveBeenCalledWith(
+         kubectlPath,
+         [command], // No --namespace flag
+         {silent: false}
+      )
    })
 })
