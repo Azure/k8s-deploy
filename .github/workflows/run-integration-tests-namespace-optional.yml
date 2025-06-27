@@ -59,34 +59,10 @@ jobs:
            run: |
               python test/integration/k8s-deploy-delete.py 'Deployment' 'all' ${{ env.NAMESPACE1 }}
               python test/integration/k8s-deploy-delete.py 'Deployment' 'all' ${{ env.NAMESPACE2 }}
-         - name: Create test manifests
-           run: |
-              echo "Creating test manifests..."
-              cat <<EOF > test_with_ns.yaml
-              apiVersion: apps/v1
-              kind: Deployment
-              metadata:
-                  name: test-deployment
-                  namespace: ${{ env.NAMESPACE1 }}
-              spec:
-                  replicas: 1
-                  selector:
-                  matchLabels:
-                      app: test-app
-                  template:
-                  metadata:
-                      labels:
-                      app: test-app
-                  spec:
-                      containers:
-                      - name: test-container
-                      image: nginx:latest
-                      ports:
-                      - containerPort: 80
          - name: Test - Handles namespace correctly based on manifest
            uses: ./
            with:
-              images: nginx:1.14.2
+              images: nginx
               manifests: |
                  test/integration/manifests/test_with_ns.yaml
                  test/integration/manifests/test_no_ns.yaml
@@ -104,7 +80,7 @@ jobs:
            uses: ./
            with:
               namespace: ${{ env.NAMESPACE1 }},${{ env.NAMESPACE2 }}
-              images: nginx:1.14.2
+              images: nginx
               manifests: |
                  test/integration/manifests/test_no_ns.yaml
               action: deploy
