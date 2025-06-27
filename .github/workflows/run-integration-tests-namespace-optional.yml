@@ -94,11 +94,11 @@ jobs:
 
          - name: Verify deployment in namespace1
            run: |
-              python test/integration/k8s-deploy-test.py namespace=test-namespace kind=Deployment name=test-deployment
+              python test/integration/k8s-deploy-test.py namespace=test-namespace kind=Deployment name=test-deployment containerName=nginx labels=app:test-app selectorLabels=app:test-app
 
-         - name: Verify deployment in default namespace
+         - name: Verify deployment in default namespace (test_no_ns.yaml)
            run: |
-              python test/integration/k8s-deploy-test.py namespace=default kind=Deployment name=test-deployment-no-ns
+              python test/integration/k8s-deploy-test.py namespace=default kind=Deployment name=test-deployment-no-ns containerName=nginx labels=app:test-app selectorLabels=app:test-app
 
          - name: Test - Deploys the same resource to two different namespaces without conflict
            uses: ./
@@ -111,17 +111,18 @@ jobs:
 
          - name: Verify deployment in namespace2
            run: |
-              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE1 }} kind=Deployment name=test-deployment-no-ns
-              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE2 }} kind=Deployment name=test-deployment-no-ns
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE1 }} kind=Deployment name=test-deployment-no-ns containerName=nginx labels=app:test-app selectorLabels=app:test-app
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE2 }} kind=Deployment name=test-deployment-no-ns containerName=nginx labels=app:test-app selectorLabels=app:test-app
 
          - name: Cleanup
            run: |
               echo "Cleaning up resources..."
-              python test/integration/k8s-deploy-delete.py 'Deployment' 'test-deployment' ${{ env.NAMESPACE1 }}
+              python test/integration/k8s-deploy-delete.py 'Deployment' 'test-deployment' test-namespace
               python test/integration/k8s-deploy-delete.py 'Deployment' 'test-deployment-no-ns' ${{ env.NAMESPACE1 }}
               python test/integration/k8s-deploy-delete.py 'Deployment' 'test-deployment-no-ns' ${{ env.NAMESPACE2 }}
               python test/integration/k8s-deploy-delete.py 'Deployment' 'test-deployment-no-ns' default
 
               kubectl delete ns ${{ env.NAMESPACE1 }}
               kubectl delete ns ${{ env.NAMESPACE2 }}
+              kubectl delete ns test-namespace
               rm -rf test_with_ns.yaml test_no_ns.yaml
