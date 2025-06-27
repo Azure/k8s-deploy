@@ -195,6 +195,27 @@ def validateKeyPresence(actualDict: dict, expectedKeys: list):
 
     return True, ""
 
+def verify_deployment_namespace(namespace, kind, name):
+    try:
+        # Retrieve the deployment
+        result = subprocess.run(
+            ["kubectl", "get", kind, name, "-n", namespace, "-o", "jsonpath={.metadata.namespace}"],
+            capture_output=True,
+            text=True,
+            check=True
+        )
+        actual_namespace = result.stdout.strip()
+
+        # Check if the namespace matches the expected namespace
+        if actual_namespace == namespace:
+            print(f"Deployment {name} is in the expected namespace: {namespace}")
+        else:
+            print(f"Deployment {name} is in the wrong namespace: {actual_namespace}. Expected: {namespace}")
+            sys.exit(1)
+    except subprocess.CalledProcessError as e:
+        print(f"Failed to retrieve deployment {name} in namespace {namespace}: {e.stderr}")
+        sys.exit(1)
+
 def main():
     parsedArgs: dict = parseArgs(sys.argv[1:])
     RESULT = False
@@ -237,8 +258,8 @@ def main():
         sys.exit(msg + " " + suffix)
 
     if kind == 'Deployment':
-        RESULT, msg = verifyDeployment(
-            k8_object, parsedArgs)
+        verify_deployment_namespace(namespace, kind, name)
+        RESULT, msg = verifyDeployment(k8_object, parsedArgs)
     if kind == 'Service':
         RESULT, msg = verifyService(
             k8_object, parsedArgs)

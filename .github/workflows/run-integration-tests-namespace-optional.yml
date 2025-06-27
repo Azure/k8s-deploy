@@ -94,11 +94,11 @@ jobs:
 
          - name: Verify deployment in namespace1
            run: |
-              python test/integration/k8s-deploy-test.py namespace=test-namespace kind=Deployment name=test-deployment containerName=nginx:1.14.2 labels=app:test-app selectorLabels=app:test-app
+              python test/integration/k8s-deploy-test.py namespace=test-namespace kind=Deployment name=test-deployment
 
          - name: Verify deployment in default namespace
            run: |
-              python test/integration/k8s-deploy-test.py namespace=default kind=Deployment name=test-deployment-no-ns containerName=nginx:1.14.2 labels=app:test-app selectorLabels=app:test-app
+              python test/integration/k8s-deploy-test.py namespace=default kind=Deployment name=test-deployment-no-ns
 
          - name: Test - Deploys the same resource to two different namespaces without conflict
            uses: ./
@@ -111,8 +111,8 @@ jobs:
 
          - name: Verify deployment in namespace2
            run: |
-              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE1 }} kind=Deployment name=test-deployment-no-ns containerName=nginx:1.14.2 labels=app:test-app selectorLabels=app:test-app
-              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE2 }} kind=Deployment name=test-deployment-no-ns containerName=nginx:1.14.2 labels=app:test-app selectorLabels=app:test-app
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE1 }} kind=Deployment name=test-deployment-no-ns
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE2 }} kind=Deployment name=test-deployment-no-ns
 
          - name: Cleanup
            run: |
