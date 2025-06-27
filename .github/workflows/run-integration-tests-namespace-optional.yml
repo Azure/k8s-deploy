@@ -68,13 +68,13 @@ jobs:
                  test/integration/manifests/test_no_ns.yaml
               action: deploy
 
-         - name: Verify deployment in namespace1
+         - name: Verify deployment in test-namespace (test_with_ns.yaml)
            run: |
-              python test/integration/k8s-deploy-test.py namespace=test-namespace kind=Deployment name=test-deployment containerName=nginx labels=app:test-app selectorLabels=app:test-app
+              python test/integration/k8s-deploy-test.py namespace=test-namespace kind=Deployment name=test-deployment containerName=nginx labels=app:test-app,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_Namespace_Optional selectorLabels=app:test-app
 
          - name: Verify deployment in default namespace (test_no_ns.yaml)
            run: |
-              python test/integration/k8s-deploy-test.py namespace=default kind=Deployment name=test-deployment-no-ns containerName=nginx labels=app:test-app selectorLabels=app:test-app
+              python test/integration/k8s-deploy-test.py namespace=default kind=Deployment name=test-deployment-no-ns containerName=nginx labels=app:test-app,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_Namespace_Optional selectorLabels=app:test-app
 
          - name: Test - Deploys the same resource to two different namespaces without conflict
            uses: ./
@@ -87,8 +87,8 @@ jobs:
 
          - name: Verify deployment in namespace2
            run: |
-              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE1 }} kind=Deployment name=test-deployment-no-ns containerName=nginx labels=app:test-app selectorLabels=app:test-app
-              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE2 }} kind=Deployment name=test-deployment-no-ns containerName=nginx labels=app:test-app selectorLabels=app:test-app
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE1 }} kind=Deployment name=test-deployment-no-ns containerName=nginx labels=app:test-app,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_Namespace_Optional selectorLabels=app:test-app
+              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE2 }} kind=Deployment name=test-deployment-no-ns containerName=nginx labels=app:test-app,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_Namespace_Optional selectorLabels=app:test-app
 
          - name: Cleanup
            run: |
