@@ -1,7 +1,8 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-   name: test-deployment-no-ns
+   name: test-deployment
+   namespace: test-namespace
 spec:
    replicas: 1
    selector:

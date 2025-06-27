@@ -48,6 +48,7 @@ jobs:
            run: |
               kubectl create ns ${{ env.NAMESPACE1 }}
               kubectl create ns ${{ env.NAMESPACE2 }}
+              kubectl create ns test-namespace
 
          - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # 5.6.0
            name: Install Python
@@ -56,44 +57,44 @@ jobs:
 
          - name: Cleaning any previously created items
            run: |
-                python test/integration/k8s-deploy-delete.py 'Deployment' 'all' ${{ env.NAMESPACE1 }}
-                python test/integration/k8s-deploy-delete.py 'Deployment' 'all' ${{ env.NAMESPACE2 }}
+              python test/integration/k8s-deploy-delete.py 'Deployment' 'all' ${{ env.NAMESPACE1 }}
+              python test/integration/k8s-deploy-delete.py 'Deployment' 'all' ${{ env.NAMESPACE2 }}
          - name: Create test manifests
            run: |
-                echo "Creating test manifests..."
-                cat <<EOF > test_with_ns.yaml
-                apiVersion: apps/v1
-                kind: Deployment
-                metadata:
-                    name: test-deployment
-                    namespace: ${{ env.NAMESPACE1 }}
-                spec:
-                    replicas: 1
-                    selector:
-                    matchLabels:
-                        app: test-app
-                    template:
-                    metadata:
-                        labels:
-                        app: test-app
-                    spec:
-                        containers:
-                        - name: test-container
-                        image: nginx:latest
-                        ports:
-                        - containerPort: 80
+              echo "Creating test manifests..."
+              cat <<EOF > test_with_ns.yaml
+              apiVersion: apps/v1
+              kind: Deployment
+              metadata:
+                  name: test-deployment
+                  namespace: ${{ env.NAMESPACE1 }}
+              spec:
+                  replicas: 1
+                  selector:
+                  matchLabels:
+                      app: test-app
+                  template:
+                  metadata:
+                      labels:
+                      app: test-app
+                  spec:
+                      containers:
+                      - name: test-container
+                      image: nginx:latest
+                      ports:
+                      - containerPort: 80
          - name: Test - Handles namespace correctly based on manifest
            uses: ./
            with:
               images: nginx:1.14.2
               manifests: |
-                 test_with_ns.yaml
+                 test/integration/manifests/test_with_ns.yaml
                  test/integration/manifests/test_no_ns.yaml
               action: deploy
 
          - name: Verify deployment in namespace1
            run: |
-              python test/integration/k8s-deploy-test.py namespace=${{ env.NAMESPACE1 }} kind=Deployment name=test-deployment containerName=nginx:1.14.2 labels=app:test-app selectorLabels=app:test-app
+              python test/integration/k8s-deploy-test.py namespace=test-namespace kind=Deployment name=test-deployment containerName=nginx:1.14.2 labels=app:test-app selectorLabels=app:test-app
 
          - name: Verify deployment in default namespace
            run: |
@@ -102,7 +103,7 @@ jobs:
          - name: Test - Deploys the same resource to two different namespaces without conflict
            uses: ./
            with:
-              namespace:  ${{ env.NAMESPACE1 }},${{ env.NAMESPACE2 }}
+              namespace: ${{ env.NAMESPACE1 }},${{ env.NAMESPACE2 }}
               images: nginx:1.14.2
               manifests: |
                  test/integration/manifests/test_no_ns.yaml
@@ -123,5 +124,4 @@ jobs:
 
               kubectl delete ns ${{ env.NAMESPACE1 }}
               kubectl delete ns ${{ env.NAMESPACE2 }}
-              rm -rf test_with_ns.yaml
-
+              rm -rf test_with_ns.yaml test_no_ns.yaml
