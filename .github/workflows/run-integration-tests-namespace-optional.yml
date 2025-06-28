@@ -59,6 +59,8 @@ jobs:
            run: |
               python test/integration/k8s-deploy-delete.py 'Deployment' 'all' ${{ env.NAMESPACE1 }}
               python test/integration/k8s-deploy-delete.py 'Deployment' 'all' ${{ env.NAMESPACE2 }}
+
+         # This tests whether the deployment respects the namespace defined in the manifest instead of defaulting to "default" when namespace is not provided.
          - name: Test - Handles namespace correctly based on manifest
            uses: ./
            with:
@@ -66,7 +68,7 @@ jobs:
               manifests: |
                  test/integration/manifests/test_with_ns.yaml
                  test/integration/manifests/test_no_ns.yaml
-              action: deploy
+              action: deploy # Deploys manifests to specified namespaces or uses the namespace defined in the manifest
 
          - name: Verify deployment in test-namespace (test_with_ns.yaml)
            run: |
@@ -76,6 +78,7 @@ jobs:
            run: |
               python test/integration/k8s-deploy-test.py namespace=default kind=Deployment name=test-deployment-no-ns containerName=nginx labels=app:test-app,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:Minikube_Integration_Tests_-_Namespace_Optional selectorLabels=app:test-app
 
+         # This tests whether the deployment works when a file is deployed to two different provided namespaces.
          - name: Test - Deploys the resource to namespace1
            uses: ./
            with:
