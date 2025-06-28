@@ -2,6 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
    name: test-deployment-no-ns
+   labels:
+      app: test-app
 spec:
    replicas: 1
    selector:
