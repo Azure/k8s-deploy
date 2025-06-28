@@ -64,7 +64,7 @@ inputs:
       required: false
       default: true
    annotate-namespace:
-      description: 'Annotate the target namespace. Ignored when annotate-resources is set to false.'
+      description: 'Annotate the target namespace. Ignored when annotate-resources is set to false or no namespace is provided.'
       required: false
       default: true
    private-cluster:
