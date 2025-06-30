@@ -115,7 +115,7 @@ jobs:
            run: |
               for ns in ${{ env.NAMESPACE1 }} ${{ env.NAMESPACE2 }}; do
                 python test/integration/k8s-deploy-test.py \
-                  namespace=ns \
+                  namespace=$ns \
                   kind=Deployment \
                   name=test-deployment-no-ns \
                   containerName=nginx \
