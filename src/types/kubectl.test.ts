@@ -539,53 +539,50 @@ describe('Kubectl class', () => {
 describe('Kubectl namespace handling', () => {
    const kubectlPath = 'kubectlPath'
    const testNamespace = 'testNamespace'
+   const configPaths = 'configPaths'
    const execReturn = {exitCode: 0, stdout: 'Output', stderr: ''}
 
    beforeEach(() => {
-      jest.spyOn(exec, 'getExecOutput').mockImplementation(async () => {
-         return execReturn
-      })
+      jest.spyOn(exec, 'getExecOutput').mockResolvedValue(execReturn)
    })
 
-   it('does not include namespace flag when namespace is omitted', async () => {
-      const kubectl = new Kubectl(kubectlPath) // No namespace provided
+   const runApply = async (namespace?: string) => {
+      const kubectl = new Kubectl(kubectlPath, namespace)
+      return kubectl.apply(configPaths)
+   }
 
-      const configPaths = 'configPaths'
-      const result = await kubectl.apply(configPaths)
-
-      expect(result).toBe(execReturn)
-      expect(exec.getExecOutput).toHaveBeenCalledWith(
-         kubectlPath,
-         ['apply', '-f', configPaths], // No --namespace flag
-         {silent: false}
-      )
-   })
-
-   it('includes namespace flag when namespace is provided', async () => {
-      const kubectl = new Kubectl(kubectlPath, testNamespace) // Namespace provided
-
-      const configPaths = 'configPaths'
-      const result = await kubectl.apply(configPaths)
-
-      expect(result).toBe(execReturn)
-      expect(exec.getExecOutput).toHaveBeenCalledWith(
-         kubectlPath,
-         ['apply', '-f', configPaths, '--namespace', testNamespace], // Includes --namespace flag
-         {silent: false}
-      )
-   })
-
-   it('does not include namespace flag when namespace is explicitly set to an empty string', async () => {
-      const kubectl = new Kubectl(kubectlPath, '') // Empty namespace provided
-
-      const configPaths = 'configPaths'
-      const result = await kubectl.apply(configPaths)
-
-      expect(result).toBe(execReturn)
-      expect(exec.getExecOutput).toHaveBeenCalledWith(
-         kubectlPath,
-         ['apply', '-f', configPaths], // No --namespace flag
-         {silent: false}
-      )
-   })
+   it.each([
+      {
+         namespace: undefined,
+         expectedArgs: ['apply', '-f', configPaths],
+         description: 'namespace omitted'
+      },
+      {
+         namespace: '',
+         expectedArgs: ['apply', '-f', configPaths],
+         description: 'namespace is an empty string (default namespace)'
+      },
+      {
+         namespace: testNamespace,
+         expectedArgs: [
+            'apply',
+            '-f',
+            configPaths,
+            '--namespace',
+            testNamespace
+         ],
+         description: 'namespace provided'
+      }
+   ])(
+      'handles namespace when $description',
+      async ({namespace, expectedArgs}) => {
+         const result = await runApply(namespace)
+         expect(result).toBe(execReturn)
+         expect(exec.getExecOutput).toHaveBeenCalledWith(
+            kubectlPath,
+            expectedArgs,
+            {silent: false}
+         )
+      }
+   )
 })
