@@ -84,16 +84,23 @@ export async function deployManifests(
          )
 
          const forceDeployment = core.getInput('force').toLowerCase() === 'true'
+         const serverSideApply =
+            core.getInput('server-side').toLowerCase() === 'true'
          if (trafficSplitMethod === TrafficSplitMethod.SMI) {
             const updatedManifests = appendStableVersionLabelToResource(files)
 
             const result = await kubectl.apply(
                updatedManifests,
-               forceDeployment
+               forceDeployment,
+               serverSideApply
             )
             checkForErrors([result])
          } else {
-            const result = await kubectl.apply(files, forceDeployment)
+            const result = await kubectl.apply(
+               files,
+               forceDeployment,
+               serverSideApply
+            )
             checkForErrors([result])
          }
 

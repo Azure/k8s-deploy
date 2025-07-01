@@ -34,7 +34,8 @@ export class Kubectl {
 
    public async apply(
       configurationPaths: string | string[],
-      force: boolean = false
+      force: boolean = false,
+      serverSide: boolean = false
    ): Promise<ExecOutput> {
       try {
          if (!configurationPaths || configurationPaths?.length === 0)
@@ -46,6 +47,7 @@ export class Kubectl {
             createInlineArray(configurationPaths)
          ]
          if (force) applyArgs.push('--force')
+         if (serverSide) applyArgs.push('--server-side')
 
          return await this.execute(applyArgs.concat(this.getFlags()))
       } catch (err) {
