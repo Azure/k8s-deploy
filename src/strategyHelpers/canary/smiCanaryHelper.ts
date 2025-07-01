@@ -213,7 +213,7 @@ async function createCanaryService(
    const forceDeployment = core.getInput('force').toLowerCase() === 'true'
    const serverSideDeployment = core.getInput('server-side').toLowerCase() === 'true'
 
-   const result = await kubectl.apply(manifestFiles, forceDeployment, server-side)
+   const result = await kubectl.apply(manifestFiles, forceDeployment, serverSideDeployment)
    checkForErrors([result])
    return manifestFiles
 }
