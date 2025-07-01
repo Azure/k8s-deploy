@@ -19,7 +19,7 @@ describe('Docker class', () => {
 
       test('pulls an image', async () => {
          await docker.pull(image, args)
-         expect(actions.getExecOutput).toBeCalledWith(
+         expect(actions.getExecOutput).toHaveBeenCalledWith(
             dockerPath,
             ['pull', image, ...args],
             {silent: false}
@@ -28,7 +28,7 @@ describe('Docker class', () => {
 
       test('pulls an image silently', async () => {
          await docker.pull(image, args, true)
-         expect(actions.getExecOutput).toBeCalledWith(
+         expect(actions.getExecOutput).toHaveBeenCalledWith(
             dockerPath,
             ['pull', image, ...args],
             {silent: true}
@@ -38,7 +38,7 @@ describe('Docker class', () => {
       test('inspects a docker image', async () => {
          const result = await docker.inspect(image, args)
          expect(result).toBe(execReturn.stdout)
-         expect(actions.getExecOutput).toBeCalledWith(
+         expect(actions.getExecOutput).toHaveBeenCalledWith(
             dockerPath,
             ['inspect', image, ...args],
             {silent: false}
@@ -48,7 +48,7 @@ describe('Docker class', () => {
       test('inspects a docker image silently', async () => {
          const result = await docker.inspect(image, args, true)
          expect(result).toBe(execReturn.stdout)
-         expect(actions.getExecOutput).toBeCalledWith(
+         expect(actions.getExecOutput).toHaveBeenCalledWith(
             dockerPath,
             ['inspect', image, ...args],
             {silent: true}

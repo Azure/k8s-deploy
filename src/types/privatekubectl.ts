@@ -1,10 +1,10 @@
 import {Kubectl} from './kubectl'
-import * as minimist from 'minimist'
+import minimist from 'minimist'
 import {ExecOptions, ExecOutput, getExecOutput} from '@actions/exec'
 import * as core from '@actions/core'
-import * as os from 'os'
-import * as fs from 'fs'
+import fs from 'node:fs'
 import * as path from 'path'
+import {getTempDirectory} from '../utilities/fileUtils'
 
 export class PrivateKubectl extends Kubectl {
    protected async execute(args: string[], silent: boolean = false) {
@@ -18,8 +18,7 @@ export class PrivateKubectl extends Kubectl {
       }
 
       if (this.containsFilenames(kubectlCmd)) {
-         // For private clusters, files will referenced solely by their basename
-         kubectlCmd = this.replaceFilnamesWithBasenames(kubectlCmd)
+         kubectlCmd = replaceFileNamesWithShallowNamesRelativeToTemp(kubectlCmd)
          addFileFlag = true
       }
 
@@ -43,22 +42,9 @@ export class PrivateKubectl extends Kubectl {
       ]
 
       if (addFileFlag) {
-         const filenames = this.extractFilesnames(kubectlCmd).split(' ')
-
-         const tempDirectory =
-            process.env['runner.tempDirectory'] || os.tmpdir() + '/manifests'
-         eo.cwd = tempDirectory
+         const tempDirectory = getTempDirectory()
+         eo.cwd = path.join(tempDirectory, 'manifests')
          privateClusterArgs.push(...['--file', '.'])
-
-         let filenamesArr = filenames[0].split(',')
-         for (let index = 0; index < filenamesArr.length; index++) {
-            const file = filenamesArr[index]
-
-            if (!file) {
-               continue
-            }
-            this.moveFileToTempManifestDir(file)
-         }
       }
 
       core.debug(
@@ -95,89 +81,89 @@ export class PrivateKubectl extends Kubectl {
       } as ExecOutput
    }
 
-   private replaceFilnamesWithBasenames(kubectlCmd: string) {
-      let exFilenames = this.extractFilesnames(kubectlCmd)
-      let filenames = exFilenames.split(' ')
-      let filenamesArr = filenames[0].split(',')
-
-      for (let index = 0; index < filenamesArr.length; index++) {
-         filenamesArr[index] = path.basename(filenamesArr[index])
-      }
-
-      let baseFilenames = filenamesArr.join()
-
-      let result = kubectlCmd.replace(exFilenames, baseFilenames)
-      return result
-   }
-
-   public extractFilesnames(strToParse: string) {
-      const fileNames: string[] = []
-      const argv = minimist(strToParse.split(' '))
-      const fArg = 'f'
-      const filenameArg = 'filename'
-
-      fileNames.push(...this.extractFilesFromMinimist(argv, fArg))
-      fileNames.push(...this.extractFilesFromMinimist(argv, filenameArg))
-
-      return fileNames.join(' ')
-   }
-
-   private extractFilesFromMinimist(argv, arg: string): string[] {
-      if (!argv[arg]) {
-         return []
-      }
-      const toReturn: string[] = []
-      if (typeof argv[arg] === 'string') {
-         toReturn.push(...argv[arg].split(','))
-      } else {
-         for (const value of argv[arg] as string[]) {
-            toReturn.push(...value.split(','))
-         }
-      }
-
-      return toReturn
-   }
-
    private containsFilenames(str: string) {
       return str.includes('-f ') || str.includes('filename ')
    }
+}
 
-   private createTempManifestsDirectory() {
-      const manifestsDir = '/tmp/manifests'
-      if (!fs.existsSync('/tmp/manifests')) {
-         fs.mkdirSync('/tmp/manifests', {recursive: true})
+function createTempManifestsDirectory(): string {
+   const manifestsDirPath = path.join(getTempDirectory(), 'manifests')
+   if (!fs.existsSync(manifestsDirPath)) {
+      fs.mkdirSync(manifestsDirPath, {recursive: true})
+   }
+
+   return manifestsDirPath
+}
+
+export function replaceFileNamesWithShallowNamesRelativeToTemp(
+   kubectlCmd: string
+) {
+   let filenames = extractFileNames(kubectlCmd)
+   core.debug(`filenames originally provided in kubectl command: ${filenames}`)
+   let relativeShallowNames = filenames.map((filename) => {
+      const relativeName = path.relative(getTempDirectory(), filename)
+
+      const relativePathElements = relativeName.split(path.sep)
+
+      const shallowName = relativePathElements.join('-')
+
+      // make manifests dir in temp if it doesn't already exist
+      const manifestsTempDir = createTempManifestsDirectory()
+
+      const shallowPath = path.join(manifestsTempDir, shallowName)
+      core.debug(
+         `moving contents from ${filename} to shallow location at ${shallowPath}`
+      )
+
+      core.debug(`reading contents from ${filename}`)
+      const contents = fs.readFileSync(filename).toString()
+
+      core.debug(`writing contents to new path ${shallowPath}`)
+      fs.writeFileSync(shallowPath, contents)
+
+      return shallowName
+   })
+
+   let result = kubectlCmd
+   if (filenames.length != relativeShallowNames.length) {
+      throw Error(
+         'replacing filenames with relative path from temp dir, ' +
+            filenames.length +
+            ' filenames != ' +
+            relativeShallowNames.length +
+            'basenames'
+      )
+   }
+   for (let index = 0; index < filenames.length; index++) {
+      result = result.replace(filenames[index], relativeShallowNames[index])
+   }
+   return result
+}
+
+export function extractFileNames(strToParse: string) {
+   const fileNames: string[] = []
+   const argv = minimist(strToParse.split(' '))
+   const fArg = 'f'
+   const filenameArg = 'filename'
+
+   fileNames.push(...extractFilesFromMinimist(argv, fArg))
+   fileNames.push(...extractFilesFromMinimist(argv, filenameArg))
+
+   return fileNames
+}
+
+export function extractFilesFromMinimist(argv, arg: string): string[] {
+   if (!argv[arg]) {
+      return []
+   }
+   const toReturn: string[] = []
+   if (typeof argv[arg] === 'string') {
+      toReturn.push(...argv[arg].split(','))
+   } else {
+      for (const value of argv[arg] as string[]) {
+         toReturn.push(...value.split(','))
       }
    }
 
-   private moveFileToTempManifestDir(file: string) {
-      this.createTempManifestsDirectory()
-      if (!fs.existsSync('/tmp/' + file)) {
-         core.debug(
-            '/tmp/' +
-               file +
-               ' does not exist, and therefore cannot be moved to the manifest directory'
-         )
-      }
-
-      fs.copyFile('/tmp/' + file, '/tmp/manifests/' + file, function (err) {
-         if (err) {
-            core.debug(
-               'Could not rename ' +
-                  '/tmp/' +
-                  file +
-                  ' to  ' +
-                  '/tmp/manifests/' +
-                  file +
-                  ' ERROR: ' +
-                  err
-            )
-            return
-         }
-         core.debug(
-            "Successfully moved file '" +
-               file +
-               "' from /tmp to /tmp/manifest directory"
-         )
-      })
-   }
+   return toReturn
 }

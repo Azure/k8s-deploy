@@ -232,8 +232,7 @@ def main():
         getAllObjectsCmd = azPrefix + 'kubectl get '+kind+' -n '+namespace
         if not azPrefix == "":
             getAllObjectsCmd = azPrefix + "'{getAllObjectsCmd}'" # add extra set of quotes
-        cmd =  + "'" + cmd + "'"
-        foundObjects = os.popen().read()
+        foundObjects = os.popen(getAllObjectsCmd).read()
         suffix = f"resources of type {kind}: {foundObjects}"
         sys.exit(msg + " " + suffix)
 

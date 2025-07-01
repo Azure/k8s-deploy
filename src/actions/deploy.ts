@@ -13,11 +13,15 @@ import {
 } from '../strategyHelpers/deploymentHelper'
 import {DeploymentStrategy} from '../types/deploymentStrategy'
 import {parseTrafficSplitMethod} from '../types/trafficSplitMethod'
-
+import {ClusterType} from '../inputUtils'
+export const ResourceTypeManagedCluster =
+   'Microsoft.ContainerService/managedClusters'
+export const ResourceTypeFleet = 'Microsoft.ContainerService/fleets'
 export async function deploy(
    kubectl: Kubectl,
    manifestFilePaths: string[],
-   deploymentStrategy: DeploymentStrategy
+   deploymentStrategy: DeploymentStrategy,
+   resourceType: ClusterType
 ) {
    // update manifests
    const inputManifestFiles: string[] = updateManifestFiles(manifestFilePaths)
@@ -45,7 +49,8 @@ export async function deploy(
          KubernetesConstants.DiscoveryAndLoadBalancerResource.SERVICE
       ])
    )
-   await checkManifestStability(kubectl, resourceTypes)
+
+   await checkManifestStability(kubectl, resourceTypes, resourceType)
    core.endGroup()
 
    // print ingresses

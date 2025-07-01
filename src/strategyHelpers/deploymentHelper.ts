@@ -10,12 +10,7 @@ import {Kubectl, Resource} from '../types/kubectl'
 import {deployPodCanary} from './canary/podCanaryHelper'
 import {deploySMICanary} from './canary/smiCanaryHelper'
 import {DeploymentConfig} from '../types/deploymentConfig'
-import {
-   deployBlueGreen,
-   deployBlueGreenIngress,
-   deployBlueGreenService
-} from './blueGreen/deploy'
-import {deployBlueGreenSMI} from './blueGreen/deploy'
+import {deployBlueGreen} from './blueGreen/deploy'
 import {DeploymentStrategy} from '../types/deploymentStrategy'
 import * as core from '@actions/core'
 import {
@@ -39,8 +34,8 @@ import {
    normalizeWorkflowStrLabel
 } from '../utilities/githubUtils'
 import {getDeploymentConfig} from '../utilities/dockerUtils'
-import {deploy} from '../actions/deploy'
 import {DeployResult} from '../types/deployResult'
+import {ClusterType} from '../inputUtils'
 
 export async function deployManifests(
    files: string[],
@@ -118,19 +113,24 @@ function appendStableVersionLabelToResource(files: string[]): string[] {
    const newObjectsList = []
 
    files.forEach((filePath: string) => {
-      const fileContents = fs.readFileSync(filePath).toString()
+      try {
+         const fileContents = fs.readFileSync(filePath).toString()
 
-      yaml.safeLoadAll(fileContents, function (inputObject) {
-         const {kind} = inputObject
+         yaml.loadAll(fileContents, function (inputObject) {
+            const kind = (inputObject as {kind: string}).kind
 
-         if (isDeploymentEntity(kind)) {
-            const updatedObject =
-               canaryDeploymentHelper.markResourceAsStable(inputObject)
-            newObjectsList.push(updatedObject)
-         } else {
-            manifestFiles.push(filePath)
-         }
-      })
+            if (isDeploymentEntity(kind)) {
+               const updatedObject =
+                  canaryDeploymentHelper.markResourceAsStable(inputObject)
+               newObjectsList.push(updatedObject)
+            } else {
+               manifestFiles.push(filePath)
+            }
+         })
+      } catch (error) {
+         core.error(`Failed to parse file at ${filePath}: ${error.message}`)
+         throw error
+      }
    })
 
    const updatedManifestFiles = fileHelper.writeObjectsToFile(newObjectsList)
@@ -141,9 +141,14 @@ function appendStableVersionLabelToResource(files: string[]): string[] {
 
 export async function checkManifestStability(
    kubectl: Kubectl,
-   resources: Resource[]
+   resources: Resource[],
+   resourceType: ClusterType
 ): Promise<void> {
-   await KubernetesManifestUtility.checkManifestStability(kubectl, resources)
+   await KubernetesManifestUtility.checkManifestStability(
+      kubectl,
+      resources,
+      resourceType
+   )
 }
 
 export async function annotateAndLabelResources(
@@ -201,14 +206,19 @@ async function annotateResources(
    )
 
    if (core.isDebug()) {
-      core.debug(`files getting annotated are ${JSON.stringify(files)}`)
-      for (const filePath of files) {
-         core.debug('printing objects getting annotated...')
-         const fileContents = fs.readFileSync(filePath).toString()
-         const inputObjects = yaml.safeLoadAll(fileContents)
-         for (const inputObject of inputObjects) {
-            core.debug(`object: ${JSON.stringify(inputObject)}`)
+      try {
+         core.debug(`files getting annotated are ${JSON.stringify(files)}`)
+         for (const filePath of files) {
+            core.debug('printing objects getting annotated...')
+            const fileContents = fs.readFileSync(filePath).toString()
+            const inputObjects = yaml.loadAll(fileContents)
+            for (const inputObject of inputObjects) {
+               core.debug(`object: ${JSON.stringify(inputObject)}`)
+            }
          }
+      } catch (error) {
+         core.error(`Failed to load and parse files: ${error.message}`)
+         throw error
       }
    }
 

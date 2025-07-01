@@ -63,7 +63,7 @@ describe('promote tests', () => {
 
       await expect(
          promoteBlueGreenIngress(kubectl, testObjects)
-      ).rejects.toThrowError()
+      ).rejects.toThrow()
    })
 
    test('promote blue/green service', async () => {
@@ -102,7 +102,7 @@ describe('promote tests', () => {
 
       await expect(
          promoteBlueGreenService(kubectl, testObjects)
-      ).rejects.toThrowError()
+      ).rejects.toThrow()
    })
 
    test('promote blue/green SMI', async () => {
@@ -153,6 +153,6 @@ describe('promote tests', () => {
          .spyOn(smiTester, 'validateTrafficSplitsState')
          .mockImplementation(() => Promise.resolve(false))
 
-      expect(promoteBlueGreenSMI(kubectl, testObjects)).rejects.toThrowError()
+      expect(promoteBlueGreenSMI(kubectl, testObjects)).rejects.toThrow()
    })
 })

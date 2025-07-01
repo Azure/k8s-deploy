@@ -10,9 +10,9 @@ jobs:
       runs-on: ubuntu-latest
       steps:
          - name: Checkout Repository
-           uses: actions/checkout@v2
+           uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+         - name: install deps
+           run: npm install
 
          - name: Enforce Prettier
-           uses: actionsx/prettier@v2
-           with:
-              args: --check .
+           run: npm run format-check

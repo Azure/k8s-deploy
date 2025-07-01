@@ -38,18 +38,20 @@ import {
    TrafficSplitMethod
 } from '../types/trafficSplitMethod'
 import {parseRouteStrategy, RouteStrategy} from '../types/routeStrategy'
+import {ClusterType} from '../inputUtils'
 
 export async function promote(
    kubectl: Kubectl,
    manifests: string[],
-   deploymentStrategy: DeploymentStrategy
+   deploymentStrategy: DeploymentStrategy,
+   resourceType: ClusterType
 ) {
    switch (deploymentStrategy) {
       case DeploymentStrategy.CANARY:
          await promoteCanary(kubectl, manifests)
          break
       case DeploymentStrategy.BLUE_GREEN:
-         await promoteBlueGreen(kubectl, manifests)
+         await promoteBlueGreen(kubectl, manifests, resourceType)
          break
       default:
          throw Error('Invalid promote deployment strategy')
@@ -139,7 +141,11 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
    core.endGroup()
 }
 
-async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
+async function promoteBlueGreen(
+   kubectl: Kubectl,
+   manifests: string[],
+   resourceType: ClusterType
+) {
    // update container images and pull secrets
    const inputManifestFiles: string[] = updateManifestFiles(manifests)
    const manifestObjects: BlueGreenManifests =
@@ -173,7 +179,11 @@ async function promoteBlueGreen(kubectl: Kubectl, manifests: string[]) {
          models.DiscoveryAndLoadBalancerResource.SERVICE
       ])
    )
-   await KubernetesManifestUtility.checkManifestStability(kubectl, resources)
+   await KubernetesManifestUtility.checkManifestStability(
+      kubectl,
+      resources,
+      resourceType
+   )
    core.endGroup()
 
    core.startGroup(
