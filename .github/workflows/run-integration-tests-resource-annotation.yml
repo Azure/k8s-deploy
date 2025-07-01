@@ -31,7 +31,7 @@ jobs:
          - name: Build
            run: ncc build src/run.ts -o lib
 
-         - uses: Azure/setup-kubectl@3e0aec4d80787158d308d7b364cb1b702e7feb7f # v4.0.0
+         - uses: Azure/setup-kubectl@776406bce94f63e41d621b960d78ee25c8b76ede # v4.0.1
            name: Install Kubectl
 
          - id: setup-minikube
