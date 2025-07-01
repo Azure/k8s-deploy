@@ -535,3 +535,54 @@ describe('Kubectl class', () => {
       })
    })
 })
+
+describe('Kubectl namespace handling', () => {
+   const kubectlPath = 'kubectlPath'
+   const testNamespace = 'testNamespace'
+   const configPaths = 'configPaths'
+   const execReturn = {exitCode: 0, stdout: 'Output', stderr: ''}
+
+   beforeEach(() => {
+      jest.spyOn(exec, 'getExecOutput').mockResolvedValue(execReturn)
+   })
+
+   const runApply = async (namespace?: string) => {
+      const kubectl = new Kubectl(kubectlPath, namespace)
+      return kubectl.apply(configPaths)
+   }
+
+   it.each([
+      {
+         namespace: undefined,
+         expectedArgs: ['apply', '-f', configPaths],
+         description: 'namespace omitted'
+      },
+      {
+         namespace: '',
+         expectedArgs: ['apply', '-f', configPaths],
+         description: 'namespace is an empty string (default namespace)'
+      },
+      {
+         namespace: testNamespace,
+         expectedArgs: [
+            'apply',
+            '-f',
+            configPaths,
+            '--namespace',
+            testNamespace
+         ],
+         description: 'namespace provided'
+      }
+   ])(
+      'handles namespace when $description',
+      async ({namespace, expectedArgs}) => {
+         const result = await runApply(namespace)
+         expect(result).toBe(execReturn)
+         expect(exec.getExecOutput).toHaveBeenCalledWith(
+            kubectlPath,
+            expectedArgs,
+            {silent: false}
+         )
+      }
+   )
+})
