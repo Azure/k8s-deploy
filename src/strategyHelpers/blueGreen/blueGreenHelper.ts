@@ -270,7 +270,13 @@ export async function deployObjects(
    objectsList: any[]
 ): Promise<DeployResult> {
    const manifestFiles = fileHelper.writeObjectsToFile(objectsList)
-   const execResult = await kubectl.apply(manifestFiles)
+   const forceDeployment = core.getInput('force').toLowerCase() === 'true'
+   const serverSideApply = core.getInput('server-side').toLowerCase() === 'true'
+   const execResult = await kubectl.apply(
+      manifestFiles,
+      forceDeployment,
+      serverSideApply
+   )
 
    return {execResult, manifestFiles}
 }
