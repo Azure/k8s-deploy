@@ -99,7 +99,7 @@ describe('Kubectl class', () => {
          const configPaths = ['configPath1', 'configPath2', 'configPath3']
          const result = await kubectl.apply(configPaths, false, true)
          expect(result).toBe(execReturn)
-         expect(exec.getExecOutput).toBeCalledWith(
+         expect(exec.getExecOutput).toHaveBeenCalledWith(
             kubectlPath,
             [
                'apply',
