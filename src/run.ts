@@ -35,7 +35,7 @@ export async function run() {
    const fullManifestFilePaths =
       await getFilesFromDirectoriesAndURLs(manifestFilePaths)
    const kubectlPath = await getKubectlPath()
-   const namespace = core.getInput('namespace') || 'default'
+   const namespace = core.getInput('namespace') || '' // Sets namespace to an empty string if not provided, allowing the manifest-defined namespace to take precedence instead of "default".
    const isPrivateCluster =
       core.getInput('private-cluster').toLowerCase() === 'true'
    const resourceGroup = core.getInput('resource-group') || ''

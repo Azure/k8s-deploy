@@ -9,7 +9,8 @@
       "test": "jest",
       "coverage": "jest --coverage=true",
       "format": "prettier --write .",
-      "format-check": "prettier --check ."
+      "format-check": "prettier --check .",
+      "prepare": "husky"
    },
    "dependencies": {
       "@actions/core": "^1.11.1",
@@ -21,6 +22,7 @@
       "@octokit/core": "^7.0.2",
       "@octokit/plugin-retry": "^8.0.1",
       "@types/minipass": "^3.3.5",
+      "husky": "^9.1.7",
       "js-yaml": "4.1.0",
       "minimist": "^1.2.8"
    },
@@ -28,7 +30,7 @@
       "@types/jest": "^30.0.0",
       "@types/js-yaml": "^4.0.9",
       "@types/minimist": "^1.2.5",
-      "@types/node": "^24.0.3",
+      "@types/node": "^24.0.4",
       "@vercel/ncc": "^0.38.3",
       "jest": "^30.0.0",
       "prettier": "^3.5.3",

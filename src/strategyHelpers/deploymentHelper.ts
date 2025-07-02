@@ -203,7 +203,7 @@ async function annotateResources(
    deploymentConfig: DeploymentConfig
 ) {
    const annotateResults: ExecOutput[] = []
-   const namespace = core.getInput('namespace') || 'default'
+   const namespace = core.getInput('namespace') || '' // Sets namespace to an empty string if not provided, allowing the manifest-defined namespace to take precedence instead of "default".
    const lastSuccessSha = await getLastSuccessfulRunSha(
       kubectl,
       namespace,
@@ -234,8 +234,10 @@ async function annotateResources(
    )}`
 
    const annotateNamespace = !(
+      namespace === '' ||
       core.getInput('annotate-namespace').toLowerCase() === 'false'
-   )
+   ) // If namespace is empty, we don't annotate it. If the input is false, we also don't annotate it.
+
    if (annotateNamespace) {
       annotateResults.push(
          await kubectl.annotate(
