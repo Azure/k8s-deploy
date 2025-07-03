@@ -40,7 +40,8 @@ describe('bluegreenhelper functions', () => {
          [].concat(
             testObjects.deploymentEntityList,
             testObjects.serviceEntityList
-         )
+         ),
+         '60s'
       )
 
       expect(value).toHaveLength(2)
@@ -52,6 +53,30 @@ describe('bluegreenhelper functions', () => {
          name: 'nginx-deployment-green',
          kind: 'Deployment'
       })
+   })
+
+   test('handles timeout when deleting objects', async () => {
+      const deleteList = [
+         {name: 'nginx-service-green', kind: 'Service'},
+         {name: 'nginx-deployment-green', kind: 'Deployment'}
+      ]
+
+      // Mock deleteObjects to prevent actual execution
+      jest.spyOn(kubectl, 'delete').mockResolvedValue({} as ExecOutput)
+
+      await bgHelper.deleteObjects(kubectl, deleteList, '60s')
+
+      // Verify kubectl.delete is called with timeout for both objects
+      expect(kubectl.delete).toHaveBeenCalledWith(
+         ['Service', 'nginx-service-green'],
+         undefined,
+         '60s'
+      )
+      expect(kubectl.delete).toHaveBeenCalledWith(
+         ['Deployment', 'nginx-deployment-green'],
+         undefined,
+         '60s'
+      )
    })
 
    test('parses objects correctly from one file (getManifestObjects)', () => {

@@ -44,21 +44,26 @@ export async function promote(
    kubectl: Kubectl,
    manifests: string[],
    deploymentStrategy: DeploymentStrategy,
-   resourceType: ClusterType
+   resourceType: ClusterType,
+   timeout?: string
 ) {
    switch (deploymentStrategy) {
       case DeploymentStrategy.CANARY:
-         await promoteCanary(kubectl, manifests)
+         await promoteCanary(kubectl, manifests, timeout)
          break
       case DeploymentStrategy.BLUE_GREEN:
-         await promoteBlueGreen(kubectl, manifests, resourceType)
+         await promoteBlueGreen(kubectl, manifests, resourceType, timeout)
          break
       default:
          throw Error('Invalid promote deployment strategy')
    }
 }
 
-async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
+async function promoteCanary(
+   kubectl: Kubectl,
+   manifests: string[],
+   timeout?: string
+) {
    let includeServices = false
 
    const manifestFilesForDeployment: string[] = updateManifestFiles(manifests)
@@ -87,7 +92,8 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
       promoteResult = await SMICanaryDeploymentHelper.deploySMICanary(
          manifestFilesForDeployment,
          kubectl,
-         true
+         true,
+         timeout
       )
 
       core.endGroup()
@@ -96,7 +102,8 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
       const stableRedirectManifests =
          await SMICanaryDeploymentHelper.redirectTrafficToStableDeployment(
             kubectl,
-            manifests
+            manifests,
+            timeout
          )
 
       filesToAnnotate = promoteResult.manifestFiles.concat(
@@ -109,7 +116,8 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
       promoteResult = await PodCanaryHelper.deployPodCanary(
          manifestFilesForDeployment,
          kubectl,
-         true
+         true,
+         timeout
       )
       filesToAnnotate = promoteResult.manifestFiles
       core.endGroup()
@@ -144,7 +152,8 @@ async function promoteCanary(kubectl: Kubectl, manifests: string[]) {
 async function promoteBlueGreen(
    kubectl: Kubectl,
    manifests: string[],
-   resourceType: ClusterType
+   resourceType: ClusterType,
+   timeout?: string
 ) {
    // update container images and pull secrets
    const inputManifestFiles: string[] = updateManifestFiles(manifests)
@@ -160,11 +169,19 @@ async function promoteBlueGreen(
    const {deployResult} = await (async () => {
       switch (routeStrategy) {
          case RouteStrategy.INGRESS:
-            return await promoteBlueGreenIngress(kubectl, manifestObjects)
+            return await promoteBlueGreenIngress(
+               kubectl,
+               manifestObjects,
+               timeout
+            )
          case RouteStrategy.SMI:
-            return await promoteBlueGreenSMI(kubectl, manifestObjects)
+            return await promoteBlueGreenSMI(kubectl, manifestObjects, timeout)
          default:
-            return await promoteBlueGreenService(kubectl, manifestObjects)
+            return await promoteBlueGreenService(
+               kubectl,
+               manifestObjects,
+               timeout
+            )
       }
    })()
 
@@ -182,7 +199,8 @@ async function promoteBlueGreen(
    await KubernetesManifestUtility.checkManifestStability(
       kubectl,
       resources,
-      resourceType
+      resourceType,
+      timeout
    )
    core.endGroup()
 
@@ -201,7 +219,8 @@ async function promoteBlueGreen(
          [].concat(
             manifestObjects.deploymentEntityList,
             manifestObjects.serviceEntityList
-         )
+         ),
+         timeout
       )
    } else if (routeStrategy == RouteStrategy.SMI) {
       await routeBlueGreenSMI(
@@ -209,15 +228,23 @@ async function promoteBlueGreen(
          NONE_LABEL_VALUE,
          manifestObjects.serviceEntityList
       )
-      await deleteGreenObjects(kubectl, manifestObjects.deploymentEntityList)
-      await cleanupSMI(kubectl, manifestObjects.serviceEntityList)
+      await deleteGreenObjects(
+         kubectl,
+         manifestObjects.deploymentEntityList,
+         timeout
+      )
+      await cleanupSMI(kubectl, manifestObjects.serviceEntityList, timeout)
    } else {
       await routeBlueGreenService(
          kubectl,
          NONE_LABEL_VALUE,
          manifestObjects.serviceEntityList
       )
-      await deleteGreenObjects(kubectl, manifestObjects.deploymentEntityList)
+      await deleteGreenObjects(
+         kubectl,
+         manifestObjects.deploymentEntityList,
+         timeout
+      )
    }
    core.endGroup()
 

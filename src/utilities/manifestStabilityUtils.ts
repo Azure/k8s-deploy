@@ -12,7 +12,8 @@ const POD = 'pod'
 export async function checkManifestStability(
    kubectl: Kubectl,
    resources: Resource[],
-   resourceType: ClusterType
+   resourceType: ClusterType,
+   timeout?: string
 ): Promise<void> {
    // Skip if resource type is microsoft.containerservice/fleets
    if (resourceType === ResourceTypeFleet) {
@@ -32,7 +33,8 @@ export async function checkManifestStability(
             const result = await kubectl.checkRolloutStatus(
                resource.type,
                resource.name,
-               resource.namespace
+               resource.namespace,
+               timeout
             )
             checkForErrors([result])
          } catch (ex) {

@@ -21,7 +21,8 @@ export async function deploy(
    kubectl: Kubectl,
    manifestFilePaths: string[],
    deploymentStrategy: DeploymentStrategy,
-   resourceType: ClusterType
+   resourceType: ClusterType,
+   timeout?: string
 ) {
    // update manifests
    const inputManifestFiles: string[] = updateManifestFiles(manifestFilePaths)
@@ -36,7 +37,8 @@ export async function deploy(
       inputManifestFiles,
       deploymentStrategy,
       kubectl,
-      trafficSplitMethod
+      trafficSplitMethod,
+      timeout
    )
    core.debug(`Deployed manifest files: ${deployedManifestFiles}`)
    core.endGroup()
@@ -50,7 +52,7 @@ export async function deploy(
       ])
    )
 
-   await checkManifestStability(kubectl, resourceTypes, resourceType)
+   await checkManifestStability(kubectl, resourceTypes, resourceType, timeout)
    core.endGroup()
 
    // print ingresses

@@ -17,7 +17,7 @@ import {
    parseTrafficSplitMethod,
    TrafficSplitMethod
 } from '../types/trafficSplitMethod'
-import {parseRouteStrategy} from '../types/routeStrategy'
+import {parseRouteStrategy, RouteStrategy} from '../types/routeStrategy'
 import {ExecOutput} from '@actions/exec'
 import {
    getWorkflowAnnotationKeyLabel,
@@ -36,19 +36,21 @@ import {
 import {getDeploymentConfig} from '../utilities/dockerUtils'
 import {DeployResult} from '../types/deployResult'
 import {ClusterType} from '../inputUtils'
+import {BlueGreenDeployment} from '../types/blueGreenTypes'
 
 export async function deployManifests(
    files: string[],
    deploymentStrategy: DeploymentStrategy,
    kubectl: Kubectl,
-   trafficSplitMethod: TrafficSplitMethod
+   trafficSplitMethod: TrafficSplitMethod,
+   timeout?: string
 ): Promise<string[]> {
    switch (deploymentStrategy) {
       case DeploymentStrategy.CANARY: {
          const canaryDeployResult: DeployResult =
             trafficSplitMethod == TrafficSplitMethod.SMI
-               ? await deploySMICanary(files, kubectl)
-               : await deployPodCanary(files, kubectl)
+               ? await deploySMICanary(files, kubectl, false, timeout)
+               : await deployPodCanary(files, kubectl, false, timeout)
 
          checkForErrors([canaryDeployResult.execResult])
          return canaryDeployResult.manifestFiles
@@ -61,7 +63,8 @@ export async function deployManifests(
          const blueGreenDeployment = await deployBlueGreen(
             kubectl,
             files,
-            routeStrategy
+            routeStrategy,
+            timeout
          )
          core.debug(
             `objects deployed for ${routeStrategy}: ${JSON.stringify(
@@ -92,14 +95,16 @@ export async function deployManifests(
             const result = await kubectl.apply(
                updatedManifests,
                forceDeployment,
-               serverSideApply
+               serverSideApply,
+               timeout
             )
             checkForErrors([result])
          } else {
             const result = await kubectl.apply(
                files,
                forceDeployment,
-               serverSideApply
+               serverSideApply,
+               timeout
             )
             checkForErrors([result])
          }
@@ -147,12 +152,14 @@ function appendStableVersionLabelToResource(files: string[]): string[] {
 export async function checkManifestStability(
    kubectl: Kubectl,
    resources: Resource[],
-   resourceType: ClusterType
+   resourceType: ClusterType,
+   timeout?: string
 ): Promise<void> {
    await KubernetesManifestUtility.checkManifestStability(
       kubectl,
       resources,
-      resourceType
+      resourceType,
+      timeout
    )
 }
 
