@@ -49,4 +49,60 @@ describe('manifestStabilityUtils', () => {
       expect(checkRolloutStatusSpy).toHaveBeenCalled()
       expect(spy).toHaveReturned()
    })
+
+   it('should pass timeout to checkRolloutStatus when provided', async () => {
+      const timeout = '300s'
+      const checkRolloutStatusSpy = jest
+         .spyOn(kc, 'checkRolloutStatus')
+         .mockImplementation(() => {
+            return new Promise<ExecOutput>((resolve, reject) => {
+               resolve({
+                  exitCode: 0,
+                  stderr: '',
+                  stdout: ''
+               })
+            })
+         })
+
+      await manifestStabilityUtils.checkManifestStability(
+         kc,
+         resources,
+         ResourceTypeManagedCluster,
+         timeout
+      )
+
+      expect(checkRolloutStatusSpy).toHaveBeenCalledWith(
+         'deployment',
+         'test',
+         'default',
+         timeout
+      )
+   })
+
+   it('should call checkRolloutStatus without timeout when not provided', async () => {
+      const checkRolloutStatusSpy = jest
+         .spyOn(kc, 'checkRolloutStatus')
+         .mockImplementation(() => {
+            return new Promise<ExecOutput>((resolve, reject) => {
+               resolve({
+                  exitCode: 0,
+                  stderr: '',
+                  stdout: ''
+               })
+            })
+         })
+
+      await manifestStabilityUtils.checkManifestStability(
+         kc,
+         resources,
+         ResourceTypeManagedCluster
+      )
+
+      expect(checkRolloutStatusSpy).toHaveBeenCalledWith(
+         'deployment',
+         'test',
+         'default',
+         undefined
+      )
+   })
 })

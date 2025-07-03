@@ -19,7 +19,8 @@ const TRAFFIC_SPLIT_OBJECT = 'TrafficSplit'
 export async function deploySMICanary(
    filePaths: string[],
    kubectl: Kubectl,
-   onlyDeployStable: boolean = false
+   onlyDeployStable: boolean = false,
+   timeout?: string
 ): Promise<DeployResult> {
    const canaryReplicasInput = core.getInput('baseline-and-canary-replicas')
    let canaryReplicaCount
@@ -107,19 +108,26 @@ export async function deploySMICanary(
    const newFilePaths = fileHelper.writeObjectsToFile(newObjectsList)
    const forceDeployment = core.getInput('force').toLowerCase() === 'true'
    const serverSideApply = core.getInput('server-side').toLowerCase() === 'true'
+
    const result = await kubectl.apply(
       newFilePaths,
       forceDeployment,
-      serverSideApply
+      serverSideApply,
+      timeout
    )
-   const svcDeploymentFiles = await createCanaryService(kubectl, filePaths)
+   const svcDeploymentFiles = await createCanaryService(
+      kubectl,
+      filePaths,
+      timeout
+   )
    newFilePaths.push(...svcDeploymentFiles)
    return {execResult: result, manifestFiles: newFilePaths}
 }
 
 async function createCanaryService(
    kubectl: Kubectl,
-   filePaths: string[]
+   filePaths: string[],
+   timeout?: string
 ): Promise<string[]> {
    const newObjectsList = []
    const trafficObjectsList: string[] = []
@@ -161,7 +169,8 @@ async function createCanaryService(
                      name,
                      0,
                      0,
-                     1000
+                     1000,
+                     timeout
                   )
 
                   trafficObjectsList.push(trafficObject)
@@ -220,7 +229,8 @@ async function createCanaryService(
    const result = await kubectl.apply(
       manifestFiles,
       forceDeployment,
-      serverSideApply
+      serverSideApply,
+      timeout
    )
    checkForErrors([result])
    return manifestFiles
@@ -228,23 +238,26 @@ async function createCanaryService(
 
 export async function redirectTrafficToCanaryDeployment(
    kubectl: Kubectl,
-   manifestFilePaths: string[]
+   manifestFilePaths: string[],
+   timeout?: string
 ) {
-   await adjustTraffic(kubectl, manifestFilePaths, 0, 1000)
+   await adjustTraffic(kubectl, manifestFilePaths, 0, 1000, timeout)
 }
 
 export async function redirectTrafficToStableDeployment(
    kubectl: Kubectl,
-   manifestFilePaths: string[]
+   manifestFilePaths: string[],
+   timeout?: string
 ): Promise<string[]> {
-   return await adjustTraffic(kubectl, manifestFilePaths, 1000, 0)
+   return await adjustTraffic(kubectl, manifestFilePaths, 1000, 0, timeout)
 }
 
 async function adjustTraffic(
    kubectl: Kubectl,
    manifestFilePaths: string[],
    stableWeight: number,
-   canaryWeight: number
+   canaryWeight: number,
+   timeout?: string
 ) {
    if (!manifestFilePaths || manifestFilePaths?.length == 0) {
       return
@@ -269,7 +282,8 @@ async function adjustTraffic(
                      name,
                      stableWeight,
                      0,
-                     canaryWeight
+                     canaryWeight,
+                     timeout
                   )
                )
             }
@@ -329,14 +343,16 @@ async function createTrafficSplitManifestFile(
    serviceName: string,
    stableWeight: number,
    baselineWeight: number,
-   canaryWeight: number
+   canaryWeight: number,
+   timeout?: string
 ): Promise<string> {
    const smiObjectString = await getTrafficSplitObject(
       kubectl,
       serviceName,
       stableWeight,
       baselineWeight,
-      canaryWeight
+      canaryWeight,
+      timeout
    )
    const manifestFile = fileHelper.writeManifestToFile(
       smiObjectString,
@@ -358,7 +374,8 @@ async function getTrafficSplitObject(
    name: string,
    stableWeight: number,
    baselineWeight: number,
-   canaryWeight: number
+   canaryWeight: number,
+   timeout?: string
 ): Promise<string> {
    // cached version
    if (!trafficSplitAPIVersion) {

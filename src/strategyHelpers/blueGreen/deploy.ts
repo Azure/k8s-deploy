@@ -22,16 +22,17 @@ import {DeployResult} from '../../types/deployResult'
 export async function deployBlueGreen(
    kubectl: Kubectl,
    files: string[],
-   routeStrategy: RouteStrategy
+   routeStrategy: RouteStrategy,
+   timeout?: string
 ): Promise<BlueGreenDeployment> {
    const blueGreenDeployment = await (async () => {
       switch (routeStrategy) {
          case RouteStrategy.INGRESS:
-            return await deployBlueGreenIngress(kubectl, files)
+            return await deployBlueGreenIngress(kubectl, files, timeout)
          case RouteStrategy.SMI:
-            return await deployBlueGreenSMI(kubectl, files)
+            return await deployBlueGreenSMI(kubectl, files, timeout)
          default:
-            return await deployBlueGreenService(kubectl, files)
+            return await deployBlueGreenService(kubectl, files, timeout)
       }
    })()
 
@@ -52,7 +53,8 @@ export async function deployBlueGreen(
 
 export async function deployBlueGreenSMI(
    kubectl: Kubectl,
-   filePaths: string[]
+   filePaths: string[],
+   timeout?: string
 ): Promise<BlueGreenDeployment> {
    // get all kubernetes objects defined in manifest files
    const manifestObjects: BlueGreenManifests = getManifestObjects(filePaths)
@@ -67,20 +69,23 @@ export async function deployBlueGreenSMI(
 
    const otherObjDeployment: DeployResult = await deployObjects(
       kubectl,
-      newObjectsList
+      newObjectsList,
+      timeout
    )
 
    // make extraservices and trafficsplit
    const smiAndSvcDeployment = await setupSMI(
       kubectl,
-      manifestObjects.serviceEntityList
+      manifestObjects.serviceEntityList,
+      timeout
    )
 
    // create new deloyments
    const blueGreenDeployment: BlueGreenDeployment = await deployWithLabel(
       kubectl,
       manifestObjects.deploymentEntityList,
-      GREEN_LABEL_VALUE
+      GREEN_LABEL_VALUE,
+      timeout
    )
 
    blueGreenDeployment.objects.push(...newObjectsList)
@@ -98,7 +103,8 @@ export async function deployBlueGreenSMI(
 
 export async function deployBlueGreenIngress(
    kubectl: Kubectl,
-   filePaths: string[]
+   filePaths: string[],
+   timeout?: string
 ): Promise<BlueGreenDeployment> {
    // get all kubernetes objects defined in manifest files
    const manifestObjects: BlueGreenManifests = getManifestObjects(filePaths)
@@ -111,14 +117,15 @@ export async function deployBlueGreenIngress(
    const workloadDeployment: BlueGreenDeployment = await deployWithLabel(
       kubectl,
       servicesAndDeployments,
-      GREEN_LABEL_VALUE
+      GREEN_LABEL_VALUE,
+      timeout
    )
 
    const otherObjects = [].concat(
       manifestObjects.otherObjects,
       manifestObjects.unroutedServiceEntityList
    )
-   await deployObjects(kubectl, otherObjects)
+   await deployObjects(kubectl, otherObjects, timeout)
    core.debug(
       `new objects after processing services and other objects: \n
          ${JSON.stringify(servicesAndDeployments)}`
@@ -132,7 +139,8 @@ export async function deployBlueGreenIngress(
 
 export async function deployBlueGreenService(
    kubectl: Kubectl,
-   filePaths: string[]
+   filePaths: string[],
+   timeout?: string
 ): Promise<BlueGreenDeployment> {
    const manifestObjects: BlueGreenManifests = getManifestObjects(filePaths)
 
@@ -140,7 +148,8 @@ export async function deployBlueGreenService(
    const blueGreenDeployment: BlueGreenDeployment = await deployWithLabel(
       kubectl,
       manifestObjects.deploymentEntityList,
-      GREEN_LABEL_VALUE
+      GREEN_LABEL_VALUE,
+      timeout
    )
 
    // create other non deployment and non service entities
@@ -150,7 +159,7 @@ export async function deployBlueGreenService(
       manifestObjects.unroutedServiceEntityList
    )
 
-   await deployObjects(kubectl, newObjectsList)
+   await deployObjects(kubectl, newObjectsList, timeout)
    // returning deployment details to check for rollout stability
    return {
       deployResult: blueGreenDeployment.deployResult,

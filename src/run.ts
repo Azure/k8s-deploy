@@ -52,6 +52,8 @@ export async function run() {
       return
    }
 
+   const timeout = core.getInput('timeout') || '10m'
+
    const kubectl = isPrivateCluster
       ? new PrivateKubectl(
            kubectlPath,
@@ -65,15 +67,27 @@ export async function run() {
    // run action
    switch (action) {
       case Action.DEPLOY: {
-         await deploy(kubectl, fullManifestFilePaths, strategy, resourceType)
+         await deploy(
+            kubectl,
+            fullManifestFilePaths,
+            strategy,
+            resourceType,
+            timeout
+         )
          break
       }
       case Action.PROMOTE: {
-         await promote(kubectl, fullManifestFilePaths, strategy, resourceType)
+         await promote(
+            kubectl,
+            fullManifestFilePaths,
+            strategy,
+            resourceType,
+            timeout
+         )
          break
       }
       case Action.REJECT: {
-         await reject(kubectl, fullManifestFilePaths, strategy)
+         await reject(kubectl, fullManifestFilePaths, strategy, timeout)
          break
       }
       default: {

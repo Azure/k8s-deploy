@@ -28,7 +28,8 @@ export const STABLE_LABEL_VALUE = 'stable'
 export async function deleteCanaryDeployment(
    kubectl: Kubectl,
    manifestFilePaths: string[],
-   includeServices: boolean
+   includeServices: boolean,
+   timeout?: string
 ): Promise<string[]> {
    if (manifestFilePaths == null || manifestFilePaths.length == 0) {
       throw new Error('Manifest files for deleting canary deployment not found')
@@ -37,7 +38,8 @@ export async function deleteCanaryDeployment(
    const deletedFiles = await cleanUpCanary(
       kubectl,
       manifestFilePaths,
-      includeServices
+      includeServices,
+      timeout
    )
    return deletedFiles
 }
@@ -83,11 +85,12 @@ export function getNewCanaryResource(
 export async function fetchResource(
    kubectl: Kubectl,
    kind: string,
-   name: string
+   name: string,
+   timeout?: string
 ) {
    let result: ExecOutput
    try {
-      result = await kubectl.getResource(kind, name)
+      result = await kubectl.getResource(kind, name, false, undefined, timeout)
    } catch (e) {
       core.debug(`detected error while fetching resources: ${e}`)
    }
@@ -193,7 +196,8 @@ function addCanaryLabelsAndAnnotations(inputObject: any, type: string) {
 async function cleanUpCanary(
    kubectl: Kubectl,
    files: string[],
-   includeServices: boolean
+   includeServices: boolean,
+   timeout?: string
 ): Promise<string[]> {
    const deleteObject = async function (
       kind: string,
@@ -201,7 +205,7 @@ async function cleanUpCanary(
       namespace: string | undefined
    ) {
       try {
-         const result = await kubectl.delete([kind, name], namespace)
+         const result = await kubectl.delete([kind, name], namespace, timeout)
          checkForErrors([result])
       } catch (ex) {
          // Ignore failures of delete if it doesn't exist
