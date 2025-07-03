@@ -303,7 +303,8 @@ async function adjustTraffic(
    const result = await kubectl.apply(
       trafficSplitManifests,
       forceDeployment,
-      serverSideApply
+      serverSideApply,
+      timeout
    )
    checkForErrors([result])
    return trafficSplitManifests
@@ -379,8 +380,10 @@ async function getTrafficSplitObject(
 ): Promise<string> {
    // cached version
    if (!trafficSplitAPIVersion) {
-      trafficSplitAPIVersion =
-         await kubectlUtils.getTrafficSplitAPIVersion(kubectl)
+      trafficSplitAPIVersion = await kubectlUtils.getTrafficSplitAPIVersion(
+         kubectl,
+         timeout
+      )
    }
 
    return JSON.stringify({

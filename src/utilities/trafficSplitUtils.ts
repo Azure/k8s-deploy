@@ -3,9 +3,14 @@ import {Kubectl} from '../types/kubectl'
 const trafficSplitAPIVersionPrefix = 'split.smi-spec.io'
 
 export async function getTrafficSplitAPIVersion(
-   kubectl: Kubectl
+   kubectl: Kubectl,
+   timeout?: string
 ): Promise<string> {
-   const result = await kubectl.executeCommand('api-versions')
+   const result = await kubectl.executeCommand(
+      'api-versions',
+      undefined,
+      timeout
+   )
    const trafficSplitAPIVersion = result.stdout
       .split('\n')
       .find((version) => version.startsWith(trafficSplitAPIVersionPrefix))
