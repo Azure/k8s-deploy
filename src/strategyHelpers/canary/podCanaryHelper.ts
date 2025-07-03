@@ -95,8 +95,13 @@ export async function deployPodCanary(
    core.debug('New objects list: ' + JSON.stringify(newObjectsList))
    const manifestFiles = fileHelper.writeObjectsToFile(newObjectsList)
    const forceDeployment = core.getInput('force').toLowerCase() === 'true'
+   const serverSideApply = core.getInput('server-side').toLowerCase() === 'true'
 
-   const execResult = await kubectl.apply(manifestFiles, forceDeployment)
+   const execResult = await kubectl.apply(
+      manifestFiles,
+      forceDeployment,
+      serverSideApply
+   )
    return {execResult, manifestFiles}
 }
 
