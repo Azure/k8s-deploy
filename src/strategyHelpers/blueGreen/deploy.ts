@@ -40,7 +40,8 @@ export async function deployBlueGreen(
    const routeDeployment = await routeBlueGreenForDeploy(
       kubectl,
       files,
-      routeStrategy
+      routeStrategy,
+      timeout
    )
    core.endGroup()
 

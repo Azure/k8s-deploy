@@ -25,7 +25,8 @@ import {getBufferTime} from '../../inputUtils'
 export async function routeBlueGreenForDeploy(
    kubectl: Kubectl,
    inputManifestFiles: string[],
-   routeStrategy: RouteStrategy
+   routeStrategy: RouteStrategy,
+   timeout?: string
 ): Promise<BlueGreenDeployment> {
    // sleep for buffer time
    const bufferTime: number = getBufferTime()
@@ -47,19 +48,22 @@ export async function routeBlueGreenForDeploy(
       return await routeBlueGreenIngress(
          kubectl,
          manifestObjects.serviceNameMap,
-         manifestObjects.ingressEntityList
+         manifestObjects.ingressEntityList,
+         timeout
       )
    } else if (routeStrategy == RouteStrategy.SMI) {
       return await routeBlueGreenSMI(
          kubectl,
          GREEN_LABEL_VALUE,
-         manifestObjects.serviceEntityList
+         manifestObjects.serviceEntityList,
+         timeout
       )
    } else {
       return await routeBlueGreenService(
          kubectl,
          GREEN_LABEL_VALUE,
-         manifestObjects.serviceEntityList
+         manifestObjects.serviceEntityList,
+         timeout
       )
    }
 }
@@ -67,7 +71,8 @@ export async function routeBlueGreenForDeploy(
 export async function routeBlueGreenIngress(
    kubectl: Kubectl,
    serviceNameMap: Map<string, string>,
-   ingressEntityList: any[]
+   ingressEntityList: any[],
+   timeout?: string
 ): Promise<BlueGreenDeployment> {
    // const newObjectsList = []
    const newObjectsList: K8sObject[] = ingressEntityList.map((obj) => {
@@ -84,7 +89,7 @@ export async function routeBlueGreenIngress(
       }
    })
 
-   const deployResult = await deployObjects(kubectl, newObjectsList)
+   const deployResult = await deployObjects(kubectl, newObjectsList, timeout)
 
    return {deployResult, objects: newObjectsList}
 }

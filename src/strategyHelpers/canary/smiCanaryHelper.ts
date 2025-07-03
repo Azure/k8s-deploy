@@ -380,10 +380,8 @@ async function getTrafficSplitObject(
 ): Promise<string> {
    // cached version
    if (!trafficSplitAPIVersion) {
-      trafficSplitAPIVersion = await kubectlUtils.getTrafficSplitAPIVersion(
-         kubectl,
-         timeout
-      )
+      trafficSplitAPIVersion =
+         await kubectlUtils.getTrafficSplitAPIVersion(kubectl)
    }
 
    return JSON.stringify({
