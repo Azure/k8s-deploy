@@ -277,6 +277,15 @@ export async function deployObjects(
    objectsList: any[],
    timeout?: string
 ): Promise<DeployResult> {
+   // Handle empty objects list gracefully to prevent "Configuration paths must exist" error
+   if (!objectsList || objectsList.length === 0) {
+      core.debug('No objects to deploy, skipping kubectl apply')
+      return {
+         execResult: {exitCode: 0, stdout: '', stderr: ''},
+         manifestFiles: []
+      }
+   }
+
    const manifestFiles = fileHelper.writeObjectsToFile(objectsList)
    const forceDeployment = core.getInput('force').toLowerCase() === 'true'
    const serverSideApply = core.getInput('server-side').toLowerCase() === 'true'

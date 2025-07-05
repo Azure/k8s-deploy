@@ -50,7 +50,8 @@ export async function setupSMI(
       const tsObject = await createTrafficSplitObject(
          kubectl,
          svc.metadata.name,
-         NONE_LABEL_VALUE
+         NONE_LABEL_VALUE,
+         timeout
       )
       tsObjects.push(tsObject as TrafficSplitObject)
    }
