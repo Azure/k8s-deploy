@@ -13,6 +13,8 @@ import * as routeHelper from './route'
 
 const ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
 const kubectl = new Kubectl('')
+const TEST_TIMEOUT_SHORT = '60s'
+const TEST_TIMEOUT_LONG = '120s'
 
 jest.mock('../../types/kubectl')
 
@@ -71,7 +73,11 @@ describe('reject tests', () => {
          {name: 'nginx-deployment-green', kind: 'Deployment'}
       ])
 
-      const value = await rejectBlueGreenIngress(kubectl, testObjects, '120s')
+      const value = await rejectBlueGreenIngress(
+         kubectl,
+         testObjects,
+         TEST_TIMEOUT_LONG
+      )
 
       const bgDeployment = value.routeResult
       const deleteResult = value.deleteResult
@@ -96,13 +102,13 @@ describe('reject tests', () => {
             testObjects.deploymentEntityList,
             testObjects.serviceEntityList
          ),
-         '120s'
+         TEST_TIMEOUT_LONG
       )
       expect(routeHelper.routeBlueGreenIngressUnchanged).toHaveBeenCalledWith(
          kubectl,
          testObjects.serviceNameMap,
          testObjects.ingressEntityList,
-         '120s'
+         TEST_TIMEOUT_LONG
       )
    })
 
@@ -112,7 +118,11 @@ describe('reject tests', () => {
          {name: 'nginx-deployment-green', kind: 'Deployment'}
       ])
 
-      const value = await rejectBlueGreenService(kubectl, testObjects, '60s')
+      const value = await rejectBlueGreenService(
+         kubectl,
+         testObjects,
+         TEST_TIMEOUT_SHORT
+      )
 
       const deleteResult = value.deleteResult
 
@@ -152,7 +162,11 @@ describe('reject tests', () => {
             {name: 'nginx-deployment-green', kind: 'Deployment'}
          ])
 
-      const value = await rejectBlueGreenService(kubectl, testObjects, '120s')
+      const value = await rejectBlueGreenService(
+         kubectl,
+         testObjects,
+         TEST_TIMEOUT_LONG
+      )
 
       const bgDeployment = value.routeResult
       const deleteResult = value.deleteResult
@@ -161,7 +175,7 @@ describe('reject tests', () => {
       expect(bgHelper.deleteGreenObjects).toHaveBeenCalledWith(
          kubectl,
          testObjects.deploymentEntityList,
-         '120s'
+         TEST_TIMEOUT_LONG
       )
 
       // Assertions for routeResult and deleteResult

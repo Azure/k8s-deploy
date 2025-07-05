@@ -38,6 +38,8 @@ const kubectlPath = 'kubectlPath'
 const testNamespace = 'testNamespace'
 const defaultNamespace = 'default'
 const otherNamespace = 'otherns'
+const TEST_TIMEOUT = '120s'
+
 describe('Kubectl class', () => {
    describe('with a success exec return in testNamespace', () => {
       const kubectl = new Kubectl(kubectlPath, testNamespace)
@@ -134,8 +136,12 @@ describe('Kubectl class', () => {
 
       it('applies a configuration with timeout when specified', async () => {
          const configPaths = ['configPath1', 'configPath2', 'configPath3']
-         const timeout = '120s'
-         const result = await kubectl.apply(configPaths, false, false, timeout)
+         const result = await kubectl.apply(
+            configPaths,
+            false,
+            false,
+            TEST_TIMEOUT
+         )
          expect(result).toBe(mockExecReturn)
          expect(exec.getExecOutput).toHaveBeenCalledWith(
             kubectlPath,
@@ -143,7 +149,7 @@ describe('Kubectl class', () => {
                'apply',
                '-f',
                configPaths[0] + ',' + configPaths[1] + ',' + configPaths[2],
-               `--timeout=${timeout}`,
+               `--timeout=${TEST_TIMEOUT}`,
                '--namespace',
                testNamespace
             ],
@@ -153,8 +159,12 @@ describe('Kubectl class', () => {
 
       it('applies a configuration with force and timeout when specified', async () => {
          const configPaths = ['configPath1', 'configPath2', 'configPath3']
-         const timeout = '120s'
-         const result = await kubectl.apply(configPaths, true, false, timeout)
+         const result = await kubectl.apply(
+            configPaths,
+            true,
+            false,
+            TEST_TIMEOUT
+         )
          expect(result).toBe(mockExecReturn)
          expect(exec.getExecOutput).toHaveBeenCalledWith(
             kubectlPath,
@@ -163,7 +173,7 @@ describe('Kubectl class', () => {
                '-f',
                configPaths[0] + ',' + configPaths[1] + ',' + configPaths[2],
                '--force',
-               `--timeout=${timeout}`,
+               `--timeout=${TEST_TIMEOUT}`,
                '--namespace',
                testNamespace
             ],
@@ -173,8 +183,12 @@ describe('Kubectl class', () => {
 
       it('applies a configuration with server-side and timeout when specified', async () => {
          const configPaths = ['configPath1', 'configPath2', 'configPath3']
-         const timeout = '120s'
-         const result = await kubectl.apply(configPaths, false, true, timeout)
+         const result = await kubectl.apply(
+            configPaths,
+            false,
+            true,
+            TEST_TIMEOUT
+         )
          expect(result).toBe(mockExecReturn)
          expect(exec.getExecOutput).toHaveBeenCalledWith(
             kubectlPath,
@@ -183,7 +197,7 @@ describe('Kubectl class', () => {
                '-f',
                configPaths[0] + ',' + configPaths[1] + ',' + configPaths[2],
                '--server-side',
-               `--timeout=${timeout}`,
+               `--timeout=${TEST_TIMEOUT}`,
                '--namespace',
                testNamespace
             ],

@@ -19,6 +19,7 @@ import {ExecOutput} from '@actions/exec'
 jest.mock('../../types/kubectl')
 
 const kubectl = new Kubectl('')
+const TEST_TIMEOUT = '60s'
 
 describe('bluegreenhelper functions', () => {
    let testObjects
@@ -41,7 +42,7 @@ describe('bluegreenhelper functions', () => {
             testObjects.deploymentEntityList,
             testObjects.serviceEntityList
          ),
-         '60s'
+         TEST_TIMEOUT
       )
 
       expect(value).toHaveLength(2)
@@ -64,18 +65,18 @@ describe('bluegreenhelper functions', () => {
       // Mock deleteObjects to prevent actual execution
       jest.spyOn(kubectl, 'delete').mockResolvedValue({} as ExecOutput)
 
-      await bgHelper.deleteObjects(kubectl, deleteList, '60s')
+      await bgHelper.deleteObjects(kubectl, deleteList, TEST_TIMEOUT)
 
       // Verify kubectl.delete is called with timeout for both objects
       expect(kubectl.delete).toHaveBeenCalledWith(
          ['Service', 'nginx-service-green'],
          undefined,
-         '60s'
+         TEST_TIMEOUT
       )
       expect(kubectl.delete).toHaveBeenCalledWith(
          ['Deployment', 'nginx-deployment-green'],
          undefined,
-         '60s'
+         TEST_TIMEOUT
       )
    })
 
