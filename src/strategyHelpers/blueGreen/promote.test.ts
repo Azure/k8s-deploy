@@ -160,135 +160,104 @@ describe('promote tests', () => {
 // Timeout tests
 describe('promote timeout tests', () => {
    beforeEach(() => {
-      //@ts-ignore
+      // @ts-ignore
       Kubectl.mockClear()
       testObjects = getManifestObjects(ingressFilepath)
    })
 
-   test('promoteBlueGreenIngress with timeout', async () => {
-      const timeout = '300s'
-      const mockLabels = new Map<string, string>()
-      mockLabels[bgHelper.BLUE_GREEN_VERSION_LABEL] = bgHelper.GREEN_LABEL_VALUE
-
-      jest.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
-         Promise.resolve({
-            kind: 'Ingress',
-            spec: {},
-            metadata: {labels: mockLabels, name: 'nginx-ingress-green'}
-         })
-      )
-
-      const deployWithLabelSpy = jest
-         .spyOn(bgHelper, 'deployWithLabel')
-         .mockResolvedValue({
-            deployResult: {
-               execResult: {exitCode: 0, stderr: '', stdout: ''},
-               manifestFiles: []
-            },
-            objects: []
-         })
-
-      await promoteBlueGreenIngress(kubectl, testObjects, timeout)
-
-      // Verify deployWithLabel was called with timeout
-      expect(deployWithLabelSpy).toHaveBeenCalledWith(
-         kubectl,
-         expect.any(Array),
-         bgHelper.NONE_LABEL_VALUE,
-         timeout
-      )
-
-      deployWithLabelSpy.mockRestore()
-   })
-
-   test('promoteBlueGreenService with timeout', async () => {
-      const timeout = '240s'
-      const mockLabels = new Map<string, string>()
-      mockLabels[bgHelper.BLUE_GREEN_VERSION_LABEL] = bgHelper.GREEN_LABEL_VALUE
-
-      jest.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
-         Promise.resolve({
-            kind: 'Service',
-            spec: {},
-            metadata: {labels: mockLabels, name: 'nginx-service-green'}
-         })
-      )
-
-      jest
-         .spyOn(servicesTester, 'validateServicesState')
-         .mockImplementation(() => Promise.resolve(true))
-
-      const deployWithLabelSpy = jest
-         .spyOn(bgHelper, 'deployWithLabel')
-         .mockResolvedValue({
-            deployResult: {
-               execResult: {exitCode: 0, stderr: '', stdout: ''},
-               manifestFiles: []
-            },
-            objects: []
-         })
-
-      await promoteBlueGreenService(kubectl, testObjects, timeout)
-
-      // Verify deployWithLabel was called with timeout
-      expect(deployWithLabelSpy).toHaveBeenCalledWith(
-         kubectl,
-         expect.any(Array),
-         bgHelper.NONE_LABEL_VALUE,
-         timeout
-      )
-
-      deployWithLabelSpy.mockRestore()
-   })
-
-   test('promoteBlueGreenSMI with timeout', async () => {
-      const timeout = '180s'
-      const mockLabels = new Map<string, string>()
-      mockLabels[bgHelper.BLUE_GREEN_VERSION_LABEL] = bgHelper.NONE_LABEL_VALUE
-
-      const mockTsObject: TrafficSplitObject = {
-         apiVersion: 'v1alpha3',
-         kind: TRAFFIC_SPLIT_OBJECT,
-         metadata: {
-            name: 'nginx-service-trafficsplit',
-            labels: new Map<string, string>(),
-            annotations: new Map<string, string>()
+   const mockDeployWithLabel = () =>
+      jest.spyOn(bgHelper, 'deployWithLabel').mockResolvedValue({
+         deployResult: {
+            execResult: {exitCode: 0, stderr: '', stdout: ''},
+            manifestFiles: []
          },
-         spec: {
-            service: 'nginx-service',
-            backends: [
-               {
-                  service: 'nginx-service-stable',
-                  weight: MIN_VAL
+         objects: []
+      })
+
+   const setupFetchResource = (
+      kind: string,
+      name: string,
+      labelValue: string
+   ) => {
+      const mockLabels = new Map<string, string>()
+      mockLabels[bgHelper.BLUE_GREEN_VERSION_LABEL] = labelValue
+
+      jest.spyOn(bgHelper, 'fetchResource').mockResolvedValue({
+         kind,
+         spec: {},
+         metadata: {labels: mockLabels, name}
+      })
+   }
+
+   test.each([
+      {
+         name: 'promoteBlueGreenIngress with timeout',
+         fn: promoteBlueGreenIngress,
+         kind: 'Ingress',
+         resourceName: 'nginx-ingress-green',
+         timeout: '300s',
+         setup: () =>
+            setupFetchResource(
+               'Ingress',
+               'nginx-ingress-green',
+               bgHelper.GREEN_LABEL_VALUE
+            )
+      },
+      {
+         name: 'promoteBlueGreenService with timeout',
+         fn: promoteBlueGreenService,
+         kind: 'Service',
+         resourceName: 'nginx-service-green',
+         timeout: '240s',
+         setup: () => {
+            setupFetchResource(
+               'Service',
+               'nginx-service-green',
+               bgHelper.GREEN_LABEL_VALUE
+            )
+            jest
+               .spyOn(servicesTester, 'validateServicesState')
+               .mockResolvedValue(true)
+         }
+      },
+      {
+         name: 'promoteBlueGreenSMI with timeout',
+         fn: promoteBlueGreenSMI,
+         kind: 'TrafficSplit',
+         resourceName: 'nginx-service-trafficsplit',
+         timeout: '180s',
+         setup: () => {
+            const mockTsObject: TrafficSplitObject = {
+               apiVersion: 'v1alpha3',
+               kind: TRAFFIC_SPLIT_OBJECT,
+               metadata: {
+                  name: 'nginx-service-trafficsplit',
+                  labels: new Map<string, string>(),
+                  annotations: new Map<string, string>()
                },
-               {
-                  service: 'nginx-service-green',
-                  weight: MAX_VAL
+               spec: {
+                  service: 'nginx-service',
+                  backends: [
+                     {service: 'nginx-service-stable', weight: MIN_VAL},
+                     {service: 'nginx-service-green', weight: MAX_VAL}
+                  ]
                }
-            ]
+            }
+
+            jest
+               .spyOn(bgHelper, 'fetchResource')
+               .mockResolvedValue(mockTsObject)
+            jest
+               .spyOn(smiTester, 'validateTrafficSplitsState')
+               .mockResolvedValue(true)
          }
       }
+   ])('$name', async ({fn, timeout, setup}) => {
+      setup()
+      const deployWithLabelSpy = mockDeployWithLabel()
 
-      jest
-         .spyOn(bgHelper, 'fetchResource')
-         .mockImplementation(() => Promise.resolve(mockTsObject))
-      jest
-         .spyOn(smiTester, 'validateTrafficSplitsState')
-         .mockImplementation(() => Promise.resolve(true))
+      await fn(kubectl, testObjects, timeout)
 
-      const deployWithLabelSpy = jest
-         .spyOn(bgHelper, 'deployWithLabel')
-         .mockResolvedValue({
-            deployResult: {
-               execResult: {exitCode: 0, stderr: '', stdout: ''},
-               manifestFiles: []
-            },
-            objects: []
-         })
-
-      await promoteBlueGreenSMI(kubectl, testObjects, timeout)
-
-      // Verify deployWithLabel was called with timeout
       expect(deployWithLabelSpy).toHaveBeenCalledWith(
          kubectl,
          expect.any(Array),
@@ -300,30 +269,15 @@ describe('promote timeout tests', () => {
    })
 
    test('promote functions without timeout should pass undefined', async () => {
-      const mockLabels = new Map<string, string>()
-      mockLabels[bgHelper.BLUE_GREEN_VERSION_LABEL] = bgHelper.GREEN_LABEL_VALUE
-
-      jest.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
-         Promise.resolve({
-            kind: 'Ingress',
-            spec: {},
-            metadata: {labels: mockLabels, name: 'nginx-ingress-green'}
-         })
+      setupFetchResource(
+         'Ingress',
+         'nginx-ingress-green',
+         bgHelper.GREEN_LABEL_VALUE
       )
-
-      const deployWithLabelSpy = jest
-         .spyOn(bgHelper, 'deployWithLabel')
-         .mockResolvedValue({
-            deployResult: {
-               execResult: {exitCode: 0, stderr: '', stdout: ''},
-               manifestFiles: []
-            },
-            objects: []
-         })
+      const deployWithLabelSpy = mockDeployWithLabel()
 
       await promoteBlueGreenIngress(kubectl, testObjects)
 
-      // Verify deployWithLabel was called with undefined timeout
       expect(deployWithLabelSpy).toHaveBeenCalledWith(
          kubectl,
          expect.any(Array),

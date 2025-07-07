@@ -226,14 +226,14 @@ export class Kubectl {
       silent: boolean = false,
       timeout?: string
    ) {
+      if (timeout) {
+         args.push(`--timeout=${timeout}`)
+      }
+
       // core.debug(`Kubectl run with command: ${this.kubectlPath} ${args}`)
       core.debug(
          `Kubectl run with command: ${this.kubectlPath} ${args.join(' ')}`
       )
-
-      if (timeout) {
-         args.push(`--timeout=${timeout}`)
-      }
 
       return await getExecOutput(this.kubectlPath, args, {
          silent

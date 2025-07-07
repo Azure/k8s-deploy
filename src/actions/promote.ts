@@ -81,7 +81,8 @@ async function promoteCanary(
       core.startGroup('Redirecting traffic to canary deployment')
       await SMICanaryDeploymentHelper.redirectTrafficToCanaryDeployment(
          kubectl,
-         manifests
+         manifests,
+         timeout
       )
       core.endGroup()
 
