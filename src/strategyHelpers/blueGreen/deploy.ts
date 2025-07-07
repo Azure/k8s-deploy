@@ -126,6 +126,11 @@ export async function deployBlueGreenIngress(
       manifestObjects.otherObjects,
       manifestObjects.unroutedServiceEntityList
    )
+   
+   // Debug logging to track empty arrays
+   core.debug(`deployBlueGreenIngress - otherObjects length: ${otherObjects.length}`)
+   core.debug(`deployBlueGreenIngress - otherObjects: ${JSON.stringify(otherObjects)}`)
+   
    await deployObjects(kubectl, otherObjects, timeout)
    core.debug(
       `new objects after processing services and other objects: \n
@@ -159,6 +164,10 @@ export async function deployBlueGreenService(
       manifestObjects.ingressEntityList,
       manifestObjects.unroutedServiceEntityList
    )
+
+   // Debug logging to track empty arrays
+   core.debug(`deployBlueGreenService - newObjectsList length: ${newObjectsList.length}`)
+   core.debug(`deployBlueGreenService - newObjectsList: ${JSON.stringify(newObjectsList)}`)
 
    await deployObjects(kubectl, newObjectsList, timeout)
    // returning deployment details to check for rollout stability
