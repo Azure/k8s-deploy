@@ -12,7 +12,11 @@ import {K8sObject} from '../types/k8sObject'
 export const urlFileKind = 'urlfile'
 
 export function getTempDirectory(): string {
-   return process.env['RUNNER_TEMP'] || process.env['runner.tempDirectory'] || os.tmpdir()
+   return (
+      process.env['RUNNER_TEMP'] ||
+      process.env['runner.tempDirectory'] ||
+      os.tmpdir()
+   )
 }
 
 export function writeObjectsToFile(inputObjects: any[]): string[] {
