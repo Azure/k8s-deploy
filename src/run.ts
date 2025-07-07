@@ -91,7 +91,7 @@ export async function run() {
    // Parse and validate timeout
    let timeout: string
    try {
-      const timeoutInput = core.getInput('timeout') || '10m'
+      const timeoutInput = core.getInput('timeout') || '60m'
       timeout = validateTimeoutDuration(timeoutInput)
       core.debug(`Using timeout: ${timeout}`)
    } catch (e) {

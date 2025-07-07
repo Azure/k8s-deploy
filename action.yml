@@ -87,7 +87,7 @@ inputs:
    timeout:
       description: 'Timeout for the rollout status'
       required: false
-      default: 10m
+      default: 60m
    resource-type:
       description: Either Microsoft.ContainerService/managedClusters or Microsoft.ContainerService/fleets'.
       required: false
