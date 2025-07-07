@@ -14,6 +14,42 @@ import {getFilesFromDirectoriesAndURLs} from './utilities/fileUtils'
 import {PrivateKubectl} from './types/privatekubectl'
 import {parseResourceTypeInput} from './inputUtils'
 
+export function validateTimeoutDuration(duration: string): string {
+   const trimmed = duration.trim()
+
+   // Parse number and optional unit
+   const match = /^(\d+(?:\.\d+)?)(ms|s|m|h)?$/i.exec(trimmed)
+   if (!match) {
+      throw new Error(
+         `Invalid timeout format: "${duration}". Use: number + unit (30s, 5m, 1h) or just number (assumes minutes)`
+      )
+   }
+
+   const value = parseFloat(match[1])
+   const unit = (match[2] || 'm').toLowerCase() // Default to minutes if no unit
+
+   if (value <= 0) {
+      throw new Error(`Timeout must be positive: "${duration}"`)
+   }
+
+   // Convert to seconds for validation
+   const multipliers = {ms: 0.001, s: 1, m: 60, h: 3600}
+   const seconds = value * multipliers[unit]
+
+   if (seconds < 0.001 || seconds > 86400) {
+      throw new Error(`Timeout out of range (1ms to 24h): "${duration}"`)
+   }
+
+   // Log assumption for bare numbers
+   if (!match[2]) {
+      core.debug(
+         `No unit specified for timeout "${duration}", assuming minutes`
+      )
+   }
+
+   return `${value}${unit}`
+}
+
 export async function run() {
    // verify kubeconfig is set
    if (!process.env['KUBECONFIG'])
@@ -52,7 +88,16 @@ export async function run() {
       return
    }
 
-   const timeout = core.getInput('timeout') || '10m'
+   // Parse and validate timeout
+   let timeout: string
+   try {
+      const timeoutInput = core.getInput('timeout') || '10m'
+      timeout = validateTimeoutDuration(timeoutInput)
+      core.debug(`Using timeout: ${timeout}`)
+   } catch (e) {
+      core.setFailed(`Invalid timeout parameter: ${e.message}`)
+      return
+   }
 
    const kubectl = isPrivateCluster
       ? new PrivateKubectl(
