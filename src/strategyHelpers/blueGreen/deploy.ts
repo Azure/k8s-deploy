@@ -128,10 +128,10 @@ export async function deployBlueGreenIngress(
    )
 
    // Debug logging to track empty arrays
-   core.debug(
+   core.info(
       `deployBlueGreenIngress - otherObjects length: ${otherObjects.length}`
    )
-   core.debug(
+   core.info(
       `deployBlueGreenIngress - otherObjects: ${JSON.stringify(otherObjects)}`
    )
 
@@ -170,10 +170,10 @@ export async function deployBlueGreenService(
    )
 
    // Debug logging to track empty arrays
-   core.debug(
+   core.info(
       `deployBlueGreenService - newObjectsList length: ${newObjectsList.length}`
    )
-   core.debug(
+   core.info(
       `deployBlueGreenService - newObjectsList: ${JSON.stringify(newObjectsList)}`
    )
 

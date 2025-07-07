@@ -277,10 +277,14 @@ export async function deployObjects(
    objectsList: any[],
    timeout?: string
 ): Promise<DeployResult> {
-   core.debug(`deployObjects called with ${objectsList?.length || 0} objects`)
-   core.debug(`Objects: ${JSON.stringify(objectsList)}`)
+   core.info(
+      `[DEBUG] deployObjects called with ${objectsList?.length || 0} objects`
+   )
+   core.info(`[DEBUG] Objects: ${JSON.stringify(objectsList)}`)
    const manifestFiles = fileHelper.writeObjectsToFile(objectsList)
-   core.debug(`Generated manifest files: ${JSON.stringify(manifestFiles)}`)
+   core.info(
+      `[DEBUG] Generated manifest files: ${JSON.stringify(manifestFiles)}`
+   )
    const forceDeployment = core.getInput('force').toLowerCase() === 'true'
    const serverSideApply = core.getInput('server-side').toLowerCase() === 'true'
    const execResult = await kubectl.apply(
