@@ -1,6 +1,6 @@
 import * as core from '@actions/core'
 
-export function validateTimeoutDuration(duration: string): string {
+export function parseDuration(duration: string): string {
    const trimmed = duration.trim()
 
    // Parse number and optional unit using regex

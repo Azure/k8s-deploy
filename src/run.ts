@@ -13,7 +13,7 @@ import {parseDeploymentStrategy} from './types/deploymentStrategy'
 import {getFilesFromDirectoriesAndURLs} from './utilities/fileUtils'
 import {PrivateKubectl} from './types/privatekubectl'
 import {parseResourceTypeInput} from './inputUtils'
-import {validateTimeoutDuration} from './utilities/durationUtils'
+import {parseDuration} from './utilities/durationUtils'
 
 export async function run() {
    // verify kubeconfig is set
@@ -57,7 +57,7 @@ export async function run() {
    let timeout: string
    try {
       const timeoutInput = core.getInput('timeout') || '10m'
-      timeout = validateTimeoutDuration(timeoutInput)
+      timeout = parseDuration(timeoutInput)
       core.debug(`Using timeout: ${timeout}`)
    } catch (e) {
       core.setFailed(`Invalid timeout parameter: ${e.message}`)

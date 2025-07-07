@@ -1,4 +1,4 @@
-import {validateTimeoutDuration} from './durationUtils'
+import {parseDuration} from './durationUtils'
 import * as core from '@actions/core'
 
 // Mock core.debug
@@ -37,11 +37,11 @@ const ERROR_MESSAGES = {
 
 // Helper functions
 const expectValidTimeout = (input: string, expected: string) => {
-   expect(validateTimeoutDuration(input)).toBe(expected)
+   expect(parseDuration(input)).toBe(expected)
 }
 
 const expectInvalidTimeout = (input: string, expectedError: string) => {
-   expect(() => validateTimeoutDuration(input)).toThrow(expectedError)
+   expect(() => parseDuration(input)).toThrow(expectedError)
 }
 
 describe('validateTimeoutDuration', () => {
@@ -85,14 +85,14 @@ describe('validateTimeoutDuration', () => {
       })
 
       test('logs assumption for bare numbers only', () => {
-         validateTimeoutDuration('5')
+         parseDuration('5')
          expect(mockCore.debug).toHaveBeenCalledWith(
             'No unit specified for timeout "5", assuming minutes'
          )
 
          jest.clearAllMocks()
 
-         validateTimeoutDuration('30s')
+         parseDuration('30s')
          expect(mockCore.debug).not.toHaveBeenCalled()
       })
    })
