@@ -70,6 +70,12 @@ describe('SMI Helper tests', () => {
    })
 
    test('setupSMI tests', async () => {
+      jest.spyOn(kc, 'apply').mockResolvedValue({
+         stdout: 'service/nginx-service-stable created',
+         stderr: '',
+         exitCode: 0
+      })
+
       const smiResults = await setupSMI(kc, testObjects.serviceEntityList)
 
       let found = 0

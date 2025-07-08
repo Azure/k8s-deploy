@@ -36,6 +36,13 @@ describe('route function tests', () => {
    })
 
    test('correctly prepares blue/green ingresses for deployment', async () => {
+      // Mock kubectl.apply to return successful result
+      jest.spyOn(kc, 'apply').mockResolvedValue({
+         stdout: 'deployment.apps/nginx-deployment created',
+         stderr: '',
+         exitCode: 0
+      })
+
       const unroutedIngCopy: K8sIngress = JSON.parse(
          JSON.stringify(testObjects.ingressEntityList[0])
       )

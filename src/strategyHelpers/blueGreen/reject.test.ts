@@ -24,6 +24,13 @@ describe('reject tests', () => {
    })
 
    test('reject blue/green ingress', async () => {
+      // Mock kubectl.apply to return successful result
+      jest.spyOn(kubectl, 'apply').mockResolvedValue({
+         stdout: 'deployment.apps/nginx-deployment created',
+         stderr: '',
+         exitCode: 0
+      })
+
       const value = await rejectBlueGreenIngress(kubectl, testObjects)
 
       const bgDeployment = value.routeResult
@@ -44,6 +51,13 @@ describe('reject tests', () => {
    })
 
    test('reject blue/green service', async () => {
+      // Mock kubectl.apply to return successful result
+      jest.spyOn(kubectl, 'apply').mockResolvedValue({
+         stdout: 'deployment.apps/nginx-deployment created',
+         stderr: '',
+         exitCode: 0
+      })
+
       const value = await rejectBlueGreenService(kubectl, testObjects)
 
       const bgDeployment = value.routeResult
@@ -57,6 +71,13 @@ describe('reject tests', () => {
    })
 
    test('reject blue/green SMI', async () => {
+      // Mock kubectl.apply to return successful result
+      jest.spyOn(kubectl, 'apply').mockResolvedValue({
+         stdout: 'deployment.apps/nginx-deployment created',
+         stderr: '',
+         exitCode: 0
+      })
+
       jest
          .spyOn(TSutils, 'getTrafficSplitAPIVersion')
          .mockImplementation(() => Promise.resolve('v1alpha3'))

@@ -20,6 +20,14 @@ describe('deploy tests', () => {
 
    test('correctly determines deploy type and acts accordingly', async () => {
       const kubectl = new Kubectl('')
+
+      // Mock kubectl.apply to return successful result
+      jest.spyOn(kubectl, 'apply').mockResolvedValue({
+         stdout: 'deployment.apps/nginx-deployment created',
+         stderr: '',
+         exitCode: 0
+      })
+
       const mockBgDeployment: BlueGreenDeployment = {
          deployResult: {
             execResult: {exitCode: 0, stderr: '', stdout: ''},
@@ -62,6 +70,14 @@ describe('deploy tests', () => {
 
    test('correctly deploys blue/green ingress', async () => {
       const kc = new Kubectl('')
+
+      // Mock kubectl.apply to return successful result
+      jest.spyOn(kc, 'apply').mockResolvedValue({
+         stdout: 'deployment.apps/nginx-deployment created',
+         stderr: '',
+         exitCode: 0
+      })
+
       const value = await deployBlueGreenIngress(kc, ingressFilepath)
       const nol = value.objects.map((obj) => {
          if (obj.kind === 'Service') {

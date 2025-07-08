@@ -25,6 +25,13 @@ describe('promote tests', () => {
    })
 
    test('promote blue/green ingress', async () => {
+      // Mock kubectl.apply to return successful result
+      jest.spyOn(kubectl, 'apply').mockResolvedValue({
+         stdout: 'deployment.apps/nginx-deployment created',
+         stderr: '',
+         exitCode: 0
+      })
+
       const mockLabels = new Map<string, string>()
       mockLabels[bgHelper.BLUE_GREEN_VERSION_LABEL] = bgHelper.GREEN_LABEL_VALUE
 
@@ -67,6 +74,13 @@ describe('promote tests', () => {
    })
 
    test('promote blue/green service', async () => {
+      // Mock kubectl.apply to return successful result
+      jest.spyOn(kubectl, 'apply').mockResolvedValue({
+         stdout: 'deployment.apps/nginx-deployment created',
+         stderr: '',
+         exitCode: 0
+      })
+
       const mockLabels = new Map<string, string>()
       mockLabels[bgHelper.BLUE_GREEN_VERSION_LABEL] = bgHelper.GREEN_LABEL_VALUE
       jest.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
@@ -106,6 +120,13 @@ describe('promote tests', () => {
    })
 
    test('promote blue/green SMI', async () => {
+      // Mock kubectl.apply to return successful result
+      jest.spyOn(kubectl, 'apply').mockResolvedValue({
+         stdout: 'deployment.apps/nginx-deployment created',
+         stderr: '',
+         exitCode: 0
+      })
+
       const mockLabels = new Map<string, string>()
       mockLabels[bgHelper.BLUE_GREEN_VERSION_LABEL] = bgHelper.NONE_LABEL_VALUE
 
