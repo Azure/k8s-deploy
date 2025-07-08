@@ -81,68 +81,54 @@ function updateContainerImagesInManifestFiles(
 ): string[] {
    if (filePaths?.length <= 0) return filePaths
 
-   // update container images
    filePaths.forEach((filePath: string) => {
-      let contents = fs.readFileSync(filePath).toString()
-      containers.forEach((container: string) => {
-         let [imageName] = container.split(':')
-         if (imageName.indexOf('@') > 0) {
-            imageName = imageName.split('@')[0]
+      let fileContents = fs.readFileSync(filePath).toString()
+      let inputObjects: K8sObject[] = yaml.loadAll(fileContents) as K8sObject[]
+      let updatedObjects: K8sObject[] = []
+      inputObjects.forEach((obj) => {
+         if (isWorkloadEntity(obj.kind)) {
+            containers.forEach((container: string) => {
+               let [imageName] = container.split(':')
+               if (imageName.indexOf('@') > 0) {
+                  imageName = imageName.split('@')[0]
+               }
+               updateImagesInK8sObject(obj, imageName, container)
+            })
          }
-
-         if (contents.indexOf(imageName) > 0)
-            contents = substituteImageNameInSpecFile(
-               contents,
-               imageName,
-               container
-            )
+         updatedObjects.push(obj)
       })
-
-      // write updated files
-      fs.writeFileSync(path.join(filePath), contents)
+      const newYaml = updatedObjects.map((o) => yaml.dump(o)).join('---\n')
+      fs.writeFileSync(path.join(filePath), newYaml)
    })
-
    return filePaths
 }
 
-/*
-  Example:
+// DRY helper to update images in all standard container locations
+function updateImagesInK8sObject(obj: any, imageName: string, newImage: string) {
+   // For most workloads
+   if (obj?.spec?.template?.spec?.containers) {
+      updateImageInContainerArray(obj.spec.template.spec.containers, imageName, newImage)
+   }
+   // For CronJob
+   if (obj?.kind?.toLowerCase() === KubernetesWorkload.CRON_JOB && obj?.spec?.jobTemplate?.spec?.template?.spec?.containers) {
+      updateImageInContainerArray(obj.spec.jobTemplate.spec.template.spec.containers, imageName, newImage)
+   }
+   // Optionally handle initContainers for both
+   if (obj?.spec?.template?.spec?.initContainers) {
+      updateImageInContainerArray(obj.spec.template.spec.initContainers, imageName, newImage)
+   }
+   if (obj?.kind?.toLowerCase() === KubernetesWorkload.CRON_JOB && obj?.spec?.jobTemplate?.spec?.template?.spec?.initContainers) {
+      updateImageInContainerArray(obj.spec.jobTemplate.spec.template.spec.initContainers, imageName, newImage)
+   }
+}
 
-  Input of
-    currentString: `image: "example/example-image"`
-    imageName: `example/example-image`
-    imageNameWithNewTag: `example/example-image:identifiertag`
-
-  would return
-    `image: "example/example-image:identifiertag"`
-*/
-export function substituteImageNameInSpecFile(
-   spec: string,
-   imageName: string,
-   imageNameWithNewTag: string
-) {
-   if (spec.indexOf(imageName) < 0) return spec
-
-   return spec.split('\n').reduce((acc, line) => {
-      const imageKeyword = line.match(/^ *-? *image:/)
-      if (imageKeyword) {
-         let [currentImageName] = line
-            .substring(imageKeyword[0].length) // consume the line from keyword onwards
-            .trim()
-            .replace(/[',"]/g, '') // replace allowed quotes with nothing
-            .split(':')
-
-         if (currentImageName?.indexOf(' ') > 0) {
-            currentImageName = currentImageName.split(' ')[0] // remove comments
-         }
-
-         if (currentImageName === imageName) {
-            return acc + `${imageKeyword[0]} ${imageNameWithNewTag}\n`
-         }
+function updateImageInContainerArray(containers: any[], imageName: string, newImage: string) {
+   if (!Array.isArray(containers)) return
+   containers.forEach((container) => {
+      if (container.image && (container.image === imageName || container.image.startsWith(imageName + ':') || container.image.startsWith(imageName + '@'))) {
+         container.image = newImage
       }
-
-      return acc + line + '\n'
-   }, '')
+   })
 }
 
 export function getReplicaCount(inputObject: any): any {
