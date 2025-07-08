@@ -9,6 +9,7 @@ import {isDeploymentEntity} from '../../types/kubernetesTypes'
 import {getReplicaCount} from '../../utilities/manifestUpdateUtils'
 import {DeployResult} from '../../types/deployResult'
 import {K8sObject} from '../../types/k8sObject'
+import {checkForErrors} from '../../utilities/kubectlUtils'
 
 export async function deployPodCanary(
    filePaths: string[],
@@ -102,6 +103,7 @@ export async function deployPodCanary(
       forceDeployment,
       serverSideApply
    )
+   checkForErrors([execResult])
    return {execResult, manifestFiles}
 }
 

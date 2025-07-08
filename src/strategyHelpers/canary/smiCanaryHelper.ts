@@ -112,6 +112,7 @@ export async function deploySMICanary(
       forceDeployment,
       serverSideApply
    )
+   checkForErrors([result])
    const svcDeploymentFiles = await createCanaryService(kubectl, filePaths)
    newFilePaths.push(...svcDeploymentFiles)
    return {execResult: result, manifestFiles: newFilePaths}
