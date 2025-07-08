@@ -115,6 +115,7 @@ export async function deploySMICanary(
       serverSideApply,
       timeout
    )
+   checkForErrors([result])
    const svcDeploymentFiles = await createCanaryService(
       kubectl,
       filePaths,
