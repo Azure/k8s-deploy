@@ -104,28 +104,63 @@ function updateContainerImagesInManifestFiles(
 }
 
 // DRY helper to update images in all standard container locations
-function updateImagesInK8sObject(obj: any, imageName: string, newImage: string) {
+function updateImagesInK8sObject(
+   obj: any,
+   imageName: string,
+   newImage: string
+) {
    // For most workloads
    if (obj?.spec?.template?.spec?.containers) {
-      updateImageInContainerArray(obj.spec.template.spec.containers, imageName, newImage)
+      updateImageInContainerArray(
+         obj.spec.template.spec.containers,
+         imageName,
+         newImage
+      )
    }
    // For CronJob
-   if (obj?.kind?.toLowerCase() === KubernetesWorkload.CRON_JOB && obj?.spec?.jobTemplate?.spec?.template?.spec?.containers) {
-      updateImageInContainerArray(obj.spec.jobTemplate.spec.template.spec.containers, imageName, newImage)
+   if (
+      obj?.kind?.toLowerCase() === KubernetesWorkload.CRON_JOB &&
+      obj?.spec?.jobTemplate?.spec?.template?.spec?.containers
+   ) {
+      updateImageInContainerArray(
+         obj.spec.jobTemplate.spec.template.spec.containers,
+         imageName,
+         newImage
+      )
    }
    // Optionally handle initContainers for both
    if (obj?.spec?.template?.spec?.initContainers) {
-      updateImageInContainerArray(obj.spec.template.spec.initContainers, imageName, newImage)
+      updateImageInContainerArray(
+         obj.spec.template.spec.initContainers,
+         imageName,
+         newImage
+      )
    }
-   if (obj?.kind?.toLowerCase() === KubernetesWorkload.CRON_JOB && obj?.spec?.jobTemplate?.spec?.template?.spec?.initContainers) {
-      updateImageInContainerArray(obj.spec.jobTemplate.spec.template.spec.initContainers, imageName, newImage)
+   if (
+      obj?.kind?.toLowerCase() === KubernetesWorkload.CRON_JOB &&
+      obj?.spec?.jobTemplate?.spec?.template?.spec?.initContainers
+   ) {
+      updateImageInContainerArray(
+         obj.spec.jobTemplate.spec.template.spec.initContainers,
+         imageName,
+         newImage
+      )
    }
 }
 
-function updateImageInContainerArray(containers: any[], imageName: string, newImage: string) {
+function updateImageInContainerArray(
+   containers: any[],
+   imageName: string,
+   newImage: string
+) {
    if (!Array.isArray(containers)) return
    containers.forEach((container) => {
-      if (container.image && (container.image === imageName || container.image.startsWith(imageName + ':') || container.image.startsWith(imageName + '@'))) {
+      if (
+         container.image &&
+         (container.image === imageName ||
+            container.image.startsWith(imageName + ':') ||
+            container.image.startsWith(imageName + '@'))
+      ) {
          container.image = newImage
       }
    })
