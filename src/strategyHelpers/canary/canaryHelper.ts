@@ -85,12 +85,11 @@ export function getNewCanaryResource(
 export async function fetchResource(
    kubectl: Kubectl,
    kind: string,
-   name: string,
-   timeout?: string
+   name: string
 ) {
    let result: ExecOutput
    try {
-      result = await kubectl.getResource(kind, name, false, undefined, timeout)
+      result = await kubectl.getResource(kind, name)
    } catch (e) {
       core.debug(`detected error while fetching resources: ${e}`)
    }

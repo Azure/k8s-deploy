@@ -62,8 +62,7 @@ export async function deployPodCanary(
                      await canaryDeploymentHelper.fetchResource(
                         kubectl,
                         kind,
-                        name,
-                        timeout
+                        name
                      )
                   if (stableObject) {
                      core.debug(

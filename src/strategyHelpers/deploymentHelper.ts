@@ -17,7 +17,7 @@ import {
    parseTrafficSplitMethod,
    TrafficSplitMethod
 } from '../types/trafficSplitMethod'
-import {parseRouteStrategy, RouteStrategy} from '../types/routeStrategy'
+import {parseRouteStrategy} from '../types/routeStrategy'
 import {ExecOutput} from '@actions/exec'
 import {
    getWorkflowAnnotationKeyLabel,
@@ -36,7 +36,6 @@ import {
 import {getDeploymentConfig} from '../utilities/dockerUtils'
 import {DeployResult} from '../types/deployResult'
 import {ClusterType} from '../inputUtils'
-import {BlueGreenDeployment} from '../types/blueGreenTypes'
 
 export async function deployManifests(
    files: string[],

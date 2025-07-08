@@ -178,8 +178,7 @@ export class Kubectl {
       resourceType: string,
       name: string,
       silentFailure: boolean = false,
-      namespace?: string,
-      timeout?: string
+      namespace?: string
    ): Promise<ExecOutput> {
       core.debug(
          'fetching resource of type ' + resourceType + ' and name ' + name
@@ -188,8 +187,7 @@ export class Kubectl {
          ['get', `${resourceType}/${name}`, '-o', 'json'].concat(
             this.getFlags(namespace)
          ),
-         silentFailure,
-         timeout
+         silentFailure
       )
    }
 
