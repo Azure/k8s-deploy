@@ -44,56 +44,56 @@ jobs:
          - name: Deploy cert manager (pre-requisite for actions-runner-controller)
            uses: Azure/k8s-deploy@v5.0.3
            with:
-             action: deploy
-             strategy: basic
-             manifests: |
-               test/integration/manifests/cert-manager.yaml
-             force: true
-          
+              action: deploy
+              strategy: basic
+              manifests: |
+                 test/integration/manifests/cert-manager.yaml
+              force: true
+
          - name: Verify cert-manager namespace was created
            run: kubectl get namespace cert-manager
-          
+
          - name: Verify cert-manager deployments are ready
            run: |
-             kubectl wait --for=condition=available --timeout=300s deployment/cert-manager -n cert-manager
-             kubectl wait --for=condition=available --timeout=300s deployment/cert-manager-cainjector -n cert-manager
-             kubectl wait --for=condition=available --timeout=300s deployment/cert-manager-webhook -n cert-manager
-          
+              kubectl wait --for=condition=available --timeout=300s deployment/cert-manager -n cert-manager
+              kubectl wait --for=condition=available --timeout=300s deployment/cert-manager-cainjector -n cert-manager
+              kubectl wait --for=condition=available --timeout=300s deployment/cert-manager-webhook -n cert-manager
+
          - name: Verify cert-manager CRDs are installed
            run: |
-             kubectl get crd certificates.cert-manager.io
-             kubectl get crd issuers.cert-manager.io
-             kubectl get crd clusterissuers.cert-manager.io
-          
+              kubectl get crd certificates.cert-manager.io
+              kubectl get crd issuers.cert-manager.io
+              kubectl get crd clusterissuers.cert-manager.io
+
          - name: Test certificate creation (basic functionality test)
            run: |
-             cat <<EOF | kubectl apply -f -
-             apiVersion: cert-manager.io/v1
-             kind: ClusterIssuer
-             metadata:
-               name: selfsigned-issuer
-             spec:
-               selfSigned: {}
-             ---
-             apiVersion: cert-manager.io/v1
-             kind: Certificate
-             metadata:
-               name: test-certificate
-               namespace: cert-manager
-             spec:
-               secretName: test-certificate-secret
-               issuerRef:
-                 name: selfsigned-issuer
-                 kind: ClusterIssuer
-               commonName: test.example.com
-             EOF
-          
+              cat <<EOF | kubectl apply -f -
+              apiVersion: cert-manager.io/v1
+              kind: ClusterIssuer
+              metadata:
+                name: selfsigned-issuer
+              spec:
+                selfSigned: {}
+              ---
+              apiVersion: cert-manager.io/v1
+              kind: Certificate
+              metadata:
+                name: test-certificate
+                namespace: cert-manager
+              spec:
+                secretName: test-certificate-secret
+                issuerRef:
+                  name: selfsigned-issuer
+                  kind: ClusterIssuer
+                commonName: test.example.com
+              EOF
+
          - name: Verify certificate was issued
            run: |
-             kubectl wait --for=condition=ready --timeout=60s certificate/test-certificate -n cert-manager
-             kubectl get secret test-certificate-secret -n cert-manager
+              kubectl wait --for=condition=ready --timeout=60s certificate/test-certificate -n cert-manager
+              kubectl get secret test-certificate-secret -n cert-manager
          - name: Cleanup test resources
            if: always()
            run: |
-             kubectl delete certificate test-certificate -n cert-manager --ignore-not-found=true
-             kubectl delete clusterissuer selfsigned-issuer --ignore-not-found=true
+              kubectl delete certificate test-certificate -n cert-manager --ignore-not-found=true
+              kubectl delete clusterissuer selfsigned-issuer --ignore-not-found=true
