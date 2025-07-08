@@ -103,7 +103,7 @@ export async function deployPodCanary(
       forceDeployment,
       serverSideApply
    )
-   checkForErrors([execResult])
+
    return {execResult, manifestFiles}
 }
 
