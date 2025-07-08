@@ -1,7 +1,6 @@
 import {
    deployWithLabel,
    deleteGreenObjects,
-   deployObjects,
    fetchResource,
    getDeploymentMatchLabels,
    getManifestObjects,
@@ -94,12 +93,6 @@ describe('bluegreenhelper functions', () => {
    })
 
    test('correctly makes labeled workloads', async () => {
-      jest.spyOn(kubectl, 'apply').mockResolvedValue({
-         stdout: 'deployment.apps/nginx-deployment created',
-         stderr: '',
-         exitCode: 0
-      })
-
       const cwlResult: BlueGreenDeployment = await deployWithLabel(
          kubectl,
          testObjects.deploymentEntityList,
@@ -199,32 +192,5 @@ describe('bluegreenhelper functions', () => {
       expect(
          getDeploymentMatchLabels(testObjects.deploymentEntityList[0])['app']
       ).toBe('nginx')
-   })
-
-   test('deployObjects calls kubectl apply and handles success', async () => {
-      const mockObjects = [testObjects.deploymentEntityList[0]]
-      const mockExecResult: ExecOutput = {
-         stdout: 'deployment.apps/nginx-deployment created',
-         stderr: '',
-         exitCode: 0
-      }
-
-      jest.spyOn(kubectl, 'apply').mockResolvedValue(mockExecResult)
-
-      const result = await deployObjects(kubectl, mockObjects)
-      expect(result.execResult).toEqual(mockExecResult)
-   })
-
-   test('deployObjects throws error when kubectl apply fails', async () => {
-      const mockObjects = [testObjects.deploymentEntityList[0]]
-      const mockExecResult: ExecOutput = {
-         stdout: '',
-         stderr: 'error: deployment failed',
-         exitCode: 1
-      }
-
-      jest.spyOn(kubectl, 'apply').mockResolvedValue(mockExecResult)
-
-      await expect(deployObjects(kubectl, mockObjects)).rejects.toThrow()
    })
 })

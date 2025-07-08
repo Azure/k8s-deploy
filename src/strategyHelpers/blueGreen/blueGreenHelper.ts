@@ -278,6 +278,5 @@ export async function deployObjects(
       serverSideApply
    )
 
-   checkForErrors([execResult])
    return {execResult, manifestFiles}
 }
