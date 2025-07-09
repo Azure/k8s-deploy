@@ -79,23 +79,24 @@ function updateContainerImagesInManifestFiles(
    filePaths: string[],
    containers: string[]
 ): string[] {
-   if (filePaths?.length <= 0) return filePaths
+   if (!filePaths?.length) return filePaths
 
    filePaths.forEach((filePath: string) => {
-      let fileContents = fs.readFileSync(filePath).toString()
-      let inputObjects: K8sObject[] = yaml.loadAll(fileContents) as K8sObject[]
-      let updatedObjects: K8sObject[] = []
-      inputObjects.forEach((obj) => {
-         if (isWorkloadEntity(obj.kind)) {
-            containers.forEach((container: string) => {
-               let [imageName] = container.split(':')
-               if (imageName.indexOf('@') > 0) {
-                  imageName = imageName.split('@')[0]
-               }
-               updateImagesInK8sObject(obj, imageName, container)
-            })
-         }
-         updatedObjects.push(obj)
+      const fileContents = fs.readFileSync(filePath, 'utf8')
+      const inputObjects = yaml.loadAll(fileContents) as K8sObject[]
+
+      const updatedObjects = inputObjects.map((obj) => {
+         if (!isWorkloadEntity(obj.kind)) return obj
+
+         containers.forEach((container: string) => {
+            let [imageName] = container.split(':')
+            if (imageName.includes('@')) {
+               imageName = imageName.split('@')[0]
+            }
+            updateImagesInK8sObject(obj, imageName, container)
+         })
+
+         return obj
       })
       const newYaml = updatedObjects.map((o) => yaml.dump(o)).join('---\n')
       fs.writeFileSync(path.join(filePath), newYaml)
