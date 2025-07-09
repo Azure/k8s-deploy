@@ -19,6 +19,19 @@ import {ExecOutput} from '@actions/exec'
 jest.mock('../../types/kubectl')
 
 const kubectl = new Kubectl('')
+const TEST_TIMEOUT = '60s'
+
+// Test constants to follow DRY principle
+const EXPECTED_GREEN_OBJECTS = [
+   {name: 'nginx-service-green', kind: 'Service'},
+   {name: 'nginx-deployment-green', kind: 'Deployment'}
+]
+
+const MOCK_EXEC_OUTPUT = {
+   exitCode: 0,
+   stderr: '',
+   stdout: ''
+} as ExecOutput
 
 describe('bluegreenhelper functions', () => {
    let testObjects
@@ -40,28 +53,56 @@ describe('bluegreenhelper functions', () => {
          [].concat(
             testObjects.deploymentEntityList,
             testObjects.serviceEntityList
-         )
+         ),
+         TEST_TIMEOUT
       )
 
-      expect(value).toHaveLength(2)
-      expect(value).toContainEqual({
-         name: 'nginx-service-green',
-         kind: 'Service'
+      expect(value).toHaveLength(EXPECTED_GREEN_OBJECTS.length)
+      EXPECTED_GREEN_OBJECTS.forEach((expectedObject) => {
+         expect(value).toContainEqual(expectedObject)
       })
-      expect(value).toContainEqual({
-         name: 'nginx-deployment-green',
-         kind: 'Deployment'
+   })
+
+   test('handles timeout when deleting objects', async () => {
+      // Mock deleteObjects to prevent actual execution
+      const deleteSpy = jest
+         .spyOn(kubectl, 'delete')
+         .mockResolvedValue(MOCK_EXEC_OUTPUT)
+
+      await bgHelper.deleteObjects(
+         kubectl,
+         EXPECTED_GREEN_OBJECTS,
+         TEST_TIMEOUT
+      )
+
+      // Verify kubectl.delete is called with timeout for each object in deleteList
+      expect(deleteSpy).toHaveBeenCalledTimes(EXPECTED_GREEN_OBJECTS.length)
+      EXPECTED_GREEN_OBJECTS.forEach(({name, kind}) => {
+         expect(deleteSpy).toHaveBeenCalledWith(
+            [kind, name],
+            undefined,
+            TEST_TIMEOUT
+         )
       })
    })
 
    test('parses objects correctly from one file (getManifestObjects)', () => {
-      expect(testObjects.deploymentEntityList[0].kind).toBe('Deployment')
-      expect(testObjects.serviceEntityList[0].kind).toBe('Service')
-      expect(testObjects.ingressEntityList[0].kind).toBe('Ingress')
+      const expectedTypes = [
+         {
+            list: testObjects.deploymentEntityList,
+            kind: 'Deployment',
+            selectorApp: 'nginx'
+         },
+         {list: testObjects.serviceEntityList, kind: 'Service'},
+         {list: testObjects.ingressEntityList, kind: 'Ingress'}
+      ]
 
-      expect(
-         testObjects.deploymentEntityList[0].spec.selector.matchLabels.app
-      ).toBe('nginx')
+      expectedTypes.forEach(({list, kind, selectorApp}) => {
+         expect(list[0].kind).toBe(kind)
+         if (selectorApp) {
+            expect(list[0].spec.selector.matchLabels.app).toBe(selectorApp)
+         }
+      })
    })
 
    test('parses other kinds of objects (getManifestObjects)', () => {
@@ -102,23 +143,24 @@ describe('bluegreenhelper functions', () => {
    })
 
    test('correctly makes new blue green object (getNewBlueGreenObject and addBlueGreenLabelsAndAnnotations)', () => {
-      const modifiedDeployment = getNewBlueGreenObject(
-         testObjects.deploymentEntityList[0],
-         GREEN_LABEL_VALUE
-      )
+      const testCases = [
+         {
+            object: testObjects.deploymentEntityList[0],
+            expectedName: 'nginx-deployment-green'
+         },
+         {
+            object: testObjects.serviceEntityList[0],
+            expectedName: 'nginx-service-green'
+         }
+      ]
 
-      expect(modifiedDeployment.metadata.name).toBe('nginx-deployment-green')
-      expect(modifiedDeployment.metadata.labels['k8s.deploy.color']).toBe(
-         'green'
-      )
-
-      const modifiedSvc = getNewBlueGreenObject(
-         testObjects.serviceEntityList[0],
-         GREEN_LABEL_VALUE
-      )
-
-      expect(modifiedSvc.metadata.name).toBe('nginx-service-green')
-      expect(modifiedSvc.metadata.labels['k8s.deploy.color']).toBe('green')
+      testCases.forEach(({object, expectedName}) => {
+         const modifiedObject = getNewBlueGreenObject(object, GREEN_LABEL_VALUE)
+         expect(modifiedObject.metadata.name).toBe(expectedName)
+         expect(modifiedObject.metadata.labels['k8s.deploy.color']).toBe(
+            'green'
+         )
+      })
    })
 
    test('correctly fetches k8s objects', async () => {
@@ -140,24 +182,41 @@ describe('bluegreenhelper functions', () => {
    })
 
    test('exits when fails to fetch k8s objects', async () => {
-      const mockExecOutput = {
-         stdout: 'this should not matter',
-         exitCode: 0,
-         stderr: 'this is a fake error'
-      } as ExecOutput
-      jest
-         .spyOn(kubectl, 'getResource')
-         .mockImplementation(() => Promise.resolve(mockExecOutput))
-      let fetched = await fetchResource(
-         kubectl,
-         'nginx-deployment',
-         'Deployment'
-      )
-      expect(fetched).toBe(null)
+      const errorTestCases = [
+         {
+            description: 'with stderr error',
+            mockOutput: {
+               stdout: 'this should not matter',
+               exitCode: 0,
+               stderr: 'this is a fake error'
+            } as ExecOutput,
+            mockImplementation: () => Promise.resolve
+         },
+         {
+            description: 'with undefined implementation',
+            mockOutput: null,
+            mockImplementation: () => undefined
+         }
+      ]
 
-      jest.spyOn(kubectl, 'getResource').mockImplementation()
-      fetched = await fetchResource(kubectl, 'nginx-deployment', 'Deployment')
-      expect(fetched).toBe(null)
+      for (const testCase of errorTestCases) {
+         const spy = jest.spyOn(kubectl, 'getResource')
+
+         if (testCase.mockOutput) {
+            spy.mockImplementation(() => Promise.resolve(testCase.mockOutput))
+         } else {
+            spy.mockImplementation()
+         }
+
+         const fetched = await fetchResource(
+            kubectl,
+            'nginx-deployment',
+            'Deployment'
+         )
+         expect(fetched).toBe(null)
+
+         spy.mockRestore()
+      }
    })
 
    test('returns null when fetch fails to unset k8s objects', async () => {

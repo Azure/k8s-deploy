@@ -13,6 +13,7 @@ import {parseDeploymentStrategy} from './types/deploymentStrategy'
 import {getFilesFromDirectoriesAndURLs} from './utilities/fileUtils'
 import {PrivateKubectl} from './types/privatekubectl'
 import {parseResourceTypeInput} from './inputUtils'
+import {parseDuration} from './utilities/durationUtils'
 
 export async function run() {
    // verify kubeconfig is set
@@ -52,6 +53,17 @@ export async function run() {
       return
    }
 
+   // Parse and validate timeout using extracted utility
+   let timeout: string
+   try {
+      const timeoutInput = core.getInput('timeout') || '10m'
+      timeout = parseDuration(timeoutInput)
+      core.debug(`Using timeout: ${timeout}`)
+   } catch (e) {
+      core.setFailed(`Invalid timeout parameter: ${e.message}`)
+      return
+   }
+
    const kubectl = isPrivateCluster
       ? new PrivateKubectl(
            kubectlPath,
@@ -65,15 +77,27 @@ export async function run() {
    // run action
    switch (action) {
       case Action.DEPLOY: {
-         await deploy(kubectl, fullManifestFilePaths, strategy, resourceType)
+         await deploy(
+            kubectl,
+            fullManifestFilePaths,
+            strategy,
+            resourceType,
+            timeout
+         )
          break
       }
       case Action.PROMOTE: {
-         await promote(kubectl, fullManifestFilePaths, strategy, resourceType)
+         await promote(
+            kubectl,
+            fullManifestFilePaths,
+            strategy,
+            resourceType,
+            timeout
+         )
          break
       }
       case Action.REJECT: {
-         await reject(kubectl, fullManifestFilePaths, strategy)
+         await reject(kubectl, fullManifestFilePaths, strategy, timeout)
          break
       }
       default: {
