@@ -42,7 +42,7 @@ jobs:
               driver: 'none'
            timeout-minutes: 3
          - name: Deploy cert manager (pre-requisite for actions-runner-controller)
-           uses: Azure/k8s-deploy@v5.0.3
+           uses: ./
            with:
               action: deploy
               strategy: basic
