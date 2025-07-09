@@ -42,6 +42,9 @@ jobs:
               kubernetes-version: 1.31.0
               driver: 'none'
            timeout-minutes: 3
+
+         - name: Install Linkerd and SMI
+           run: |
               curl --proto '=https' --tlsv1.2 -sSfL https://run.linkerd.io/install-edge | sh
               export PATH=$PATH:/home/runner/.linkerd2/bin
               curl -sL https://linkerd.github.io/linkerd-smi/install | sh

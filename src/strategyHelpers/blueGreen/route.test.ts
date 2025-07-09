@@ -16,7 +16,9 @@ import {
 import {
    routeBlueGreenIngress,
    routeBlueGreenService,
-   routeBlueGreenForDeploy
+   routeBlueGreenForDeploy,
+   routeBlueGreenSMI,
+   routeBlueGreenIngressUnchanged
 } from './route'
 
 jest.mock('../../types/kubectl')
@@ -115,5 +117,143 @@ describe('route function tests', () => {
       expect(
          (smiResult.objects as TrafficSplitObject[])[0].spec.backends
       ).toHaveLength(2)
+   })
+})
+
+// Timeout tests
+describe('route timeout tests', () => {
+   let testObjects: BlueGreenManifests
+   beforeEach(() => {
+      //@ts-ignore
+      Kubectl.mockClear()
+
+      testObjects = getManifestObjects(ingressFilepath)
+      jest
+         .spyOn(fileHelper, 'writeObjectsToFile')
+         .mockImplementationOnce(() => [''])
+   })
+
+   test('routeBlueGreenService with timeout', async () => {
+      const timeout = '240s'
+
+      // Mock deployObjects to capture timeout parameter
+      const deployObjectsSpy = jest
+         .spyOn(require('./blueGreenHelper'), 'deployObjects')
+         .mockResolvedValue({
+            execResult: {exitCode: 0, stderr: '', stdout: ''},
+            manifestFiles: []
+         })
+
+      const value = await routeBlueGreenService(
+         kc,
+         GREEN_LABEL_VALUE,
+         testObjects.serviceEntityList,
+         timeout
+      )
+
+      expect(deployObjectsSpy).toHaveBeenCalledWith(
+         kc,
+         expect.any(Array),
+         timeout
+      )
+      expect(value.objects).toHaveLength(1)
+
+      deployObjectsSpy.mockRestore()
+   })
+
+   test('routeBlueGreenSMI with timeout', async () => {
+      const timeout = '300s'
+
+      jest
+         .spyOn(TSutils, 'getTrafficSplitAPIVersion')
+         .mockImplementation(() => Promise.resolve('v1alpha3'))
+
+      // Mock deployObjects and createTrafficSplitObject to capture timeout parameter
+      const deployObjectsSpy = jest
+         .spyOn(require('./blueGreenHelper'), 'deployObjects')
+         .mockResolvedValue({
+            execResult: {exitCode: 0, stderr: '', stdout: ''},
+            manifestFiles: []
+         })
+
+      const createTrafficSplitSpy = jest
+         .spyOn(require('./smiBlueGreenHelper'), 'createTrafficSplitObject')
+         .mockResolvedValue({
+            metadata: {name: 'nginx-service-trafficsplit'},
+            spec: {backends: []}
+         })
+
+      const value = await routeBlueGreenSMI(
+         kc,
+         GREEN_LABEL_VALUE,
+         testObjects.serviceEntityList,
+         timeout
+      )
+
+      expect(createTrafficSplitSpy).toHaveBeenCalledWith(
+         kc,
+         'nginx-service',
+         GREEN_LABEL_VALUE,
+         timeout
+      )
+      expect(deployObjectsSpy).toHaveBeenCalledWith(
+         kc,
+         expect.any(Array),
+         timeout
+      )
+
+      deployObjectsSpy.mockRestore()
+      createTrafficSplitSpy.mockRestore()
+   })
+
+   test('routeBlueGreenIngressUnchanged with timeout', async () => {
+      const timeout = '180s'
+
+      // Mock deployObjects to capture timeout parameter
+      const deployObjectsSpy = jest
+         .spyOn(require('./blueGreenHelper'), 'deployObjects')
+         .mockResolvedValue({
+            execResult: {exitCode: 0, stderr: '', stdout: ''},
+            manifestFiles: []
+         })
+
+      const value = await routeBlueGreenIngressUnchanged(
+         kc,
+         testObjects.serviceNameMap,
+         testObjects.ingressEntityList,
+         timeout
+      )
+
+      expect(deployObjectsSpy).toHaveBeenCalledWith(
+         kc,
+         expect.any(Array),
+         timeout
+      )
+
+      deployObjectsSpy.mockRestore()
+   })
+
+   test('route functions without timeout should pass undefined', async () => {
+      const deployObjectsSpy = jest
+         .spyOn(require('./blueGreenHelper'), 'deployObjects')
+         .mockResolvedValue({
+            execResult: {exitCode: 0, stderr: '', stdout: ''},
+            manifestFiles: []
+         })
+
+      // Test routeBlueGreenService without timeout
+      await routeBlueGreenService(
+         kc,
+         GREEN_LABEL_VALUE,
+         testObjects.serviceEntityList
+      )
+
+      expect(deployObjectsSpy).toHaveBeenCalledWith(
+         kc,
+         expect.any(Array),
+         undefined
+      )
+
+      deployObjectsSpy.mockRestore()
    })
 })

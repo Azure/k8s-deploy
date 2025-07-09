@@ -11,7 +11,8 @@ import {validateTrafficSplitsState} from './smiBlueGreenHelper'
 
 export async function promoteBlueGreenIngress(
    kubectl: Kubectl,
-   manifestObjects
+   manifestObjects,
+   timeout?: string
 ): Promise<BlueGreenDeployment> {
    //checking if anything to promote
    const {areValid, invalidIngresses} = await validateIngresses(
@@ -32,7 +33,8 @@ export async function promoteBlueGreenIngress(
          manifestObjects.deploymentEntityList,
          manifestObjects.serviceEntityList
       ),
-      NONE_LABEL_VALUE
+      NONE_LABEL_VALUE,
+      timeout
    )
 
    // create stable services with new configuration
@@ -41,7 +43,8 @@ export async function promoteBlueGreenIngress(
 
 export async function promoteBlueGreenService(
    kubectl: Kubectl,
-   manifestObjects
+   manifestObjects,
+   timeout?: string
 ): Promise<BlueGreenDeployment> {
    // checking if services are in the right state ie. targeting green deployments
    if (
@@ -54,13 +57,15 @@ export async function promoteBlueGreenService(
    return await deployWithLabel(
       kubectl,
       manifestObjects.deploymentEntityList,
-      NONE_LABEL_VALUE
+      NONE_LABEL_VALUE,
+      timeout
    )
 }
 
 export async function promoteBlueGreenSMI(
    kubectl: Kubectl,
-   manifestObjects
+   manifestObjects,
+   timeout?: string
 ): Promise<BlueGreenDeployment> {
    // checking if there is something to promote
    if (
@@ -76,6 +81,7 @@ export async function promoteBlueGreenSMI(
    return await deployWithLabel(
       kubectl,
       manifestObjects.deploymentEntityList,
-      NONE_LABEL_VALUE
+      NONE_LABEL_VALUE,
+      timeout
    )
 }

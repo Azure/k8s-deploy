@@ -13,7 +13,8 @@ import {K8sObject} from '../../types/k8sObject'
 export async function deployPodCanary(
    filePaths: string[],
    kubectl: Kubectl,
-   onlyDeployStable: boolean = false
+   onlyDeployStable: boolean = false,
+   timeout?: string
 ): Promise<DeployResult> {
    const newObjectsList = []
    const percentage = parseInt(core.getInput('percentage', {required: true}))
@@ -100,7 +101,8 @@ export async function deployPodCanary(
    const execResult = await kubectl.apply(
       manifestFiles,
       forceDeployment,
-      serverSideApply
+      serverSideApply,
+      timeout
    )
    return {execResult, manifestFiles}
 }
