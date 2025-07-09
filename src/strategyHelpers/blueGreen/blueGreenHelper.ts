@@ -32,7 +32,8 @@ export const STABLE_SUFFIX = '-stable'
 
 export async function deleteGreenObjects(
    kubectl: Kubectl,
-   toDelete: K8sObject[]
+   toDelete: K8sObject[],
+   timeout?: string
 ): Promise<K8sDeleteObject[]> {
    // const resourcesToDelete: K8sDeleteObject[] = []
    const resourcesToDelete: K8sDeleteObject[] = toDelete.map((obj) => {
@@ -45,18 +46,23 @@ export async function deleteGreenObjects(
 
    core.debug(`deleting green objects: ${JSON.stringify(resourcesToDelete)}`)
 
-   await deleteObjects(kubectl, resourcesToDelete)
+   await deleteObjects(kubectl, resourcesToDelete, timeout)
    return resourcesToDelete
 }
 
 export async function deleteObjects(
    kubectl: Kubectl,
-   deleteList: K8sDeleteObject[]
+   deleteList: K8sDeleteObject[],
+   timeout?: string
 ) {
    // delete services and deployments
    for (const delObject of deleteList) {
       try {
-         const result = await kubectl.delete([delObject.kind, delObject.name])
+         const result = await kubectl.delete(
+            [delObject.kind, delObject.name],
+            delObject.namespace,
+            timeout
+         )
          checkForErrors([result])
       } catch (ex) {
          core.debug(`failed to delete object ${delObject.name}: ${ex}`)
@@ -141,7 +147,8 @@ export function isServiceRouted(
 export async function deployWithLabel(
    kubectl: Kubectl,
    deploymentObjectList: any[],
-   nextLabel: string
+   nextLabel: string,
+   timeout?: string
 ): Promise<BlueGreenDeployment> {
    const newObjectsList = deploymentObjectList.map((inputObject) =>
       getNewBlueGreenObject(inputObject, nextLabel)
@@ -150,7 +157,7 @@ export async function deployWithLabel(
    core.debug(
       `objects deployed with label are ${JSON.stringify(newObjectsList)}`
    )
-   const deployResult = await deployObjects(kubectl, newObjectsList)
+   const deployResult = await deployObjects(kubectl, newObjectsList, timeout)
    return {deployResult, objects: newObjectsList}
 }
 
@@ -267,15 +274,26 @@ export async function fetchResource(
 
 export async function deployObjects(
    kubectl: Kubectl,
-   objectsList: any[]
+   objectsList: any[],
+   timeout?: string
 ): Promise<DeployResult> {
+   // Handle empty objects list gracefully to prevent "Configuration paths must exist" error
+   if (!objectsList || objectsList.length === 0) {
+      core.debug('No objects to deploy, skipping kubectl apply')
+      return {
+         execResult: {exitCode: 0, stdout: '', stderr: ''},
+         manifestFiles: []
+      }
+   }
+
    const manifestFiles = fileHelper.writeObjectsToFile(objectsList)
    const forceDeployment = core.getInput('force').toLowerCase() === 'true'
    const serverSideApply = core.getInput('server-side').toLowerCase() === 'true'
    const execResult = await kubectl.apply(
       manifestFiles,
       forceDeployment,
-      serverSideApply
+      serverSideApply,
+      timeout
    )
 
    checkForErrors([execResult])

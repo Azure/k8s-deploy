@@ -203,4 +203,191 @@ describe('SMI Helper tests', () => {
       expect(deleteObjects[0].name).toBe('nginx-service-green')
       expect(deleteObjects[0].kind).toBe('Service')
    })
+
+   // Timeout-specific tests
+   test('setupSMI with timeout test', async () => {
+      const deployObjectsSpy = jest
+         .spyOn(bgHelper, 'deployObjects')
+         .mockResolvedValue({
+            result: 'success'
+         } as any)
+
+      const timeout = '300s'
+      const smiResults = await setupSMI(
+         kc,
+         testObjects.serviceEntityList,
+         timeout
+      )
+
+      // Verify deployObjects was called with timeout
+      expect(deployObjectsSpy).toHaveBeenCalledWith(
+         kc,
+         expect.any(Array),
+         timeout
+      )
+
+      expect(smiResults.objects).toBeDefined()
+      expect(smiResults.deployResult).toBeDefined()
+
+      deployObjectsSpy.mockRestore()
+   })
+
+   test('createTrafficSplitObject with timeout test', async () => {
+      const deleteObjectsSpy = jest
+         .spyOn(bgHelper, 'deleteObjects')
+         .mockResolvedValue()
+
+      const timeout = '180s'
+      const tsObject = await createTrafficSplitObject(
+         kc,
+         testObjects.serviceEntityList[0].metadata.name,
+         NONE_LABEL_VALUE,
+         timeout
+      )
+
+      // Verify deleteObjects was called with timeout
+      expect(deleteObjectsSpy).toHaveBeenCalledWith(
+         kc,
+         expect.arrayContaining([
+            expect.objectContaining({
+               name: 'nginx-service-trafficsplit',
+               kind: TRAFFIC_SPLIT_OBJECT
+            })
+         ]),
+         timeout
+      )
+
+      expect(tsObject.metadata.name).toBe('nginx-service-trafficsplit')
+      expect(tsObject.spec.backends).toHaveLength(2)
+
+      deleteObjectsSpy.mockRestore()
+   })
+
+   test('createTrafficSplitObject with GREEN_LABEL_VALUE and timeout test', async () => {
+      const deleteObjectsSpy = jest
+         .spyOn(bgHelper, 'deleteObjects')
+         .mockResolvedValue()
+
+      const timeout = '240s'
+      const tsObject = await createTrafficSplitObject(
+         kc,
+         testObjects.serviceEntityList[0].metadata.name,
+         GREEN_LABEL_VALUE,
+         timeout
+      )
+
+      // Verify deleteObjects was called with timeout
+      expect(deleteObjectsSpy).toHaveBeenCalledWith(
+         kc,
+         expect.any(Array),
+         timeout
+      )
+
+      // Verify weights are correct for green deployment
+      for (const be of tsObject.spec.backends) {
+         if (be.service === 'nginx-service-stable') {
+            expect(be.weight).toBe(MIN_VAL)
+         }
+         if (be.service === 'nginx-service-green') {
+            expect(be.weight).toBe(MAX_VAL)
+         }
+      }
+
+      deleteObjectsSpy.mockRestore()
+   })
+
+   test('cleanupSMI with timeout test', async () => {
+      const deleteObjectsSpy = jest
+         .spyOn(bgHelper, 'deleteObjects')
+         .mockResolvedValue()
+
+      const timeout = '120s'
+      const deleteObjects = await cleanupSMI(
+         kc,
+         testObjects.serviceEntityList,
+         timeout
+      )
+
+      // Verify deleteObjects was called with timeout
+      expect(deleteObjectsSpy).toHaveBeenCalledWith(
+         kc,
+         expect.arrayContaining([
+            expect.objectContaining({
+               name: 'nginx-service-green',
+               kind: 'Service'
+            })
+         ]),
+         timeout
+      )
+
+      expect(deleteObjects).toHaveLength(1)
+      expect(deleteObjects[0].name).toBe('nginx-service-green')
+      expect(deleteObjects[0].kind).toBe('Service')
+
+      deleteObjectsSpy.mockRestore()
+   })
+
+   test('setupSMI without timeout test', async () => {
+      const deployObjectsSpy = jest
+         .spyOn(bgHelper, 'deployObjects')
+         .mockResolvedValue({
+            result: 'success'
+         } as any)
+
+      const smiResults = await setupSMI(kc, testObjects.serviceEntityList)
+
+      // Verify deployObjects was called without timeout (undefined)
+      expect(deployObjectsSpy).toHaveBeenCalledWith(
+         kc,
+         expect.any(Array),
+         undefined
+      )
+
+      expect(smiResults.objects).toBeDefined()
+      expect(smiResults.deployResult).toBeDefined()
+
+      deployObjectsSpy.mockRestore()
+   })
+
+   test('createTrafficSplitObject without timeout test', async () => {
+      const deleteObjectsSpy = jest
+         .spyOn(bgHelper, 'deleteObjects')
+         .mockResolvedValue()
+
+      const tsObject = await createTrafficSplitObject(
+         kc,
+         testObjects.serviceEntityList[0].metadata.name,
+         NONE_LABEL_VALUE
+      )
+
+      // Verify deleteObjects was called without timeout (undefined)
+      expect(deleteObjectsSpy).toHaveBeenCalledWith(
+         kc,
+         expect.any(Array),
+         undefined
+      )
+
+      expect(tsObject.metadata.name).toBe('nginx-service-trafficsplit')
+
+      deleteObjectsSpy.mockRestore()
+   })
+
+   test('cleanupSMI without timeout test', async () => {
+      const deleteObjectsSpy = jest
+         .spyOn(bgHelper, 'deleteObjects')
+         .mockResolvedValue()
+
+      const deleteObjects = await cleanupSMI(kc, testObjects.serviceEntityList)
+
+      // Verify deleteObjects was called without timeout (undefined)
+      expect(deleteObjectsSpy).toHaveBeenCalledWith(
+         kc,
+         expect.any(Array),
+         undefined
+      )
+
+      expect(deleteObjects).toHaveLength(1)
+
+      deleteObjectsSpy.mockRestore()
+   })
 })

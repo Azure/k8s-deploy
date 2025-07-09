@@ -14,7 +14,8 @@ import {checkForErrors} from '../../utilities/kubectlUtils'
 export async function deployPodCanary(
    filePaths: string[],
    kubectl: Kubectl,
-   onlyDeployStable: boolean = false
+   onlyDeployStable: boolean = false,
+   timeout?: string
 ): Promise<DeployResult> {
    const newObjectsList = []
    const percentage = parseInt(core.getInput('percentage', {required: true}))
@@ -101,7 +102,8 @@ export async function deployPodCanary(
    const execResult = await kubectl.apply(
       manifestFiles,
       forceDeployment,
-      serverSideApply
+      serverSideApply,
+      timeout
    )
    checkForErrors([execResult])
    return {execResult, manifestFiles}

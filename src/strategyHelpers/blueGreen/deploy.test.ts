@@ -1,10 +1,17 @@
 import {getManifestObjects} from './blueGreenHelper'
 import {BlueGreenDeployment} from '../../types/blueGreenTypes'
-import {deployBlueGreen, deployBlueGreenIngress} from './deploy'
+import {
+   deployBlueGreen,
+   deployBlueGreenIngress,
+   deployBlueGreenService,
+   deployBlueGreenSMI
+} from './deploy'
 import * as routeTester from './route'
 import {Kubectl} from '../../types/kubectl'
 import {RouteStrategy} from '../../types/routeStrategy'
 import * as TSutils from '../../utilities/trafficSplitUtils'
+import * as bgHelper from './blueGreenHelper'
+import * as smiHelper from './smiBlueGreenHelper'
 
 const ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
 
@@ -87,5 +94,261 @@ describe('deploy tests', () => {
             expect(obj.metadata.name).toBe('nginx-deployment-green')
          }
       })
+   })
+})
+
+// Timeout tests
+describe('deploy timeout tests', () => {
+   let testObjects
+   beforeEach(() => {
+      //@ts-ignore
+      Kubectl.mockClear()
+      testObjects = getManifestObjects(ingressFilepath)
+   })
+
+   test('deployBlueGreen with timeout passes to strategy functions', async () => {
+      const kubectl = new Kubectl('')
+      const timeout = '300s'
+
+      const mockBgDeployment: BlueGreenDeployment = {
+         deployResult: {
+            execResult: {exitCode: 0, stderr: '', stdout: ''},
+            manifestFiles: []
+         },
+         objects: []
+      }
+
+      // Mock the helper functions that are actually called
+      const deployWithLabelSpy = jest
+         .spyOn(bgHelper, 'deployWithLabel')
+         .mockResolvedValue(mockBgDeployment)
+      const deployObjectsSpy = jest
+         .spyOn(bgHelper, 'deployObjects')
+         .mockResolvedValue({
+            execResult: {exitCode: 0, stderr: '', stdout: ''},
+            manifestFiles: []
+         })
+      const setupSMISpy = jest
+         .spyOn(smiHelper, 'setupSMI')
+         .mockResolvedValue(mockBgDeployment)
+      const routeSpy = jest
+         .spyOn(routeTester, 'routeBlueGreenForDeploy')
+         .mockResolvedValue(mockBgDeployment)
+
+      // Test INGRESS strategy
+      await deployBlueGreen(
+         kubectl,
+         ingressFilepath,
+         RouteStrategy.INGRESS,
+         timeout
+      )
+      expect(deployWithLabelSpy).toHaveBeenCalledWith(
+         kubectl,
+         expect.any(Array),
+         expect.any(String),
+         timeout
+      )
+
+      // Test SERVICE strategy
+      deployWithLabelSpy.mockClear()
+      deployObjectsSpy.mockClear()
+      await deployBlueGreen(
+         kubectl,
+         ingressFilepath,
+         RouteStrategy.SERVICE,
+         timeout
+      )
+      expect(deployWithLabelSpy).toHaveBeenCalledWith(
+         kubectl,
+         expect.any(Array),
+         expect.any(String),
+         timeout
+      )
+
+      // Test SMI strategy
+      deployWithLabelSpy.mockClear()
+      setupSMISpy.mockClear()
+      await deployBlueGreen(
+         kubectl,
+         ingressFilepath,
+         RouteStrategy.SMI,
+         timeout
+      )
+      expect(setupSMISpy).toHaveBeenCalledWith(
+         kubectl,
+         expect.any(Array),
+         timeout
+      )
+
+      deployWithLabelSpy.mockRestore()
+      deployObjectsSpy.mockRestore()
+      setupSMISpy.mockRestore()
+      routeSpy.mockRestore()
+   })
+
+   test('deployBlueGreenIngress with timeout', async () => {
+      const kubectl = new Kubectl('')
+      const timeout = '240s'
+
+      // Mock the dependencies
+      const deployWithLabelSpy = jest
+         .spyOn(bgHelper, 'deployWithLabel')
+         .mockResolvedValue({
+            deployResult: {
+               execResult: {exitCode: 0, stderr: '', stdout: ''},
+               manifestFiles: []
+            },
+            objects: []
+         })
+      const deployObjectsSpy = jest
+         .spyOn(bgHelper, 'deployObjects')
+         .mockResolvedValue({
+            execResult: {exitCode: 0, stderr: '', stdout: ''},
+            manifestFiles: []
+         })
+
+      await deployBlueGreenIngress(kubectl, ingressFilepath, timeout)
+
+      // Verify deployWithLabel was called with timeout
+      expect(deployWithLabelSpy).toHaveBeenCalledWith(
+         kubectl,
+         expect.any(Array),
+         expect.any(String),
+         timeout
+      )
+
+      // Verify deployObjects was called with timeout
+      expect(deployObjectsSpy).toHaveBeenCalledWith(
+         kubectl,
+         expect.any(Array),
+         timeout
+      )
+
+      deployWithLabelSpy.mockRestore()
+      deployObjectsSpy.mockRestore()
+   })
+
+   test('deployBlueGreenService with timeout', async () => {
+      const kubectl = new Kubectl('')
+      const timeout = '180s'
+
+      // Mock the dependencies
+      const deployWithLabelSpy = jest
+         .spyOn(bgHelper, 'deployWithLabel')
+         .mockResolvedValue({
+            deployResult: {
+               execResult: {exitCode: 0, stderr: '', stdout: ''},
+               manifestFiles: []
+            },
+            objects: []
+         })
+      const deployObjectsSpy = jest
+         .spyOn(bgHelper, 'deployObjects')
+         .mockResolvedValue({
+            execResult: {exitCode: 0, stderr: '', stdout: ''},
+            manifestFiles: []
+         })
+
+      await deployBlueGreenService(kubectl, ingressFilepath, timeout)
+
+      // Verify deployWithLabel was called with timeout
+      expect(deployWithLabelSpy).toHaveBeenCalledWith(
+         kubectl,
+         expect.any(Array),
+         expect.any(String),
+         timeout
+      )
+
+      // Verify deployObjects was called with timeout
+      expect(deployObjectsSpy).toHaveBeenCalledWith(
+         kubectl,
+         expect.any(Array),
+         timeout
+      )
+
+      deployWithLabelSpy.mockRestore()
+      deployObjectsSpy.mockRestore()
+   })
+
+   test('deployBlueGreenSMI with timeout', async () => {
+      const kubectl = new Kubectl('')
+      const timeout = '360s'
+
+      // Mock the dependencies
+      const setupSMISpy = jest.spyOn(smiHelper, 'setupSMI').mockResolvedValue({
+         objects: [],
+         deployResult: {
+            execResult: {exitCode: 0, stderr: '', stdout: ''},
+            manifestFiles: []
+         }
+      })
+      const deployObjectsSpy = jest
+         .spyOn(bgHelper, 'deployObjects')
+         .mockResolvedValue({
+            execResult: {exitCode: 0, stderr: '', stdout: ''},
+            manifestFiles: []
+         })
+      const deployWithLabelSpy = jest
+         .spyOn(bgHelper, 'deployWithLabel')
+         .mockResolvedValue({
+            deployResult: {
+               execResult: {exitCode: 0, stderr: '', stdout: ''},
+               manifestFiles: []
+            },
+            objects: []
+         })
+
+      await deployBlueGreenSMI(kubectl, ingressFilepath, timeout)
+
+      // Verify setupSMI was called with timeout
+      expect(setupSMISpy).toHaveBeenCalledWith(
+         kubectl,
+         expect.any(Array),
+         timeout
+      )
+
+      // Verify deployObjects was called with timeout
+      expect(deployObjectsSpy).toHaveBeenCalledWith(
+         kubectl,
+         expect.any(Array),
+         timeout
+      )
+
+      setupSMISpy.mockRestore()
+      deployObjectsSpy.mockRestore()
+      deployWithLabelSpy.mockRestore()
+   })
+
+   test('deploy functions without timeout should pass undefined', async () => {
+      const kubectl = new Kubectl('')
+
+      const deployWithLabelSpy = jest
+         .spyOn(bgHelper, 'deployWithLabel')
+         .mockResolvedValue({
+            deployResult: {
+               execResult: {exitCode: 0, stderr: '', stdout: ''},
+               manifestFiles: []
+            },
+            objects: []
+         })
+      const deployObjectsSpy = jest
+         .spyOn(bgHelper, 'deployObjects')
+         .mockResolvedValue({
+            execResult: {exitCode: 0, stderr: '', stdout: ''},
+            manifestFiles: []
+         })
+
+      await deployBlueGreenIngress(kubectl, ingressFilepath)
+
+      // Verify deployWithLabel was called with undefined timeout
+      expect(deployWithLabelSpy).toHaveBeenCalledWith(
+         kubectl,
+         expect.any(Array),
+         expect.any(String),
+         undefined
+      )
+
+      deployWithLabelSpy.mockRestore()
+      deployObjectsSpy.mockRestore()
    })
 })

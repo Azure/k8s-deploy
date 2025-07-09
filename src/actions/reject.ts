@@ -19,21 +19,26 @@ import {parseRouteStrategy, RouteStrategy} from '../types/routeStrategy'
 export async function reject(
    kubectl: Kubectl,
    manifests: string[],
-   deploymentStrategy: DeploymentStrategy
+   deploymentStrategy: DeploymentStrategy,
+   timeout?: string
 ) {
    switch (deploymentStrategy) {
       case DeploymentStrategy.CANARY:
-         await rejectCanary(kubectl, manifests)
+         await rejectCanary(kubectl, manifests, timeout)
          break
       case DeploymentStrategy.BLUE_GREEN:
-         await rejectBlueGreen(kubectl, manifests)
+         await rejectBlueGreen(kubectl, manifests, timeout)
          break
       default:
          throw 'Invalid delete deployment strategy'
    }
 }
 
-async function rejectCanary(kubectl: Kubectl, manifests: string[]) {
+async function rejectCanary(
+   kubectl: Kubectl,
+   manifests: string[],
+   timeout?: string
+) {
    let includeServices = false
 
    const trafficSplitMethod = parseTrafficSplitMethod(
@@ -44,7 +49,8 @@ async function rejectCanary(kubectl: Kubectl, manifests: string[]) {
       includeServices = true
       await SMICanaryDeploymentHelper.redirectTrafficToStableDeployment(
          kubectl,
-         manifests
+         manifests,
+         timeout
       )
       core.endGroup()
    }
@@ -53,12 +59,17 @@ async function rejectCanary(kubectl: Kubectl, manifests: string[]) {
    await canaryDeploymentHelper.deleteCanaryDeployment(
       kubectl,
       manifests,
-      includeServices
+      includeServices,
+      timeout
    )
    core.endGroup()
 }
 
-async function rejectBlueGreen(kubectl: Kubectl, manifests: string[]) {
+async function rejectBlueGreen(
+   kubectl: Kubectl,
+   manifests: string[],
+   timeout?: string
+) {
    const routeStrategy = parseRouteStrategy(
       core.getInput('route-method', {required: true})
    )
@@ -67,11 +78,11 @@ async function rejectBlueGreen(kubectl: Kubectl, manifests: string[]) {
    const manifestObjects: BlueGreenManifests = getManifestObjects(manifests)
 
    if (routeStrategy == RouteStrategy.INGRESS) {
-      await rejectBlueGreenIngress(kubectl, manifestObjects)
+      await rejectBlueGreenIngress(kubectl, manifestObjects, timeout)
    } else if (routeStrategy == RouteStrategy.SMI) {
-      await rejectBlueGreenSMI(kubectl, manifestObjects)
+      await rejectBlueGreenSMI(kubectl, manifestObjects, timeout)
    } else {
-      await rejectBlueGreenService(kubectl, manifestObjects)
+      await rejectBlueGreenService(kubectl, manifestObjects, timeout)
    }
    core.endGroup()
 }
