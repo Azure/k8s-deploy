@@ -1,4 +1,3 @@
-import * as core from '@actions/core'
 import {TrafficSplitObject} from '../../types/k8sObject'
 import {Kubectl} from '../../types/kubectl'
 import * as fileHelper from '../../utilities/fileUtils'
@@ -21,7 +20,6 @@ import {
    MIN_VAL,
    setupSMI,
    TRAFFIC_SPLIT_OBJECT,
-   TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX,
    validateTrafficSplitsState
 } from './smiBlueGreenHelper'
 import * as bgHelper from './blueGreenHelper'
@@ -30,6 +28,20 @@ jest.mock('../../types/kubectl')
 
 const kc = new Kubectl('')
 const ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
+
+// Shared mock objects following DRY principle
+const mockSuccessResult = {
+   stdout: 'service/nginx-service-stable created',
+   stderr: '',
+   exitCode: 0
+}
+
+const mockFailureResult = {
+   stdout: '',
+   stderr: 'error: service creation failed',
+   exitCode: 1
+}
+
 const mockTsObject: TrafficSplitObject = {
    apiVersion: 'v1alpha3',
    kind: TRAFFIC_SPLIT_OBJECT,
@@ -70,6 +82,8 @@ describe('SMI Helper tests', () => {
    })
 
    test('setupSMI tests', async () => {
+      jest.spyOn(kc, 'apply').mockResolvedValue(mockSuccessResult)
+
       const smiResults = await setupSMI(kc, testObjects.serviceEntityList)
 
       let found = 0
@@ -198,13 +212,29 @@ describe('SMI Helper tests', () => {
       expect(deleteObjects[0].kind).toBe('Service')
    })
 
+   // Consolidated error tests using test.each for DRY principle
+   test.each([
+      {
+         name: 'should throw error when kubectl apply fails during SMI setup',
+         fn: () => setupSMI(kc, testObjects.serviceEntityList),
+         setup: () => {
+            jest.spyOn(kc, 'apply').mockResolvedValue(mockFailureResult)
+         }
+      }
+   ])('$name', async ({fn, setup}) => {
+      setup()
+
+      await expect(fn()).rejects.toThrow()
+   })
+
    // Timeout-specific tests
    test('setupSMI with timeout test', async () => {
       const deployObjectsSpy = jest
          .spyOn(bgHelper, 'deployObjects')
          .mockResolvedValue({
-            result: 'success'
-         } as any)
+            execResult: mockSuccessResult,
+            manifestFiles: []
+         })
 
       const timeout = '300s'
       const smiResults = await setupSMI(
@@ -325,8 +355,9 @@ describe('SMI Helper tests', () => {
       const deployObjectsSpy = jest
          .spyOn(bgHelper, 'deployObjects')
          .mockResolvedValue({
-            result: 'success'
-         } as any)
+            execResult: mockSuccessResult,
+            manifestFiles: []
+         })
 
       const smiResults = await setupSMI(kc, testObjects.serviceEntityList)
 

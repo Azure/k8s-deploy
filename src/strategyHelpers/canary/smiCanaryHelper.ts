@@ -120,6 +120,7 @@ export async function deploySMICanary(
       filePaths,
       timeout
    )
+   checkForErrors([result])
    newFilePaths.push(...svcDeploymentFiles)
    return {execResult: result, manifestFiles: newFilePaths}
 }

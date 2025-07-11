@@ -296,5 +296,6 @@ export async function deployObjects(
       timeout
    )
 
+   checkForErrors([execResult])
    return {execResult, manifestFiles}
 }
