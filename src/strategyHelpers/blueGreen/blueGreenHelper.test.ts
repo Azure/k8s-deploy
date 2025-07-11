@@ -135,7 +135,7 @@ describe('bluegreenhelper functions', () => {
    })
 
    test('correctly makes labeled workloads', async () => {
-      jest.spyOn(kubectl, 'apply').mockResolvedValue({
+      const kubectlApplySpy = jest.spyOn(kubectl, 'apply').mockResolvedValue({
          stdout: 'deployment.apps/nginx-deployment created',
          stderr: '',
          exitCode: 0
@@ -147,6 +147,8 @@ describe('bluegreenhelper functions', () => {
          GREEN_LABEL_VALUE
       )
       expect(cwlResult.deployResult.manifestFiles[0]).toBe('')
+
+      kubectlApplySpy.mockRestore()
    })
 
    test('correctly makes new blue green object (getNewBlueGreenObject and addBlueGreenLabelsAndAnnotations)', () => {
@@ -226,20 +228,23 @@ describe('bluegreenhelper functions', () => {
       }
    })
 
-   test('returns null when fetch fails to unset k8s objects', async () => {
+   test('returns undefined when fetch fails to unset k8s objects', async () => {
       const mockExecOutput = {
-         stdout: 'this should not matter',
+         stdout: JSON.stringify(testObjects.deploymentEntityList[0]),
          exitCode: 0,
-         stderr: 'this is a fake error'
+         stderr: ''
       } as ExecOutput
+
+      jest.spyOn(kubectl, 'getResource').mockResolvedValue(mockExecOutput)
       jest
          .spyOn(manifestUpdateUtils, 'UnsetClusterSpecificDetails')
          .mockImplementation(() => {
             throw new Error('test error')
          })
+
       expect(
          await fetchResource(kubectl, 'nginx-deployment', 'Deployment')
-      ).toBe(null)
+      ).toBeUndefined()
    })
 
    test('gets deployment labels', () => {
@@ -260,30 +265,67 @@ describe('bluegreenhelper functions', () => {
       ).toBe('nginx')
    })
 
-   test('deployObjects calls kubectl apply and handles success', async () => {
-      const mockObjects = [testObjects.deploymentEntityList[0]]
-      const mockExecResult: ExecOutput = {
+   describe('deployObjects', () => {
+      let mockObjects: any[]
+      let kubectlApplySpy: jest.SpyInstance
+
+      const mockSuccessResult: ExecOutput = {
          stdout: 'deployment.apps/nginx-deployment created',
          stderr: '',
          exitCode: 0
       }
 
-      jest.spyOn(kubectl, 'apply').mockResolvedValue(mockExecResult)
-
-      const result = await deployObjects(kubectl, mockObjects)
-      expect(result.execResult).toEqual(mockExecResult)
-   })
-
-   test('deployObjects throws error when kubectl apply fails', async () => {
-      const mockObjects = [testObjects.deploymentEntityList[0]]
-      const mockExecResult: ExecOutput = {
+      const mockFailureResult: ExecOutput = {
          stdout: '',
          stderr: 'error: deployment failed',
          exitCode: 1
       }
 
-      jest.spyOn(kubectl, 'apply').mockResolvedValue(mockExecResult)
+      beforeEach(() => {
+         // //@ts-ignore
+         // Kubectl.mockClear()
+         mockObjects = [testObjects.deploymentEntityList[0]]
+         kubectlApplySpy = jest.spyOn(kubectl, 'apply')
+      })
 
-      await expect(deployObjects(kubectl, mockObjects)).rejects.toThrow()
+      afterEach(() => {
+         jest.clearAllMocks()
+      })
+
+      it('should return execution result and manifest files when kubectl apply succeeds', async () => {
+         kubectlApplySpy.mockClear()
+         kubectlApplySpy.mockResolvedValue(mockSuccessResult)
+
+         const result = await deployObjects(kubectl, mockObjects)
+
+         expect(result.execResult).toEqual(mockSuccessResult)
+         const lastArg = kubectlApplySpy.mock.calls[0][3]
+         expect(kubectlApplySpy).toHaveBeenCalledWith(
+            expect.any(Array),
+            expect.any(Boolean),
+            expect.any(Boolean),
+            expect(typeof lastArg === 'string' || lastArg === undefined).toBe(
+               true
+            )
+         )
+         expect(kubectlApplySpy).toHaveBeenCalledTimes(1)
+      })
+
+      it('should throw an error when kubectl apply fails with non-zero exit code', async () => {
+         kubectlApplySpy.mockClear()
+         kubectlApplySpy.mockResolvedValue(mockFailureResult)
+
+         await expect(deployObjects(kubectl, mockObjects)).rejects.toThrow()
+         const lastArg = kubectlApplySpy.mock.calls[0][3]
+         expect(kubectlApplySpy).toHaveBeenCalledWith(
+            expect.any(Array),
+            expect.any(Boolean),
+            expect.any(Boolean),
+            expect(typeof lastArg === 'string' || lastArg === undefined).toBe(
+               true
+            )
+         )
+         expect(kubectlApplySpy).toHaveBeenCalledTimes(1)
+      })
    })
 })
