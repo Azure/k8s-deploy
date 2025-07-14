@@ -1,0 +1,28 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledJob
+metadata:
+  name: test-scaledjob
+  labels:
+    app: test-scaledjob
+spec:
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: test-scaledjob
+        spec:
+          containers:
+          - name: processor
+            image: busybox:latest
+            imagePullPolicy: IfNotPresent
+            command: ["echo", "hello world"]
+          imagePullSecrets:
+          - name: test-secret
+          restartPolicy: Never
+  triggers:
+  - type: cron
+    metadata:
+      timezone: Etc/UTC
+      start: 0 */5 * * * *
+      end: 1 */5 * * * *

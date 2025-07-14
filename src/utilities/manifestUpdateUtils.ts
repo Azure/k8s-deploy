@@ -155,7 +155,8 @@ export function getReplicaCount(inputObject: any): any {
    const {kind} = inputObject
    if (
       kind.toLowerCase() !== KubernetesWorkload.POD.toLowerCase() &&
-      kind.toLowerCase() !== KubernetesWorkload.DAEMON_SET.toLowerCase()
+      kind.toLowerCase() !== KubernetesWorkload.DAEMON_SET.toLowerCase() &&
+      kind.toLowerCase() !== KubernetesWorkload.SCALED_JOB.toLowerCase()
    )
       return inputObject.spec.replicas
 
