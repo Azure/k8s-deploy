@@ -299,14 +299,16 @@ describe('bluegreenhelper functions', () => {
          const result = await deployObjects(kubectl, mockObjects)
 
          expect(result.execResult).toEqual(mockSuccessResult)
-         const lastArg = kubectlApplySpy.mock.calls[0][3]
+         const timeoutArg = kubectlApplySpy.mock.calls[0][3]
+         expect(
+            typeof timeoutArg === 'string' || timeoutArg === undefined
+         ).toBe(true)
+
          expect(kubectlApplySpy).toHaveBeenCalledWith(
             expect.any(Array),
             expect.any(Boolean),
             expect.any(Boolean),
-            expect(typeof lastArg === 'string' || lastArg === undefined).toBe(
-               true
-            )
+            timeoutArg
          )
          expect(kubectlApplySpy).toHaveBeenCalledTimes(1)
       })
@@ -316,14 +318,16 @@ describe('bluegreenhelper functions', () => {
          kubectlApplySpy.mockResolvedValue(mockFailureResult)
 
          await expect(deployObjects(kubectl, mockObjects)).rejects.toThrow()
-         const lastArg = kubectlApplySpy.mock.calls[0][3]
+         const timeoutArg = kubectlApplySpy.mock.calls[0][3]
+         expect(
+            typeof timeoutArg === 'string' || timeoutArg === undefined
+         ).toBe(true)
+
          expect(kubectlApplySpy).toHaveBeenCalledWith(
             expect.any(Array),
             expect.any(Boolean),
             expect.any(Boolean),
-            expect(typeof lastArg === 'string' || lastArg === undefined).toBe(
-               true
-            )
+            timeoutArg
          )
          expect(kubectlApplySpy).toHaveBeenCalledTimes(1)
       })

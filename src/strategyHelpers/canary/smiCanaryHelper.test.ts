@@ -93,6 +93,7 @@ describe('SMI Canary Helper tests', () => {
          await expect(
             deploySMICanary(mockFilePaths, kc, false)
          ).rejects.toThrow()
+         expect(kubectlApplySpy).toHaveBeenCalledTimes(2)
       })
 
       test('should deploy stable only when onlyDeployStable is true', async () => {
@@ -155,6 +156,7 @@ describe('SMI Canary Helper tests', () => {
          await expect(
             redirectTrafficToCanaryDeployment(kc, mockFilePaths)
          ).rejects.toThrow()
+         expect(kubectlApplySpy).toHaveBeenCalledTimes(1)
       })
    })
 
@@ -189,37 +191,13 @@ describe('SMI Canary Helper tests', () => {
          )
       })
 
-      test('should throw error when kubectl apply fails', async () => {
+      test('should throw error when kubectl apply fails during traffic redirect to stable', async () => {
          kubectlApplySpy.mockResolvedValue(mockFailureResult)
 
          await expect(
             redirectTrafficToStableDeployment(kc, mockFilePaths)
          ).rejects.toThrow()
+         expect(kubectlApplySpy).toHaveBeenCalledTimes(1)
       })
-   })
-
-   // Consolidated error tests
-   test.each([
-      {
-         name: 'should throw error when kubectl apply fails during SMI canary deployment',
-         fn: () => deploySMICanary(mockFilePaths, kc, false),
-         expectedCalls: 2
-      },
-      {
-         name: 'should throw error when kubectl apply fails during traffic redirect to canary',
-         fn: () => redirectTrafficToCanaryDeployment(kc, mockFilePaths),
-         expectedCalls: 1
-      },
-      {
-         name: 'should throw error when kubectl apply fails during traffic redirect to stable',
-         fn: () => redirectTrafficToStableDeployment(kc, mockFilePaths),
-         expectedCalls: 1
-      }
-   ])('$name', async ({fn, expectedCalls}) => {
-      kubectlApplySpy.mockClear()
-      kubectlApplySpy.mockResolvedValue(mockFailureResult)
-
-      await expect(fn()).rejects.toThrow()
-      expect(kubectlApplySpy).toHaveBeenCalledTimes(expectedCalls)
    })
 })

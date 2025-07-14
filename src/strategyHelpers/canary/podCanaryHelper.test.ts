@@ -82,6 +82,7 @@ describe('Pod Canary Helper tests', () => {
          await expect(
             deployPodCanary(mockFilePaths, kc, false)
          ).rejects.toThrow()
+         expect(kubectlApplySpy).toHaveBeenCalledTimes(1)
       })
 
       test('should deploy stable only when onlyDeployStable is true', async () => {
@@ -280,20 +281,5 @@ describe('Pod Canary Helper tests', () => {
          const result = calculateReplicaCountForCanary(mockObject, 0)
          expect(result).toBe(1)
       })
-   })
-
-   // Consolidated error tests using test.each for DRY principle
-   test.each([
-      {
-         name: 'should throw error when kubectl apply fails during pod canary deployment',
-         fn: () => deployPodCanary(mockFilePaths, kc, false),
-         expectedCalls: 1
-      }
-   ])('$name', async ({fn, expectedCalls}) => {
-      kubectlApplySpy.mockClear()
-      kubectlApplySpy.mockResolvedValue(mockFailureResult)
-
-      await expect(fn()).rejects.toThrow()
-      expect(kubectlApplySpy).toHaveBeenCalledTimes(expectedCalls)
    })
 })
