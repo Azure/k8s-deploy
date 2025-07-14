@@ -36,8 +36,10 @@ function getSpecLabels(inputObject: any) {
       return inputObject.metadata.labels
 
    if (
-      inputObject.kind.toLowerCase() === KubernetesWorkload.CRON_JOB.toLowerCase() ||
-      inputObject.kind.toLowerCase() === KubernetesWorkload.SCALED_JOB.toLowerCase()
+      inputObject.kind.toLowerCase() ===
+         KubernetesWorkload.CRON_JOB.toLowerCase() ||
+      inputObject.kind.toLowerCase() ===
+         KubernetesWorkload.SCALED_JOB.toLowerCase()
    ) {
       return inputObject?.spec?.jobTemplate?.spec?.template?.metadata?.labels
    }
