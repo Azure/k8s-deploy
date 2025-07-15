@@ -205,13 +205,11 @@ describe('checkManifestStability failure and resource-specific scenarios', () =>
       const checkPodStatusSpy = jest
          .spyOn(manifestStabilityUtils, 'checkPodStatus')
          .mockRejectedValue(podError)
-      const describeSpy = jest
-         .spyOn(kc, 'describe')
-         .mockResolvedValue({
-            stdout: 'describe output',
-            stderr: '',
-            exitCode: 0
-         })
+      const describeSpy = jest.spyOn(kc, 'describe').mockResolvedValue({
+         stdout: 'describe output',
+         stderr: '',
+         exitCode: 0
+      })
 
       // Act: This should not throw, only warn.
       await manifestStabilityUtils.checkManifestStability(
@@ -293,13 +291,11 @@ describe('checkManifestStability failure and resource-specific scenarios', () =>
       const getResourceSpy = jest
          .spyOn(kc, 'getResource')
          .mockRejectedValue(getServiceError)
-      const describeSpy = jest
-         .spyOn(kc, 'describe')
-         .mockResolvedValue({
-            stdout: 'describe output',
-            stderr: '',
-            exitCode: 0
-         })
+      const describeSpy = jest.spyOn(kc, 'describe').mockResolvedValue({
+         stdout: 'describe output',
+         stderr: '',
+         exitCode: 0
+      })
 
       // Act: Run the stability check. It should NOT throw an error, only warn.
       await manifestStabilityUtils.checkManifestStability(
