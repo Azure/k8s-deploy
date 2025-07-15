@@ -1,6 +1,7 @@
 import {
    deployWithLabel,
    deleteGreenObjects,
+   deployObjects,
    fetchResource,
    getDeploymentMatchLabels,
    getManifestObjects,
@@ -134,12 +135,20 @@ describe('bluegreenhelper functions', () => {
    })
 
    test('correctly makes labeled workloads', async () => {
+      const kubectlApplySpy = jest.spyOn(kubectl, 'apply').mockResolvedValue({
+         stdout: 'deployment.apps/nginx-deployment created',
+         stderr: '',
+         exitCode: 0
+      })
+
       const cwlResult: BlueGreenDeployment = await deployWithLabel(
          kubectl,
          testObjects.deploymentEntityList,
          GREEN_LABEL_VALUE
       )
       expect(cwlResult.deployResult.manifestFiles[0]).toBe('')
+
+      kubectlApplySpy.mockRestore()
    })
 
    test('correctly makes new blue green object (getNewBlueGreenObject and addBlueGreenLabelsAndAnnotations)', () => {
@@ -219,20 +228,23 @@ describe('bluegreenhelper functions', () => {
       }
    })
 
-   test('returns null when fetch fails to unset k8s objects', async () => {
+   test('returns undefined when fetch fails to unset k8s objects', async () => {
       const mockExecOutput = {
-         stdout: 'this should not matter',
+         stdout: JSON.stringify(testObjects.deploymentEntityList[0]),
          exitCode: 0,
-         stderr: 'this is a fake error'
+         stderr: ''
       } as ExecOutput
+
+      jest.spyOn(kubectl, 'getResource').mockResolvedValue(mockExecOutput)
       jest
          .spyOn(manifestUpdateUtils, 'UnsetClusterSpecificDetails')
          .mockImplementation(() => {
             throw new Error('test error')
          })
+
       expect(
          await fetchResource(kubectl, 'nginx-deployment', 'Deployment')
-      ).toBe(null)
+      ).toBeUndefined()
    })
 
    test('gets deployment labels', () => {
@@ -251,5 +263,73 @@ describe('bluegreenhelper functions', () => {
       expect(
          getDeploymentMatchLabels(testObjects.deploymentEntityList[0])['app']
       ).toBe('nginx')
+   })
+
+   describe('deployObjects', () => {
+      let mockObjects: any[]
+      let kubectlApplySpy: jest.SpyInstance
+
+      const mockSuccessResult: ExecOutput = {
+         stdout: 'deployment.apps/nginx-deployment created',
+         stderr: '',
+         exitCode: 0
+      }
+
+      const mockFailureResult: ExecOutput = {
+         stdout: '',
+         stderr: 'error: deployment failed',
+         exitCode: 1
+      }
+
+      beforeEach(() => {
+         // //@ts-ignore
+         // Kubectl.mockClear()
+         mockObjects = [testObjects.deploymentEntityList[0]]
+         kubectlApplySpy = jest.spyOn(kubectl, 'apply')
+      })
+
+      afterEach(() => {
+         jest.clearAllMocks()
+      })
+
+      it('should return execution result and manifest files when kubectl apply succeeds', async () => {
+         kubectlApplySpy.mockClear()
+         kubectlApplySpy.mockResolvedValue(mockSuccessResult)
+
+         const result = await deployObjects(kubectl, mockObjects)
+
+         expect(result.execResult).toEqual(mockSuccessResult)
+         const timeoutArg = kubectlApplySpy.mock.calls[0][3]
+         expect(
+            typeof timeoutArg === 'string' || timeoutArg === undefined
+         ).toBe(true)
+
+         expect(kubectlApplySpy).toHaveBeenCalledWith(
+            expect.any(Array),
+            expect.any(Boolean),
+            expect.any(Boolean),
+            timeoutArg
+         )
+         expect(kubectlApplySpy).toHaveBeenCalledTimes(1)
+      })
+
+      it('should throw an error when kubectl apply fails with non-zero exit code', async () => {
+         kubectlApplySpy.mockClear()
+         kubectlApplySpy.mockResolvedValue(mockFailureResult)
+
+         await expect(deployObjects(kubectl, mockObjects)).rejects.toThrow()
+         const timeoutArg = kubectlApplySpy.mock.calls[0][3]
+         expect(
+            typeof timeoutArg === 'string' || timeoutArg === undefined
+         ).toBe(true)
+
+         expect(kubectlApplySpy).toHaveBeenCalledWith(
+            expect.any(Array),
+            expect.any(Boolean),
+            expect.any(Boolean),
+            timeoutArg
+         )
+         expect(kubectlApplySpy).toHaveBeenCalledTimes(1)
+      })
    })
 })
