@@ -21,6 +21,14 @@ export async function checkManifestStability(
       return
    }
    let rolloutStatusHasErrors = false
+   // Collect errors for reporting
+   // This will be used to throw a detailed error at the end if any rollout fails
+   // This is useful for debugging and understanding which resources failed
+   // their rollout status check
+   // It will also include the describe output for the resource that failed
+   // to provide more context on the failure
+   const rolloutErrors: string[] = []
+
    for (let i = 0; i < resources.length; i++) {
       const resource = resources[i]
 
@@ -38,20 +46,37 @@ export async function checkManifestStability(
             )
             checkForErrors([result])
          } catch (ex) {
-            core.error(ex)
-            await kubectl.describe(
-               resource.type,
-               resource.name,
-               IS_SILENT,
-               resource.namespace
-            )
+            const errorMessage = `Rollout failed for ${resource.type}/${resource.name} in namespace ${resource.namespace}: ${ex.message || ex}`
+            core.error(errorMessage)
+            rolloutErrors.push(errorMessage)
+
+            // Get more detailed information
+            try {
+               const describeResult = await kubectl.describe(
+                  resource.type,
+                  resource.name,
+                  IS_SILENT,
+                  resource.namespace
+               )
+               core.info(
+                  `Describe output for ${resource.type}/${resource.name}:\n${describeResult.stdout}`
+               )
+            } catch (describeEx) {
+               core.warning(
+                  `Could not describe ${resource.type}/${resource.name}: ${describeEx}`
+               )
+            }
+
             rolloutStatusHasErrors = true
          }
       }
 
-      if (resource.type == KubernetesConstants.KubernetesWorkload.POD) {
+      if (
+         resource.type.toLowerCase() ===
+         KubernetesConstants.KubernetesWorkload.POD.toLowerCase()
+      ) {
          try {
-            await checkPodStatus(kubectl, resource)
+            await exports.checkPodStatus(kubectl, resource)
          } catch (ex) {
             core.warning(
                `Could not determine pod status: ${JSON.stringify(ex)}`
@@ -81,21 +106,31 @@ export async function checkManifestStability(
                }
             }
          } catch (ex) {
-            core.warning(
-               `Could not determine service status of: ${resource.name} Error: ${ex}`
-            )
-            await kubectl.describe(
-               resource.type,
-               resource.name,
-               IS_SILENT,
-               resource.namespace
-            )
+            const errorMessage = `Could not determine service status of: ${resource.name} in namespace ${resource.namespace}. Error: ${ex.message || ex}`
+            core.warning(errorMessage)
+
+            try {
+               const describeResult = await kubectl.describe(
+                  resource.type,
+                  resource.name,
+                  IS_SILENT,
+                  resource.namespace
+               )
+               core.info(
+                  `Describe output for service/${resource.name}:\n${describeResult.stdout}`
+               )
+            } catch (describeEx) {
+               core.warning(
+                  `Could not describe service/${resource.name}: ${describeEx}`
+               )
+            }
          }
       }
    }
 
    if (rolloutStatusHasErrors) {
-      throw new Error('Rollout status error')
+      const detailedError = `Rollout status failed for the following resources:\n${rolloutErrors.join('\n')}`
+      throw new Error(detailedError)
    }
 }
 
@@ -108,6 +143,8 @@ export async function checkPodStatus(
 
    let podStatus
    let kubectlDescribeNeeded = false
+   let errorDetails = ''
+
    for (let i = 0; i < iterations; i++) {
       await sleep(sleepTimeout)
 
@@ -124,31 +161,56 @@ export async function checkPodStatus(
    }
 
    podStatus = await getPodStatus(kubectl, pod)
+   // Get container statuses for detailed error information
+   const containerErrors = getContainerErrors(podStatus)
    switch (podStatus.phase) {
       case 'Succeeded':
       case 'Running':
          if (isPodReady(podStatus)) {
             console.log(`pod/${pod.name} is successfully rolled out`)
          } else {
+            errorDetails = `Pod ${pod.name} is ${podStatus.phase} but not ready. ${containerErrors}`
+            core.error(errorDetails)
             kubectlDescribeNeeded = true
          }
          break
       case 'Pending':
          if (!isPodReady(podStatus)) {
-            core.warning(`pod/${pod.name} rollout status check timed out`)
+            errorDetails = `Pod ${pod.name} rollout status check timed out (still Pending after ${(iterations * sleepTimeout) / 1000} seconds). ${containerErrors}`
+            core.warning(errorDetails)
             kubectlDescribeNeeded = true
          }
          break
       case 'Failed':
-         core.error(`pod/${pod.name} rollout failed`)
+         errorDetails = `Pod ${pod.name} rollout failed. ${containerErrors}`
+         core.error(errorDetails)
          kubectlDescribeNeeded = true
          break
       default:
-         core.warning(`pod/${pod.name} rollout status: ${podStatus.phase}`)
+         errorDetails = `Pod ${pod.name} has unexpected status: ${podStatus.phase}. ${containerErrors}`
+         core.warning(errorDetails)
+         kubectlDescribeNeeded = true
    }
 
    if (kubectlDescribeNeeded) {
-      await kubectl.describe(POD, pod.name, IS_SILENT, pod.namespace)
+      try {
+         const describeResult = await kubectl.describe(
+            POD,
+            pod.name,
+            IS_SILENT,
+            pod.namespace
+         )
+         core.info(
+            `Describe output for pod/${pod.name}:\n${describeResult.stdout}`
+         )
+      } catch (describeEx) {
+         core.warning(`Could not describe pod/${pod.name}: ${describeEx}`)
+      }
+
+      // Throw error with detailed information
+      if (errorDetails) {
+         throw new Error(errorDetails)
+      }
    }
 }
 
@@ -180,6 +242,42 @@ function isPodReady(podStatus: any): boolean {
    }
 
    return allContainersAreReady
+}
+
+export function getContainerErrors(podStatus: any): string {
+   const errors: string[] = []
+
+   if (podStatus.containerStatuses) {
+      podStatus.containerStatuses.forEach((container) => {
+         if (!container.ready) {
+            if (container.state.waiting) {
+               errors.push(
+                  `Container '${container.name}' is waiting: ${container.state.waiting.reason} - ${container.state.waiting.message || 'No message'}`
+               )
+            } else if (container.state.terminated) {
+               errors.push(
+                  `Container '${container.name}' terminated: ${container.state.terminated.reason} - ${container.state.terminated.message || 'No message'}`
+               )
+            } else {
+               errors.push(
+                  `Container '${container.name}' is not ready: ${JSON.stringify(container.state)}`
+               )
+            }
+         }
+      })
+   }
+
+   if (podStatus.initContainerStatuses) {
+      podStatus.initContainerStatuses.forEach((container) => {
+         if (!container.ready && container.state.waiting) {
+            errors.push(
+               `Init container '${container.name}' is waiting: ${container.state.waiting.reason} - ${container.state.waiting.message || 'No message'}`
+            )
+         }
+      })
+   }
+
+   return errors.length > 0 ? `Container issues: ${errors.join('; ')}` : ''
 }
 
 async function getService(kubectl: Kubectl, service: Resource) {
