@@ -45,10 +45,11 @@ describe('File utils', () => {
          'test/unit/manifests/manifest_test_dir/nested-test-service.yaml',
          'test/unit/manifests/test-ingress.yml',
          'test/unit/manifests/test-ingress-new.yml',
-         'test/unit/manifests/test-service.yml'
+         'test/unit/manifests/test-service.yml',
+         'test/unit/manifests/basic-test.yml'
       ]
 
-      expect(testSearch).toHaveLength(8)
+      expect(testSearch).toHaveLength(9)
       expectedManifests.forEach((fileName) => {
          if (fileName.startsWith('test/unit')) {
             expect(testSearch).toContain(fileName)
@@ -94,7 +95,7 @@ describe('File utils', () => {
             fileAtOuter,
             innerPath
          ])
-      ).toHaveLength(7)
+      ).toHaveLength(8)
    })
 
    it('throws an error for an invalid URL', async () => {
