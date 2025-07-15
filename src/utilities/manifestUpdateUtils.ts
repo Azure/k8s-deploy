@@ -90,7 +90,7 @@ function updateContainerImagesInManifestFiles(
             imageName = imageName.split('@')[0]
          }
 
-         if (contents.indexOf(imageName) > 0)
+         if (contents.indexOf(imageName) >= 0)
             contents = substituteImageNameInSpecFile(
                contents,
                imageName,
@@ -152,12 +152,17 @@ export function getReplicaCount(inputObject: any): any {
       throw InputObjectKindNotDefinedError
    }
 
-   const {kind} = inputObject
-   if (
-      kind.toLowerCase() !== KubernetesWorkload.POD.toLowerCase() &&
-      kind.toLowerCase() !== KubernetesWorkload.DAEMON_SET.toLowerCase()
-   )
-      return inputObject.spec.replicas
+   const {kind} = inputObject.kind.toLowerCase()
+
+   const workloadsWithReplicas = new Set([
+      KubernetesWorkload.DEPLOYMENT.toLowerCase(),
+      KubernetesWorkload.REPLICASET.toLowerCase(),
+      KubernetesWorkload.STATEFUL_SET.toLowerCase()
+   ])
+
+   if (workloadsWithReplicas.has(kind)) {
+      return inputObject.spec?.replicas
+   }
 
    return 0
 }
