@@ -104,7 +104,7 @@ function updateContainerImagesInManifestFiles(
    return filePaths
 }
 
-function updateImagesInK8sObject(
+export function updateImagesInK8sObject(
    obj: any,
    imageName: string,
    newImage: string
