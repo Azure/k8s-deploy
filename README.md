@@ -136,6 +136,10 @@ Following are the key capabilities of this action:
     <td>Acceptable values: true/false</br>Default value: false</br>True if the insecure-skip-tls-verify option should be used</td>
   </tr>
   <tr>
+    <td>timeout</br></br>(Optional)</td>
+    <td>Default value: 10m</br>Timeout for the rollout status. Accepts time units like '10m', '1h', '30s'. If only a number is provided (e.g., '30'), it is assumed to be minutes.</td>
+  </tr>
+  <tr>
     <td>resource-type (Optional)</td>
     <td>Acceptable values: `Microsoft.ContainerService/managedClusters` (default), 'Microsoft.ContainerService/fleets'</td>
   </tr>
