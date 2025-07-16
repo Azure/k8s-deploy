@@ -152,7 +152,7 @@ export function getReplicaCount(inputObject: any): any {
       throw InputObjectKindNotDefinedError
    }
 
-   const {kind} = inputObject.kind.toLowerCase()
+   const kind = inputObject.kind.toLowerCase()
 
    const workloadsWithReplicas = new Set([
       KubernetesWorkload.DEPLOYMENT.toLowerCase(),
