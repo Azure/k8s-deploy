@@ -45,7 +45,8 @@ describe('File utils', () => {
          'test/unit/manifests/manifest_test_dir/nested-test-service.yaml',
          'test/unit/manifests/test-ingress.yml',
          'test/unit/manifests/test-ingress-new.yml',
-         'test/unit/manifests/test-service.yml'
+         'test/unit/manifests/test-service.yml',
+         'test/unit/manifests/basic-test.yml'
       ]
 
       expect(testSearch).toHaveLength(9)
