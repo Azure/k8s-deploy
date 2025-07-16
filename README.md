@@ -124,6 +124,10 @@ Following are the key capabilities of this action:
     <td>The apply command runs in the server instead of the client. If true then '--server-side' argument is added to the apply command.</td>
   </tr>
   <tr>
+    <td>timeout</br></br>(Optional)</td>
+    <td>Default value: 10m</br>Timeout for the rollout status. Accepts time units like '10m', '1h', '30s'. If only a number is provided (e.g., '30'), it is assumed to be minutes.</td>
+  </tr>
+  <tr>
     <td>annotate-resources</br></br>(Optional)</td>
     <td>Acceptable values: true/false</br>Default value: true</br>Switch whether to annotate the resources or not. If set to false all annotations are skipped completely.</td>
   </tr>
@@ -134,10 +138,6 @@ Following are the key capabilities of this action:
   <tr>
     <td>skip-tls-verify</br></br>(Optional)</td>
     <td>Acceptable values: true/false</br>Default value: false</br>True if the insecure-skip-tls-verify option should be used</td>
-  </tr>
-  <tr>
-    <td>timeout</br></br>(Optional)</td>
-    <td>Default value: 10m</br>Timeout for the rollout status. Accepts time units like '10m', '1h', '30s'. If only a number is provided (e.g., '30'), it is assumed to be minutes.</td>
   </tr>
   <tr>
     <td>resource-type (Optional)</td>
