@@ -79,70 +79,87 @@ function updateContainerImagesInManifestFiles(
    filePaths: string[],
    containers: string[]
 ): string[] {
-   if (filePaths?.length <= 0) return filePaths
+   if (!filePaths?.length) return filePaths
 
-   // update container images
    filePaths.forEach((filePath: string) => {
-      let contents = fs.readFileSync(filePath).toString()
-      containers.forEach((container: string) => {
-         let [imageName] = container.split(':')
-         if (imageName.indexOf('@') > 0) {
-            imageName = imageName.split('@')[0]
-         }
+      const fileContents = fs.readFileSync(filePath, 'utf8')
+      const inputObjects = yaml.loadAll(fileContents) as K8sObject[]
 
-         if (contents.indexOf(imageName) >= 0)
-            contents = substituteImageNameInSpecFile(
-               contents,
-               imageName,
-               container
-            )
+      const updatedObjects = inputObjects.map((obj) => {
+         if (!isWorkloadEntity(obj.kind)) return obj
+
+         containers.forEach((container: string) => {
+            let [imageName] = container.split(':')
+            if (imageName.includes('@')) {
+               imageName = imageName.split('@')[0]
+            }
+            updateImagesInK8sObject(obj, imageName, container)
+         })
+
+         return obj
       })
-
-      // write updated files
-      fs.writeFileSync(path.join(filePath), contents)
+      const newYaml = updatedObjects.map((o) => yaml.dump(o)).join('---\n')
+      fs.writeFileSync(path.join(filePath), newYaml)
    })
-
    return filePaths
 }
 
-/*
-  Example:
+const SPECIAL_CONTAINER_SPEC_PATHS: Record<string, string[]> = {
+   [KubernetesWorkload.POD.toLowerCase()]: ['spec'],
+   [KubernetesWorkload.CRON_JOB.toLowerCase()]: [
+      'spec.jobTemplate.spec.template.spec'
+   ],
+   [KubernetesWorkload.SCALED_JOB.toLowerCase()]: [
+      'spec.jobTargetRef.template.spec'
+   ]
+}
 
-  Input of
-    currentString: `image: "example/example-image"`
-    imageName: `example/example-image`
-    imageNameWithNewTag: `example/example-image:identifiertag`
+const DEFAULT_CONTAINER_SPEC_PATH = 'spec.template.spec'
 
-  would return
-    `image: "example/example-image:identifiertag"`
-*/
-export function substituteImageNameInSpecFile(
-   spec: string,
+function getNestedProperty(obj: any, path: string): any {
+   return path.split('.').reduce((current, key) => current?.[key], obj)
+}
+
+export function updateImagesInK8sObject(
+   obj: any,
    imageName: string,
-   imageNameWithNewTag: string
+   newImage: string
 ) {
-   if (spec.indexOf(imageName) < 0) return spec
+   const kind = obj?.kind?.toLowerCase()
+   const specPaths = SPECIAL_CONTAINER_SPEC_PATHS[kind] || [
+      DEFAULT_CONTAINER_SPEC_PATH
+   ]
 
-   return spec.split('\n').reduce((acc, line) => {
-      const imageKeyword = line.match(/^ *-? *image:/)
-      if (imageKeyword) {
-         let [currentImageName] = line
-            .substring(imageKeyword[0].length) // consume the line from keyword onwards
-            .trim()
-            .replace(/[',"]/g, '') // replace allowed quotes with nothing
-            .split(':')
+   const containerPaths = specPaths
+      .map((path) => getNestedProperty(obj, path))
+      .filter(Boolean)
 
-         if (currentImageName?.indexOf(' ') > 0) {
-            currentImageName = currentImageName.split(' ')[0] // remove comments
-         }
-
-         if (currentImageName === imageName) {
-            return acc + `${imageKeyword[0]} ${imageNameWithNewTag}\n`
-         }
+   for (const path of containerPaths) {
+      if (path?.containers) {
+         updateImageInContainerArray(path.containers, imageName, newImage)
       }
+      if (path?.initContainers) {
+         updateImageInContainerArray(path.initContainers, imageName, newImage)
+      }
+   }
+}
 
-      return acc + line + '\n'
-   }, '')
+function updateImageInContainerArray(
+   containers: any[],
+   imageName: string,
+   newImage: string
+) {
+   if (!Array.isArray(containers)) return
+   containers.forEach((container) => {
+      if (
+         container.image &&
+         (container.image === imageName ||
+            container.image.startsWith(imageName + ':') ||
+            container.image.startsWith(imageName + '@'))
+      ) {
+         container.image = newImage
+      }
+   })
 }
 
 export function getReplicaCount(inputObject: any): any {

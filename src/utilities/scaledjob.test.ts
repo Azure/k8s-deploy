@@ -41,7 +41,7 @@ describe('ScaledJob Support', () => {
          updateSpecLabels(scaledJobObject, newLabels, false)
 
          const updatedLabels =
-            scaledJobObject.spec.jobTemplate.spec.template.metadata.labels
+            scaledJobObject.spec.jobTargetRef.template.metadata.labels
          expect(updatedLabels['app']).toBe('test-scaledjob') // original label
          expect(updatedLabels['environment']).toBe('test') // new label
          expect(updatedLabels['version']).toBe('1.0.0') // new label

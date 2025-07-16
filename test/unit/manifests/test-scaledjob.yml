@@ -5,21 +5,20 @@ metadata:
    labels:
       app: test-scaledjob
 spec:
-   jobTemplate:
-      spec:
-         template:
-            metadata:
-               labels:
-                  app: test-scaledjob
-            spec:
-               containers:
-                  - name: processor
-                    image: busybox:latest
-                    imagePullPolicy: IfNotPresent
-                    command: ['echo', 'hello world']
-               imagePullSecrets:
-                  - name: test-secret
-               restartPolicy: Never
+   jobTargetRef:
+      template:
+         metadata:
+            labels:
+               app: test-scaledjob
+         spec:
+            containers:
+               - name: processor
+                 image: busybox:latest
+                 imagePullPolicy: IfNotPresent
+                 command: ['echo', 'hello world']
+            imagePullSecrets:
+               - name: test-secret
+            restartPolicy: Never
    triggers:
       - type: cron
         metadata:

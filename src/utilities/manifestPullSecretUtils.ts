@@ -14,8 +14,7 @@ export function getImagePullSecrets(inputObject: any) {
       inputObject.kind.toLowerCase() ===
       KubernetesWorkload.SCALED_JOB.toLowerCase()
    )
-      return inputObject?.spec?.jobTemplate?.spec?.template?.spec
-         ?.imagePullSecrets
+      return inputObject?.spec?.jobTargetRef?.template?.spec?.imagePullSecrets
 
    if (inputObject.kind.toLowerCase() === KubernetesWorkload.POD.toLowerCase())
       return inputObject.spec.imagePullSecrets
@@ -40,12 +39,20 @@ export function setImagePullSecrets(
 
    if (
       inputObject.kind.toLowerCase() ===
-         KubernetesWorkload.CRON_JOB.toLowerCase() ||
-      inputObject.kind.toLowerCase() ===
-         KubernetesWorkload.SCALED_JOB.toLowerCase()
+      KubernetesWorkload.CRON_JOB.toLowerCase()
    ) {
       if (inputObject?.spec?.jobTemplate?.spec?.template?.spec)
          inputObject.spec.jobTemplate.spec.template.spec.imagePullSecrets =
+            newImagePullSecrets
+      return
+   }
+
+   if (
+      inputObject.kind.toLowerCase() ===
+      KubernetesWorkload.SCALED_JOB.toLowerCase()
+   ) {
+      if (inputObject?.spec?.jobTargetRef?.template?.spec)
+         inputObject.spec.jobTargetRef.template.spec.imagePullSecrets =
             newImagePullSecrets
       return
    }
