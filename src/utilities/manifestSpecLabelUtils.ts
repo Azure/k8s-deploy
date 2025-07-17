@@ -30,30 +30,54 @@ export function updateSpecLabels(
 }
 
 function getSpecLabels(inputObject: any) {
-   if (!inputObject) return null
+   const kind = inputObject?.kind?.toLowerCase()
+   const spec = inputObject?.spec
 
-   if (inputObject.kind.toLowerCase() === KubernetesWorkload.POD.toLowerCase())
-      return inputObject.metadata.labels
+   if (!inputObject || !kind) return null
 
-   if (inputObject?.spec?.template?.metadata)
-      return inputObject.spec.template.metadata.labels
+   switch (kind) {
+      case KubernetesWorkload.POD.toLowerCase():
+         return inputObject.metadata.labels
 
-   return null
+      case KubernetesWorkload.CRON_JOB.toLowerCase():
+         return spec?.jobTemplate?.spec?.template?.metadata?.labels
+
+      case KubernetesWorkload.SCALED_JOB.toLowerCase():
+         return spec?.jobTargetRef?.template?.metadata?.labels
+
+      default:
+         return spec?.template?.metadata?.labels || null
+   }
 }
 
 function setSpecLabels(inputObject: any, newLabels: any) {
-   if (!inputObject || !newLabels) return null
+   const kind = inputObject?.kind?.toLowerCase()
+   const spec = inputObject?.spec
 
-   if (
-      inputObject.kind.toLowerCase() === KubernetesWorkload.POD.toLowerCase()
-   ) {
-      inputObject.metadata.labels = newLabels
-      return
-   }
+   if (!inputObject || !newLabels || !kind) return null
 
-   if (inputObject?.spec?.template?.metatada) {
-      inputObject.spec.template.metatada.labels = newLabels
-      return
+   switch (kind) {
+      case KubernetesWorkload.POD.toLowerCase():
+         inputObject.metadata.labels = newLabels
+         break
+
+      case KubernetesWorkload.CRON_JOB.toLowerCase():
+         if (spec?.jobTemplate?.spec?.template?.metadata) {
+            spec.jobTemplate.spec.template.metadata.labels = newLabels
+         }
+         break
+
+      case KubernetesWorkload.SCALED_JOB.toLowerCase():
+         if (spec?.jobTargetRef?.template?.metadata) {
+            spec.jobTargetRef.template.metadata.labels = newLabels
+         }
+         break
+
+      default:
+         if (spec?.template?.metadata) {
+            spec.template.metadata.labels = newLabels
+         }
+         break
    }
 }
 

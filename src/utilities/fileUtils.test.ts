@@ -49,7 +49,7 @@ describe('File utils', () => {
          'test/unit/manifests/basic-test.yml'
       ]
 
-      expect(testSearch).toHaveLength(9)
+      expect(testSearch).toHaveLength(10)
       expectedManifests.forEach((fileName) => {
          if (fileName.startsWith('test/unit')) {
             expect(testSearch).toContain(fileName)
@@ -95,7 +95,7 @@ describe('File utils', () => {
             fileAtOuter,
             innerPath
          ])
-      ).toHaveLength(8)
+      ).toHaveLength(9)
    })
 
    it('throws an error for an invalid URL', async () => {
