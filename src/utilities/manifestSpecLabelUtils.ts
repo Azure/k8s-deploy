@@ -30,64 +30,54 @@ export function updateSpecLabels(
 }
 
 function getSpecLabels(inputObject: any) {
-   if (!inputObject) return null
+   const kind = inputObject?.kind?.toLowerCase()
+   const spec = inputObject?.spec
 
-   if (inputObject.kind.toLowerCase() === KubernetesWorkload.POD.toLowerCase())
-      return inputObject.metadata.labels
+   if (!inputObject || !kind) return null
 
-   if (
-      inputObject.kind.toLowerCase() ===
-      KubernetesWorkload.CRON_JOB.toLowerCase()
-   ) {
-      return inputObject?.spec?.jobTemplate?.spec?.template?.metadata?.labels
+   switch (kind) {
+      case KubernetesWorkload.POD.toLowerCase():
+         return inputObject.metadata.labels
+
+      case KubernetesWorkload.CRON_JOB.toLowerCase():
+         return spec?.jobTemplate?.spec?.template?.metadata?.labels
+
+      case KubernetesWorkload.SCALED_JOB.toLowerCase():
+         return spec?.jobTargetRef?.template?.metadata?.labels
+
+      default:
+         return spec?.template?.metadata?.labels || null
    }
-
-   if (
-      inputObject.kind.toLowerCase() ===
-      KubernetesWorkload.SCALED_JOB.toLowerCase()
-   ) {
-      return inputObject?.spec?.jobTargetRef?.template?.metadata?.labels
-   }
-
-   if (inputObject?.spec?.template?.metadata)
-      return inputObject.spec.template.metadata.labels
-
-   return null
 }
 
 function setSpecLabels(inputObject: any, newLabels: any) {
-   if (!inputObject || !newLabels) return null
+   const kind = inputObject?.kind?.toLowerCase()
+   const spec = inputObject?.spec
 
-   if (
-      inputObject.kind.toLowerCase() === KubernetesWorkload.POD.toLowerCase()
-   ) {
-      inputObject.metadata.labels = newLabels
-      return
-   }
+   if (!inputObject || !newLabels || !kind) return null
 
-   if (
-      inputObject.kind.toLowerCase() ===
-      KubernetesWorkload.CRON_JOB.toLowerCase()
-   ) {
-      if (inputObject?.spec?.jobTemplate?.spec?.template?.metadata) {
-         inputObject.spec.jobTemplate.spec.template.metadata.labels = newLabels
-      }
-      return
-   }
+   switch (kind) {
+      case KubernetesWorkload.POD.toLowerCase():
+         inputObject.metadata.labels = newLabels
+         break
 
-   if (
-      inputObject.kind.toLowerCase() ===
-      KubernetesWorkload.SCALED_JOB.toLowerCase()
-   ) {
-      if (inputObject?.spec?.jobTargetRef?.template?.metadata) {
-         inputObject.spec.jobTargetRef.template.metadata.labels = newLabels
-      }
-      return
-   }
+      case KubernetesWorkload.CRON_JOB.toLowerCase():
+         if (spec?.jobTemplate?.spec?.template?.metadata) {
+            spec.jobTemplate.spec.template.metadata.labels = newLabels
+         }
+         break
 
-   if (inputObject?.spec?.template?.metadata) {
-      inputObject.spec.template.metadata.labels = newLabels
-      return
+      case KubernetesWorkload.SCALED_JOB.toLowerCase():
+         if (spec?.jobTargetRef?.template?.metadata) {
+            spec.jobTargetRef.template.metadata.labels = newLabels
+         }
+         break
+
+      default:
+         if (spec?.template?.metadata) {
+            spec.template.metadata.labels = newLabels
+         }
+         break
    }
 }
 

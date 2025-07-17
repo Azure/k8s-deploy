@@ -104,21 +104,15 @@ function updateContainerImagesInManifestFiles(
    return filePaths
 }
 
-const SPECIAL_CONTAINER_SPEC_PATHS: Record<string, string[]> = {
-   [KubernetesWorkload.POD.toLowerCase()]: ['spec'],
-   [KubernetesWorkload.CRON_JOB.toLowerCase()]: [
-      'spec.jobTemplate.spec.template.spec'
-   ],
-   [KubernetesWorkload.SCALED_JOB.toLowerCase()]: [
+const SPECIAL_CONTAINER_SPEC_PATHS: Record<string, string> = {
+   [KubernetesWorkload.POD.toLowerCase()]: 'spec',
+   [KubernetesWorkload.CRON_JOB.toLowerCase()]:
+      'spec.jobTemplate.spec.template.spec',
+   [KubernetesWorkload.SCALED_JOB.toLowerCase()]:
       'spec.jobTargetRef.template.spec'
-   ]
 }
 
 const DEFAULT_CONTAINER_SPEC_PATH = 'spec.template.spec'
-
-function getNestedProperty(obj: any, path: string): any {
-   return path.split('.').reduce((current, key) => current?.[key], obj)
-}
 
 export function updateImagesInK8sObject(
    obj: any,
@@ -126,21 +120,21 @@ export function updateImagesInK8sObject(
    newImage: string
 ) {
    const kind = obj?.kind?.toLowerCase()
-   const specPaths = SPECIAL_CONTAINER_SPEC_PATHS[kind] || [
-      DEFAULT_CONTAINER_SPEC_PATH
-   ]
+   const specPath =
+      SPECIAL_CONTAINER_SPEC_PATHS[kind] || DEFAULT_CONTAINER_SPEC_PATH
 
-   const containerPaths = specPaths
-      .map((path) => getNestedProperty(obj, path))
-      .filter(Boolean)
+   // Convert dot-separated path string into nested object traversal with full optional chaining
+   // Example: 'spec.jobTargetRef.template.spec' becomes obj?.spec?.jobTargetRef?.template?.spec
+   // The reduce function walks through each key safely with optional chaining at every step
+   const path = specPath
+      .split('.')
+      .reduce((current, key) => current?.[key], obj)
 
-   for (const path of containerPaths) {
-      if (path?.containers) {
-         updateImageInContainerArray(path.containers, imageName, newImage)
-      }
-      if (path?.initContainers) {
-         updateImageInContainerArray(path.initContainers, imageName, newImage)
-      }
+   if (path?.containers) {
+      updateImageInContainerArray(path.containers, imageName, newImage)
+   }
+   if (path?.initContainers) {
+      updateImageInContainerArray(path.initContainers, imageName, newImage)
    }
 }
 
