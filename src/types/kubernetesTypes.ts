@@ -6,6 +6,7 @@ export class KubernetesWorkload {
    public static DAEMON_SET: string = 'DaemonSet'
    public static JOB: string = 'job'
    public static CRON_JOB: string = 'cronjob'
+   public static SCALED_JOB: string = 'scaledjob'
 }
 
 export class DiscoveryAndLoadBalancerResource {
@@ -34,7 +35,8 @@ export const WORKLOAD_TYPES: string[] = [
    'pod',
    'statefulset',
    'job',
-   'cronjob'
+   'cronjob',
+   'scaledjob'
 ]
 
 export const WORKLOAD_TYPES_WITH_ROLLOUT_STATUS: string[] = [

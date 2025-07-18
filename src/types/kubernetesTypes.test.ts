@@ -21,6 +21,7 @@ describe('Kubernetes types', () => {
       expect(KubernetesWorkload.DAEMON_SET).toBe('DaemonSet')
       expect(KubernetesWorkload.JOB).toBe('job')
       expect(KubernetesWorkload.CRON_JOB).toBe('cronjob')
+      expect(KubernetesWorkload.SCALED_JOB).toBe('scaledjob')
    })
 
    it('contains discovery and load balancer resources', () => {
@@ -53,7 +54,8 @@ describe('Kubernetes types', () => {
          'pod',
          'statefulset',
          'job',
-         'cronjob'
+         'cronjob',
+         'scaledjob'
       ]
       expect(expected.every((val) => WORKLOAD_TYPES.includes(val))).toBe(true)
    })
