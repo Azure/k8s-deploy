@@ -246,38 +246,29 @@ function isPodReady(podStatus: any): boolean {
 
 export function getContainerErrors(podStatus: any): string {
    const errors: string[] = []
-
-   if (podStatus.containerStatuses) {
-      podStatus.containerStatuses.forEach((container) => {
-         if (!container.ready) {
-            if (container.state.waiting) {
+   const collectErrors = (containers: any[], label: string) => {
+      containers?.forEach(({name, ready, state}) => {
+         if (!ready) {
+            if (state?.waiting) {
                errors.push(
-                  `Container '${container.name}' is waiting: ${container.state.waiting.reason} - ${container.state.waiting.message || 'No message'}`
+                  `${label} '${name}' is waiting: ${state.waiting.reason} - ${state.waiting.message || 'No message'}`
                )
-            } else if (container.state.terminated) {
+            } else if (state?.terminated) {
                errors.push(
-                  `Container '${container.name}' terminated: ${container.state.terminated.reason} - ${container.state.terminated.message || 'No message'}`
+                  `${label} '${name}' terminated: ${state.terminated.reason} - ${state.terminated.message || 'No message'}`
                )
             } else {
                errors.push(
-                  `Container '${container.name}' is not ready: ${JSON.stringify(container.state)}`
+                  `${label} '${name}' is not ready: ${JSON.stringify(state)}`
                )
             }
          }
       })
    }
+   collectErrors(podStatus.containerStatuses, 'Container')
+   collectErrors(podStatus.initContainerStatuses, 'Init container')
 
-   if (podStatus.initContainerStatuses) {
-      podStatus.initContainerStatuses.forEach((container) => {
-         if (!container.ready && container.state.waiting) {
-            errors.push(
-               `Init container '${container.name}' is waiting: ${container.state.waiting.reason} - ${container.state.waiting.message || 'No message'}`
-            )
-         }
-      })
-   }
-
-   return errors.length > 0 ? `Container issues: ${errors.join('; ')}` : ''
+   return errors.length ? `Container issues: ${errors.join('; ')}` : ''
 }
 
 async function getService(kubectl: Kubectl, service: Resource) {

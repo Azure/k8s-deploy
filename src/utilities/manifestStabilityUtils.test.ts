@@ -4,11 +4,7 @@ import {ResourceTypeFleet, ResourceTypeManagedCluster} from '../actions/deploy'
 import {ExecOutput} from '@actions/exec'
 import {exitCode, stdout} from 'process'
 import * as core from '@actions/core'
-import {sleep} from './timeUtils'
-
-jest.mock('./timeUtils', () => ({
-   sleep: jest.fn().mockResolvedValue(undefined)
-}))
+import * as timeUtils from './timeUtils'
 
 describe('manifestStabilityUtils', () => {
    const kc = new Kubectl('')
@@ -232,6 +228,8 @@ describe('checkManifestStability failure and resource-specific scenarios', () =>
    })
 
    it('should wait for external IP for a LoadBalancer service', async () => {
+      //Spying on sleep to avoid actual delays in tests
+      jest.spyOn(timeUtils, 'sleep').mockResolvedValue(undefined)
       const resources = [
          {type: 'service', name: 'test-svc', namespace: 'default'}
       ]
@@ -455,5 +453,109 @@ describe('checkManifestStability additional scenarios', () => {
             ResourceTypeManagedCluster
          )
       ).resolves.not.toThrow()
+   })
+})
+
+describe('getContainerErrors', () => {
+   it('should return an empty string if all containers are ready', () => {
+      const podStatus = {
+         containerStatuses: [
+            {
+               name: 'app',
+               ready: true,
+               state: {running: {startedAt: '2025-07-18T10:00:00Z'}}
+            }
+         ]
+      }
+      expect(manifestStabilityUtils.getContainerErrors(podStatus)).toBe('')
+   })
+
+   it('should report an error for a waiting container', () => {
+      const podStatus = {
+         containerStatuses: [
+            {
+               name: 'app',
+               ready: false,
+               state: {
+                  waiting: {
+                     reason: 'ImagePullBackOff',
+                     message: 'Back-off pulling image "my-image:latest"'
+                  }
+               }
+            }
+         ]
+      }
+      const expectedError =
+         'Container issues: Container \'app\' is waiting: ImagePullBackOff - Back-off pulling image "my-image:latest"'
+      expect(manifestStabilityUtils.getContainerErrors(podStatus)).toBe(
+         expectedError
+      )
+   })
+
+   it('should report an error for a terminated container', () => {
+      const podStatus = {
+         containerStatuses: [
+            {
+               name: 'job-runner',
+               ready: false,
+               state: {
+                  terminated: {
+                     reason: 'Error',
+                     message: 'The job failed with exit code 1'
+                  }
+               }
+            }
+         ]
+      }
+      const expectedError =
+         "Container issues: Container 'job-runner' terminated: Error - The job failed with exit code 1"
+      expect(manifestStabilityUtils.getContainerErrors(podStatus)).toBe(
+         expectedError
+      )
+   })
+
+   it('should report an error for a waiting init container', () => {
+      const podStatus = {
+         initContainerStatuses: [
+            {
+               name: 'init-db',
+               ready: false,
+               state: {
+                  waiting: {
+                     reason: 'PodInitializing'
+                  }
+               }
+            }
+         ]
+      }
+      const expectedError =
+         "Container issues: Init container 'init-db' is waiting: PodInitializing - No message"
+      expect(manifestStabilityUtils.getContainerErrors(podStatus)).toBe(
+         expectedError
+      )
+   })
+
+   it('should combine errors from multiple containers', () => {
+      const podStatus = {
+         containerStatuses: [
+            {
+               name: 'main-app',
+               ready: false,
+               state: {waiting: {reason: 'CrashLoopBackOff'}}
+            }
+         ],
+         initContainerStatuses: [
+            {
+               name: 'init-migrations',
+               ready: false,
+               state: {terminated: {reason: 'Error'}}
+            }
+         ]
+      }
+      const expectedError =
+         "Container issues: Container 'main-app' is waiting: CrashLoopBackOff - No message; Init container 'init-migrations' terminated: Error - No message"
+      expect(manifestStabilityUtils.getContainerErrors(podStatus)).toBe(
+         expectedError
+      )
    })
 })
