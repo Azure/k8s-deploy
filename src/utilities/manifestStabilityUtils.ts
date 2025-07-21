@@ -248,6 +248,7 @@ export function getContainerErrors(podStatus: any): string {
    const errors: string[] = []
    const collectErrors = (containers: any[], label: string) => {
       containers?.forEach(({name, ready, state}) => {
+         if (ready) return
          if (!ready) {
             if (state?.waiting) {
                errors.push(
