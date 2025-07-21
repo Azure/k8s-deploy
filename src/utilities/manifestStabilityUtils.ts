@@ -249,20 +249,18 @@ export function getContainerErrors(podStatus: any): string {
    const collectErrors = (containers: any[], label: string) => {
       containers?.forEach(({name, ready, state}) => {
          if (ready) return
-         if (!ready) {
-            if (state?.waiting) {
-               errors.push(
-                  `${label} '${name}' is waiting: ${state.waiting.reason} - ${state.waiting.message || 'No message'}`
-               )
-            } else if (state?.terminated) {
-               errors.push(
-                  `${label} '${name}' terminated: ${state.terminated.reason} - ${state.terminated.message || 'No message'}`
-               )
-            } else {
-               errors.push(
-                  `${label} '${name}' is not ready: ${JSON.stringify(state)}`
-               )
-            }
+         if (state?.waiting) {
+            errors.push(
+               `${label} '${name}' is waiting: ${state.waiting.reason} - ${state.waiting.message || 'No message'}`
+            )
+         } else if (state?.terminated) {
+            errors.push(
+               `${label} '${name}' terminated: ${state.terminated.reason} - ${state.terminated.message || 'No message'}`
+            )
+         } else {
+            errors.push(
+               `${label} '${name}' is not ready: ${JSON.stringify(state)}`
+            )
          }
       })
    }
