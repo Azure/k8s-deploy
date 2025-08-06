@@ -1,5 +1,21 @@
 # Changelog
 
+## [5.0.4] - 2025-08-05
+
+### Added
+
+- #408 [Add missing README.md and action.yml parameters](https://github.com/Azure/k8s-deploy/pull/408)
+- #414 [Fix the major update packages including Jest](https://github.com/Azure/k8s-deploy/pull/414)
+- #418 [Add husky pre-commit hook.](https://github.com/Azure/k8s-deploy/pull/418)
+- #420 [Make namespace input optional](https://github.com/Azure/k8s-deploy/pull/420)
+- #424 [add server-side option for kubectl apply commands](https://github.com/Azure/k8s-deploy/pull/424)
+- #425 [Add timeout to the rollout status](https://github.com/Azure/k8s-deploy/pull/425)
+- #428 [Added additional check in getTempdirectory function](https://github.com/Azure/k8s-deploy/pull/428)
+- #432 [Added error check for canary promote actions](https://github.com/Azure/k8s-deploy/pull/432)
+- #436 [Add support for ScaledJob](https://github.com/Azure/k8s-deploy/pull/436)
+- #440 [Add Enhanced Deployment Error Reporting and Logging](https://github.com/Azure/k8s-deploy/pull/440)
+- #441 [Added timeout input description to README](https://github.com/Azure/k8s-deploy/pull/441)
+
 ## [5.0.3] - 2025-04-16
 
 ### Added
