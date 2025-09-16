@@ -116,7 +116,7 @@ describe('checkManifestStability failure and resource-specific scenarios', () =>
    let coreWarningSpy: jest.SpyInstance
 
    beforeEach(() => {
-      kc = new Kubectl('')
+      kc = new Kubectl('', 'default')
       coreErrorSpy = jest.spyOn(core, 'error').mockImplementation()
       coreInfoSpy = jest.spyOn(core, 'info').mockImplementation()
       coreWarningSpy = jest.spyOn(core, 'warning').mockImplementation()
@@ -128,7 +128,7 @@ describe('checkManifestStability failure and resource-specific scenarios', () =>
 
    it('should call describe and collect errors when a rollout fails', async () => {
       const resources = [
-         {type: 'deployment', name: 'failing-app', namespace: 'default'}
+         {type: 'deployment', name: 'failing-app', namespace: 'app-ns-123'}
       ]
       const rolloutError = new Error('Progress deadline exceeded')
       const describeOutput =
@@ -145,7 +145,7 @@ describe('checkManifestStability failure and resource-specific scenarios', () =>
       })
 
       // Act & Assert: Expect the function to throw the final aggregated error
-      const expectedErrorMessage = `Rollout failed for deployment/failing-app in namespace default: ${rolloutError.message}`
+      const expectedErrorMessage = `Rollout failed for deployment/failing-app in namespace app-ns-123: ${rolloutError.message}`
       await expect(
          manifestStabilityUtils.checkManifestStability(
             kc,
@@ -163,7 +163,7 @@ describe('checkManifestStability failure and resource-specific scenarios', () =>
          'deployment',
          'failing-app',
          false,
-         'default'
+         'app-ns-123'
       )
       expect(coreInfoSpy).toHaveBeenCalledWith(
          `Describe output for deployment/failing-app:\n${describeOutput}`
