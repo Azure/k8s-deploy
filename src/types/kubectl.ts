@@ -238,13 +238,17 @@ export class Kubectl {
       })
    }
 
+   public getNamespace(namespaceOverride?: string): string {
+      return namespaceOverride || this.namespace
+   }
+
    protected getFlags(namespaceOverride?: string): string[] {
       const flags = []
       if (this.ignoreSSLErrors) {
          flags.push('--insecure-skip-tls-verify')
       }
 
-      const ns = namespaceOverride || this.namespace
+      const ns = this.getNamespace(namespaceOverride)
       if (ns) {
          flags.push('--namespace', ns)
       }
