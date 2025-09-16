@@ -46,7 +46,7 @@ export async function checkManifestStability(
             )
             checkForErrors([result])
          } catch (ex) {
-            const errorMessage = `Rollout failed for ${resource.type}/${resource.name} in namespace ${resource.namespace}: ${ex.message || ex}`
+            const errorMessage = `Rollout failed for ${resource.type}/${resource.name} in namespace ${kubectl.getNamespace(resource.namespace)}: ${ex.message || ex}`
             core.error(errorMessage)
             rolloutErrors.push(errorMessage)
 
@@ -106,7 +106,7 @@ export async function checkManifestStability(
                }
             }
          } catch (ex) {
-            const errorMessage = `Could not determine service status of: ${resource.name} in namespace ${resource.namespace}. Error: ${ex.message || ex}`
+            const errorMessage = `Could not determine service status of: ${resource.name} in namespace ${kubectl.getNamespace(resource.namespace)}. Error: ${ex.message || ex}`
             core.warning(errorMessage)
 
             try {
