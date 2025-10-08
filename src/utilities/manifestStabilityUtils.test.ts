@@ -116,7 +116,7 @@ describe('checkManifestStability failure and resource-specific scenarios', () =>
    let coreWarningSpy: jest.SpyInstance
 
    beforeEach(() => {
-      kc = new Kubectl('')
+      kc = new Kubectl('', 'default')
       coreErrorSpy = jest.spyOn(core, 'error').mockImplementation()
       coreInfoSpy = jest.spyOn(core, 'info').mockImplementation()
       coreWarningSpy = jest.spyOn(core, 'warning').mockImplementation()
@@ -128,8 +128,50 @@ describe('checkManifestStability failure and resource-specific scenarios', () =>
 
    it('should call describe and collect errors when a rollout fails', async () => {
       const resources = [
-         {type: 'deployment', name: 'failing-app', namespace: 'default'}
+         {type: 'deployment', name: 'failing-app', namespace: 'app-ns-123'}
       ]
+      const rolloutError = new Error('Progress deadline exceeded')
+      const describeOutput =
+         'Events:\n  Type\tReason\tMessage\n  Normal\tScalingReplicaSet\tScaled up replica set failing-app-123 to 1'
+
+      // Arrange: Mock rollout to fail and describe to succeed
+      const checkRolloutStatusSpy = jest
+         .spyOn(kc, 'checkRolloutStatus')
+         .mockRejectedValue(rolloutError)
+      const describeSpy = jest.spyOn(kc, 'describe').mockResolvedValue({
+         stdout: describeOutput,
+         stderr: '',
+         exitCode: 0
+      })
+
+      // Act & Assert: Expect the function to throw the final aggregated error
+      const expectedErrorMessage = `Rollout failed for deployment/failing-app in namespace app-ns-123: ${rolloutError.message}`
+      await expect(
+         manifestStabilityUtils.checkManifestStability(
+            kc,
+            resources,
+            ResourceTypeManagedCluster
+         )
+      ).rejects.toThrow(
+         `Rollout status failed for the following resources:\n${expectedErrorMessage}`
+      )
+
+      // Assert that the correct functions were called
+      expect(checkRolloutStatusSpy).toHaveBeenCalledTimes(1)
+      expect(coreErrorSpy).toHaveBeenCalledWith(expectedErrorMessage)
+      expect(describeSpy).toHaveBeenCalledWith(
+         'deployment',
+         'failing-app',
+         false,
+         'app-ns-123'
+      )
+      expect(coreInfoSpy).toHaveBeenCalledWith(
+         `Describe output for deployment/failing-app:\n${describeOutput}`
+      )
+   })
+
+   it('should use the default kubectl namespace when none is provided', async () => {
+      const resources = [{type: 'deployment', name: 'failing-app'}]
       const rolloutError = new Error('Progress deadline exceeded')
       const describeOutput =
          'Events:\n  Type\tReason\tMessage\n  Normal\tScalingReplicaSet\tScaled up replica set failing-app-123 to 1'
@@ -163,7 +205,7 @@ describe('checkManifestStability failure and resource-specific scenarios', () =>
          'deployment',
          'failing-app',
          false,
-         'default'
+         undefined
       )
       expect(coreInfoSpy).toHaveBeenCalledWith(
          `Describe output for deployment/failing-app:\n${describeOutput}`
