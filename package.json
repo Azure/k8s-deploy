@@ -23,7 +23,7 @@
       "@octokit/plugin-retry": "^8.0.3",
       "@types/minipass": "^3.3.5",
       "husky": "^9.1.7",
-      "js-yaml": "4.1.0",
+      "js-yaml": "4.1.1",
       "minimist": "^1.2.8"
    },
    "devDependencies": {
