@@ -21,7 +21,7 @@ jobs:
          NAMESPACE1: integration-test-namespace1-${{ github.run_id }}
          NAMESPACE2: integration-test-namespace2-${{ github.run_id }}
       steps:
-         - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+         - uses: actions/checkout@93cb6efe18208431cddfb8368fd83d5badbf9bfd # v5.0.1
 
          - name: Install dependencies
            run: |
