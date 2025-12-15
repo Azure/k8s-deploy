@@ -13,7 +13,7 @@ jobs:
 
       # Steps represent a sequence of tasks that will be executed as part of the job
       steps:
-         - uses: actions/stale@5f858e3efba33a5ca4407a664cc011ad407f2008 # v10.1.0
+         - uses: actions/stale@997185467fa4f803885201cee163a9f38240193d # v10.1.1
            name: Setting issue as idle
            with:
               repo-token: ${{ secrets.GITHUB_TOKEN }}
@@ -24,7 +24,7 @@ jobs:
               operations-per-run: 100
               exempt-issue-labels: 'backlog'
 
-         - uses: actions/stale@5f858e3efba33a5ca4407a664cc011ad407f2008 # v10.1.0
+         - uses: actions/stale@997185467fa4f803885201cee163a9f38240193d # v10.1.1
            name: Setting PR as idle
            with:
               repo-token: ${{ secrets.GITHUB_TOKEN }}
