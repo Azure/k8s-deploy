@@ -22,6 +22,7 @@ jobs:
 
          - uses: ./.github/actions/minikube-setup
            name: Setup Minikube Environment
+           timeout-minutes: 3
 
          - name: Create namespace to run tests
            run: kubectl create ns ${{ env.NAMESPACE }}

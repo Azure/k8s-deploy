@@ -37,7 +37,6 @@ runs:
         minikube-version: 1.37.0
         kubernetes-version: 1.31.0
         driver: 'docker'
-      timeout-minutes: 3
 
     - name: Install Linkerd and SMI
       if: inputs.install-smi == 'true'

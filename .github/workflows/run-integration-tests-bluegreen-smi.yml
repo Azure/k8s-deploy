@@ -22,6 +22,7 @@ jobs:
 
          - uses: ./.github/actions/minikube-setup
            name: Setup Minikube Environment
+           timeout-minutes: 3
            with:
               install-smi: 'true'
 

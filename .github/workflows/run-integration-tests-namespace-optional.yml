@@ -25,6 +25,7 @@ jobs:
 
          - uses: ./.github/actions/minikube-setup
            name: Setup Minikube Environment
+           timeout-minutes: 3
 
          - name: Create namespaces for tests
            run: |
