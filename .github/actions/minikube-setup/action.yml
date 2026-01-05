@@ -1,0 +1,58 @@
+name: 'Setup Minikube Test Environment'
+description: 'Common setup steps for minikube integration tests'
+inputs:
+  install-smi:
+    description: 'Install Linkerd SMI for service mesh tests'
+    required: false
+    default: 'false'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Install dependencies
+      shell: bash
+      run: |
+        rm -rf node_modules/
+        npm install
+
+    - name: Install ncc
+      shell: bash
+      run: npm i -g @vercel/ncc
+
+    - name: Install conntrack
+      shell: bash
+      run: sudo apt-get install -y conntrack
+
+    - name: Build
+      shell: bash
+      run: ncc build src/run.ts -o lib
+
+    - uses: Azure/setup-kubectl@776406bce94f63e41d621b960d78ee25c8b76ede # v4.0.1
+      name: Install Kubectl
+
+    - id: setup-minikube
+      name: Setup Minikube
+      uses: medyagh/setup-minikube@e9e035a86bbc3caea26a450bd4dbf9d0c453682e # v0.0.21
+      with:
+        minikube-version: 1.37.0
+        kubernetes-version: 1.31.0
+        driver: 'docker'
+      timeout-minutes: 3
+
+    - name: Install Linkerd and SMI
+      if: inputs.install-smi == 'true'
+      shell: bash
+      run: |
+        curl --proto '=https' --tlsv1.2 -sSfL https://run.linkerd.io/install-edge | sh
+        export PATH=$PATH:/home/runner/.linkerd2/bin
+        curl -sL https://linkerd.github.io/linkerd-smi/install | sh
+        kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.0/standard-install.yaml
+
+        linkerd install --crds | kubectl apply -f -
+        linkerd install --set proxyInit.runAsRoot=true | kubectl apply -f -
+        linkerd smi install | kubectl apply -f -
+
+    - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # 6.1.0
+      name: Install Python
+      with:
+        python-version: '3.x'
