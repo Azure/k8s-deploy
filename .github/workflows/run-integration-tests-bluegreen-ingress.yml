@@ -12,7 +12,7 @@ on:
 
 jobs:
    run-integration-test:
-      name: Run Minikube Integration Tests
+      name: Blue-Green Ingress Tests
       runs-on: ubuntu-22.04
       env:
          KUBECONFIG: /home/runner/.kube/config
@@ -20,36 +20,12 @@ jobs:
       steps:
          - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
 
-         - name: Install dependencies
-           run: |
-              rm -rf node_modules/
-              npm install
-         - name: Install ncc
-           run: npm i -g @vercel/ncc
-         - name: Install conntrack
-           run: sudo apt-get install -y conntrack
-         - name: Build
-           run: ncc build src/run.ts -o lib
-
-         - uses: Azure/setup-kubectl@776406bce94f63e41d621b960d78ee25c8b76ede # v4.0.1
-           name: Install Kubectl
-
-         - id: setup-minikube
-           name: Setup Minikube
-           uses: medyagh/setup-minikube@e9e035a86bbc3caea26a450bd4dbf9d0c453682e # v0.0.21
-           with:
-              minikube-version: 1.34.0
-              kubernetes-version: 1.31.0
-              driver: 'none'
-           timeout-minutes: 3
+         - uses: ./.github/actions/minikube-setup
+           name: Setup Minikube Environment
+           timeout-minutes: 5
 
          - name: Create namespace to run tests
            run: kubectl create ns ${{ env.NAMESPACE }}
-
-         - uses: actions/setup-python@83679a892e2d95755f2dac6acb0bfd1e9ac5d548 # 6.1.0
-           name: Install Python
-           with:
-              python-version: '3.x'
 
          - name: Cleaning any previously created items
            run: |
