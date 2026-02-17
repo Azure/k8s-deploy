@@ -13,11 +13,11 @@
       "prepare": "husky"
    },
    "dependencies": {
-      "@actions/core": "^2.0.2",
-      "@actions/exec": "^2.0.0",
-      "@actions/io": "^2.0.0",
-      "@actions/tool-cache": "3.0.0",
-      "@babel/preset-env": "^7.28.6",
+      "@actions/core": "^3.0.0",
+      "@actions/exec": "^3.0.0",
+      "@actions/io": "^3.0.2",
+      "@actions/tool-cache": "4.0.0",
+      "@babel/preset-env": "^7.29.0",
       "@babel/preset-typescript": "^7.28.5",
       "@octokit/core": "^7.0.6",
       "@octokit/plugin-retry": "^8.0.3",
@@ -30,10 +30,10 @@
       "@types/jest": "^30.0.0",
       "@types/js-yaml": "^4.0.9",
       "@types/minimist": "^1.2.5",
-      "@types/node": "^25.0.9",
+      "@types/node": "^25.2.3",
       "@vercel/ncc": "^0.38.4",
       "jest": "^30.2.0",
-      "prettier": "^3.8.0",
+      "prettier": "^3.8.1",
       "ts-jest": "^29.4.6",
       "typescript": "5.9.3"
    }
