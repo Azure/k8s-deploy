@@ -1,20 +1,22 @@
-import {getManifestObjects} from './blueGreenHelper'
+import {vi} from 'vitest'
+import type {MockInstance} from 'vitest'
+import {getManifestObjects} from './blueGreenHelper.js'
 import {
    promoteBlueGreenIngress,
    promoteBlueGreenService,
    promoteBlueGreenSMI
-} from './promote'
-import {TrafficSplitObject} from '../../types/k8sObject'
-import * as servicesTester from './serviceBlueGreenHelper'
-import {Kubectl} from '../../types/kubectl'
-import {MAX_VAL, MIN_VAL, TRAFFIC_SPLIT_OBJECT} from './smiBlueGreenHelper'
-import * as smiTester from './smiBlueGreenHelper'
-import * as bgHelper from './blueGreenHelper'
+} from './promote.js'
+import {TrafficSplitObject} from '../../types/k8sObject.js'
+import * as servicesTester from './serviceBlueGreenHelper.js'
+import {Kubectl} from '../../types/kubectl.js'
+import {MAX_VAL, MIN_VAL, TRAFFIC_SPLIT_OBJECT} from './smiBlueGreenHelper.js'
+import * as smiTester from './smiBlueGreenHelper.js'
+import * as bgHelper from './blueGreenHelper.js'
 import {ExecOutput} from '@actions/exec'
 
 const ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
 
-jest.mock('../../types/kubectl')
+vi.mock('../../types/kubectl')
 
 // Shared variables used across all test suites
 let testObjects: any
@@ -42,13 +44,12 @@ const mockBgDeployment = {
 }
 
 describe('promote tests', () => {
-   let kubectlApplySpy: jest.SpyInstance
+   let kubectlApplySpy: MockInstance
 
    beforeEach(() => {
-      //@ts-ignore
-      Kubectl.mockClear()
+      vi.mocked(Kubectl).mockClear()
       testObjects = getManifestObjects(ingressFilepath)
-      kubectlApplySpy = jest.spyOn(kubectl, 'apply')
+      kubectlApplySpy = vi.spyOn(kubectl, 'apply')
    })
 
    test('promote blue/green ingress', async () => {
@@ -57,7 +58,7 @@ describe('promote tests', () => {
       const mockLabels = new Map<string, string>()
       mockLabels[bgHelper.BLUE_GREEN_VERSION_LABEL] = bgHelper.GREEN_LABEL_VALUE
 
-      jest.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
+      vi.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
          Promise.resolve({
             kind: 'Ingress',
             spec: {},
@@ -82,7 +83,7 @@ describe('promote tests', () => {
    test('fail to promote invalid blue/green ingress', async () => {
       const mockLabels = new Map<string, string>()
       mockLabels[bgHelper.BLUE_GREEN_VERSION_LABEL] = bgHelper.NONE_LABEL_VALUE
-      jest.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
+      vi.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
          Promise.resolve({
             kind: 'Ingress',
             spec: {},
@@ -100,7 +101,7 @@ describe('promote tests', () => {
 
       const mockLabels = new Map<string, string>()
       mockLabels[bgHelper.BLUE_GREEN_VERSION_LABEL] = bgHelper.GREEN_LABEL_VALUE
-      jest.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
+      vi.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
          Promise.resolve({
             kind: 'Service',
             spec: {selector: mockLabels},
@@ -120,16 +121,16 @@ describe('promote tests', () => {
    test('fail to promote invalid blue/green service', async () => {
       const mockLabels = new Map<string, string>()
       mockLabels[bgHelper.BLUE_GREEN_VERSION_LABEL] = bgHelper.NONE_LABEL_VALUE
-      jest.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
+      vi.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
          Promise.resolve({
             kind: 'Service',
             spec: {},
             metadata: {labels: mockLabels, name: 'nginx-ingress-green'}
          })
       )
-      jest
-         .spyOn(servicesTester, 'validateServicesState')
-         .mockImplementationOnce(() => Promise.resolve(false))
+      vi.spyOn(servicesTester, 'validateServicesState').mockImplementationOnce(
+         () => Promise.resolve(false)
+      )
 
       await expect(
          promoteBlueGreenService(kubectl, testObjects)
@@ -164,9 +165,9 @@ describe('promote tests', () => {
             ]
          }
       }
-      jest
-         .spyOn(bgHelper, 'fetchResource')
-         .mockImplementation(() => Promise.resolve(mockTsObject))
+      vi.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
+         Promise.resolve(mockTsObject)
+      )
 
       const deployResult = await promoteBlueGreenSMI(kubectl, testObjects)
 
@@ -182,11 +183,11 @@ describe('promote tests', () => {
    test('promote blue/green SMI with bad trafficsplit', async () => {
       const mockLabels = new Map<string, string>()
       mockLabels[bgHelper.BLUE_GREEN_VERSION_LABEL] = bgHelper.NONE_LABEL_VALUE
-      jest
-         .spyOn(smiTester, 'validateTrafficSplitsState')
-         .mockImplementation(() => Promise.resolve(false))
+      vi.spyOn(smiTester, 'validateTrafficSplitsState').mockImplementation(() =>
+         Promise.resolve(false)
+      )
 
-      expect(promoteBlueGreenSMI(kubectl, testObjects)).rejects.toThrow()
+      await expect(promoteBlueGreenSMI(kubectl, testObjects)).rejects.toThrow()
    })
 
    // Consolidated error tests
@@ -198,7 +199,7 @@ describe('promote tests', () => {
             const mockLabels = new Map<string, string>()
             mockLabels[bgHelper.BLUE_GREEN_VERSION_LABEL] =
                bgHelper.GREEN_LABEL_VALUE
-            jest.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
+            vi.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
                Promise.resolve({
                   kind: 'Ingress',
                   spec: {},
@@ -214,16 +215,16 @@ describe('promote tests', () => {
             const mockLabels = new Map<string, string>()
             mockLabels[bgHelper.BLUE_GREEN_VERSION_LABEL] =
                bgHelper.GREEN_LABEL_VALUE
-            jest.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
+            vi.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
                Promise.resolve({
                   kind: 'Service',
                   spec: {selector: mockLabels},
                   metadata: {labels: mockLabels, name: 'nginx-service-green'}
                })
             )
-            jest
-               .spyOn(servicesTester, 'validateServicesState')
-               .mockResolvedValue(true)
+            vi.spyOn(servicesTester, 'validateServicesState').mockResolvedValue(
+               true
+            )
          }
       },
       {
@@ -246,12 +247,10 @@ describe('promote tests', () => {
                   ]
                }
             }
-            jest
-               .spyOn(bgHelper, 'fetchResource')
-               .mockResolvedValue(mockTsObject)
-            jest
-               .spyOn(smiTester, 'validateTrafficSplitsState')
-               .mockResolvedValue(true)
+            vi.spyOn(bgHelper, 'fetchResource').mockResolvedValue(mockTsObject)
+            vi.spyOn(smiTester, 'validateTrafficSplitsState').mockResolvedValue(
+               true
+            )
          }
       }
    ])('$name', async ({fn, setup}) => {
@@ -279,15 +278,12 @@ describe('promote tests', () => {
 // Timeout tests
 describe('promote timeout tests', () => {
    beforeEach(() => {
-      // @ts-ignore
-      Kubectl.mockClear()
+      vi.mocked(Kubectl).mockClear()
       testObjects = getManifestObjects(ingressFilepath)
    })
 
    const mockDeployWithLabel = () =>
-      jest
-         .spyOn(bgHelper, 'deployWithLabel')
-         .mockResolvedValue(mockBgDeployment)
+      vi.spyOn(bgHelper, 'deployWithLabel').mockResolvedValue(mockBgDeployment)
 
    const setupFetchResource = (
       kind: string,
@@ -297,7 +293,7 @@ describe('promote timeout tests', () => {
       const mockLabels = new Map<string, string>()
       mockLabels[bgHelper.BLUE_GREEN_VERSION_LABEL] = labelValue
 
-      jest.spyOn(bgHelper, 'fetchResource').mockResolvedValue({
+      vi.spyOn(bgHelper, 'fetchResource').mockResolvedValue({
          kind,
          spec: {},
          metadata: {labels: mockLabels, name}
@@ -330,9 +326,9 @@ describe('promote timeout tests', () => {
                'nginx-service-green',
                bgHelper.GREEN_LABEL_VALUE
             )
-            jest
-               .spyOn(servicesTester, 'validateServicesState')
-               .mockResolvedValue(true)
+            vi.spyOn(servicesTester, 'validateServicesState').mockResolvedValue(
+               true
+            )
          }
       },
       {
@@ -359,12 +355,10 @@ describe('promote timeout tests', () => {
                }
             }
 
-            jest
-               .spyOn(bgHelper, 'fetchResource')
-               .mockResolvedValue(mockTsObject)
-            jest
-               .spyOn(smiTester, 'validateTrafficSplitsState')
-               .mockResolvedValue(true)
+            vi.spyOn(bgHelper, 'fetchResource').mockResolvedValue(mockTsObject)
+            vi.spyOn(smiTester, 'validateTrafficSplitsState').mockResolvedValue(
+               true
+            )
          }
       }
    ])('$name', async ({fn, timeout, setup}) => {

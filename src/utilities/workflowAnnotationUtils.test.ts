@@ -2,7 +2,7 @@ import {
    cleanLabel,
    removeInvalidLabelCharacters,
    VALID_LABEL_REGEX
-} from '../utilities/workflowAnnotationUtils'
+} from '../utilities/workflowAnnotationUtils.js'
 
 describe('WorkflowAnnotationUtils', () => {
    describe('cleanLabel', () => {

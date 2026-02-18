@@ -1,10 +1,29 @@
-import * as manifestStabilityUtils from './manifestStabilityUtils'
-import {Kubectl} from '../types/kubectl'
-import {ResourceTypeFleet, ResourceTypeManagedCluster} from '../actions/deploy'
+import {vi} from 'vitest'
+import type {MockInstance} from 'vitest'
+vi.mock('@actions/core', async (importOriginal) => {
+   const actual: any = await importOriginal()
+   return {
+      ...actual,
+      getInput: vi.fn().mockReturnValue(''),
+      debug: vi.fn(),
+      info: vi.fn(),
+      warning: vi.fn(),
+      error: vi.fn(),
+      setFailed: vi.fn(),
+      setOutput: vi.fn()
+   }
+})
+
+import * as manifestStabilityUtils from './manifestStabilityUtils.js'
+import {Kubectl} from '../types/kubectl.js'
+import {
+   ResourceTypeFleet,
+   ResourceTypeManagedCluster
+} from '../actions/deploy.js'
 import {ExecOutput} from '@actions/exec'
 import {exitCode, stdout} from 'process'
 import * as core from '@actions/core'
-import * as timeUtils from './timeUtils'
+import * as timeUtils from './timeUtils.js'
 
 describe('manifestStabilityUtils', () => {
    const kc = new Kubectl('')
@@ -17,8 +36,8 @@ describe('manifestStabilityUtils', () => {
    ]
 
    it('should return immediately if the resource type is fleet', async () => {
-      const spy = jest.spyOn(manifestStabilityUtils, 'checkManifestStability')
-      const checkRolloutStatusSpy = jest.spyOn(kc, 'checkRolloutStatus')
+      const spy = vi.spyOn(manifestStabilityUtils, 'checkManifestStability')
+      const checkRolloutStatusSpy = vi.spyOn(kc, 'checkRolloutStatus')
       await manifestStabilityUtils.checkManifestStability(
          kc,
          resources,
@@ -30,8 +49,8 @@ describe('manifestStabilityUtils', () => {
    })
 
    it('should run fully if the resource type is managedCluster', async () => {
-      const spy = jest.spyOn(manifestStabilityUtils, 'checkManifestStability')
-      const checkRolloutStatusSpy = jest
+      const spy = vi.spyOn(manifestStabilityUtils, 'checkManifestStability')
+      const checkRolloutStatusSpy = vi
          .spyOn(kc, 'checkRolloutStatus')
          .mockImplementation(() => {
             return new Promise<ExecOutput>((resolve, reject) => {
@@ -54,7 +73,7 @@ describe('manifestStabilityUtils', () => {
 
    it('should pass timeout to checkRolloutStatus when provided', async () => {
       const timeout = '300s'
-      const checkRolloutStatusSpy = jest
+      const checkRolloutStatusSpy = vi
          .spyOn(kc, 'checkRolloutStatus')
          .mockImplementation(() => {
             return new Promise<ExecOutput>((resolve, reject) => {
@@ -82,7 +101,7 @@ describe('manifestStabilityUtils', () => {
    })
 
    it('should call checkRolloutStatus without timeout when not provided', async () => {
-      const checkRolloutStatusSpy = jest
+      const checkRolloutStatusSpy = vi
          .spyOn(kc, 'checkRolloutStatus')
          .mockImplementation(() => {
             return new Promise<ExecOutput>((resolve, reject) => {
@@ -111,19 +130,19 @@ describe('manifestStabilityUtils', () => {
 
 describe('checkManifestStability failure and resource-specific scenarios', () => {
    let kc: Kubectl
-   let coreErrorSpy: jest.SpyInstance
-   let coreInfoSpy: jest.SpyInstance
-   let coreWarningSpy: jest.SpyInstance
+   let coreErrorSpy: MockInstance
+   let coreInfoSpy: MockInstance
+   let coreWarningSpy: MockInstance
 
    beforeEach(() => {
       kc = new Kubectl('', 'default')
-      coreErrorSpy = jest.spyOn(core, 'error').mockImplementation()
-      coreInfoSpy = jest.spyOn(core, 'info').mockImplementation()
-      coreWarningSpy = jest.spyOn(core, 'warning').mockImplementation()
+      coreErrorSpy = vi.spyOn(core, 'error').mockImplementation(() => {})
+      coreInfoSpy = vi.spyOn(core, 'info').mockImplementation(() => {})
+      coreWarningSpy = vi.spyOn(core, 'warning').mockImplementation(() => {})
    })
 
    afterEach(() => {
-      jest.restoreAllMocks()
+      vi.restoreAllMocks()
    })
 
    it('should call describe and collect errors when a rollout fails', async () => {
@@ -135,10 +154,10 @@ describe('checkManifestStability failure and resource-specific scenarios', () =>
          'Events:\n  Type\tReason\tMessage\n  Normal\tScalingReplicaSet\tScaled up replica set failing-app-123 to 1'
 
       // Arrange: Mock rollout to fail and describe to succeed
-      const checkRolloutStatusSpy = jest
+      const checkRolloutStatusSpy = vi
          .spyOn(kc, 'checkRolloutStatus')
          .mockRejectedValue(rolloutError)
-      const describeSpy = jest.spyOn(kc, 'describe').mockResolvedValue({
+      const describeSpy = vi.spyOn(kc, 'describe').mockResolvedValue({
          stdout: describeOutput,
          stderr: '',
          exitCode: 0
@@ -177,10 +196,10 @@ describe('checkManifestStability failure and resource-specific scenarios', () =>
          'Events:\n  Type\tReason\tMessage\n  Normal\tScalingReplicaSet\tScaled up replica set failing-app-123 to 1'
 
       // Arrange: Mock rollout to fail and describe to succeed
-      const checkRolloutStatusSpy = jest
+      const checkRolloutStatusSpy = vi
          .spyOn(kc, 'checkRolloutStatus')
          .mockRejectedValue(rolloutError)
-      const describeSpy = jest.spyOn(kc, 'describe').mockResolvedValue({
+      const describeSpy = vi.spyOn(kc, 'describe').mockResolvedValue({
          stdout: describeOutput,
          stderr: '',
          exitCode: 0
@@ -216,10 +235,10 @@ describe('checkManifestStability failure and resource-specific scenarios', () =>
       const resources = [{type: 'Pod', name: 'test-pod', namespace: 'default'}]
 
       // Arrange: Spy on checkPodStatus and checkRolloutStatus
-      const checkPodStatusSpy = jest
+      const checkPodStatusSpy = vi
          .spyOn(manifestStabilityUtils, 'checkPodStatus')
          .mockResolvedValue() // Assume pod becomes ready
-      const checkRolloutStatusSpy = jest.spyOn(kc, 'checkRolloutStatus')
+      const checkRolloutStatusSpy = vi.spyOn(kc, 'checkRolloutStatus')
 
       // Act
       await manifestStabilityUtils.checkManifestStability(
@@ -240,10 +259,10 @@ describe('checkManifestStability failure and resource-specific scenarios', () =>
       const podError = new Error('Pod rollout failed')
 
       // Arrange: Mock checkPodStatus to fail
-      const checkPodStatusSpy = jest
+      const checkPodStatusSpy = vi
          .spyOn(manifestStabilityUtils, 'checkPodStatus')
          .mockRejectedValue(podError)
-      const describeSpy = jest.spyOn(kc, 'describe').mockResolvedValue({
+      const describeSpy = vi.spyOn(kc, 'describe').mockResolvedValue({
          stdout: 'describe output',
          stderr: '',
          exitCode: 0
@@ -271,7 +290,7 @@ describe('checkManifestStability failure and resource-specific scenarios', () =>
 
    it('should wait for external IP for a LoadBalancer service', async () => {
       //Spying on sleep to avoid actual delays in tests
-      jest.spyOn(timeUtils, 'sleep').mockResolvedValue(undefined)
+      vi.spyOn(timeUtils, 'sleep').mockResolvedValue(undefined)
       const resources = [
          {type: 'service', name: 'test-svc', namespace: 'default'}
       ]
@@ -285,7 +304,7 @@ describe('checkManifestStability failure and resource-specific scenarios', () =>
       }
 
       // Arrange: Mock getResource to simulate the IP being assigned on the second poll
-      const getResourceSpy = jest
+      const getResourceSpy = vi
          .spyOn(kc, 'getResource')
          // First call: Initial service check
          .mockResolvedValueOnce({
@@ -328,10 +347,10 @@ describe('checkManifestStability failure and resource-specific scenarios', () =>
 
       // Arrange: Mock getService to fail, and describe to succeed
       // Note: We mock getResource because getService is a private helper
-      const getResourceSpy = jest
+      const getResourceSpy = vi
          .spyOn(kc, 'getResource')
          .mockRejectedValue(getServiceError)
-      const describeSpy = jest.spyOn(kc, 'describe').mockResolvedValue({
+      const describeSpy = vi.spyOn(kc, 'describe').mockResolvedValue({
          stdout: 'describe output',
          stderr: '',
          exitCode: 0
@@ -369,7 +388,7 @@ describe('checkManifestStability failure and resource-specific scenarios', () =>
       }
 
       // Arrange
-      const getResourceSpy = jest.spyOn(kc, 'getResource').mockResolvedValue({
+      const getResourceSpy = vi.spyOn(kc, 'getResource').mockResolvedValue({
          stdout: JSON.stringify(clusterIpService),
          stderr: '',
          exitCode: 0
@@ -392,19 +411,19 @@ describe('checkManifestStability failure and resource-specific scenarios', () =>
 
 describe('checkManifestStability additional scenarios', () => {
    let kc: Kubectl
-   let coreErrorSpy: jest.SpyInstance
-   let coreInfoSpy: jest.SpyInstance
-   let coreWarningSpy: jest.SpyInstance
+   let coreErrorSpy: MockInstance
+   let coreInfoSpy: MockInstance
+   let coreWarningSpy: MockInstance
 
    beforeEach(() => {
       kc = new Kubectl('')
-      coreErrorSpy = jest.spyOn(core, 'error').mockImplementation()
-      coreInfoSpy = jest.spyOn(core, 'info').mockImplementation()
-      coreWarningSpy = jest.spyOn(core, 'warning').mockImplementation()
+      coreErrorSpy = vi.spyOn(core, 'error').mockImplementation(() => {})
+      coreInfoSpy = vi.spyOn(core, 'info').mockImplementation(() => {})
+      coreWarningSpy = vi.spyOn(core, 'warning').mockImplementation(() => {})
    })
 
    afterEach(() => {
-      jest.restoreAllMocks()
+      vi.restoreAllMocks()
    })
 
    it('should aggregate errors from deployment and pod failures', async () => {
@@ -416,15 +435,15 @@ describe('checkManifestStability additional scenarios', () => {
       const podError = new Error('Pod not ready in time')
 
       // Arrange: Mock failures
-      const checkRolloutStatusSpy = jest
+      const checkRolloutStatusSpy = vi
          .spyOn(kc, 'checkRolloutStatus')
          .mockRejectedValue(deploymentError)
       // For pod: simulate a pod check failure
-      const checkPodStatusSpy = jest
+      const checkPodStatusSpy = vi
          .spyOn(manifestStabilityUtils, 'checkPodStatus')
          .mockRejectedValue(podError)
       // For both, simulate a successful describe call to provide additional details
-      const describeSpy = jest.spyOn(kc, 'describe').mockResolvedValue({
+      const describeSpy = vi.spyOn(kc, 'describe').mockResolvedValue({
          stdout: 'describe aggregated output',
          stderr: '',
          exitCode: 0
@@ -463,25 +482,25 @@ describe('checkManifestStability additional scenarios', () => {
 
       // Arrange:
       // Deployment rollout succeeds
-      jest.spyOn(kc, 'checkRolloutStatus').mockResolvedValue({
+      vi.spyOn(kc, 'checkRolloutStatus').mockResolvedValue({
          exitCode: 0,
          stderr: '',
          stdout: ''
       })
       // Pod becomes ready
-      jest.spyOn(manifestStabilityUtils, 'checkPodStatus').mockResolvedValue()
+      vi.spyOn(manifestStabilityUtils, 'checkPodStatus').mockResolvedValue()
       // Simulate a LoadBalancer service that already has an external IP
       const stableService = {
          spec: {type: 'LoadBalancer'},
          status: {loadBalancer: {ingress: [{ip: '1.2.3.4'}]}}
       }
-      jest.spyOn(kc, 'getResource').mockResolvedValue({
+      vi.spyOn(kc, 'getResource').mockResolvedValue({
          stdout: JSON.stringify(stableService),
          stderr: '',
          exitCode: 0
       })
       // Provide a describe result to avoid warnings
-      jest.spyOn(kc, 'describe').mockResolvedValue({
+      vi.spyOn(kc, 'describe').mockResolvedValue({
          stdout: 'describe output stable',
          stderr: '',
          exitCode: 0

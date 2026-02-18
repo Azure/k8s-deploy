@@ -1,9 +1,10 @@
-import * as fileUtils from './fileUtils'
+import {vi} from 'vitest'
+import * as fileUtils from './fileUtils.js'
 
 import * as yaml from 'js-yaml'
 import fs from 'node:fs'
 import * as path from 'path'
-import {K8sObject} from '../types/k8sObject'
+import {K8sObject} from '../types/k8sObject.js'
 
 const sampleYamlUrl =
    'https://raw.githubusercontent.com/kubernetes/website/main/content/en/examples/controllers/nginx-deployment.yaml'
@@ -69,7 +70,7 @@ describe('File utils', () => {
          'manifest_test_dir'
       )
 
-      expect(
+      await expect(
          fileUtils.getFilesFromDirectoriesAndURLs([badPath, goodPath])
       ).rejects.toThrow()
    })
@@ -108,8 +109,8 @@ describe('File utils', () => {
 
 describe('moving files to temp', () => {
    it('correctly moves the contents of a file to the temporary directory', () => {
-      jest.spyOn(fs, 'writeFileSync').mockImplementation(() => {})
-      jest.spyOn(fs, 'readFileSync').mockImplementation((filename) => {
+      vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {})
+      vi.spyOn(fs, 'readFileSync').mockImplementation((filename) => {
          return 'test contents'
       })
       const originalFilePath = path.join('path', 'in', 'repo')

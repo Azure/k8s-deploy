@@ -1,8 +1,14 @@
 {
    "compilerOptions": {
-      "target": "ES6",
-      "module": "commonjs",
-      "esModuleInterop": true
+      "target": "ES2022",
+      "module": "ES2022",
+      "moduleResolution": "bundler",
+      "esModuleInterop": true,
+      "strict": false,
+      "skipLibCheck": true,
+      "resolveJsonModule": true,
+      "declaration": false,
+      "sourceMap": true
    },
-   "exclude": ["node_modules", "test", "src/**/*.test.ts"]
+   "exclude": ["node_modules", "test", "lib"]
 }

@@ -1,4 +1,7 @@
-import {DeploymentStrategy, parseDeploymentStrategy} from './deploymentStrategy'
+import {
+   DeploymentStrategy,
+   parseDeploymentStrategy
+} from './deploymentStrategy.js'
 
 describe('Deployment strategy type', () => {
    test('it has required values', () => {
