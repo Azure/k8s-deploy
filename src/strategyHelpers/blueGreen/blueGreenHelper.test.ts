@@ -1,3 +1,5 @@
+import {vi} from 'vitest'
+import type {MockInstance} from 'vitest'
 import {
    deployWithLabel,
    deleteGreenObjects,
@@ -8,16 +10,16 @@ import {
    getNewBlueGreenObject,
    GREEN_LABEL_VALUE,
    isServiceRouted
-} from './blueGreenHelper'
-import {BlueGreenDeployment} from '../../types/blueGreenTypes'
-import * as bgHelper from './blueGreenHelper'
-import {Kubectl} from '../../types/kubectl'
-import * as fileHelper from '../../utilities/fileUtils'
-import {K8sObject} from '../../types/k8sObject'
-import * as manifestUpdateUtils from '../../utilities/manifestUpdateUtils'
+} from './blueGreenHelper.js'
+import {BlueGreenDeployment} from '../../types/blueGreenTypes.js'
+import * as bgHelper from './blueGreenHelper.js'
+import {Kubectl} from '../../types/kubectl.js'
+import * as fileHelper from '../../utilities/fileUtils.js'
+import {K8sObject} from '../../types/k8sObject.js'
+import * as manifestUpdateUtils from '../../utilities/manifestUpdateUtils.js'
 import {ExecOutput} from '@actions/exec'
 
-jest.mock('../../types/kubectl')
+vi.mock('../../types/kubectl')
 
 const kubectl = new Kubectl('')
 const TEST_TIMEOUT = '60s'
@@ -37,17 +39,17 @@ const MOCK_EXEC_OUTPUT = {
 describe('bluegreenhelper functions', () => {
    let testObjects
    beforeEach(() => {
-      //@ts-ignore
-      Kubectl.mockClear()
+      vi.restoreAllMocks()
+      vi.mocked(Kubectl).mockClear()
       testObjects = getManifestObjects(['test/unit/manifests/test-ingress.yml'])
 
-      jest
-         .spyOn(fileHelper, 'writeObjectsToFile')
-         .mockImplementationOnce(() => [''])
+      vi.spyOn(fileHelper, 'writeObjectsToFile').mockImplementationOnce(() => [
+         ''
+      ])
    })
 
    test('correctly deletes services and workloads according to label', async () => {
-      jest.spyOn(bgHelper, 'deleteObjects').mockReturnValue({} as Promise<void>)
+      vi.spyOn(bgHelper, 'deleteObjects').mockReturnValue({} as Promise<void>)
 
       const value = await deleteGreenObjects(
          kubectl,
@@ -65,21 +67,16 @@ describe('bluegreenhelper functions', () => {
    })
 
    test('handles timeout when deleting objects', async () => {
-      // Mock deleteObjects to prevent actual execution
-      const deleteSpy = jest
-         .spyOn(kubectl, 'delete')
-         .mockResolvedValue(MOCK_EXEC_OUTPUT)
+      const deleteMock = vi.fn().mockResolvedValue(MOCK_EXEC_OUTPUT)
+      kubectl.delete = deleteMock
 
-      await bgHelper.deleteObjects(
-         kubectl,
-         EXPECTED_GREEN_OBJECTS,
-         TEST_TIMEOUT
-      )
+      const deleteList = EXPECTED_GREEN_OBJECTS
 
-      // Verify kubectl.delete is called with timeout for each object in deleteList
-      expect(deleteSpy).toHaveBeenCalledTimes(EXPECTED_GREEN_OBJECTS.length)
-      EXPECTED_GREEN_OBJECTS.forEach(({name, kind}) => {
-         expect(deleteSpy).toHaveBeenCalledWith(
+      await bgHelper.deleteObjects(kubectl, deleteList, TEST_TIMEOUT)
+
+      expect(deleteMock).toHaveBeenCalledTimes(deleteList.length)
+      deleteList.forEach(({name, kind}) => {
+         expect(deleteMock).toHaveBeenCalledWith(
             [kind, name],
             undefined,
             TEST_TIMEOUT
@@ -135,7 +132,7 @@ describe('bluegreenhelper functions', () => {
    })
 
    test('correctly makes labeled workloads', async () => {
-      const kubectlApplySpy = jest.spyOn(kubectl, 'apply').mockResolvedValue({
+      const kubectlApplySpy = vi.spyOn(kubectl, 'apply').mockResolvedValue({
          stdout: 'deployment.apps/nginx-deployment created',
          stderr: '',
          exitCode: 0
@@ -179,9 +176,9 @@ describe('bluegreenhelper functions', () => {
          exitCode: 0
       }
 
-      jest
-         .spyOn(kubectl, 'getResource')
-         .mockImplementation(() => Promise.resolve(mockExecOutput))
+      vi.spyOn(kubectl, 'getResource').mockImplementation(() =>
+         Promise.resolve(mockExecOutput)
+      )
       const fetched = await fetchResource(
          kubectl,
          'nginx-deployment',
@@ -209,12 +206,12 @@ describe('bluegreenhelper functions', () => {
       ]
 
       for (const testCase of errorTestCases) {
-         const spy = jest.spyOn(kubectl, 'getResource')
+         const spy = vi.spyOn(kubectl, 'getResource')
 
          if (testCase.mockOutput) {
             spy.mockImplementation(() => Promise.resolve(testCase.mockOutput))
          } else {
-            spy.mockImplementation()
+            spy.mockResolvedValue(null)
          }
 
          const fetched = await fetchResource(
@@ -235,12 +232,13 @@ describe('bluegreenhelper functions', () => {
          stderr: ''
       } as ExecOutput
 
-      jest.spyOn(kubectl, 'getResource').mockResolvedValue(mockExecOutput)
-      jest
-         .spyOn(manifestUpdateUtils, 'UnsetClusterSpecificDetails')
-         .mockImplementation(() => {
-            throw new Error('test error')
-         })
+      vi.spyOn(kubectl, 'getResource').mockResolvedValue(mockExecOutput)
+      vi.spyOn(
+         manifestUpdateUtils,
+         'UnsetClusterSpecificDetails'
+      ).mockImplementation(() => {
+         throw new Error('test error')
+      })
 
       expect(
          await fetchResource(kubectl, 'nginx-deployment', 'Deployment')
@@ -267,7 +265,7 @@ describe('bluegreenhelper functions', () => {
 
    describe('deployObjects', () => {
       let mockObjects: any[]
-      let kubectlApplySpy: jest.SpyInstance
+      let kubectlApplySpy: MockInstance
 
       const mockSuccessResult: ExecOutput = {
          stdout: 'deployment.apps/nginx-deployment created',
@@ -285,11 +283,11 @@ describe('bluegreenhelper functions', () => {
          // //@ts-ignore
          // Kubectl.mockClear()
          mockObjects = [testObjects.deploymentEntityList[0]]
-         kubectlApplySpy = jest.spyOn(kubectl, 'apply')
+         kubectlApplySpy = vi.spyOn(kubectl, 'apply')
       })
 
       afterEach(() => {
-         jest.clearAllMocks()
+         vi.clearAllMocks()
       })
 
       it('should return execution result and manifest files when kubectl apply succeeds', async () => {

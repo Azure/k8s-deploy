@@ -1,6 +1,6 @@
 import * as core from '@actions/core'
-import {Kubectl} from '../../types/kubectl'
-import * as kubectlUtils from '../../utilities/trafficSplitUtils'
+import {Kubectl} from '../../types/kubectl.js'
+import * as kubectlUtils from '../../utilities/trafficSplitUtils.js'
 import {
    deleteObjects,
    deployObjects,
@@ -11,15 +11,15 @@ import {
    GREEN_SUFFIX,
    NONE_LABEL_VALUE,
    STABLE_SUFFIX
-} from './blueGreenHelper'
-import {BlueGreenDeployment} from '../../types/blueGreenTypes'
+} from './blueGreenHelper.js'
+import {BlueGreenDeployment} from '../../types/blueGreenTypes.js'
 import {
    K8sDeleteObject,
    K8sObject,
    TrafficSplitObject
-} from '../../types/k8sObject'
-import {DeployResult} from '../../types/deployResult'
-import {inputAnnotations} from '../../inputUtils'
+} from '../../types/k8sObject.js'
+import {DeployResult} from '../../types/deployResult.js'
+import {inputAnnotations} from '../../inputUtils.js'
 
 export const TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX = '-trafficsplit'
 export const TRAFFIC_SPLIT_OBJECT = 'TrafficSplit'

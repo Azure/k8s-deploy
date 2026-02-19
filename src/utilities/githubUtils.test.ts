@@ -2,7 +2,7 @@ import {
    getNormalizedPath,
    isHttpUrl,
    normalizeWorkflowStrLabel
-} from './githubUtils'
+} from './githubUtils.js'
 
 describe('Github utils', () => {
    it('normalizes workflow string labels', () => {

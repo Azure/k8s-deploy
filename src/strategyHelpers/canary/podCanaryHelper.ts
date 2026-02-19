@@ -1,15 +1,15 @@
-import {Kubectl} from '../../types/kubectl'
+import {Kubectl} from '../../types/kubectl.js'
 import * as core from '@actions/core'
 import * as fs from 'fs'
 import * as yaml from 'js-yaml'
 
-import * as fileHelper from '../../utilities/fileUtils'
-import * as canaryDeploymentHelper from './canaryHelper'
-import {isDeploymentEntity} from '../../types/kubernetesTypes'
-import {getReplicaCount} from '../../utilities/manifestUpdateUtils'
-import {DeployResult} from '../../types/deployResult'
-import {K8sObject} from '../../types/k8sObject'
-import {checkForErrors} from '../../utilities/kubectlUtils'
+import * as fileHelper from '../../utilities/fileUtils.js'
+import * as canaryDeploymentHelper from './canaryHelper.js'
+import {isDeploymentEntity} from '../../types/kubernetesTypes.js'
+import {getReplicaCount} from '../../utilities/manifestUpdateUtils.js'
+import {DeployResult} from '../../types/deployResult.js'
+import {K8sObject} from '../../types/k8sObject.js'
+import {checkForErrors} from '../../utilities/kubectlUtils.js'
 
 export async function deployPodCanary(
    filePaths: string[],

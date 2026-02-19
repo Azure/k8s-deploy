@@ -1,4 +1,4 @@
-import {parseRouteStrategy, RouteStrategy} from './routeStrategy'
+import {parseRouteStrategy, RouteStrategy} from './routeStrategy.js'
 
 describe('Route strategy type', () => {
    test('it has required values', () => {

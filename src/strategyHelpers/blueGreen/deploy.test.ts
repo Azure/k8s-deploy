@@ -1,21 +1,23 @@
-import {BlueGreenDeployment} from '../../types/blueGreenTypes'
+import {vi} from 'vitest'
+import type {MockInstance} from 'vitest'
+import {BlueGreenDeployment} from '../../types/blueGreenTypes.js'
 import {
    deployBlueGreen,
    deployBlueGreenIngress,
    deployBlueGreenService,
    deployBlueGreenSMI
-} from './deploy'
-import * as routeTester from './route'
-import {Kubectl} from '../../types/kubectl'
-import {RouteStrategy} from '../../types/routeStrategy'
-import * as TSutils from '../../utilities/trafficSplitUtils'
-import * as bgHelper from './blueGreenHelper'
-import * as smiHelper from './smiBlueGreenHelper'
+} from './deploy.js'
+import * as routeTester from './route.js'
+import {Kubectl} from '../../types/kubectl.js'
+import {RouteStrategy} from '../../types/routeStrategy.js'
+import * as TSutils from '../../utilities/trafficSplitUtils.js'
+import * as bgHelper from './blueGreenHelper.js'
+import * as smiHelper from './smiBlueGreenHelper.js'
 import {ExecOutput} from '@actions/exec'
 
 const ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
 
-jest.mock('../../types/kubectl')
+vi.mock('../../types/kubectl')
 
 // Shared variables and mock objects used across all test suites
 const mockDeployResult = {
@@ -30,7 +32,7 @@ const mockBgDeployment: BlueGreenDeployment = {
 
 describe('deploy tests', () => {
    let kubectl: Kubectl
-   let kubectlApplySpy: jest.SpyInstance
+   let kubectlApplySpy: MockInstance
 
    const mockSuccessResult: ExecOutput = {
       stdout: 'deployment.apps/nginx-deployment created',
@@ -45,21 +47,20 @@ describe('deploy tests', () => {
    }
 
    beforeEach(() => {
-      //@ts-ignore
-      Kubectl.mockClear()
+      vi.mocked(Kubectl).mockClear()
       kubectl = new Kubectl('')
-      kubectlApplySpy = jest.spyOn(kubectl, 'apply')
+      kubectlApplySpy = vi.spyOn(kubectl, 'apply')
    })
 
    test('correctly determines deploy type and acts accordingly', async () => {
       kubectlApplySpy.mockResolvedValue(mockSuccessResult)
 
-      jest
-         .spyOn(routeTester, 'routeBlueGreenForDeploy')
-         .mockImplementation(() => Promise.resolve(mockBgDeployment))
-      jest
-         .spyOn(TSutils, 'getTrafficSplitAPIVersion')
-         .mockImplementation(() => Promise.resolve('v1alpha3'))
+      vi.spyOn(routeTester, 'routeBlueGreenForDeploy').mockImplementation(() =>
+         Promise.resolve(mockBgDeployment)
+      )
+      vi.spyOn(TSutils, 'getTrafficSplitAPIVersion').mockImplementation(() =>
+         Promise.resolve('v1alpha3')
+      )
 
       const ingressResult = await deployBlueGreen(
          kubectl,
@@ -112,12 +113,12 @@ describe('deploy tests', () => {
          fn: () =>
             deployBlueGreen(kubectl, ingressFilepath, RouteStrategy.INGRESS),
          setup: () => {
-            jest
-               .spyOn(routeTester, 'routeBlueGreenForDeploy')
-               .mockImplementation(() => Promise.resolve(mockBgDeployment))
-            jest
-               .spyOn(TSutils, 'getTrafficSplitAPIVersion')
-               .mockImplementation(() => Promise.resolve('v1alpha3'))
+            vi.spyOn(routeTester, 'routeBlueGreenForDeploy').mockImplementation(
+               () => Promise.resolve(mockBgDeployment)
+            )
+            vi.spyOn(TSutils, 'getTrafficSplitAPIVersion').mockImplementation(
+               () => Promise.resolve('v1alpha3')
+            )
          }
       },
       {
@@ -125,24 +126,24 @@ describe('deploy tests', () => {
          fn: () =>
             deployBlueGreen(kubectl, ingressFilepath, RouteStrategy.SERVICE),
          setup: () => {
-            jest
-               .spyOn(routeTester, 'routeBlueGreenForDeploy')
-               .mockImplementation(() => Promise.resolve(mockBgDeployment))
-            jest
-               .spyOn(TSutils, 'getTrafficSplitAPIVersion')
-               .mockImplementation(() => Promise.resolve('v1alpha3'))
+            vi.spyOn(routeTester, 'routeBlueGreenForDeploy').mockImplementation(
+               () => Promise.resolve(mockBgDeployment)
+            )
+            vi.spyOn(TSutils, 'getTrafficSplitAPIVersion').mockImplementation(
+               () => Promise.resolve('v1alpha3')
+            )
          }
       },
       {
          name: 'should throw error when kubectl apply fails during blue/green deployment with SMI strategy',
          fn: () => deployBlueGreen(kubectl, ingressFilepath, RouteStrategy.SMI),
          setup: () => {
-            jest
-               .spyOn(routeTester, 'routeBlueGreenForDeploy')
-               .mockImplementation(() => Promise.resolve(mockBgDeployment))
-            jest
-               .spyOn(TSutils, 'getTrafficSplitAPIVersion')
-               .mockImplementation(() => Promise.resolve('v1alpha3'))
+            vi.spyOn(routeTester, 'routeBlueGreenForDeploy').mockImplementation(
+               () => Promise.resolve(mockBgDeployment)
+            )
+            vi.spyOn(TSutils, 'getTrafficSplitAPIVersion').mockImplementation(
+               () => Promise.resolve('v1alpha3')
+            )
          }
       },
       {
@@ -181,8 +182,7 @@ describe('deploy timeout tests', () => {
    let kubectl: Kubectl
 
    beforeEach(() => {
-      //@ts-ignore
-      Kubectl.mockClear()
+      vi.mocked(Kubectl).mockClear()
       kubectl = new Kubectl('')
    })
 
@@ -190,16 +190,16 @@ describe('deploy timeout tests', () => {
       const timeout = '300s'
 
       // Mock the helper functions that are actually called
-      const deployWithLabelSpy = jest
+      const deployWithLabelSpy = vi
          .spyOn(bgHelper, 'deployWithLabel')
          .mockResolvedValue(mockBgDeployment)
-      const deployObjectsSpy = jest
+      const deployObjectsSpy = vi
          .spyOn(bgHelper, 'deployObjects')
          .mockResolvedValue(mockDeployResult)
-      const setupSMISpy = jest
+      const setupSMISpy = vi
          .spyOn(smiHelper, 'setupSMI')
          .mockResolvedValue(mockBgDeployment)
-      const routeSpy = jest
+      const routeSpy = vi
          .spyOn(routeTester, 'routeBlueGreenForDeploy')
          .mockResolvedValue(mockBgDeployment)
 
@@ -258,10 +258,10 @@ describe('deploy timeout tests', () => {
       const timeout = '240s'
 
       // Mock the dependencies
-      const deployWithLabelSpy = jest
+      const deployWithLabelSpy = vi
          .spyOn(bgHelper, 'deployWithLabel')
          .mockResolvedValue(mockBgDeployment)
-      const deployObjectsSpy = jest
+      const deployObjectsSpy = vi
          .spyOn(bgHelper, 'deployObjects')
          .mockResolvedValue(mockDeployResult)
 
@@ -290,10 +290,10 @@ describe('deploy timeout tests', () => {
       const timeout = '180s'
 
       // Mock the dependencies
-      const deployWithLabelSpy = jest
+      const deployWithLabelSpy = vi
          .spyOn(bgHelper, 'deployWithLabel')
          .mockResolvedValue(mockBgDeployment)
-      const deployObjectsSpy = jest
+      const deployObjectsSpy = vi
          .spyOn(bgHelper, 'deployObjects')
          .mockResolvedValue(mockDeployResult)
 
@@ -322,13 +322,13 @@ describe('deploy timeout tests', () => {
       const timeout = '360s'
 
       // Mock the dependencies
-      const setupSMISpy = jest
+      const setupSMISpy = vi
          .spyOn(smiHelper, 'setupSMI')
          .mockResolvedValue(mockBgDeployment)
-      const deployObjectsSpy = jest
+      const deployObjectsSpy = vi
          .spyOn(bgHelper, 'deployObjects')
          .mockResolvedValue(mockDeployResult)
-      const deployWithLabelSpy = jest
+      const deployWithLabelSpy = vi
          .spyOn(bgHelper, 'deployWithLabel')
          .mockResolvedValue(mockBgDeployment)
 
@@ -354,10 +354,10 @@ describe('deploy timeout tests', () => {
    })
 
    test('deploy functions without timeout should pass undefined', async () => {
-      const deployWithLabelSpy = jest
+      const deployWithLabelSpy = vi
          .spyOn(bgHelper, 'deployWithLabel')
          .mockResolvedValue(mockBgDeployment)
-      const deployObjectsSpy = jest
+      const deployObjectsSpy = vi
          .spyOn(bgHelper, 'deployObjects')
          .mockResolvedValue(mockDeployResult)
 

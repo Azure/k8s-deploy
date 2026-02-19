@@ -1,9 +1,10 @@
-import {parseDuration} from './durationUtils'
+import {vi, type Mocked} from 'vitest'
+import {parseDuration} from './durationUtils.js'
 import * as core from '@actions/core'
 
 // Mock core.debug
-jest.mock('@actions/core')
-const mockCore = core as jest.Mocked<typeof core>
+vi.mock('@actions/core')
+const mockCore = core as Mocked<typeof core>
 
 // Test data constants
 const VALID_TIMEOUTS = {
@@ -46,7 +47,7 @@ const expectInvalidTimeout = (input: string, expectedError: string) => {
 
 describe('validateTimeoutDuration', () => {
    beforeEach(() => {
-      jest.clearAllMocks()
+      vi.clearAllMocks()
    })
 
    describe('valid timeout formats', () => {
@@ -90,7 +91,7 @@ describe('validateTimeoutDuration', () => {
             'No unit specified for timeout "5", assuming minutes'
          )
 
-         jest.clearAllMocks()
+         vi.clearAllMocks()
 
          parseDuration('30s')
          expect(mockCore.debug).not.toHaveBeenCalled()

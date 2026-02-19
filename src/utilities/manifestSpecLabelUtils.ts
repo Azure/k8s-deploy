@@ -3,7 +3,7 @@ import {
    isServiceEntity,
    KubernetesWorkload,
    NullInputObjectError
-} from '../types/kubernetesTypes'
+} from '../types/kubernetesTypes.js'
 
 export function updateSpecLabels(
    inputObject: any,

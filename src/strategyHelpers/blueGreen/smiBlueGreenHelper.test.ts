@@ -1,15 +1,16 @@
-import {TrafficSplitObject} from '../../types/k8sObject'
-import {Kubectl} from '../../types/kubectl'
-import * as fileHelper from '../../utilities/fileUtils'
-import * as TSutils from '../../utilities/trafficSplitUtils'
+import {vi} from 'vitest'
+import {TrafficSplitObject} from '../../types/k8sObject.js'
+import {Kubectl} from '../../types/kubectl.js'
+import * as fileHelper from '../../utilities/fileUtils.js'
+import * as TSutils from '../../utilities/trafficSplitUtils.js'
 
-import {BlueGreenManifests} from '../../types/blueGreenTypes'
+import {BlueGreenManifests} from '../../types/blueGreenTypes.js'
 import {
    BLUE_GREEN_VERSION_LABEL,
    getManifestObjects,
    GREEN_LABEL_VALUE,
    NONE_LABEL_VALUE
-} from './blueGreenHelper'
+} from './blueGreenHelper.js'
 
 import {
    cleanupSMI,
@@ -21,10 +22,10 @@ import {
    setupSMI,
    TRAFFIC_SPLIT_OBJECT,
    validateTrafficSplitsState
-} from './smiBlueGreenHelper'
-import * as bgHelper from './blueGreenHelper'
+} from './smiBlueGreenHelper.js'
+import * as bgHelper from './blueGreenHelper.js'
 
-jest.mock('../../types/kubectl')
+vi.mock('../../types/kubectl')
 
 const kc = new Kubectl('')
 const ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
@@ -68,21 +69,20 @@ const mockTsObject: TrafficSplitObject = {
 describe('SMI Helper tests', () => {
    let testObjects: BlueGreenManifests
    beforeEach(() => {
-      //@ts-ignore
-      Kubectl.mockClear()
+      vi.mocked(Kubectl).mockClear()
 
-      jest
-         .spyOn(TSutils, 'getTrafficSplitAPIVersion')
-         .mockImplementation(() => Promise.resolve(''))
+      vi.spyOn(TSutils, 'getTrafficSplitAPIVersion').mockImplementation(() =>
+         Promise.resolve('')
+      )
 
       testObjects = getManifestObjects(ingressFilepath)
-      jest
-         .spyOn(fileHelper, 'writeObjectsToFile')
-         .mockImplementationOnce(() => [''])
+      vi.spyOn(fileHelper, 'writeObjectsToFile').mockImplementationOnce(() => [
+         ''
+      ])
    })
 
    test('setupSMI tests', async () => {
-      jest.spyOn(kc, 'apply').mockResolvedValue(mockSuccessResult)
+      vi.spyOn(kc, 'apply').mockResolvedValue(mockSuccessResult)
 
       const smiResults = await setupSMI(kc, testObjects.serviceEntityList)
 
@@ -174,9 +174,9 @@ describe('SMI Helper tests', () => {
    })
 
    test('validateTrafficSplitsState', async () => {
-      jest
-         .spyOn(bgHelper, 'fetchResource')
-         .mockImplementation(() => Promise.resolve(mockTsObject))
+      vi.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
+         Promise.resolve(mockTsObject)
+      )
 
       let valResult = await validateTrafficSplitsState(
          kc,
@@ -187,9 +187,9 @@ describe('SMI Helper tests', () => {
 
       const mockTsCopy = JSON.parse(JSON.stringify(mockTsObject))
       mockTsCopy.spec.backends[0].weight = MAX_VAL
-      jest
-         .spyOn(bgHelper, 'fetchResource')
-         .mockImplementation(() => Promise.resolve(mockTsCopy))
+      vi.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
+         Promise.resolve(mockTsCopy)
+      )
 
       valResult = await validateTrafficSplitsState(
          kc,
@@ -197,7 +197,7 @@ describe('SMI Helper tests', () => {
       )
       expect(valResult).toBe(false)
 
-      jest.spyOn(bgHelper, 'fetchResource').mockImplementation()
+      vi.spyOn(bgHelper, 'fetchResource').mockResolvedValue(null)
       valResult = await validateTrafficSplitsState(
          kc,
          testObjects.serviceEntityList
@@ -218,7 +218,7 @@ describe('SMI Helper tests', () => {
          name: 'should throw error when kubectl apply fails during SMI setup',
          fn: () => setupSMI(kc, testObjects.serviceEntityList),
          setup: () => {
-            jest.spyOn(kc, 'apply').mockResolvedValue(mockFailureResult)
+            vi.spyOn(kc, 'apply').mockResolvedValue(mockFailureResult)
          }
       }
    ])('$name', async ({fn, setup}) => {
@@ -229,7 +229,7 @@ describe('SMI Helper tests', () => {
 
    // Timeout-specific tests
    test('setupSMI with timeout test', async () => {
-      const deployObjectsSpy = jest
+      const deployObjectsSpy = vi
          .spyOn(bgHelper, 'deployObjects')
          .mockResolvedValue({
             execResult: mockSuccessResult,
@@ -257,7 +257,7 @@ describe('SMI Helper tests', () => {
    })
 
    test('createTrafficSplitObject with timeout test', async () => {
-      const deleteObjectsSpy = jest
+      const deleteObjectsSpy = vi
          .spyOn(bgHelper, 'deleteObjects')
          .mockResolvedValue()
 
@@ -288,7 +288,7 @@ describe('SMI Helper tests', () => {
    })
 
    test('createTrafficSplitObject with GREEN_LABEL_VALUE and timeout test', async () => {
-      const deleteObjectsSpy = jest
+      const deleteObjectsSpy = vi
          .spyOn(bgHelper, 'deleteObjects')
          .mockResolvedValue()
 
@@ -321,7 +321,7 @@ describe('SMI Helper tests', () => {
    })
 
    test('cleanupSMI with timeout test', async () => {
-      const deleteObjectsSpy = jest
+      const deleteObjectsSpy = vi
          .spyOn(bgHelper, 'deleteObjects')
          .mockResolvedValue()
 
@@ -352,7 +352,7 @@ describe('SMI Helper tests', () => {
    })
 
    test('setupSMI without timeout test', async () => {
-      const deployObjectsSpy = jest
+      const deployObjectsSpy = vi
          .spyOn(bgHelper, 'deployObjects')
          .mockResolvedValue({
             execResult: mockSuccessResult,
@@ -375,7 +375,7 @@ describe('SMI Helper tests', () => {
    })
 
    test('createTrafficSplitObject without timeout test', async () => {
-      const deleteObjectsSpy = jest
+      const deleteObjectsSpy = vi
          .spyOn(bgHelper, 'deleteObjects')
          .mockResolvedValue()
 
@@ -398,7 +398,7 @@ describe('SMI Helper tests', () => {
    })
 
    test('cleanupSMI without timeout test', async () => {
-      const deleteObjectsSpy = jest
+      const deleteObjectsSpy = vi
          .spyOn(bgHelper, 'deleteObjects')
          .mockResolvedValue()
 

@@ -2,25 +2,25 @@ import * as core from '@actions/core'
 import * as fs from 'fs'
 import * as yaml from 'js-yaml'
 import * as path from 'path'
-import * as fileHelper from './fileUtils'
-import {moveFileToTmpDir} from './fileUtils'
+import * as fileHelper from './fileUtils.js'
+import {moveFileToTmpDir} from './fileUtils.js'
 import {
    InputObjectKindNotDefinedError,
    InputObjectMetadataNotDefinedError,
    isWorkloadEntity,
    KubernetesWorkload,
    NullInputObjectError
-} from '../types/kubernetesTypes'
+} from '../types/kubernetesTypes.js'
 import {
    getSpecSelectorLabels,
    setSpecSelectorLabels
-} from './manifestSpecLabelUtils'
+} from './manifestSpecLabelUtils.js'
 import {
    getImagePullSecrets,
    setImagePullSecrets
-} from './manifestPullSecretUtils'
-import {Resource} from '../types/kubectl'
-import {K8sObject} from '../types/k8sObject'
+} from './manifestPullSecretUtils.js'
+import {Resource} from '../types/kubectl.js'
+import {K8sObject} from '../types/k8sObject.js'
 
 export function updateManifestFiles(manifestFilePaths: string[]) {
    if (manifestFilePaths?.length === 0) {

@@ -1,4 +1,4 @@
-import {Kubectl} from '../types/kubectl'
+import {Kubectl} from '../types/kubectl.js'
 
 const trafficSplitAPIVersionPrefix = 'split.smi-spec.io'
 

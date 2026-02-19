@@ -1,4 +1,7 @@
-import {parseTrafficSplitMethod, TrafficSplitMethod} from './trafficSplitMethod'
+import {
+   parseTrafficSplitMethod,
+   TrafficSplitMethod
+} from './trafficSplitMethod.js'
 
 describe('Traffic split method type', () => {
    test('it has required values', () => {

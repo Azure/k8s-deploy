@@ -1,4 +1,4 @@
-import {Kubectl} from '../../types/kubectl'
+import {Kubectl} from '../../types/kubectl.js'
 import * as fs from 'fs'
 import * as yaml from 'js-yaml'
 import * as core from '@actions/core'
@@ -7,15 +7,15 @@ import {
    isDeploymentEntity,
    isServiceEntity,
    KubernetesWorkload
-} from '../../types/kubernetesTypes'
-import * as utils from '../../utilities/manifestUpdateUtils'
+} from '../../types/kubernetesTypes.js'
+import * as utils from '../../utilities/manifestUpdateUtils.js'
 import {
    updateObjectAnnotations,
    updateObjectLabels,
    updateSelectorLabels
-} from '../../utilities/manifestUpdateUtils'
-import {updateSpecLabels} from '../../utilities/manifestSpecLabelUtils'
-import {checkForErrors} from '../../utilities/kubectlUtils'
+} from '../../utilities/manifestUpdateUtils.js'
+import {updateSpecLabels} from '../../utilities/manifestSpecLabelUtils.js'
+import {checkForErrors} from '../../utilities/kubectlUtils.js'
 
 export const CANARY_VERSION_LABEL = 'workflow/version'
 const BASELINE_SUFFIX = '-baseline'

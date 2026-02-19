@@ -1,10 +1,10 @@
-import {Kubectl} from './kubectl'
+import {Kubectl} from './kubectl.js'
 import minimist from 'minimist'
 import {ExecOptions, ExecOutput, getExecOutput} from '@actions/exec'
 import * as core from '@actions/core'
 import fs from 'node:fs'
 import * as path from 'path'
-import {getTempDirectory} from '../utilities/fileUtils'
+import {getTempDirectory} from '../utilities/fileUtils.js'
 
 export class PrivateKubectl extends Kubectl {
    protected async execute(args: string[], silent: boolean = false) {

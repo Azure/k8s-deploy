@@ -1,13 +1,34 @@
+import {vi} from 'vitest'
+import type {MockInstance} from 'vitest'
+vi.mock('@actions/core', async (importOriginal) => {
+   const actual: any = await importOriginal()
+   return {
+      ...actual,
+      getInput: vi.fn().mockReturnValue(''),
+      debug: vi.fn(),
+      info: vi.fn(),
+      warning: vi.fn(),
+      error: vi.fn(),
+      setFailed: vi.fn(),
+      setOutput: vi.fn(),
+      group: vi
+         .fn()
+         .mockImplementation(
+            async (_name: string, fn: () => Promise<void>) => await fn()
+         )
+   }
+})
+
 import * as core from '@actions/core'
 import * as fs from 'fs'
-import {Kubectl} from '../../types/kubectl'
+import {Kubectl} from '../../types/kubectl.js'
 import {
    deploySMICanary,
    redirectTrafficToCanaryDeployment,
    redirectTrafficToStableDeployment
-} from './smiCanaryHelper'
+} from './smiCanaryHelper.js'
 
-jest.mock('../../types/kubectl')
+vi.mock('../../types/kubectl')
 
 const kc = new Kubectl('')
 
@@ -40,22 +61,21 @@ const TIMEOUT_240S = '240s'
 
 describe('SMI Canary Helper tests', () => {
    let mockFilePaths: string[]
-   let kubectlApplySpy: jest.SpyInstance
-   let kubectlExecuteCommandSpy: jest.SpyInstance
+   let kubectlApplySpy: MockInstance
+   let kubectlExecuteCommandSpy: MockInstance
 
    beforeEach(() => {
-      //@ts-ignore
-      Kubectl.mockClear()
-      jest.restoreAllMocks()
+      vi.mocked(Kubectl).mockClear()
+      vi.restoreAllMocks()
 
       mockFilePaths = testManifestFiles
-      kubectlApplySpy = jest.spyOn(kc, 'apply')
-      kubectlExecuteCommandSpy = jest
+      kubectlApplySpy = vi.spyOn(kc, 'apply')
+      kubectlExecuteCommandSpy = vi
          .spyOn(kc, 'executeCommand')
          .mockResolvedValue(mockExecuteCommandResult)
 
       // Mock core.getInput with default values
-      jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
+      vi.spyOn(core, 'getInput').mockImplementation((name: string) => {
          switch (name) {
             case 'percentage':
                return '50'
@@ -72,7 +92,7 @@ describe('SMI Canary Helper tests', () => {
    })
 
    afterEach(() => {
-      jest.restoreAllMocks()
+      vi.restoreAllMocks()
       kubectlApplySpy.mockClear()
    })
 
@@ -106,7 +126,7 @@ describe('SMI Canary Helper tests', () => {
       })
 
       test('should handle custom replica count from input', async () => {
-         jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
+         vi.spyOn(core, 'getInput').mockImplementation((name: string) => {
             switch (name) {
                case 'baseline-and-canary-replicas':
                   return VALID_REPLICA_COUNT.toString()

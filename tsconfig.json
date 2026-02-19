@@ -1,8 +1,15 @@
 {
    "compilerOptions": {
-      "target": "ES6",
-      "module": "commonjs",
-      "esModuleInterop": true
+      "target": "ES2020",
+      "module": "NodeNext",
+      "moduleResolution": "NodeNext",
+      "types": ["vitest/globals"],
+      "esModuleInterop": true,
+      "strict": false,
+      "skipLibCheck": true,
+      "resolveJsonModule": true,
+      "declaration": false,
+      "sourceMap": true
    },
-   "exclude": ["node_modules", "test", "src/**/*.test.ts"]
+   "exclude": ["node_modules", "test", "lib"]
 }
