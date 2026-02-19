@@ -1,44 +1,44 @@
 import * as core from '@actions/core'
-import * as canaryDeploymentHelper from '../strategyHelpers/canary/canaryHelper'
-import * as SMICanaryDeploymentHelper from '../strategyHelpers/canary/smiCanaryHelper'
-import * as PodCanaryHelper from '../strategyHelpers/canary/podCanaryHelper'
+import * as canaryDeploymentHelper from '../strategyHelpers/canary/canaryHelper.js'
+import * as SMICanaryDeploymentHelper from '../strategyHelpers/canary/smiCanaryHelper.js'
+import * as PodCanaryHelper from '../strategyHelpers/canary/podCanaryHelper.js'
 import {
    getResources,
    updateManifestFiles
-} from '../utilities/manifestUpdateUtils'
-import {annotateAndLabelResources} from '../strategyHelpers/deploymentHelper'
-import * as models from '../types/kubernetesTypes'
-import * as KubernetesManifestUtility from '../utilities/manifestStabilityUtils'
+} from '../utilities/manifestUpdateUtils.js'
+import {annotateAndLabelResources} from '../strategyHelpers/deploymentHelper.js'
+import * as models from '../types/kubernetesTypes.js'
+import * as KubernetesManifestUtility from '../utilities/manifestStabilityUtils.js'
 import {
    deleteGreenObjects,
    getManifestObjects,
    NONE_LABEL_VALUE
-} from '../strategyHelpers/blueGreen/blueGreenHelper'
+} from '../strategyHelpers/blueGreen/blueGreenHelper.js'
 
-import {BlueGreenManifests} from '../types/blueGreenTypes'
-import {DeployResult} from '../types/deployResult'
+import {BlueGreenManifests} from '../types/blueGreenTypes.js'
+import {DeployResult} from '../types/deployResult.js'
 
 import {
    promoteBlueGreenIngress,
    promoteBlueGreenService,
    promoteBlueGreenSMI
-} from '../strategyHelpers/blueGreen/promote'
+} from '../strategyHelpers/blueGreen/promote.js'
 
 import {
    routeBlueGreenService,
    routeBlueGreenIngressUnchanged,
    routeBlueGreenSMI
-} from '../strategyHelpers/blueGreen/route'
+} from '../strategyHelpers/blueGreen/route.js'
 
-import {cleanupSMI} from '../strategyHelpers/blueGreen/smiBlueGreenHelper'
-import {Kubectl, Resource} from '../types/kubectl'
-import {DeploymentStrategy} from '../types/deploymentStrategy'
+import {cleanupSMI} from '../strategyHelpers/blueGreen/smiBlueGreenHelper.js'
+import {Kubectl, Resource} from '../types/kubectl.js'
+import {DeploymentStrategy} from '../types/deploymentStrategy.js'
 import {
    parseTrafficSplitMethod,
    TrafficSplitMethod
-} from '../types/trafficSplitMethod'
-import {parseRouteStrategy, RouteStrategy} from '../types/routeStrategy'
-import {ClusterType} from '../inputUtils'
+} from '../types/trafficSplitMethod.js'
+import {parseRouteStrategy, RouteStrategy} from '../types/routeStrategy.js'
+import {ClusterType} from '../inputUtils.js'
 
 export async function promote(
    kubectl: Kubectl,

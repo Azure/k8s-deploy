@@ -1,4 +1,4 @@
-import {KubernetesWorkload} from '../types/kubernetesTypes'
+import {KubernetesWorkload} from '../types/kubernetesTypes.js'
 
 export function getImagePullSecrets(inputObject: any) {
    const kind = inputObject?.kind?.toLowerCase()

@@ -1,41 +1,41 @@
 import * as fs from 'fs'
 import * as yaml from 'js-yaml'
-import * as canaryDeploymentHelper from './canary/canaryHelper'
-import * as models from '../types/kubernetesTypes'
-import {isDeploymentEntity} from '../types/kubernetesTypes'
-import * as fileHelper from '../utilities/fileUtils'
-import * as KubernetesManifestUtility from '../utilities/manifestStabilityUtils'
-import {Kubectl, Resource} from '../types/kubectl'
+import * as canaryDeploymentHelper from './canary/canaryHelper.js'
+import * as models from '../types/kubernetesTypes.js'
+import {isDeploymentEntity} from '../types/kubernetesTypes.js'
+import * as fileHelper from '../utilities/fileUtils.js'
+import * as KubernetesManifestUtility from '../utilities/manifestStabilityUtils.js'
+import {Kubectl, Resource} from '../types/kubectl.js'
 
-import {deployPodCanary} from './canary/podCanaryHelper'
-import {deploySMICanary} from './canary/smiCanaryHelper'
-import {DeploymentConfig} from '../types/deploymentConfig'
-import {deployBlueGreen} from './blueGreen/deploy'
-import {DeploymentStrategy} from '../types/deploymentStrategy'
+import {deployPodCanary} from './canary/podCanaryHelper.js'
+import {deploySMICanary} from './canary/smiCanaryHelper.js'
+import {DeploymentConfig} from '../types/deploymentConfig.js'
+import {deployBlueGreen} from './blueGreen/deploy.js'
+import {DeploymentStrategy} from '../types/deploymentStrategy.js'
 import * as core from '@actions/core'
 import {
    parseTrafficSplitMethod,
    TrafficSplitMethod
-} from '../types/trafficSplitMethod'
-import {parseRouteStrategy} from '../types/routeStrategy'
+} from '../types/trafficSplitMethod.js'
+import {parseRouteStrategy} from '../types/routeStrategy.js'
 import {ExecOutput} from '@actions/exec'
 import {
    getWorkflowAnnotationKeyLabel,
    getWorkflowAnnotations,
    cleanLabel
-} from '../utilities/workflowAnnotationUtils'
+} from '../utilities/workflowAnnotationUtils.js'
 import {
    annotateChildPods,
    checkForErrors,
    getLastSuccessfulRunSha
-} from '../utilities/kubectlUtils'
+} from '../utilities/kubectlUtils.js'
 import {
    getWorkflowFilePath,
    normalizeWorkflowStrLabel
-} from '../utilities/githubUtils'
-import {getDeploymentConfig} from '../utilities/dockerUtils'
-import {DeployResult} from '../types/deployResult'
-import {ClusterType} from '../inputUtils'
+} from '../utilities/githubUtils.js'
+import {getDeploymentConfig} from '../utilities/dockerUtils.js'
+import {DeployResult} from '../types/deployResult.js'
+import {ClusterType} from '../inputUtils.js'
 
 export async function deployManifests(
    files: string[],

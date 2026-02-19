@@ -1,10 +1,10 @@
 import * as core from '@actions/core'
-import * as KubernetesConstants from '../types/kubernetesTypes'
-import {Kubectl, Resource} from '../types/kubectl'
-import {checkForErrors} from './kubectlUtils'
-import {sleep} from './timeUtils'
-import {ResourceTypeFleet} from '../actions/deploy'
-import {ClusterType} from '../inputUtils'
+import * as KubernetesConstants from '../types/kubernetesTypes.js'
+import {Kubectl, Resource} from '../types/kubectl.js'
+import {checkForErrors} from './kubectlUtils.js'
+import {sleep} from './timeUtils.js'
+import {ResourceTypeFleet} from '../actions/deploy.js'
+import {ClusterType} from '../inputUtils.js'
 
 const IS_SILENT = false
 const POD = 'pod'

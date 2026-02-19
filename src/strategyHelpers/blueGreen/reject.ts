@@ -1,14 +1,14 @@
-import {K8sDeleteObject} from '../../types/k8sObject'
-import {Kubectl} from '../../types/kubectl'
+import {K8sDeleteObject} from '../../types/k8sObject.js'
+import {Kubectl} from '../../types/kubectl.js'
 import {
    BlueGreenDeployment,
    BlueGreenManifests,
    BlueGreenRejectResult
-} from '../../types/blueGreenTypes'
-import {deleteGreenObjects, NONE_LABEL_VALUE} from './blueGreenHelper'
-import {routeBlueGreenSMI} from './route'
-import {cleanupSMI} from './smiBlueGreenHelper'
-import {routeBlueGreenIngressUnchanged, routeBlueGreenService} from './route'
+} from '../../types/blueGreenTypes.js'
+import {deleteGreenObjects, NONE_LABEL_VALUE} from './blueGreenHelper.js'
+import {routeBlueGreenSMI} from './route.js'
+import {cleanupSMI} from './smiBlueGreenHelper.js'
+import {routeBlueGreenIngressUnchanged, routeBlueGreenService} from './route.js'
 
 export async function rejectBlueGreenIngress(
    kubectl: Kubectl,

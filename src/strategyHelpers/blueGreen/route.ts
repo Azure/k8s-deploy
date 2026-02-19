@@ -1,26 +1,26 @@
-import {sleep} from '../../utilities/timeUtils'
-import {RouteStrategy} from '../../types/routeStrategy'
-import {Kubectl} from '../../types/kubectl'
+import {sleep} from '../../utilities/timeUtils.js'
+import {RouteStrategy} from '../../types/routeStrategy.js'
+import {Kubectl} from '../../types/kubectl.js'
 import {
    BlueGreenDeployment,
    BlueGreenManifests
-} from '../../types/blueGreenTypes'
+} from '../../types/blueGreenTypes.js'
 import {
    getManifestObjects,
    GREEN_LABEL_VALUE,
    deployObjects
-} from './blueGreenHelper'
+} from './blueGreenHelper.js'
 
 import {
    getUpdatedBlueGreenIngress,
    isIngressRouted
-} from './ingressBlueGreenHelper'
-import {getUpdatedBlueGreenService} from './serviceBlueGreenHelper'
-import {createTrafficSplitObject} from './smiBlueGreenHelper'
+} from './ingressBlueGreenHelper.js'
+import {getUpdatedBlueGreenService} from './serviceBlueGreenHelper.js'
+import {createTrafficSplitObject} from './smiBlueGreenHelper.js'
 
 import * as core from '@actions/core'
-import {K8sObject, TrafficSplitObject} from '../../types/k8sObject'
-import {getBufferTime} from '../../inputUtils'
+import {K8sObject, TrafficSplitObject} from '../../types/k8sObject.js'
+import {getBufferTime} from '../../inputUtils.js'
 
 export async function routeBlueGreenForDeploy(
    kubectl: Kubectl,

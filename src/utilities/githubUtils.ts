@@ -1,4 +1,4 @@
-import {GitHubClient, OkStatusCode} from '../types/githubClient'
+import {GitHubClient, OkStatusCode} from '../types/githubClient.js'
 import * as core from '@actions/core'
 
 export async function getWorkflowFilePath(

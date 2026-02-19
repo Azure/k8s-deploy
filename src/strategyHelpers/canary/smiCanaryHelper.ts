@@ -1,17 +1,20 @@
-import {Kubectl} from '../../types/kubectl'
+import {Kubectl} from '../../types/kubectl.js'
 import * as core from '@actions/core'
 import * as fs from 'fs'
 import * as yaml from 'js-yaml'
 
-import * as fileHelper from '../../utilities/fileUtils'
-import * as kubectlUtils from '../../utilities/trafficSplitUtils'
-import * as canaryDeploymentHelper from './canaryHelper'
-import * as podCanaryHelper from './podCanaryHelper'
-import {isDeploymentEntity, isServiceEntity} from '../../types/kubernetesTypes'
-import {checkForErrors} from '../../utilities/kubectlUtils'
-import {inputAnnotations} from '../../inputUtils'
-import {DeployResult} from '../../types/deployResult'
-import {K8sObject} from '../../types/k8sObject'
+import * as fileHelper from '../../utilities/fileUtils.js'
+import * as kubectlUtils from '../../utilities/trafficSplitUtils.js'
+import * as canaryDeploymentHelper from './canaryHelper.js'
+import * as podCanaryHelper from './podCanaryHelper.js'
+import {
+   isDeploymentEntity,
+   isServiceEntity
+} from '../../types/kubernetesTypes.js'
+import {checkForErrors} from '../../utilities/kubectlUtils.js'
+import {inputAnnotations} from '../../inputUtils.js'
+import {DeployResult} from '../../types/deployResult.js'
+import {K8sObject} from '../../types/k8sObject.js'
 
 const TRAFFIC_SPLIT_OBJECT_NAME_SUFFIX = '-workflow-rollout'
 const TRAFFIC_SPLIT_OBJECT = 'TrafficSplit'

@@ -1,4 +1,4 @@
-import {DeploymentConfig} from '../types/deploymentConfig'
+import {DeploymentConfig} from '../types/deploymentConfig.js'
 
 const ANNOTATION_PREFIX = 'actions.github.com'
 

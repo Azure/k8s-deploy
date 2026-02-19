@@ -1,19 +1,19 @@
 import * as core from '@actions/core'
-import {getKubectlPath, Kubectl} from './types/kubectl'
+import {getKubectlPath, Kubectl} from './types/kubectl.js'
 import {
    deploy,
    ResourceTypeFleet,
    ResourceTypeManagedCluster
-} from './actions/deploy'
-import {ClusterType} from './inputUtils'
-import {promote} from './actions/promote'
-import {reject} from './actions/reject'
-import {Action, parseAction} from './types/action'
-import {parseDeploymentStrategy} from './types/deploymentStrategy'
-import {getFilesFromDirectoriesAndURLs} from './utilities/fileUtils'
-import {PrivateKubectl} from './types/privatekubectl'
-import {parseResourceTypeInput} from './inputUtils'
-import {parseDuration} from './utilities/durationUtils'
+} from './actions/deploy.js'
+import {ClusterType} from './inputUtils.js'
+import {promote} from './actions/promote.js'
+import {reject} from './actions/reject.js'
+import {Action, parseAction} from './types/action.js'
+import {parseDeploymentStrategy} from './types/deploymentStrategy.js'
+import {getFilesFromDirectoriesAndURLs} from './utilities/fileUtils.js'
+import {PrivateKubectl} from './types/privatekubectl.js'
+import {parseResourceTypeInput} from './inputUtils.js'
+import {parseDuration} from './utilities/durationUtils.js'
 
 export async function run() {
    // verify kubeconfig is set

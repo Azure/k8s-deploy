@@ -1,23 +1,23 @@
 import * as core from '@actions/core'
 
-import {Kubectl} from '../../types/kubectl'
+import {Kubectl} from '../../types/kubectl.js'
 import {
    BlueGreenDeployment,
    BlueGreenManifests
-} from '../../types/blueGreenTypes'
+} from '../../types/blueGreenTypes.js'
 
-import {RouteStrategy} from '../../types/routeStrategy'
+import {RouteStrategy} from '../../types/routeStrategy.js'
 
 import {
    deployWithLabel,
    getManifestObjects,
    GREEN_LABEL_VALUE,
    deployObjects
-} from './blueGreenHelper'
-import {setupSMI} from './smiBlueGreenHelper'
+} from './blueGreenHelper.js'
+import {setupSMI} from './smiBlueGreenHelper.js'
 
-import {routeBlueGreenForDeploy} from './route'
-import {DeployResult} from '../../types/deployResult'
+import {routeBlueGreenForDeploy} from './route.js'
+import {DeployResult} from '../../types/deployResult.js'
 
 export async function deployBlueGreen(
    kubectl: Kubectl,
