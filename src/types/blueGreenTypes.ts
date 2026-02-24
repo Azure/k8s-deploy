@@ -1,5 +1,5 @@
-import {DeployResult} from './deployResult'
-import {K8sObject, K8sDeleteObject} from './k8sObject'
+import {DeployResult} from './deployResult.js'
+import {K8sObject, K8sDeleteObject} from './k8sObject.js'
 
 export interface BlueGreenDeployment {
    deployResult: DeployResult

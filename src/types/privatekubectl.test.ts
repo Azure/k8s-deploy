@@ -1,10 +1,13 @@
-import * as fileUtils from '../utilities/fileUtils'
+import {vi} from 'vitest'
+vi.mock('@actions/exec')
+
+import * as fileUtils from '../utilities/fileUtils.js'
 import fs from 'node:fs'
 import {
    PrivateKubectl,
    extractFileNames,
    replaceFileNamesWithShallowNamesRelativeToTemp
-} from './privatekubectl'
+} from './privatekubectl.js'
 import * as exec from '@actions/exec'
 
 describe('Private kubectl', () => {
@@ -17,14 +20,14 @@ describe('Private kubectl', () => {
       'resourceName'
    )
 
-   const spy = jest
+   const spy = vi
       .spyOn(fileUtils, 'getTempDirectory')
       .mockImplementation(() => {
          return '/tmp'
       })
 
-   jest.spyOn(fs, 'writeFileSync').mockImplementation(() => {})
-   jest.spyOn(fs, 'readFileSync').mockImplementation((filename) => {
+   vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {})
+   vi.spyOn(fs, 'readFileSync').mockImplementation((filename) => {
       return 'test contents'
    })
 
@@ -48,7 +51,7 @@ describe('Private kubectl', () => {
 
    test('Should throw well defined Error on error from Azure', async () => {
       const errorMsg = 'An error message'
-      jest.spyOn(exec, 'getExecOutput').mockImplementation(async () => {
+      vi.spyOn(exec, 'getExecOutput').mockImplementation(async () => {
          return {exitCode: 1, stdout: '', stderr: errorMsg}
       })
 

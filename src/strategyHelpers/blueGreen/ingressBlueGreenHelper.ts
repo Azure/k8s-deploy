@@ -1,12 +1,12 @@
 import * as core from '@actions/core'
-import {K8sIngress} from '../../types/k8sObject'
+import {K8sIngress} from '../../types/k8sObject.js'
 import {
    addBlueGreenLabelsAndAnnotations,
    BLUE_GREEN_VERSION_LABEL,
    GREEN_LABEL_VALUE,
    fetchResource
-} from './blueGreenHelper'
-import {Kubectl} from '../../types/kubectl'
+} from './blueGreenHelper.js'
+import {Kubectl} from '../../types/kubectl.js'
 
 const BACKEND = 'backend'
 

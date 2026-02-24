@@ -10,7 +10,7 @@ import {
    ServiceTypes,
    WORKLOAD_TYPES,
    WORKLOAD_TYPES_WITH_ROLLOUT_STATUS
-} from './kubernetesTypes'
+} from './kubernetesTypes.js'
 
 describe('Kubernetes types', () => {
    it('contains kubernetes workloads', () => {

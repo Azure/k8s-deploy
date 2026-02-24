@@ -1,12 +1,12 @@
 import * as core from '@actions/core'
-import {K8sServiceObject} from '../../types/k8sObject'
-import {Kubectl} from '../../types/kubectl'
+import {K8sServiceObject} from '../../types/k8sObject.js'
+import {Kubectl} from '../../types/kubectl.js'
 import {
    addBlueGreenLabelsAndAnnotations,
    BLUE_GREEN_VERSION_LABEL,
    fetchResource,
    GREEN_LABEL_VALUE
-} from './blueGreenHelper'
+} from './blueGreenHelper.js'
 
 // add green labels to configure existing service
 export function getUpdatedBlueGreenService(

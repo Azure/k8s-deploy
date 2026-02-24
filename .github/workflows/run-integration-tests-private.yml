@@ -25,10 +25,10 @@ jobs:
            run: |
               rm -rf node_modules/
               npm install
-         - name: Install ncc
-           run: npm i -g @vercel/ncc
+
          - name: Build
-           run: ncc build src/run.ts -o lib
+           run: npm run build
+
          - name: Azure login
            uses: azure/login@v2.3.0
            with:

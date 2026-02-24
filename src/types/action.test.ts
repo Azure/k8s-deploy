@@ -1,4 +1,4 @@
-import {Action, parseAction} from './action'
+import {Action, parseAction} from './action.js'
 
 describe('Action type', () => {
    test('it has required values', () => {

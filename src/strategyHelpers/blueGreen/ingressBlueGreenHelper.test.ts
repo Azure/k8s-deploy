@@ -1,27 +1,27 @@
-import {getManifestObjects, GREEN_LABEL_VALUE} from './blueGreenHelper'
-import * as bgHelper from './blueGreenHelper'
+import {vi} from 'vitest'
+import {getManifestObjects, GREEN_LABEL_VALUE} from './blueGreenHelper.js'
+import * as bgHelper from './blueGreenHelper.js'
 import {
    getUpdatedBlueGreenIngress,
    isIngressRouted,
    validateIngresses
-} from './ingressBlueGreenHelper'
-import {Kubectl} from '../../types/kubectl'
-import * as fileHelper from '../../utilities/fileUtils'
+} from './ingressBlueGreenHelper.js'
+import {Kubectl} from '../../types/kubectl.js'
+import * as fileHelper from '../../utilities/fileUtils.js'
 
 const betaFilepath = ['test/unit/manifests/test-ingress.yml']
 const ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
 const kubectl = new Kubectl('')
-jest.mock('../../types/kubectl')
+vi.mock('../../types/kubectl')
 
 describe('ingress blue green helpers', () => {
    let testObjects
    beforeEach(() => {
-      //@ts-ignore
-      Kubectl.mockClear()
+      vi.mocked(Kubectl).mockClear()
       testObjects = getManifestObjects(ingressFilepath)
-      jest
-         .spyOn(fileHelper, 'writeObjectsToFile')
-         .mockImplementationOnce(() => [''])
+      vi.spyOn(fileHelper, 'writeObjectsToFile').mockImplementationOnce(() => [
+         ''
+      ])
    })
 
    test('it should correctly classify ingresses', () => {
@@ -72,7 +72,7 @@ describe('ingress blue green helpers', () => {
 
    test('it should validate ingresses', async () => {
       // what if nothing gets returned from fetchResource?
-      jest.spyOn(bgHelper, 'fetchResource').mockImplementation()
+      vi.spyOn(bgHelper, 'fetchResource').mockResolvedValue(null)
       let validResponse = await validateIngresses(
          kubectl,
          testObjects.ingressEntityList,
@@ -89,9 +89,9 @@ describe('ingress blue green helpers', () => {
       const mockLabels = new Map<string, string>()
       mockLabels[bgHelper.BLUE_GREEN_VERSION_LABEL] = GREEN_LABEL_VALUE
       mockIngress.metadata.labels = mockLabels
-      jest
-         .spyOn(bgHelper, 'fetchResource')
-         .mockImplementation(() => Promise.resolve(mockIngress))
+      vi.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
+         Promise.resolve(mockIngress)
+      )
       validResponse = await validateIngresses(
          kubectl,
          testObjects.ingressEntityList,

@@ -15,17 +15,13 @@ runs:
            rm -rf node_modules/
            npm install
 
-      - name: Install ncc
+      - name: Build
         shell: bash
-        run: npm i -g @vercel/ncc
+        run: npm run build
 
       - name: Install conntrack
         shell: bash
         run: sudo apt-get install -y conntrack
-
-      - name: Build
-        shell: bash
-        run: ncc build src/run.ts -o lib
 
       - uses: Azure/setup-kubectl@776406bce94f63e41d621b960d78ee25c8b76ede # v4.0.1
         name: Install Kubectl

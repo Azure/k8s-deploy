@@ -1,4 +1,7 @@
-import {DockerExec} from './docker'
+import {vi} from 'vitest'
+vi.mock('@actions/exec')
+
+import {DockerExec} from './docker.js'
 import * as actions from '@actions/exec'
 
 const dockerPath = 'dockerPath'
@@ -12,7 +15,7 @@ describe('Docker class', () => {
       const execReturn = {exitCode: 0, stdout: 'Output', stderr: ''}
 
       beforeEach(() => {
-         jest.spyOn(actions, 'getExecOutput').mockImplementation(async () => {
+         vi.spyOn(actions, 'getExecOutput').mockImplementation(async () => {
             return execReturn
          })
       })
@@ -60,7 +63,7 @@ describe('Docker class', () => {
       const execReturn = {exitCode: 3, stdout: '', stderr: ''}
 
       beforeEach(() => {
-         jest.spyOn(actions, 'getExecOutput').mockImplementation(async () => {
+         vi.spyOn(actions, 'getExecOutput').mockImplementation(async () => {
             return execReturn
          })
       })
@@ -80,7 +83,7 @@ describe('Docker class', () => {
       const execReturn = {exitCode: 0, stdout: '', stderr: 'Output'}
 
       beforeEach(() => {
-         jest.spyOn(actions, 'getExecOutput').mockImplementation(async () => {
+         vi.spyOn(actions, 'getExecOutput').mockImplementation(async () => {
             return execReturn
          })
       })

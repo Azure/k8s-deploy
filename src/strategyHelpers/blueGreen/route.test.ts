@@ -1,24 +1,28 @@
-import {K8sIngress, TrafficSplitObject} from '../../types/k8sObject'
-import {Kubectl} from '../../types/kubectl'
-import * as fileHelper from '../../utilities/fileUtils'
-import * as TSutils from '../../utilities/trafficSplitUtils'
-import {RouteStrategy} from '../../types/routeStrategy'
-import {BlueGreenManifests} from '../../types/blueGreenTypes'
+import {vi} from 'vitest'
+import type {MockInstance} from 'vitest'
+import {K8sIngress, TrafficSplitObject} from '../../types/k8sObject.js'
+import {Kubectl} from '../../types/kubectl.js'
+import * as fileHelper from '../../utilities/fileUtils.js'
+import * as TSutils from '../../utilities/trafficSplitUtils.js'
+import {RouteStrategy} from '../../types/routeStrategy.js'
+import {BlueGreenManifests} from '../../types/blueGreenTypes.js'
 
 import {
    BLUE_GREEN_VERSION_LABEL,
    getManifestObjects,
    GREEN_LABEL_VALUE
-} from './blueGreenHelper'
+} from './blueGreenHelper.js'
+import * as bgHelper from './blueGreenHelper.js'
+import * as smiHelper from './smiBlueGreenHelper.js'
 import {
    routeBlueGreenIngress,
    routeBlueGreenService,
    routeBlueGreenForDeploy,
    routeBlueGreenSMI,
    routeBlueGreenIngressUnchanged
-} from './route'
+} from './route.js'
 
-jest.mock('../../types/kubectl')
+vi.mock('../../types/kubectl')
 const ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
 const kc = new Kubectl('')
 
@@ -37,16 +41,15 @@ const mockFailureResult = {
 
 describe('route function tests', () => {
    let testObjects: BlueGreenManifests
-   let kubectlApplySpy: jest.SpyInstance
+   let kubectlApplySpy: MockInstance
 
    beforeEach(() => {
-      //@ts-ignore
-      Kubectl.mockClear()
+      vi.mocked(Kubectl).mockClear()
       testObjects = getManifestObjects(ingressFilepath)
-      kubectlApplySpy = jest.spyOn(kc, 'apply')
-      jest
-         .spyOn(fileHelper, 'writeObjectsToFile')
-         .mockImplementationOnce(() => [''])
+      kubectlApplySpy = vi.spyOn(kc, 'apply')
+      vi.spyOn(fileHelper, 'writeObjectsToFile').mockImplementationOnce(() => [
+         ''
+      ])
    })
 
    test('correctly prepares blue/green ingresses for deployment', async () => {
@@ -96,9 +99,9 @@ describe('route function tests', () => {
    })
 
    test('correctly identifies route pattern and acts accordingly', async () => {
-      jest
-         .spyOn(TSutils, 'getTrafficSplitAPIVersion')
-         .mockImplementation(() => Promise.resolve('v1alpha3'))
+      vi.spyOn(TSutils, 'getTrafficSplitAPIVersion').mockImplementation(() =>
+         Promise.resolve('v1alpha3')
+      )
 
       const ingressResult = await routeBlueGreenForDeploy(
          kc,
@@ -164,9 +167,9 @@ describe('route function tests', () => {
                testObjects.serviceEntityList
             ),
          setup: () => {
-            jest
-               .spyOn(TSutils, 'getTrafficSplitAPIVersion')
-               .mockImplementation(() => Promise.resolve('v1alpha3'))
+            vi.spyOn(TSutils, 'getTrafficSplitAPIVersion').mockImplementation(
+               () => Promise.resolve('v1alpha3')
+            )
          }
       },
       {
@@ -194,24 +197,23 @@ describe('route timeout tests', () => {
    let testObjects: BlueGreenManifests
 
    beforeEach(() => {
-      //@ts-ignore
-      Kubectl.mockClear()
+      vi.mocked(Kubectl).mockClear()
       testObjects = getManifestObjects(ingressFilepath)
-      jest
-         .spyOn(fileHelper, 'writeObjectsToFile')
-         .mockImplementationOnce(() => [''])
+      vi.spyOn(fileHelper, 'writeObjectsToFile').mockImplementationOnce(() => [
+         ''
+      ])
    })
 
    afterEach(() => {
-      jest.restoreAllMocks()
+      vi.restoreAllMocks()
    })
 
    test('routeBlueGreenService with timeout', async () => {
       const timeout = '240s'
 
       // Mock deployObjects to capture timeout parameter
-      const deployObjectsSpy = jest
-         .spyOn(require('./blueGreenHelper'), 'deployObjects')
+      const deployObjectsSpy = vi
+         .spyOn(bgHelper, 'deployObjects')
          .mockResolvedValue({
             execResult: mockSuccessResult,
             manifestFiles: []
@@ -237,23 +239,29 @@ describe('route timeout tests', () => {
    test('routeBlueGreenSMI with timeout', async () => {
       const timeout = '300s'
 
-      jest
-         .spyOn(TSutils, 'getTrafficSplitAPIVersion')
-         .mockImplementation(() => Promise.resolve('v1alpha3'))
+      vi.spyOn(TSutils, 'getTrafficSplitAPIVersion').mockImplementation(() =>
+         Promise.resolve('v1alpha3')
+      )
 
       // Mock deployObjects and createTrafficSplitObject to capture timeout parameter
-      const deployObjectsSpy = jest
-         .spyOn(require('./blueGreenHelper'), 'deployObjects')
+      const deployObjectsSpy = vi
+         .spyOn(bgHelper, 'deployObjects')
          .mockResolvedValue({
             execResult: mockSuccessResult,
             manifestFiles: []
          })
 
-      const createTrafficSplitSpy = jest
-         .spyOn(require('./smiBlueGreenHelper'), 'createTrafficSplitObject')
+      const createTrafficSplitSpy = vi
+         .spyOn(smiHelper, 'createTrafficSplitObject')
          .mockResolvedValue({
-            metadata: {name: 'nginx-service-trafficsplit'},
-            spec: {backends: []}
+            apiVersion: 'split.smi-spec.io/v1alpha3',
+            kind: 'TrafficSplit',
+            metadata: {
+               name: 'nginx-service-trafficsplit',
+               labels: new Map(),
+               annotations: new Map()
+            },
+            spec: {service: 'nginx-service', backends: []}
          })
 
       const value = await routeBlueGreenSMI(
@@ -284,8 +292,8 @@ describe('route timeout tests', () => {
       const timeout = '180s'
 
       // Mock deployObjects to capture timeout parameter
-      const deployObjectsSpy = jest
-         .spyOn(require('./blueGreenHelper'), 'deployObjects')
+      const deployObjectsSpy = vi
+         .spyOn(bgHelper, 'deployObjects')
          .mockResolvedValue({
             execResult: mockSuccessResult,
             manifestFiles: []
@@ -309,8 +317,8 @@ describe('route timeout tests', () => {
    })
 
    test('route functions without timeout should pass undefined', async () => {
-      const deployObjectsSpy = jest
-         .spyOn(require('./blueGreenHelper'), 'deployObjects')
+      const deployObjectsSpy = vi
+         .spyOn(bgHelper, 'deployObjects')
          .mockResolvedValue({
             execResult: mockSuccessResult,
             manifestFiles: []

@@ -1,19 +1,19 @@
 import * as core from '@actions/core'
-import * as models from '../types/kubernetesTypes'
-import * as KubernetesConstants from '../types/kubernetesTypes'
-import {Kubectl, Resource} from '../types/kubectl'
+import * as models from '../types/kubernetesTypes.js'
+import * as KubernetesConstants from '../types/kubernetesTypes.js'
+import {Kubectl, Resource} from '../types/kubectl.js'
 import {
    getResources,
    updateManifestFiles
-} from '../utilities/manifestUpdateUtils'
+} from '../utilities/manifestUpdateUtils.js'
 import {
    annotateAndLabelResources,
    checkManifestStability,
    deployManifests
-} from '../strategyHelpers/deploymentHelper'
-import {DeploymentStrategy} from '../types/deploymentStrategy'
-import {parseTrafficSplitMethod} from '../types/trafficSplitMethod'
-import {ClusterType} from '../inputUtils'
+} from '../strategyHelpers/deploymentHelper.js'
+import {DeploymentStrategy} from '../types/deploymentStrategy.js'
+import {parseTrafficSplitMethod} from '../types/trafficSplitMethod.js'
+import {ClusterType} from '../inputUtils.js'
 export const ResourceTypeManagedCluster =
    'Microsoft.ContainerService/managedClusters'
 export const ResourceTypeFleet = 'Microsoft.ContainerService/fleets'

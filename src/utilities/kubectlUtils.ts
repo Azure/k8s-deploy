@@ -1,6 +1,6 @@
 import * as core from '@actions/core'
 import {ExecOutput} from '@actions/exec'
-import {Kubectl} from '../types/kubectl'
+import {Kubectl} from '../types/kubectl.js'
 
 const NAMESPACE = 'namespace'
 

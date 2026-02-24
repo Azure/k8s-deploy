@@ -1,20 +1,20 @@
 import * as core from '@actions/core'
-import * as canaryDeploymentHelper from '../strategyHelpers/canary/canaryHelper'
-import * as SMICanaryDeploymentHelper from '../strategyHelpers/canary/smiCanaryHelper'
-import {Kubectl} from '../types/kubectl'
-import {BlueGreenManifests} from '../types/blueGreenTypes'
+import * as canaryDeploymentHelper from '../strategyHelpers/canary/canaryHelper.js'
+import * as SMICanaryDeploymentHelper from '../strategyHelpers/canary/smiCanaryHelper.js'
+import {Kubectl} from '../types/kubectl.js'
+import {BlueGreenManifests} from '../types/blueGreenTypes.js'
 import {
    rejectBlueGreenIngress,
    rejectBlueGreenService,
    rejectBlueGreenSMI
-} from '../strategyHelpers/blueGreen/reject'
-import {getManifestObjects} from '../strategyHelpers/blueGreen/blueGreenHelper'
-import {DeploymentStrategy} from '../types/deploymentStrategy'
+} from '../strategyHelpers/blueGreen/reject.js'
+import {getManifestObjects} from '../strategyHelpers/blueGreen/blueGreenHelper.js'
+import {DeploymentStrategy} from '../types/deploymentStrategy.js'
 import {
    parseTrafficSplitMethod,
    TrafficSplitMethod
-} from '../types/trafficSplitMethod'
-import {parseRouteStrategy, RouteStrategy} from '../types/routeStrategy'
+} from '../types/trafficSplitMethod.js'
+import {parseRouteStrategy, RouteStrategy} from '../types/routeStrategy.js'
 
 export async function reject(
    kubectl: Kubectl,

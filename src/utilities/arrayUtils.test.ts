@@ -1,4 +1,4 @@
-import {createInlineArray} from './arrayUtils'
+import {createInlineArray} from './arrayUtils.js'
 
 describe('array utilities', () => {
    it('creates an inline array', () => {

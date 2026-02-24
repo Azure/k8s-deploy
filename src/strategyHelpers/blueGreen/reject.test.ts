@@ -1,21 +1,23 @@
-import {getManifestObjects} from './blueGreenHelper'
-import {Kubectl} from '../../types/kubectl'
+import {vi} from 'vitest'
+import type {MockInstance} from 'vitest'
+import {getManifestObjects} from './blueGreenHelper.js'
+import {Kubectl} from '../../types/kubectl.js'
 
-import * as TSutils from '../../utilities/trafficSplitUtils'
+import * as TSutils from '../../utilities/trafficSplitUtils.js'
 import {
    rejectBlueGreenIngress,
    rejectBlueGreenService,
    rejectBlueGreenSMI
-} from './reject'
-import * as bgHelper from './blueGreenHelper'
-import * as routeHelper from './route'
+} from './reject.js'
+import * as bgHelper from './blueGreenHelper.js'
+import * as routeHelper from './route.js'
 
 const ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
 const kubectl = new Kubectl('')
 const TEST_TIMEOUT_SHORT = '60s'
 const TEST_TIMEOUT_LONG = '120s'
 
-jest.mock('../../types/kubectl')
+vi.mock('../../types/kubectl')
 
 // Shared mock objects following DRY principle
 const mockSuccessResult = {
@@ -54,14 +56,13 @@ const mockDeleteResult = [
 
 describe('reject tests', () => {
    let testObjects: any
-   let kubectlApplySpy: jest.SpyInstance
+   let kubectlApplySpy: MockInstance
 
    beforeEach(() => {
-      //@ts-ignore
-      Kubectl.mockClear()
-      jest.restoreAllMocks()
+      vi.mocked(Kubectl).mockClear()
+      vi.restoreAllMocks()
       testObjects = getManifestObjects(ingressFilepath)
-      kubectlApplySpy = jest.spyOn(kubectl, 'apply')
+      kubectlApplySpy = vi.spyOn(kubectl, 'apply')
    })
 
    test('reject blue/green ingress', async () => {
@@ -89,13 +90,13 @@ describe('reject tests', () => {
 
    test('reject blue/green ingress with timeout', async () => {
       // Mock routeBlueGreenIngressUnchanged and deleteGreenObjects
-      jest
-         .spyOn(routeHelper, 'routeBlueGreenIngressUnchanged')
-         .mockResolvedValue(mockBgDeployment)
+      vi.spyOn(routeHelper, 'routeBlueGreenIngressUnchanged').mockResolvedValue(
+         mockBgDeployment
+      )
 
-      jest
-         .spyOn(bgHelper, 'deleteGreenObjects')
-         .mockResolvedValue(mockDeleteResult)
+      vi.spyOn(bgHelper, 'deleteGreenObjects').mockResolvedValue(
+         mockDeleteResult
+      )
 
       const value = await rejectBlueGreenIngress(
          kubectl,
@@ -138,9 +139,9 @@ describe('reject tests', () => {
 
    test('reject blue/green service', async () => {
       kubectlApplySpy.mockResolvedValue(mockSuccessResult)
-      jest
-         .spyOn(bgHelper, 'deleteGreenObjects')
-         .mockResolvedValue(mockDeleteResult)
+      vi.spyOn(bgHelper, 'deleteGreenObjects').mockResolvedValue(
+         mockDeleteResult
+      )
 
       const value = await rejectBlueGreenService(
          kubectl,
@@ -163,7 +164,7 @@ describe('reject tests', () => {
 
    test('reject blue/green service with timeout', async () => {
       // Mock routeBlueGreenService and deleteGreenObjects
-      jest.spyOn(routeHelper, 'routeBlueGreenService').mockResolvedValue({
+      vi.spyOn(routeHelper, 'routeBlueGreenService').mockResolvedValue({
          deployResult: {
             execResult: {stdout: '', stderr: '', exitCode: 0},
             manifestFiles: []
@@ -180,11 +181,9 @@ describe('reject tests', () => {
          ]
       })
 
-      jest
-         .spyOn(bgHelper, 'deleteGreenObjects')
-         .mockResolvedValue([
-            {name: 'nginx-deployment-green', kind: 'Deployment'}
-         ])
+      vi.spyOn(bgHelper, 'deleteGreenObjects').mockResolvedValue([
+         {name: 'nginx-deployment-green', kind: 'Deployment'}
+      ])
 
       const value = await rejectBlueGreenService(
          kubectl,
@@ -213,9 +212,9 @@ describe('reject tests', () => {
       // Mock kubectl.apply to return successful result
       kubectlApplySpy.mockResolvedValue(mockSuccessResult)
 
-      jest
-         .spyOn(TSutils, 'getTrafficSplitAPIVersion')
-         .mockImplementation(() => Promise.resolve('v1alpha3'))
+      vi.spyOn(TSutils, 'getTrafficSplitAPIVersion').mockImplementation(() =>
+         Promise.resolve('v1alpha3')
+      )
       const rejectResult = await rejectBlueGreenSMI(kubectl, testObjects)
       expect(rejectResult.deleteResult).toHaveLength(2)
    })
@@ -226,27 +225,27 @@ describe('reject tests', () => {
          name: 'should throw error when kubectl apply fails during blue/green ingress rejection',
          fn: () => rejectBlueGreenIngress(kubectl, testObjects),
          setup: () => {
-            jest
-               .spyOn(bgHelper, 'deleteGreenObjects')
-               .mockResolvedValue(mockDeleteResult)
+            vi.spyOn(bgHelper, 'deleteGreenObjects').mockResolvedValue(
+               mockDeleteResult
+            )
          }
       },
       {
          name: 'should throw error when kubectl apply fails during blue/green service rejection',
          fn: () => rejectBlueGreenService(kubectl, testObjects),
          setup: () => {
-            jest
-               .spyOn(bgHelper, 'deleteGreenObjects')
-               .mockResolvedValue(mockDeleteResult)
+            vi.spyOn(bgHelper, 'deleteGreenObjects').mockResolvedValue(
+               mockDeleteResult
+            )
          }
       },
       {
          name: 'should throw error when kubectl apply fails during blue/green SMI rejection',
          fn: () => rejectBlueGreenSMI(kubectl, testObjects),
          setup: () => {
-            jest
-               .spyOn(TSutils, 'getTrafficSplitAPIVersion')
-               .mockImplementation(() => Promise.resolve('v1alpha3'))
+            vi.spyOn(TSutils, 'getTrafficSplitAPIVersion').mockImplementation(
+               () => Promise.resolve('v1alpha3')
+            )
          }
       }
    ])('$name', async ({fn, setup}) => {

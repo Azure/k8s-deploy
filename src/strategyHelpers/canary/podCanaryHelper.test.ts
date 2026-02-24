@@ -1,11 +1,15 @@
+import {vi} from 'vitest'
+import type {MockInstance} from 'vitest'
+vi.mock('@actions/core')
+
 import * as core from '@actions/core'
-import {Kubectl} from '../../types/kubectl'
+import {Kubectl} from '../../types/kubectl.js'
 import {
    deployPodCanary,
    calculateReplicaCountForCanary
-} from './podCanaryHelper'
+} from './podCanaryHelper.js'
 
-jest.mock('../../types/kubectl')
+vi.mock('../../types/kubectl')
 
 const kc = new Kubectl('')
 
@@ -35,18 +39,17 @@ const TIMEOUT_300S = '300s'
 
 describe('Pod Canary Helper tests', () => {
    let mockFilePaths: string[]
-   let kubectlApplySpy: jest.SpyInstance
+   let kubectlApplySpy: MockInstance
 
    beforeEach(() => {
-      //@ts-ignore
-      Kubectl.mockClear()
-      jest.restoreAllMocks()
+      vi.mocked(Kubectl).mockClear()
+      vi.restoreAllMocks()
 
       mockFilePaths = testManifestFiles
-      kubectlApplySpy = jest.spyOn(kc, 'apply')
+      kubectlApplySpy = vi.spyOn(kc, 'apply')
 
       // Mock core.getInput with default values
-      jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
+      vi.spyOn(core, 'getInput').mockImplementation((name: string) => {
          switch (name) {
             case 'percentage':
                return VALID_PERCENTAGE.toString()
@@ -61,7 +64,7 @@ describe('Pod Canary Helper tests', () => {
    })
 
    afterEach(() => {
-      jest.restoreAllMocks()
+      vi.restoreAllMocks()
       kubectlApplySpy.mockClear()
    })
 
@@ -114,7 +117,7 @@ describe('Pod Canary Helper tests', () => {
       })
 
       test('should throw error for invalid low percentage', async () => {
-         jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
+         vi.spyOn(core, 'getInput').mockImplementation((name: string) => {
             if (name === 'percentage') return INVALID_LOW_PERCENTAGE.toString()
             return ''
          })
@@ -127,7 +130,7 @@ describe('Pod Canary Helper tests', () => {
       })
 
       test('should throw error for invalid high percentage', async () => {
-         jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
+         vi.spyOn(core, 'getInput').mockImplementation((name: string) => {
             if (name === 'percentage') return INVALID_HIGH_PERCENTAGE.toString()
             return ''
          })
@@ -143,7 +146,7 @@ describe('Pod Canary Helper tests', () => {
          kubectlApplySpy.mockResolvedValue(mockSuccessResult)
 
          // Test minimum valid percentage
-         jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
+         vi.spyOn(core, 'getInput').mockImplementation((name: string) => {
             if (name === 'percentage') return MIN_PERCENTAGE.toString()
             return ''
          })
@@ -152,7 +155,7 @@ describe('Pod Canary Helper tests', () => {
          expect(resultMin.execResult).toEqual(mockSuccessResult)
 
          // Test maximum valid percentage
-         jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
+         vi.spyOn(core, 'getInput').mockImplementation((name: string) => {
             if (name === 'percentage') return MAX_PERCENTAGE.toString()
             return ''
          })
@@ -162,7 +165,7 @@ describe('Pod Canary Helper tests', () => {
       })
 
       test('should handle force deployment option', async () => {
-         jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
+         vi.spyOn(core, 'getInput').mockImplementation((name: string) => {
             switch (name) {
                case 'percentage':
                   return VALID_PERCENTAGE.toString()
@@ -186,7 +189,7 @@ describe('Pod Canary Helper tests', () => {
       })
 
       test('should handle server-side apply option', async () => {
-         jest.spyOn(core, 'getInput').mockImplementation((name: string) => {
+         vi.spyOn(core, 'getInput').mockImplementation((name: string) => {
             switch (name) {
                case 'percentage':
                   return VALID_PERCENTAGE.toString()

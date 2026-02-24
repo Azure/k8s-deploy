@@ -2,27 +2,27 @@ import * as core from '@actions/core'
 import * as fs from 'fs'
 import * as yaml from 'js-yaml'
 
-import {DeployResult} from '../../types/deployResult'
-import {K8sObject, K8sDeleteObject} from '../../types/k8sObject'
-import {Kubectl} from '../../types/kubectl'
+import {DeployResult} from '../../types/deployResult.js'
+import {K8sObject, K8sDeleteObject} from '../../types/k8sObject.js'
+import {Kubectl} from '../../types/kubectl.js'
 import {
    isDeploymentEntity,
    isIngressEntity,
    isServiceEntity,
    KubernetesWorkload
-} from '../../types/kubernetesTypes'
+} from '../../types/kubernetesTypes.js'
 import {
    BlueGreenDeployment,
    BlueGreenManifests
-} from '../../types/blueGreenTypes'
-import * as fileHelper from '../../utilities/fileUtils'
-import {updateSpecLabels} from '../../utilities/manifestSpecLabelUtils'
-import {checkForErrors} from '../../utilities/kubectlUtils'
+} from '../../types/blueGreenTypes.js'
+import * as fileHelper from '../../utilities/fileUtils.js'
+import {updateSpecLabels} from '../../utilities/manifestSpecLabelUtils.js'
+import {checkForErrors} from '../../utilities/kubectlUtils.js'
 import {
    UnsetClusterSpecificDetails,
    updateObjectLabels,
    updateSelectorLabels
-} from '../../utilities/manifestUpdateUtils'
+} from '../../utilities/manifestUpdateUtils.js'
 
 export const GREEN_LABEL_VALUE = 'green'
 export const NONE_LABEL_VALUE = 'None'

@@ -1,8 +1,8 @@
 import * as io from '@actions/io'
-import {DeploymentConfig} from '../types/deploymentConfig'
+import {DeploymentConfig} from '../types/deploymentConfig.js'
 import * as core from '@actions/core'
-import {DockerExec} from '../types/docker'
-import {getNormalizedPath} from './githubUtils'
+import {DockerExec} from '../types/docker.js'
+import {getNormalizedPath} from './githubUtils.js'
 
 export async function getDeploymentConfig(): Promise<DeploymentConfig> {
    let helmChartPaths: string[] =

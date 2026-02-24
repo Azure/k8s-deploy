@@ -1,5 +1,8 @@
-import {parseResourceTypeInput} from './inputUtils'
-import {ResourceTypeFleet, ResourceTypeManagedCluster} from './actions/deploy'
+import {parseResourceTypeInput} from './inputUtils.js'
+import {
+   ResourceTypeFleet,
+   ResourceTypeManagedCluster
+} from './actions/deploy.js'
 
 describe('InputUtils', () => {
    describe('parseResourceTypeInput', () => {

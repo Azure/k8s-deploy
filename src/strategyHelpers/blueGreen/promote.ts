@@ -1,13 +1,13 @@
 import * as core from '@actions/core'
 
-import {Kubectl} from '../../types/kubectl'
+import {Kubectl} from '../../types/kubectl.js'
 
-import {BlueGreenDeployment} from '../../types/blueGreenTypes'
-import {deployWithLabel, NONE_LABEL_VALUE} from './blueGreenHelper'
+import {BlueGreenDeployment} from '../../types/blueGreenTypes.js'
+import {deployWithLabel, NONE_LABEL_VALUE} from './blueGreenHelper.js'
 
-import {validateIngresses} from './ingressBlueGreenHelper'
-import {validateServicesState} from './serviceBlueGreenHelper'
-import {validateTrafficSplitsState} from './smiBlueGreenHelper'
+import {validateIngresses} from './ingressBlueGreenHelper.js'
+import {validateServicesState} from './serviceBlueGreenHelper.js'
+import {validateTrafficSplitsState} from './smiBlueGreenHelper.js'
 
 export async function promoteBlueGreenIngress(
    kubectl: Kubectl,

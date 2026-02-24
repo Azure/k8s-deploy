@@ -1,14 +1,17 @@
-import * as fileUtils from './fileUtils'
-import * as manifestUpdateUtils from './manifestUpdateUtils'
+import {vi} from 'vitest'
+vi.mock('fs')
+
+import * as fileUtils from './fileUtils.js'
+import * as manifestUpdateUtils from './manifestUpdateUtils.js'
 import * as path from 'path'
 import * as fs from 'fs'
 
 describe('manifestUpdateUtils', () => {
-   jest.spyOn(fileUtils, 'moveFileToTmpDir').mockImplementation((filename) => {
+   vi.spyOn(fileUtils, 'moveFileToTmpDir').mockImplementation((filename) => {
       return path.join('/tmp', filename)
    })
-   jest.spyOn(fs, 'writeFileSync').mockImplementation(() => {})
-   jest.spyOn(fs, 'readFileSync').mockImplementation((filename) => {
+   vi.spyOn(fs, 'writeFileSync').mockImplementation(() => {})
+   vi.spyOn(fs, 'readFileSync').mockImplementation((filename) => {
       return 'test contents'
    })
 

@@ -1,26 +1,26 @@
+import {vi} from 'vitest'
 import * as core from '@actions/core'
 import {
    BLUE_GREEN_VERSION_LABEL,
    getManifestObjects,
    GREEN_LABEL_VALUE
-} from './blueGreenHelper'
-import * as bgHelper from './blueGreenHelper'
-import {Kubectl} from '../../types/kubectl'
+} from './blueGreenHelper.js'
+import * as bgHelper from './blueGreenHelper.js'
+import {Kubectl} from '../../types/kubectl.js'
 import {
    getServiceSpecLabel,
    getUpdatedBlueGreenService,
    validateServicesState
-} from './serviceBlueGreenHelper'
+} from './serviceBlueGreenHelper.js'
 
 let testObjects
 const ingressFilepath = ['test/unit/manifests/test-ingress-new.yml']
-jest.mock('../../types/kubectl')
+vi.mock('../../types/kubectl')
 const kubectl = new Kubectl('')
 
 describe('blue/green service helper tests', () => {
    beforeEach(() => {
-      //@ts-ignore
-      Kubectl.mockClear()
+      vi.mocked(Kubectl).mockClear()
       testObjects = getManifestObjects(ingressFilepath)
    })
 
@@ -42,7 +42,7 @@ describe('blue/green service helper tests', () => {
       mockLabels[BLUE_GREEN_VERSION_LABEL] = bgHelper.GREEN_LABEL_VALUE
       const mockSelectors = new Map<string, string>()
       mockSelectors[BLUE_GREEN_VERSION_LABEL] = GREEN_LABEL_VALUE
-      jest.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
+      vi.spyOn(bgHelper, 'fetchResource').mockImplementation(() =>
          Promise.resolve({
             kind: 'Service',
             spec: {selector: mockSelectors},
