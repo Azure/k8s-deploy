@@ -1,5 +1,14 @@
 # Changelog
 
+## [5.1.0] - 2026-03-03
+
+### Added
+
+- #458 [Ensure error messages display the correct namespace](https://github.com/Azure/k8s-deploy/pull/458)
+- #482 [docker driver](https://github.com/Azure/k8s-deploy/pull/482)
+- #492 [Migrate to esbuild/Vitest and upgrade @actions/\* to ESM-only versions](https://github.com/Azure/k8s-deploy/pull/492)
+- #498 [Add typecheck to build script](https://github.com/Azure/k8s-deploy/pull/498)
+
 ## [5.0.4] - 2025-08-05
 
 ### Added
