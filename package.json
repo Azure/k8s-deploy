@@ -1,6 +1,6 @@
 {
    "name": "k8s-deploy-action",
-   "version": "5.0.4",
+   "version": "5.1.0",
    "author": "Deepak Sattiraju",
    "license": "MIT",
    "type": "module",
