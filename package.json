@@ -5,7 +5,7 @@
    "license": "MIT",
    "type": "module",
    "scripts": {
-      "build": "esbuild src/run.ts --bundle --platform=node --target=node20 --format=esm --outfile=lib/index.js --banner:js=\"import { createRequire } from 'module';const require = createRequire(import.meta.url);\"",
+      "build": "tsc --noEmit && esbuild src/run.ts --bundle --platform=node --target=node20 --format=esm --outfile=lib/index.js --banner:js=\"import { createRequire } from 'module';const require = createRequire(import.meta.url);\"",
       "typecheck": "tsc --noEmit",
       "test": "vitest run",
       "coverage": "vitest run --coverage",
