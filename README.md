@@ -1,6 +1,6 @@
 # Deploy manifests action for Kubernetes
 
-This action is used to deploy manifests to Kubernetes clusters. It requires that the cluster context be set earlier in the workflow by using either the [Azure/aks-set-context](https://github.com/Azure/aks-set-context/tree/releases/v1) action or the [Azure/k8s-set-context](https://github.com/Azure/k8s-set-context/tree/releases/v1) action. It also requires Kubectl to be installed (you can use the [Azure/setup-kubectl](https://github.com/Azure/setup-kubectl) action).
+This action is used to deploy manifests to Kubernetes clusters. It requires that the cluster context be set earlier in the workflow by using either the [Azure/aks-set-context](https://github.com/Azure/aks-set-context/tree/releases/v4) action or the [Azure/k8s-set-context](https://github.com/Azure/k8s-set-context/tree/releases/v4) action. It also requires Kubectl to be installed (you can use the [Azure/setup-kubectl](https://github.com/Azure/setup-kubectl) action).
 
 If you are looking to automate your workflows to deploy to [Azure Web Apps](https://azure.microsoft.com/en-us/services/app-service/web/) and [Azure Web App for Containers](https://azure.microsoft.com/en-us/services/app-service/containers/), consider using [`Azure/webapps-deploy`](https://github.com/Azure/webapps-deploy) action.
 
@@ -310,9 +310,9 @@ jobs:
    build:
       runs-on: ubuntu-latest
       steps:
-         - uses: actions/checkout@v4
+         - uses: actions/checkout@v6
 
-         - uses: Azure/docker-login@v1
+         - uses: Azure/docker-login@v2
            with:
               login-server: contoso.azurecr.io
               username: ${{ secrets.REGISTRY_USERNAME }}
@@ -331,7 +331,7 @@ jobs:
               cluster-name: contoso
               resource-group: contoso-rg
 
-         - uses: Azure/k8s-create-secret@v4
+         - uses: Azure/k8s-create-secret@v5
            with:
               container-registry-url: contoso.azurecr.io
               container-registry-username: ${{ secrets.REGISTRY_USERNAME }}
@@ -359,9 +359,9 @@ jobs:
    build:
       runs-on: ubuntu-latest
       steps:
-         - uses: actions/checkout@v4
+         - uses: actions/checkout@v6
 
-         - uses: Azure/docker-login@v1
+         - uses: Azure/docker-login@v2
            with:
               login-server: contoso.azurecr.io
               username: ${{ secrets.REGISTRY_USERNAME }}
@@ -377,14 +377,14 @@ jobs:
            with:
               kubeconfig: ${{ secrets.KUBE_CONFIG }}
 
-         - uses: Azure/k8s-create-secret@v4
+         - uses: Azure/k8s-create-secret@v5
            with:
               container-registry-url: contoso.azurecr.io
               container-registry-username: ${{ secrets.REGISTRY_USERNAME }}
               container-registry-password: ${{ secrets.REGISTRY_PASSWORD }}
               secret-name: demo-k8s-secret
 
-         - uses: Azure/k8s-deploy@v4
+         - uses: Azure/k8s-deploy@v5
            with:
               action: deploy
               manifests: |
@@ -409,9 +409,9 @@ jobs:
    build:
       runs-on: ubuntu-latest
       steps:
-         - uses: actions/checkout@v4
+         - uses: actions/checkout@v6
 
-         - uses: Azure/docker-login@v1
+         - uses: Azure/docker-login@v2
            with:
               login-server: contoso.azurecr.io
               username: ${{ secrets.REGISTRY_USERNAME }}
@@ -433,9 +433,9 @@ jobs:
    deploy:
       runs-on: ubuntu-latest
       steps:
-         - uses: actions/checkout@master
+         - uses: actions/checkout@v6
 
-         - uses: Azure/docker-login@v1
+         - uses: Azure/docker-login@v2
            with:
               login-server: contoso.azurecr.io
               username: ${{ secrets.REGISTRY_USERNAME }}
@@ -450,7 +450,7 @@ jobs:
               cluster-name: contoso
               resource-group: contoso-rg
 
-         - uses: Azure/k8s-create-secret@v4
+         - uses: Azure/k8s-create-secret@v5
            with:
               namespace: ${{ env.NAMESPACE  }}
               container-registry-url: contoso.azurecr.io
