@@ -36,7 +36,7 @@ jobs:
               tenant-id: ${{ secrets.AZURE_TENANT_ID }}
               subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-         - uses: Azure/setup-kubectl@15650b3ad78fff148532a140b8a4c821796b2d7b # v5.0.0
+         - uses: Azure/setup-kubectl@829323503d1be3d00ca8346e5391ca0b07a9ab0d # v5.1.0
            name: Install Kubectl
 
          - name: Create private AKS cluster and set context
