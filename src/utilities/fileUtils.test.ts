@@ -304,3 +304,94 @@ describe('assertPathWithinWorkspace', () => {
       expect(fileUtils.assertPathWithinWorkspace(target)).toBe(target)
    })
 })
+
+import {EventEmitter} from 'node:events'
+import {PassThrough} from 'node:stream'
+import * as https from 'node:https'
+
+const httpsState = vi.hoisted(() => ({impl: null as any}))
+
+vi.mock('https', async (importOriginal) => {
+   const actual = await importOriginal<typeof import('https')>()
+   const get = (...args: any[]) =>
+      httpsState.impl ? httpsState.impl(...args) : (actual.get as any)(...args)
+   return {
+      ...actual,
+      default: {...actual, get},
+      get
+   }
+})
+
+describe('writeYamlFromURLToFile error handling', () => {
+   afterEach(() => {
+      httpsState.impl = null
+      vi.restoreAllMocks()
+   })
+
+   function mockHttpsGet(
+      makeResponse: () => {
+         response: EventEmitter & {
+            statusCode?: number
+            statusMessage?: string
+            pipe: PassThrough['pipe']
+            resume: () => void
+         }
+         requestEmitter: EventEmitter
+      }
+   ) {
+      httpsState.impl = ((url: string, cb?: any) => {
+         const {response, requestEmitter} = makeResponse()
+         if (cb) setImmediate(() => cb(response))
+         return requestEmitter as any
+      }) as any
+   }
+
+   it('rejects on HTTP 500 without writing a file', async () => {
+      const requestEmitter = new EventEmitter()
+      const response = Object.assign(new PassThrough(), {
+         statusCode: 500,
+         statusMessage: 'Server Error',
+         resume() {
+            /* drain */
+         }
+      })
+      mockHttpsGet(() => ({response: response as any, requestEmitter}))
+
+      await expect(
+         fileUtils.writeYamlFromURLToFile('https://example.com/x.yaml', 99)
+      ).rejects.toThrow(/Server Error/)
+   })
+
+   it('rejects when the response stream errors mid-download', async () => {
+      const requestEmitter = new EventEmitter()
+      const response = Object.assign(new PassThrough(), {
+         statusCode: 200,
+         statusMessage: 'OK',
+         resume() {}
+      })
+      mockHttpsGet(() => ({response: response as any, requestEmitter}))
+
+      const p = fileUtils.writeYamlFromURLToFile(
+         'https://example.com/y.yaml',
+         100
+      )
+      setImmediate(() => response.emit('error', new Error('socket reset')))
+      await expect(p).rejects.toThrow(/socket reset/)
+   })
+
+   it('rejects on request-level errors', async () => {
+      const requestEmitter = new EventEmitter()
+      const response = Object.assign(new PassThrough(), {
+         statusCode: 200,
+         resume() {}
+      })
+      mockHttpsGet(() => ({response: response as any, requestEmitter}))
+
+      const p = fileUtils.writeYamlFromURLToFile(
+         'https://example.com/z.yaml',
+         101
+      )
+      setImmediate(() => requestEmitter.emit('error', new Error('DNS failure')))
+      await expect(p).rejects.toThrow(/DNS failure/)
+   })
+})

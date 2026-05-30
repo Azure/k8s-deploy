@@ -179,42 +179,41 @@ export async function writeYamlFromURLToFile(
 ): Promise<string> {
    return new Promise((resolve, reject) => {
       https
-         .get(url, async (response) => {
+         .get(url, (response) => {
             const code = response.statusCode ?? 0
             if (code >= 400) {
+               response.resume()
                reject(
-                  Error(
+                  new Error(
                      `received response status ${response.statusMessage} from url ${url}`
                   )
                )
+               return
             }
 
             const targetPath = getNewTempManifestFileName(
                urlFileKind,
                fileNumber.toString()
             )
-            // save the file to disk
-            const fileWriter = fs
-               .createWriteStream(targetPath)
-               .on('finish', () => {
-                  const verification = verifyYaml(targetPath, url)
-                  if (succeeded(verification)) {
-                     core.debug(
-                        `outputting YAML contents from ${url} to ${targetPath}: ${JSON.stringify(
-                           verification.result
-                        )}`
-                     )
-                     resolve(targetPath)
-                  } else {
-                     reject(verification.error)
-                  }
-               })
-
+            const fileWriter = fs.createWriteStream(targetPath)
+            fileWriter.on('error', reject)
+            fileWriter.on('finish', () => {
+               const verification = verifyYaml(targetPath, url)
+               if (succeeded(verification)) {
+                  core.debug(
+                     `outputting YAML contents from ${url} to ${targetPath}: ${JSON.stringify(
+                        verification.result
+                     )}`
+                  )
+                  resolve(targetPath)
+               } else {
+                  reject(new Error(verification.error))
+               }
+            })
+            response.on('error', reject)
             response.pipe(fileWriter)
          })
-         .on('error', (error) => {
-            reject(error)
-         })
+         .on('error', reject)
    })
 }
 
