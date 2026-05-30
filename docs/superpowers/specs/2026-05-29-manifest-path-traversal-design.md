@@ -15,7 +15,7 @@ The copied file is then passed to `kubectl apply -f`. If it is not a
 valid Kubernetes manifest, `kubectl` error output may surface field
 names or YAML excerpts in CI logs.
 
-`recurisveManifestGetter()` makes this stronger: a traversal *directory*
+`recurisveManifestGetter()` makes this stronger: a traversal _directory_
 path lets a caller enumerate `.yaml`/`.yml` files anywhere readable
 without knowing filenames in advance.
 
@@ -39,6 +39,7 @@ Two fixes in `src/utilities/fileUtils.ts`:
 2. **Async / error-handling fix** — `writeYamlFromURLToFile`.
 
 Out of scope (separate cleanup PRs):
+
 - Renaming the `recurisveManifestGetter` typo.
 - Refactoring redundant `path.join(fileName)` calls in
   `writeObjectsToFile` / `writeManifestToFile`.
@@ -68,7 +69,7 @@ function assertPathWithinWorkspace(inputPath: string): string {
    if (rel.startsWith('..') || path.isAbsolute(rel)) {
       throw new Error(
          `manifest path ${inputPath} resolves to ${resolvedInput}, ` +
-         `which is outside the workspace ${resolvedWorkspace}`
+            `which is outside the workspace ${resolvedWorkspace}`
       )
    }
    return resolvedInput
@@ -97,6 +98,7 @@ export function moveFileToTmpDir(originalFilepath: string) {
 ```
 
 Key changes:
+
 - Source validated by `assertPathWithinWorkspace` before any read.
 - Destination is **basename-only** under `tempDirectory` — caller-
   supplied directory structure is never reproduced under `RUNNER_TEMP`.
@@ -109,7 +111,7 @@ Key changes:
 ### Entry-point validation
 
 In `getFilesFromDirectoriesAndURLs`, apply `assertPathWithinWorkspace`
-once on each user-supplied `fileName` *before* `lstatSync` /
+once on each user-supplied `fileName` _before_ `lstatSync` /
 `readdirSync` / URL handling. The recursive descent in
 `recurisveManifestGetter` then operates only on already-validated
 absolute paths within the workspace, so discovered files are
@@ -184,6 +186,7 @@ export async function writeYamlFromURLToFile(
 ```
 
 Changes:
+
 - Drop misleading `async` on the get callback.
 - `return` after HTTP-error `reject` so the success path no longer runs.
 - Drain the response on early reject.
@@ -199,23 +202,23 @@ Tests live under `test/` (vitest). Add a new `test/unit/fileUtils.test.ts`
 
 ### Path traversal
 
-| Case | Expected |
-|------|----------|
-| `moveFileToTmpDir('../etc/passwd.yaml')` with `GITHUB_WORKSPACE` set | throws "outside the workspace" |
-| `getFilesFromDirectoriesAndURLs(['../../.config/myapp/'])` | throws |
-| `moveFileToTmpDir('<workspace>/manifests/svc.yaml')` | returns `<RUNNER_TEMP>/svc_<ts>.yaml`, file exists, contents match |
-| Symlink inside workspace → file outside workspace | throws (realpath check) |
-| Two inputs sharing basename (`a/svc.yaml`, `b/svc.yaml`) | both copied, distinct destination names, no overwrite |
-| `GITHUB_WORKSPACE` unset | no containment check, but destination is basename-only under RUNNER_TEMP |
+| Case                                                                 | Expected                                                                 |
+| -------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `moveFileToTmpDir('../etc/passwd.yaml')` with `GITHUB_WORKSPACE` set | throws "outside the workspace"                                           |
+| `getFilesFromDirectoriesAndURLs(['../../.config/myapp/'])`           | throws                                                                   |
+| `moveFileToTmpDir('<workspace>/manifests/svc.yaml')`                 | returns `<RUNNER_TEMP>/svc_<ts>.yaml`, file exists, contents match       |
+| Symlink inside workspace → file outside workspace                    | throws (realpath check)                                                  |
+| Two inputs sharing basename (`a/svc.yaml`, `b/svc.yaml`)             | both copied, distinct destination names, no overwrite                    |
+| `GITHUB_WORKSPACE` unset                                             | no containment check, but destination is basename-only under RUNNER_TEMP |
 
 ### URL writer
 
-| Case | Expected |
-|------|----------|
-| HTTP 500 response | promise rejects, no file written, no hang |
-| Socket error mid-stream | promise rejects |
-| Valid YAML body | promise resolves with path, file exists |
-| Invalid YAML body | promise rejects with verification error |
+| Case                    | Expected                                  |
+| ----------------------- | ----------------------------------------- |
+| HTTP 500 response       | promise rejects, no file written, no hang |
+| Socket error mid-stream | promise rejects                           |
+| Valid YAML body         | promise resolves with path, file exists   |
+| Invalid YAML body       | promise rejects with verification error   |
 
 Use temporary directories + `fs.symlinkSync` for the traversal setup;
 mock `https.get` with `nock` or a local `http.createServer` for the URL

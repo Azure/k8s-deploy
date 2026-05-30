@@ -27,6 +27,7 @@ Two commits, scoped per fix.
 ## Task 1: Add `assertPathWithinWorkspace` helper (TDD)
 
 **Files:**
+
 - Modify: `src/utilities/fileUtils.ts` (add private helper near top, after `getTempDirectory`)
 - Modify: `src/utilities/fileUtils.test.ts` (add describe block at end)
 
@@ -164,13 +165,16 @@ Expected: 6 passing.
 ## Task 2: Rewrite `moveFileToTmpDir` (basename-only destination)
 
 **Files:**
+
 - Modify: `src/utilities/fileUtils.ts:66-84`
 - Modify: `src/utilities/fileUtils.test.ts:110-124` (replace the stale test)
 
 The existing test asserts the vulnerable behavior:
+
 ```ts
 expect(output).toEqual(path.join(fileUtils.getTempDirectory(), '/path/in/repo'))
 ```
+
 This must be replaced — the new contract is "basename + uniquifier under RUNNER_TEMP".
 
 - [ ] **Step 1: Replace the existing `moving files to temp` describe block with new failing tests**
@@ -286,6 +290,7 @@ Expected: 3 passing. If the "share a basename" test fails because both calls lan
 ## Task 3: Validate paths at the entry to `getFilesFromDirectoriesAndURLs`
 
 **Files:**
+
 - Modify: `src/utilities/fileUtils.ts:92-135`
 - Modify: `src/utilities/fileUtils.test.ts` (extend the existing `File utils` describe block)
 
@@ -330,48 +335,47 @@ Expected: FAIL — current code accepts the path.
 In `src/utilities/fileUtils.ts`, modify the loop in `getFilesFromDirectoriesAndURLs` (around line 98). Replace the body of the `for` loop with:
 
 ```ts
-   for (const fileName of filePaths) {
-      try {
-         if (isHttpUrl(fileName)) {
-            try {
-               const tempFilePath: string = await writeYamlFromURLToFile(
-                  fileName,
-                  fileCounter++
-               )
-               fullPathSet.add(tempFilePath)
-            } catch (e) {
-               throw Error(
-                  `encountered error trying to pull YAML from URL ${fileName}: ${e}`
-               )
-            }
-            continue
-         }
-
-         const safePath = assertPathWithinWorkspace(fileName)
-
-         if (fs.lstatSync(safePath).isDirectory()) {
-            recurisveManifestGetter(safePath).forEach((file) => {
-               fullPathSet.add(file)
-            })
-         } else if (
-            getFileExtension(safePath) === 'yml' ||
-            getFileExtension(safePath) === 'yaml'
-         ) {
-            fullPathSet.add(safePath)
-         } else {
-            core.debug(
-               `Detected non-manifest file, ${fileName}, continuing... `
+for (const fileName of filePaths) {
+   try {
+      if (isHttpUrl(fileName)) {
+         try {
+            const tempFilePath: string = await writeYamlFromURLToFile(
+               fileName,
+               fileCounter++
+            )
+            fullPathSet.add(tempFilePath)
+         } catch (e) {
+            throw Error(
+               `encountered error trying to pull YAML from URL ${fileName}: ${e}`
             )
          }
-      } catch (ex) {
-         throw Error(
-            `Exception occurred while reading the file ${fileName}: ${ex}`
-         )
+         continue
       }
+
+      const safePath = assertPathWithinWorkspace(fileName)
+
+      if (fs.lstatSync(safePath).isDirectory()) {
+         recurisveManifestGetter(safePath).forEach((file) => {
+            fullPathSet.add(file)
+         })
+      } else if (
+         getFileExtension(safePath) === 'yml' ||
+         getFileExtension(safePath) === 'yaml'
+      ) {
+         fullPathSet.add(safePath)
+      } else {
+         core.debug(`Detected non-manifest file, ${fileName}, continuing... `)
+      }
+   } catch (ex) {
+      throw Error(
+         `Exception occurred while reading the file ${fileName}: ${ex}`
+      )
    }
+}
 ```
 
 Key changes vs. current:
+
 - URL branch is handled then `continue`s, since URLs bypass workspace containment.
 - All disk paths go through `assertPathWithinWorkspace` before `lstatSync` / `readdirSync`.
 - `recurisveManifestGetter` is called with the resolved absolute path, so its discovered files are intrinsically contained.
@@ -386,6 +390,7 @@ beforeAll(() => {
    process.env.GITHUB_WORKSPACE ??= process.cwd()
 })
 ```
+
 at the top of the `File utils` describe.
 
 - [ ] **Step 5: Typecheck**
@@ -401,6 +406,7 @@ Add an entry at the top under a `## Unreleased` heading (create the heading if m
 ## Unreleased
 
 ### Security
+
 - Confine `manifests` inputs to `GITHUB_WORKSPACE`. Paths that resolve
   outside the workspace (via `../` traversal, absolute paths, or
   symlinks) now cause the action to fail with a clear error instead of
@@ -436,6 +442,7 @@ matching the safer pattern already used by getNewTempManifestFileName."
 ## Task 4: Fix `writeYamlFromURLToFile` error handling (TDD)
 
 **Files:**
+
 - Modify: `src/utilities/fileUtils.ts:137-180`
 - Modify: `src/utilities/fileUtils.test.ts` (extend existing URL tests)
 
@@ -487,10 +494,17 @@ describe('writeYamlFromURLToFile error handling', () => {
       vi.restoreAllMocks()
    })
 
-   function mockHttpsGet(makeResponse: () => {
-      response: EventEmitter & {statusCode?: number; statusMessage?: string; pipe: PassThrough['pipe']; resume: () => void}
-      requestEmitter: EventEmitter
-   }) {
+   function mockHttpsGet(
+      makeResponse: () => {
+         response: EventEmitter & {
+            statusCode?: number
+            statusMessage?: string
+            pipe: PassThrough['pipe']
+            resume: () => void
+         }
+         requestEmitter: EventEmitter
+      }
+   ) {
       const https = require('https') as typeof import('https')
       vi.spyOn(https, 'get').mockImplementation(((url: string, cb?: any) => {
          const {response, requestEmitter} = makeResponse()
@@ -544,9 +558,7 @@ describe('writeYamlFromURLToFile error handling', () => {
          'https://example.com/z.yaml',
          101
       )
-      setImmediate(() =>
-         requestEmitter.emit('error', new Error('DNS failure'))
-      )
+      setImmediate(() => requestEmitter.emit('error', new Error('DNS failure')))
       await expect(p).rejects.toThrow(/DNS failure/)
    })
 })
@@ -608,6 +620,7 @@ export async function writeYamlFromURLToFile(
 ```
 
 Changes:
+
 - Dropped `async` from the get callback (it never awaited anything; the keyword silently swallowed throws).
 - `return` after the HTTP-error `reject` so the success branch no longer runs.
 - `response.resume()` to drain the body on early reject.
@@ -669,16 +682,16 @@ Expected: clean working tree.
 ## Self-Review Summary
 
 - **Spec coverage:**
-  - `assertPathWithinWorkspace` helper → Task 1 ✅
-  - `moveFileToTmpDir` basename rewrite + uniquifier → Task 2 ✅
-  - Entry-point validation in `getFilesFromDirectoriesAndURLs` (covers `recurisveManifestGetter` indirectly via resolved paths) → Task 3 ✅
-  - Hard-error behavior → exercised in Tasks 2 & 3 ✅
-  - `GITHUB_WORKSPACE` unset fallback → Task 1 test ✅
-  - Symlink hardening via realpath → Task 1 test ✅
-  - Basename collision handling → Task 2 test ✅
-  - `writeYamlFromURLToFile` async/error fix → Task 4 ✅
-  - CHANGELOG entry → Task 3 ✅
-  - Two commits → Tasks 3 & 4 ✅
+   - `assertPathWithinWorkspace` helper → Task 1 ✅
+   - `moveFileToTmpDir` basename rewrite + uniquifier → Task 2 ✅
+   - Entry-point validation in `getFilesFromDirectoriesAndURLs` (covers `recurisveManifestGetter` indirectly via resolved paths) → Task 3 ✅
+   - Hard-error behavior → exercised in Tasks 2 & 3 ✅
+   - `GITHUB_WORKSPACE` unset fallback → Task 1 test ✅
+   - Symlink hardening via realpath → Task 1 test ✅
+   - Basename collision handling → Task 2 test ✅
+   - `writeYamlFromURLToFile` async/error fix → Task 4 ✅
+   - CHANGELOG entry → Task 3 ✅
+   - Two commits → Tasks 3 & 4 ✅
 
 - **Placeholders:** none.
 

@@ -11,8 +11,44 @@ import {K8sObject} from '../types/k8sObject.js'
 
 export const urlFileKind = 'urlfile'
 
+let moveCounter = 0
+
 export function getTempDirectory(): string {
    return process.env['RUNNER_TEMP'] || os.tmpdir()
+}
+
+// Exported for tests. Validates that `inputPath` resolves (after symlink
+// resolution) to a location inside GITHUB_WORKSPACE. When GITHUB_WORKSPACE
+// is not set (e.g. local dev / unit tests), the check is skipped — callers
+// that write to RUNNER_TEMP still get protection from basename-only
+// destinations.
+export function assertPathWithinWorkspace(inputPath: string): string {
+   const workspace = process.env.GITHUB_WORKSPACE
+   if (!workspace) {
+      return inputPath
+   }
+   const resolvedWorkspace = fs.realpathSync(path.resolve(workspace))
+   let resolvedInput: string
+   try {
+      resolvedInput = fs.realpathSync(path.resolve(inputPath))
+   } catch (e) {
+      throw new Error(
+         `manifest path ${inputPath} does not exist or is not readable: ${e}`
+      )
+   }
+   const rel = path.relative(resolvedWorkspace, resolvedInput)
+   if (
+      rel === '' ||
+      (rel !== '..' &&
+         !rel.startsWith('..' + path.sep) &&
+         !path.isAbsolute(rel))
+   ) {
+      return resolvedInput
+   }
+   throw new Error(
+      `manifest path ${inputPath} resolves to ${resolvedInput}, ` +
+         `which is outside the workspace ${resolvedWorkspace}`
+   )
 }
 
 export function writeObjectsToFile(inputObjects: any[]): string[] {
@@ -64,22 +100,20 @@ export function writeManifestToFile(
 }
 
 export function moveFileToTmpDir(originalFilepath: string) {
+   const safeSource = assertPathWithinWorkspace(originalFilepath)
    const tempDirectory = getTempDirectory()
-   const newPath = path.join(tempDirectory, originalFilepath)
+   const ext = path.extname(safeSource)
+   const base = path.basename(safeSource, ext)
+   const uniqueName = `${base}_${getCurrentTime()}_${moveCounter++}${ext}`
+   const newPath = path.join(tempDirectory, uniqueName)
 
    core.debug(`reading original contents from path: ${originalFilepath}`)
-   const contents = fs.readFileSync(originalFilepath).toString()
+   const contents = fs.readFileSync(safeSource)
 
-   const dirName = path.dirname(newPath)
-   if (!fs.existsSync(dirName)) {
-      core.debug(`path ${dirName} doesn't exist yet, making new dir...`)
-      fs.mkdirSync(dirName, {recursive: true})
-   }
    core.debug(`writing contents to new path ${newPath}`)
-   fs.writeFileSync(path.join(newPath), contents)
+   fs.writeFileSync(newPath, contents)
 
    core.debug(`moved contents from ${originalFilepath} to ${newPath}`)
-
    return newPath
 }
 
@@ -109,15 +143,20 @@ export async function getFilesFromDirectoriesAndURLs(
                   `encountered error trying to pull YAML from URL ${fileName}: ${e}`
                )
             }
-         } else if (fs.lstatSync(fileName).isDirectory()) {
-            recurisveManifestGetter(fileName).forEach((file) => {
+            continue
+         }
+
+         const safePath = assertPathWithinWorkspace(fileName)
+
+         if (fs.lstatSync(safePath).isDirectory()) {
+            recurisveManifestGetter(safePath).forEach((file) => {
                fullPathSet.add(file)
             })
          } else if (
-            getFileExtension(fileName) === 'yml' ||
-            getFileExtension(fileName) === 'yaml'
+            getFileExtension(safePath) === 'yml' ||
+            getFileExtension(safePath) === 'yaml'
          ) {
-            fullPathSet.add(fileName)
+            fullPathSet.add(safePath)
          } else {
             core.debug(
                `Detected non-manifest file, ${fileName}, continuing... `
@@ -221,7 +260,7 @@ function recurisveManifestGetter(dirName: string): string[] {
          getFileExtension(fileName) === 'yml' ||
          getFileExtension(fileName) === 'yaml'
       ) {
-         toRet.push(path.join(dirName, fileName))
+         toRet.push(assertPathWithinWorkspace(fnwd))
       } else {
          core.debug(`Detected non-manifest file, ${fileName}, continuing... `)
       }
