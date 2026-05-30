@@ -25,6 +25,9 @@ export function getTempDirectory(): string {
 export function assertPathWithinWorkspace(inputPath: string): string {
    const workspace = process.env.GITHUB_WORKSPACE
    if (!workspace) {
+      core.warning(
+         'GITHUB_WORKSPACE is not set; skipping manifest path containment check'
+      )
       return inputPath
    }
    const resolvedWorkspace = fs.realpathSync(path.resolve(workspace))
@@ -198,16 +201,20 @@ export async function writeYamlFromURLToFile(
             const fileWriter = fs.createWriteStream(targetPath)
             fileWriter.on('error', reject)
             fileWriter.on('finish', () => {
-               const verification = verifyYaml(targetPath, url)
-               if (succeeded(verification)) {
-                  core.debug(
-                     `outputting YAML contents from ${url} to ${targetPath}: ${JSON.stringify(
-                        verification.result
-                     )}`
-                  )
-                  resolve(targetPath)
-               } else {
-                  reject(new Error(verification.error))
+               try {
+                  const verification = verifyYaml(targetPath, url)
+                  if (succeeded(verification)) {
+                     core.debug(
+                        `outputting YAML contents from ${url} to ${targetPath}: ${JSON.stringify(
+                           verification.result
+                        )}`
+                     )
+                     resolve(targetPath)
+                  } else {
+                     reject(new Error(verification.error))
+                  }
+               } catch (e) {
+                  reject(e)
                }
             })
             response.on('error', reject)
@@ -237,7 +244,7 @@ function verifyYaml(filepath: string, url: string): Errorable<K8sObject[]> {
    }
 
    for (const obj of inputObjects) {
-      if (!obj.kind || !obj.apiVersion || !obj.metadata) {
+      if (obj == null || !obj.kind || !obj.apiVersion || !obj.metadata) {
          return {
             succeeded: false,
             error: `failed to parse manifest from ${url}: missing fields`
