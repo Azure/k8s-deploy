@@ -189,7 +189,7 @@ describe('moveFileToTmpDir', () => {
 
       const out = fileUtils.moveFileToTmpDir(src)
 
-      expect(path.dirname(out)).toBe(fs.realpathSync(tmpDir))
+      expect(fs.realpathSync(path.dirname(out))).toBe(fs.realpathSync(tmpDir))
       expect(path.basename(out)).toMatch(/^svc_\d+_\d+\.yaml$/)
       expect(fs.readFileSync(out).toString()).toBe('kind: Service')
    })
