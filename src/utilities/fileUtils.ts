@@ -31,9 +31,16 @@ export function assertPathWithinWorkspace(inputPath: string): string {
       return inputPath
    }
    const resolvedWorkspace = fs.realpathSync(path.resolve(workspace))
+   // Resolve relative inputs against the workspace (not process.cwd()), so
+   // a relative `manifests:` input is interpreted consistently regardless of
+   // whether a prior step changed the working directory. Absolute paths are
+   // passed through unchanged and still validated below.
+   const absoluteInput = path.isAbsolute(inputPath)
+      ? inputPath
+      : path.resolve(resolvedWorkspace, inputPath)
    let resolvedInput: string
    try {
-      resolvedInput = fs.realpathSync(path.resolve(inputPath))
+      resolvedInput = fs.realpathSync(absoluteInput)
    } catch (e) {
       throw new Error(
          `manifest path ${inputPath} does not exist or is not readable: ${e}`
@@ -198,8 +205,15 @@ export async function writeYamlFromURLToFile(
                urlFileKind,
                fileNumber.toString()
             )
+            // Once the write stream is created the file exists on disk;
+            // route all post-stream rejections through this helper so we
+            // don't leave truncated YAML in RUNNER_TEMP for later tooling
+            // to pick up. Do NOT unlink on the success path.
+            const cleanupAndReject = (err: unknown) => {
+               fs.rm(targetPath, {force: true}, () => reject(err))
+            }
             const fileWriter = fs.createWriteStream(targetPath)
-            fileWriter.on('error', reject)
+            fileWriter.on('error', cleanupAndReject)
             fileWriter.on('finish', () => {
                try {
                   const verification = verifyYaml(targetPath, url)
@@ -211,13 +225,13 @@ export async function writeYamlFromURLToFile(
                      )
                      resolve(targetPath)
                   } else {
-                     reject(new Error(verification.error))
+                     cleanupAndReject(new Error(verification.error))
                   }
                } catch (e) {
-                  reject(e)
+                  cleanupAndReject(e)
                }
             })
-            response.on('error', reject)
+            response.on('error', cleanupAndReject)
             response.pipe(fileWriter)
          })
          .on('error', reject)

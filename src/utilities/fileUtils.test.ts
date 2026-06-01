@@ -272,6 +272,16 @@ describe('assertPathWithinWorkspace', () => {
       )
    })
 
+   it('resolves relative paths against GITHUB_WORKSPACE even when CWD differs', () => {
+      const inside = path.join(workspace, 'manifest.yaml')
+      fs.writeFileSync(inside, 'kind: X')
+      // Deliberately chdir somewhere unrelated so a process.cwd()-based
+      // resolver would either reject or resolve to the wrong place.
+      process.chdir(os.tmpdir())
+      const result = fileUtils.assertPathWithinWorkspace('manifest.yaml')
+      expect(result).toBe(fs.realpathSync(inside))
+   })
+
    it('throws for absolute paths outside the workspace', () => {
       const target = path.join(outside, 'secrets.yaml')
       fs.writeFileSync(target, 'api_key: secret')
@@ -323,10 +333,30 @@ vi.mock('https', async (importOriginal) => {
 })
 
 describe('writeYamlFromURLToFile error handling', () => {
+   let tempDir: string
+   let originalRunnerTemp: string | undefined
+
+   beforeEach(() => {
+      originalRunnerTemp = process.env.RUNNER_TEMP
+      tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'url-fetch-'))
+      process.env.RUNNER_TEMP = tempDir
+   })
+
    afterEach(() => {
       httpsState.impl = null
       vi.restoreAllMocks()
+      if (originalRunnerTemp === undefined) {
+         delete process.env.RUNNER_TEMP
+      } else {
+         process.env.RUNNER_TEMP = originalRunnerTemp
+      }
+      fs.rmSync(tempDir, {recursive: true, force: true})
    })
+
+   // Wait one tick so cleanupAndReject's async fs.rm callback can fire
+   // before the test inspects the temp directory.
+   const waitForCleanup = () =>
+      new Promise<void>((r) => setImmediate(() => setImmediate(r)))
 
    function mockHttpsGet(
       makeResponse: () => {
@@ -393,5 +423,52 @@ describe('writeYamlFromURLToFile error handling', () => {
       )
       setImmediate(() => requestEmitter.emit('error', new Error('DNS failure')))
       await expect(p).rejects.toThrow(/DNS failure/)
+   })
+
+   it('removes temp file when verification fails', async () => {
+      const requestEmitter = new EventEmitter()
+      const response = Object.assign(new PassThrough(), {
+         statusCode: 200,
+         statusMessage: 'OK'
+      })
+      mockHttpsGet(() => ({response: response as any, requestEmitter}))
+
+      const before = new Set(fs.readdirSync(tempDir))
+      const p = fileUtils.writeYamlFromURLToFile(
+         'https://example.com/bad.yaml',
+         200
+      )
+      // Stream a YAML document missing required k8s fields so verifyYaml fails.
+      setImmediate(() => {
+         response.end('not: a-real-manifest\n')
+      })
+      await expect(p).rejects.toThrow(/missing fields|failed to parse/)
+      await waitForCleanup()
+      const after = fs.readdirSync(tempDir).filter((f) => !before.has(f))
+      expect(after).toEqual([])
+   })
+
+   it('removes temp file on mid-stream response error', async () => {
+      const requestEmitter = new EventEmitter()
+      const response = Object.assign(new PassThrough(), {
+         statusCode: 200,
+         statusMessage: 'OK',
+         resume() {}
+      })
+      mockHttpsGet(() => ({response: response as any, requestEmitter}))
+
+      const before = new Set(fs.readdirSync(tempDir))
+      const p = fileUtils.writeYamlFromURLToFile(
+         'https://example.com/midstream.yaml',
+         201
+      )
+      setImmediate(() => {
+         response.write('kind: Foo\n')
+         response.emit('error', new Error('socket reset'))
+      })
+      await expect(p).rejects.toThrow(/socket reset/)
+      await waitForCleanup()
+      const after = fs.readdirSync(tempDir).filter((f) => !before.has(f))
+      expect(after).toEqual([])
    })
 })
