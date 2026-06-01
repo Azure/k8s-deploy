@@ -1,5 +1,22 @@
 # Changelog
 
+## [6.0.0] - 2026-04-17
+
+### Changed
+
+- #504 [Update Node.js runtime from node20 to node24](https://github.com/Azure/k8s-deploy/pull/504)
+- #500 [Update action version references in README to latest majors](https://github.com/Azure/k8s-deploy/pull/500)
+
+### Security
+
+- #506 [Bump undici from 6.23.0 to 6.24.1](https://github.com/Azure/k8s-deploy/pull/506)
+- #513 [Bump vite from 8.0.3 to 8.0.5](https://github.com/Azure/k8s-deploy/pull/513)
+- #509 [Bump the actions group across 1 directory with 4 updates](https://github.com/Azure/k8s-deploy/pull/509)
+- #510 [Bump the actions group across 1 directory with 2 updates](https://github.com/Azure/k8s-deploy/pull/510)
+- #511 [Bump vitest from 4.1.1 to 4.1.2](https://github.com/Azure/k8s-deploy/pull/511)
+- #514 [Bump the actions group with 2 updates](https://github.com/Azure/k8s-deploy/pull/514)
+- #501 [Bump @types/node from 25.3.3 to 25.4.0](https://github.com/Azure/k8s-deploy/pull/501)
+
 ## [5.1.0] - 2026-03-03
 
 ### Added
