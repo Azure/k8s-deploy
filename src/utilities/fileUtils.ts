@@ -11,8 +11,54 @@ import {K8sObject} from '../types/k8sObject.js'
 
 export const urlFileKind = 'urlfile'
 
+let moveCounter = 0
+
 export function getTempDirectory(): string {
    return process.env['RUNNER_TEMP'] || os.tmpdir()
+}
+
+// Exported for tests. Validates that `inputPath` resolves (after symlink
+// resolution) to a location inside GITHUB_WORKSPACE. When GITHUB_WORKSPACE
+// is not set (e.g. local dev / unit tests), the check is skipped — callers
+// that write to RUNNER_TEMP still get protection from basename-only
+// destinations.
+export function assertPathWithinWorkspace(inputPath: string): string {
+   const workspace = process.env.GITHUB_WORKSPACE
+   if (!workspace) {
+      core.warning(
+         'GITHUB_WORKSPACE is not set; skipping manifest path containment check'
+      )
+      return inputPath
+   }
+   const resolvedWorkspace = fs.realpathSync(path.resolve(workspace))
+   // Resolve relative inputs against the workspace (not process.cwd()), so
+   // a relative `manifests:` input is interpreted consistently regardless of
+   // whether a prior step changed the working directory. Absolute paths are
+   // passed through unchanged and still validated below.
+   const absoluteInput = path.isAbsolute(inputPath)
+      ? inputPath
+      : path.resolve(resolvedWorkspace, inputPath)
+   let resolvedInput: string
+   try {
+      resolvedInput = fs.realpathSync(absoluteInput)
+   } catch (e) {
+      throw new Error(
+         `manifest path ${inputPath} does not exist or is not readable: ${e}`
+      )
+   }
+   const rel = path.relative(resolvedWorkspace, resolvedInput)
+   if (
+      rel === '' ||
+      (rel !== '..' &&
+         !rel.startsWith('..' + path.sep) &&
+         !path.isAbsolute(rel))
+   ) {
+      return resolvedInput
+   }
+   throw new Error(
+      `manifest path ${inputPath} resolves to ${resolvedInput}, ` +
+         `which is outside the workspace ${resolvedWorkspace}`
+   )
 }
 
 export function writeObjectsToFile(inputObjects: any[]): string[] {
@@ -64,22 +110,20 @@ export function writeManifestToFile(
 }
 
 export function moveFileToTmpDir(originalFilepath: string) {
+   const safeSource = assertPathWithinWorkspace(originalFilepath)
    const tempDirectory = getTempDirectory()
-   const newPath = path.join(tempDirectory, originalFilepath)
+   const ext = path.extname(safeSource)
+   const base = path.basename(safeSource, ext)
+   const uniqueName = `${base}_${getCurrentTime()}_${moveCounter++}${ext}`
+   const newPath = path.join(tempDirectory, uniqueName)
 
    core.debug(`reading original contents from path: ${originalFilepath}`)
-   const contents = fs.readFileSync(originalFilepath).toString()
+   const contents = fs.readFileSync(safeSource)
 
-   const dirName = path.dirname(newPath)
-   if (!fs.existsSync(dirName)) {
-      core.debug(`path ${dirName} doesn't exist yet, making new dir...`)
-      fs.mkdirSync(dirName, {recursive: true})
-   }
    core.debug(`writing contents to new path ${newPath}`)
-   fs.writeFileSync(path.join(newPath), contents)
+   fs.writeFileSync(newPath, contents)
 
    core.debug(`moved contents from ${originalFilepath} to ${newPath}`)
-
    return newPath
 }
 
@@ -109,15 +153,20 @@ export async function getFilesFromDirectoriesAndURLs(
                   `encountered error trying to pull YAML from URL ${fileName}: ${e}`
                )
             }
-         } else if (fs.lstatSync(fileName).isDirectory()) {
-            recurisveManifestGetter(fileName).forEach((file) => {
+            continue
+         }
+
+         const safePath = assertPathWithinWorkspace(fileName)
+
+         if (fs.lstatSync(safePath).isDirectory()) {
+            recurisveManifestGetter(safePath).forEach((file) => {
                fullPathSet.add(file)
             })
          } else if (
-            getFileExtension(fileName) === 'yml' ||
-            getFileExtension(fileName) === 'yaml'
+            getFileExtension(safePath) === 'yml' ||
+            getFileExtension(safePath) === 'yaml'
          ) {
-            fullPathSet.add(fileName)
+            fullPathSet.add(safePath)
          } else {
             core.debug(
                `Detected non-manifest file, ${fileName}, continuing... `
@@ -140,24 +189,33 @@ export async function writeYamlFromURLToFile(
 ): Promise<string> {
    return new Promise((resolve, reject) => {
       https
-         .get(url, async (response) => {
+         .get(url, (response) => {
             const code = response.statusCode ?? 0
             if (code >= 400) {
+               response.resume()
                reject(
-                  Error(
+                  new Error(
                      `received response status ${response.statusMessage} from url ${url}`
                   )
                )
+               return
             }
 
             const targetPath = getNewTempManifestFileName(
                urlFileKind,
                fileNumber.toString()
             )
-            // save the file to disk
-            const fileWriter = fs
-               .createWriteStream(targetPath)
-               .on('finish', () => {
+            // Once the write stream is created the file exists on disk;
+            // route all post-stream rejections through this helper so we
+            // don't leave truncated YAML in RUNNER_TEMP for later tooling
+            // to pick up. Do NOT unlink on the success path.
+            const cleanupAndReject = (err: unknown) => {
+               fs.rm(targetPath, {force: true}, () => reject(err))
+            }
+            const fileWriter = fs.createWriteStream(targetPath)
+            fileWriter.on('error', cleanupAndReject)
+            fileWriter.on('finish', () => {
+               try {
                   const verification = verifyYaml(targetPath, url)
                   if (succeeded(verification)) {
                      core.debug(
@@ -167,15 +225,16 @@ export async function writeYamlFromURLToFile(
                      )
                      resolve(targetPath)
                   } else {
-                     reject(verification.error)
+                     cleanupAndReject(new Error(verification.error))
                   }
-               })
-
+               } catch (e) {
+                  cleanupAndReject(e)
+               }
+            })
+            response.on('error', cleanupAndReject)
             response.pipe(fileWriter)
          })
-         .on('error', (error) => {
-            reject(error)
-         })
+         .on('error', reject)
    })
 }
 
@@ -199,7 +258,7 @@ function verifyYaml(filepath: string, url: string): Errorable<K8sObject[]> {
    }
 
    for (const obj of inputObjects) {
-      if (!obj.kind || !obj.apiVersion || !obj.metadata) {
+      if (obj == null || !obj.kind || !obj.apiVersion || !obj.metadata) {
          return {
             succeeded: false,
             error: `failed to parse manifest from ${url}: missing fields`
@@ -221,7 +280,7 @@ function recurisveManifestGetter(dirName: string): string[] {
          getFileExtension(fileName) === 'yml' ||
          getFileExtension(fileName) === 'yaml'
       ) {
-         toRet.push(path.join(dirName, fileName))
+         toRet.push(assertPathWithinWorkspace(fnwd))
       } else {
          core.debug(`Detected non-manifest file, ${fileName}, continuing... `)
       }
