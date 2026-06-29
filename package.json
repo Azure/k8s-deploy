@@ -20,16 +20,16 @@
       "@actions/tool-cache": "4.0.0",
       "@octokit/core": "^7.0.6",
       "@octokit/plugin-retry": "^8.1.0",
-      "js-yaml": "4.2.0",
+      "js-yaml": "5.2.0",
       "minimist": "^1.2.8"
    },
    "devDependencies": {
       "@types/js-yaml": "^4.0.9",
       "@types/minimist": "^1.2.5",
-      "@types/node": "^25.9.3",
+      "@types/node": "^26.0.1",
       "esbuild": "^0.28",
       "husky": "^9.1.7",
-      "prettier": "^3.8.4",
+      "prettier": "^3.9.3",
       "typescript": "6.0.3",
       "vitest": "^4"
    }
