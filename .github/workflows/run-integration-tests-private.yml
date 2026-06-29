@@ -51,7 +51,7 @@ jobs:
            run: |
               az aks command invoke --resource-group ${{ env.NAMESPACE }} --name ${{ env.NAMESPACE }} --command "kubectl create ns ${{ env.NAMESPACE }}"
 
-         - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # 6.2.0
+         - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # 6.3.0
            name: Install Python
            with:
               python-version: '3.x'
