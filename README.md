@@ -147,10 +147,25 @@ Following are the key capabilities of this action:
 
 ## Usage Examples
 
+### Pinning the action version
+
+For supply-chain security, GitHub [recommends](https://docs.github.com/en/actions/security-guides/security-hardening-for-github-actions#using-third-party-actions) pinning third-party actions to a full-length commit SHA rather than a mutable tag. The examples below use `Azure/k8s-deploy@v7` for readability, but the pinned form is preferred in production workflows:
+
+```yaml
+# Pinned to a specific commit SHA (recommended)
+- uses: Azure/k8s-deploy@<full-commit-sha> # v7.0.0
+  with:
+     manifests: |
+        deployment.yaml
+        service.yaml
+```
+
+Replace `<full-commit-sha>` with the 40-character commit SHA of the [release](https://github.com/Azure/k8s-deploy/releases) you want to pin to. Dependabot can keep pinned SHAs up to date automatically — see [Keeping your actions up to date with Dependabot](https://docs.github.com/en/code-security/dependabot/working-with-dependabot/keeping-your-actions-up-to-date-with-dependabot).
+
 ### Basic deployment (without any deployment strategy)
 
 ```yaml
-- uses: Azure/k8s-deploy@v5
+- uses: Azure/k8s-deploy@v7
   with:
      namespace: 'myapp'
      manifests: |
@@ -164,7 +179,7 @@ Following are the key capabilities of this action:
 ### Private cluster deployment
 
 ```yaml
-- uses: Azure/k8s-deploy@v5
+- uses: Azure/k8s-deploy@v7
   with:
      resource-group: yourResourceGroup
      name: yourClusterName
@@ -184,7 +199,7 @@ Following are the key capabilities of this action:
 ### Canary deployment without service mesh
 
 ```yaml
-- uses: Azure/k8s-deploy@v5
+- uses: Azure/k8s-deploy@v7
   with:
      namespace: 'myapp'
      images: 'contoso.azurecr.io/myapp:${{ event.run_id }}'
@@ -203,7 +218,7 @@ Following are the key capabilities of this action:
 To promote/reject the canary created by the above snippet, the following YAML snippet could be used:
 
 ```yaml
-- uses: Azure/k8s-deploy@v5
+- uses: Azure/k8s-deploy@v7
   with:
      namespace: 'myapp'
      images: 'contoso.azurecr.io/myapp:${{ event.run_id }}'
@@ -221,7 +236,7 @@ To promote/reject the canary created by the above snippet, the following YAML sn
 ### Canary deployment based on Service Mesh Interface
 
 ```yaml
-- uses: Azure/k8s-deploy@v5
+- uses: Azure/k8s-deploy@v7
   with:
      namespace: 'myapp'
      images: 'contoso.azurecr.io/myapp:${{ event.run_id }}'
@@ -242,7 +257,7 @@ To promote/reject the canary created by the above snippet, the following YAML sn
 To promote/reject the canary created by the above snippet, the following YAML snippet could be used:
 
 ```yaml
-- uses: Azure/k8s-deploy@v5
+- uses: Azure/k8s-deploy@v7
   with:
      namespace: 'myapp'
      images: 'contoso.azurecr.io/myapp:${{ event.run_id }} '
@@ -261,7 +276,7 @@ To promote/reject the canary created by the above snippet, the following YAML sn
 ### Blue-Green deployment with different route methods
 
 ```yaml
-- uses: Azure/k8s-deploy@v5
+- uses: Azure/k8s-deploy@v7
   with:
      namespace: 'myapp'
      images: 'contoso.azurecr.io/myapp:${{ event.run_id }}'
@@ -281,7 +296,7 @@ To promote/reject the canary created by the above snippet, the following YAML sn
 To promote/reject the green workload created by the above snippet, the following YAML snippet could be used:
 
 ```yaml
-- uses: Azure/k8s-deploy@v5
+- uses: Azure/k8s-deploy@v7
   with:
      namespace: 'myapp'
      images: 'contoso.azurecr.io/myapp:${{ event.run_id }}'
@@ -338,7 +353,7 @@ jobs:
               container-registry-password: ${{ secrets.REGISTRY_PASSWORD }}
               secret-name: demo-k8s-secret
 
-         - uses: Azure/k8s-deploy@v5
+         - uses: Azure/k8s-deploy@v7
            with:
               action: deploy
               manifests: |
@@ -384,7 +399,7 @@ jobs:
               container-registry-password: ${{ secrets.REGISTRY_PASSWORD }}
               secret-name: demo-k8s-secret
 
-         - uses: Azure/k8s-deploy@v5
+         - uses: Azure/k8s-deploy@v7
            with:
               action: deploy
               manifests: |
@@ -468,7 +483,7 @@ jobs:
               helm-version: 'latest'
            id: bake
 
-         - uses: Azure/k8s-deploy@v5
+         - uses: Azure/k8s-deploy@v7
            with:
               action: deploy
               manifests: ${{ steps.bake.outputs.manifestsBundle }}

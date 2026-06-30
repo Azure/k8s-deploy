@@ -1,5 +1,28 @@
 # Changelog
 
+## [7.0.0] - 2026-06-23
+
+### Changed
+
+- #528 [Confine manifest paths to GITHUB_WORKSPACE (**breaking**: workflows passing `manifests:` paths outside the workspace now fail with a clear error)](https://github.com/Azure/k8s-deploy/pull/528)
+- #527 [Pin release workflow to commit SHA for supply chain safety](https://github.com/Azure/k8s-deploy/pull/527)
+
+### Security
+
+- #528 [Harden URL fetcher error handling in writeYamlFromURLToFile](https://github.com/Azure/k8s-deploy/pull/528)
+- #537 [Bump undici from 6.25.0 to 6.27.0](https://github.com/Azure/k8s-deploy/pull/537)
+- #536 [Bump actions/checkout in /.github/workflows in the actions group](https://github.com/Azure/k8s-deploy/pull/536)
+- #534 [Bump the actions group with 3 updates](https://github.com/Azure/k8s-deploy/pull/534)
+- #533 [Bump esbuild from 0.28.0 to 0.28.1](https://github.com/Azure/k8s-deploy/pull/533)
+- #532 [Bump github/codeql-action in /.github/workflows in the actions group](https://github.com/Azure/k8s-deploy/pull/532)
+- #531 [Bump @types/node from 25.9.1 to 25.9.2 in the actions group](https://github.com/Azure/k8s-deploy/pull/531)
+- #530 [Bump the actions group in /.github/workflows with 2 updates](https://github.com/Azure/k8s-deploy/pull/530)
+- #529 [Bump the actions group with 2 updates](https://github.com/Azure/k8s-deploy/pull/529)
+- #526 [Bump the actions group in /.github/workflows with 2 updates](https://github.com/Azure/k8s-deploy/pull/526)
+- #525 [Bump the actions group with 2 updates](https://github.com/Azure/k8s-deploy/pull/525)
+- #524 [Bump @types/node from 25.7.0 to 25.9.0 in the actions group](https://github.com/Azure/k8s-deploy/pull/524)
+- #523 [Bump github/codeql-action in /.github/workflows in the actions group](https://github.com/Azure/k8s-deploy/pull/523)
+
 ## [6.0.0] - 2026-04-17
 
 ### Changed
