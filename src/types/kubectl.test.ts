@@ -635,11 +635,11 @@ describe('Kubectl class', () => {
    it('gets new replica sets', async () => {
       const kubectl = new Kubectl(kubectlPath, testNamespace)
 
-      const newReplicaSetName = 'newreplicaset'
+      const newReplicaSetName = 'newreplicaset:'
       const name = 'name'
       const describeReturn = {
          exitCode: 0,
-         stdout: newReplicaSetName + name + ' ' + 'extra',
+         stdout: newReplicaSetName + ' ' + name + ' ' + 'extra',
          stderr: ''
       }
 
