@@ -16,7 +16,11 @@ export function getWorkflowAnnotations(
       workflowFileName: workflowFilePath.replace('.github/workflows/', ''),
       jobName: process.env.GITHUB_JOB,
       createdBy: process.env.GITHUB_ACTOR,
-      runUri: `https://github.com/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`,
+      runUri: `${
+         process.env.GITHUB_SERVER_URL || 'https://github.com'
+      }/${process.env.GITHUB_REPOSITORY}/actions/runs/${
+         process.env.GITHUB_RUN_ID
+      }`,
       commit: process.env.GITHUB_SHA,
       lastSuccessRunCommit: lastSuccessRunSha,
       branch: process.env.GITHUB_REF,
