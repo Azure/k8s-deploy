@@ -85,7 +85,7 @@ export class Kubectl {
          const stdout = result.stdout.split('\n')
          core.debug('stdout from getNewReplicaSet is ' + JSON.stringify(stdout))
          stdout.forEach((line: string) => {
-            const newreplicaset = 'newreplicaset'
+            const newreplicaset = 'newreplicaset:'
             if (line && line.toLowerCase().indexOf(newreplicaset) > -1) {
                core.debug(
                   `found string of interest for replicaset, line is ${line}`
