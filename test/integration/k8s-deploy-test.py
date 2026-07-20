@@ -21,6 +21,7 @@ namespaceKey = "namespace"
 ingressServicesKey = "ingressServices"
 tsServicesKey = "tsServices"
 privateKey = "private"
+resourceGroupKey = "resourceGroup"
 
 
 def parseArgs(sysArgs):
@@ -211,7 +212,12 @@ def main():
     try:
         if privateKey in parsedArgs:
             uniqueName = parsedArgs[privateKey]
-            azPrefix = f"az aks command invoke --resource-group {uniqueName} --name {uniqueName} --command "
+            # The resource group defaults to the cluster's unique name for
+            # backward compatibility (older workflows named the RG and cluster
+            # identically). When the RG is shared/pre-created and differs from
+            # the cluster name, pass it explicitly via resourceGroup=<rg>.
+            resourceGroup = parsedArgs.get(resourceGroupKey, uniqueName)
+            azPrefix = f"az aks command invoke --resource-group {resourceGroup} --name {uniqueName} --command "
             cmd = azPrefix + "'" + cmd + "'"
             outputString = os.popen(cmd).read()
             successExit = "exitcode=0"
