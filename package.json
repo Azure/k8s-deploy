@@ -24,11 +24,11 @@
    },
    "devDependencies": {
       "@types/js-yaml": "^4.0.9",
-      "@types/node": "^26.4.0",
+      "@types/node": "^26.5.0",
       "esbuild": "^0.28",
       "husky": "^9.1.7",
       "prettier": "^3.9.5",
       "typescript": "7.0.2",
-      "vitest": "^4"
+      "vitest": "^5"
    }
 }
