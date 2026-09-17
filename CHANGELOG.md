@@ -1,5 +1,26 @@
 # Changelog
 
+## [7.0.1] - 2026-08-31
+
+### Security
+
+- #560 [Fix command injection in `az aks command invoke` for private clusters: argv is now POSIX-quoted instead of flattened with `join(' ')`, so manifest resource names, the `namespace` input and the workflow annotation payload can no longer escape into the run-command pod's high-privilege service account](https://github.com/Azure/k8s-deploy/pull/560)
+- #552 [Bump js-yaml from 5.2.1 to 5.2.2](https://github.com/Azure/k8s-deploy/pull/552)
+- #551 [Bump postcss from 8.5.15 to 8.5.25](https://github.com/Azure/k8s-deploy/pull/551)
+- #550 [Bump js-yaml from 4.2.0 to 4.3.0](https://github.com/Azure/k8s-deploy/pull/550)
+- #548 [Bump the actions group across 1 directory with 6 updates](https://github.com/Azure/k8s-deploy/pull/548)
+- #547 [Bump the actions group across 1 directory with 5 updates](https://github.com/Azure/k8s-deploy/pull/547)
+
+### Fixed
+
+- #543 [Strip trailing colon from the parsed `NewReplicaSet` name in rollout status output](https://github.com/Azure/k8s-deploy/pull/543)
+- #560 [Honour the caller's `silent` flag in `PrivateKubectl.execute`; command output was previously written to the debug log unconditionally](https://github.com/Azure/k8s-deploy/pull/560)
+
+### Changed
+
+- #560 [Remove the unused `minimist` dependency](https://github.com/Azure/k8s-deploy/pull/560)
+- #555 [Document that the `k8s-bake` example requires `k8s-bake` v4.1.1+, which writes its baked manifest inside `GITHUB_WORKSPACE`](https://github.com/Azure/k8s-deploy/pull/555)
+
 ## [7.0.0] - 2026-06-23
 
 ### Changed

@@ -31,5 +31,4 @@ export function parseResourceTypeInput(rawInput: string): ClusterType {
    )
 }
 export type ClusterType =
-   | typeof ResourceTypeManagedCluster
-   | typeof ResourceTypeFleet
+   typeof ResourceTypeManagedCluster | typeof ResourceTypeFleet
