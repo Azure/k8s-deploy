@@ -1,8 +1,12 @@
-# Private-cluster integration test (1ES pipeline).
+# Private-cluster release gate (1ES pipeline).
 #
-# Runs the k8s-deploy action against a real private AKS cluster. Lives in Azure
-# DevOps (not GitHub Actions) because GitHub-repo Federated Identity Credentials
-# are being removed; auth uses a governed WIF service connection instead.
+# Runs the k8s-deploy action against a real private AKS cluster before a release
+# is published. The internal release orchestrator must queue this pipeline for
+# the exact releases/vX.Y.Z commit, pass that SHA as releaseCandidateCommit, and
+# depend on this run succeeding before it tags or publishes the release.
+#
+# This pipeline intentionally has no CI or PR trigger. It uses a governed WIF
+# service connection and must never execute code supplied by a pull request.
 #
 # The node24 JS action is invoked as `node lib/index.js` with inputs supplied via
 # INPUT_* env vars. There is no action.yml default injection here, so keep INPUT_*
@@ -10,17 +14,19 @@
 # must be set or the action throws.
 #
 # The pipeline does not create/delete the resource group (it must already exist);
-# it only creates and deletes a per-build cluster inside it.
+# it only creates and deletes a per-build cluster inside it. Azure DevOps pipeline
+# UI triggers must also remain disabled because UI settings override this YAML.
+# The service connection must use a custom role scoped to the shared resource
+# group; do not grant subscription-wide Contributor or Owner.
 
-trigger:
-   branches:
-      include:
-         - main
+parameters:
+   - name: releaseCandidateCommit
+     displayName: Exact release candidate commit SHA
+     type: string
+     default: ''
 
-pr:
-   branches:
-      include:
-         - releases/*
+trigger: none
+pr: none
 
 resources:
    repositories:
@@ -33,6 +39,7 @@ variables:
    serviceConnection: k8s-deploy-intg-test-svc-conn
    resourceGroup: k8s-deploy-intg-rg
    location: eastus2
+   kubectlVersion: 1.34.1
    clusterName: test-$(Build.BuildId)
    namespace: test-$(Build.BuildId)
    workflowFriendlyName: k8s-deploy-integration-tests-private
@@ -65,12 +72,46 @@ extends:
                         versionSpec: '24.x'
 
                    - script: |
-                        rm -rf node_modules/
-                        npm install
+                        set -euo pipefail
+
+                        if [[ ! "$BUILD_SOURCEBRANCH" =~ ^refs/heads/releases/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+                           echo "##vso[task.logissue type=error]This release gate only accepts releases/vX.Y.Z branches; received $BUILD_SOURCEBRANCH"
+                           exit 1
+                        fi
+
+                        if [[ ! "$EXPECTED_RELEASE_COMMIT" =~ ^[0-9a-fA-F]{40}$ ]]; then
+                           echo "##vso[task.logissue type=error]releaseCandidateCommit must be a full 40-character commit SHA"
+                           exit 1
+                        fi
+
+                        checked_out_commit="$(git rev-parse HEAD)"
+                        if [[ "$BUILD_SOURCEVERSION" != "$EXPECTED_RELEASE_COMMIT" || "$checked_out_commit" != "$EXPECTED_RELEASE_COMMIT" ]]; then
+                           echo "##vso[task.logissue type=error]Release candidate mismatch: requested $EXPECTED_RELEASE_COMMIT, source $BUILD_SOURCEVERSION, checked out $checked_out_commit"
+                           exit 1
+                        fi
+
+                        expected_version="${BUILD_SOURCEBRANCH#refs/heads/releases/v}"
+                        actual_version="$(node -p "require('./package.json').version")"
+                        if [[ "$actual_version" != "$expected_version" ]]; then
+                           echo "##vso[task.logissue type=error]Release branch version $expected_version does not match package.json version $actual_version"
+                           exit 1
+                        fi
+
+                        echo "##vso[task.setvariable variable=releaseCandidateValidated]true"
+                     displayName: Validate release candidate
+                     env:
+                        EXPECTED_RELEASE_COMMIT: ${{ parameters.releaseCandidateCommit }}
+
+                   - script: npm ci
                      displayName: Install dependencies
 
                    - script: npm run build
                      displayName: Build
+
+                   - task: KubectlInstaller@0
+                     displayName: Install kubectl
+                     inputs:
+                        kubectlVersion: $(kubectlVersion)
 
                    - task: AzureCLI@2
                      displayName: Create private AKS cluster and set context
@@ -79,10 +120,17 @@ extends:
                         scriptType: bash
                         scriptLocation: inlineScript
                         inlineScript: |
-                           set -e
+                           set -euo pipefail
                            set +x
                            # RG must already exist; do not run `az group create`.
-                           az aks create --name $(clusterName) --resource-group $(resourceGroup) --enable-private-cluster --generate-ssh-keys
+                           az aks create \
+                              --name $(clusterName) \
+                              --resource-group $(resourceGroup) \
+                              --location $(location) \
+                              --enable-private-cluster \
+                              --generate-ssh-keys \
+                              --node-count 1 \
+                              --tags purpose=k8s-deploy-private-integration build-id=$(Build.BuildId)
                            az aks get-credentials --resource-group $(resourceGroup) --name $(clusterName)
 
                    - task: AzureCLI@2
@@ -92,7 +140,7 @@ extends:
                         scriptType: bash
                         scriptLocation: inlineScript
                         inlineScript: |
-                           set -e
+                           set -euo pipefail
                            az aks command invoke --resource-group $(resourceGroup) --name $(clusterName) --command "kubectl create ns $(namespace)"
 
                    - task: UsePythonVersion@0
@@ -107,7 +155,7 @@ extends:
                         scriptType: bash
                         scriptLocation: inlineScript
                         inlineScript: |
-                           set -e
+                           set -euo pipefail
                            node lib/index.js
                      env:
                         KUBECONFIG: $(HOME)/.kube/config
@@ -125,8 +173,24 @@ extends:
                         INPUT_RESOURCE-GROUP: $(resourceGroup)
                         INPUT_NAME: $(clusterName)
                         INPUT_RESOURCE-TYPE: Microsoft.ContainerService/managedClusters
-                        # Required by the action; also the workflowFriendlyName label.
-                        GITHUB_WORKFLOW: $(workflowFriendlyName)
+                        INPUT_PULL-IMAGES: 'false'
+                        INPUT_ANNOTATE-RESOURCES: 'true'
+                        INPUT_ANNOTATE-NAMESPACE: 'true'
+                        INPUT_FORCE: 'false'
+                        INPUT_SERVER-SIDE: 'false'
+                        INPUT_TIMEOUT: 10m
+                        # Emulate the GitHub Action context used in annotations and
+                        # manifest path containment. A workflow-style path avoids an
+                        # unnecessary GitHub API request for its display name.
+                        GITHUB_WORKSPACE: $(Build.Repository.LocalPath)
+                        RUNNER_TEMP: $(Agent.TempDirectory)
+                        GITHUB_REPOSITORY: Azure/k8s-deploy
+                        GITHUB_SHA: $(Build.SourceVersion)
+                        GITHUB_REF: $(Build.SourceBranch)
+                        GITHUB_RUN_ID: $(Build.BuildId)
+                        GITHUB_JOB: run_integration_test
+                        GITHUB_ACTOR: $(Build.RequestedFor)
+                        GITHUB_WORKFLOW: .github/workflows/$(workflowFriendlyName)
 
                    - task: AzureCLI@2
                      displayName: Checking if deployments and services were created
@@ -135,7 +199,7 @@ extends:
                         scriptType: bash
                         scriptLocation: inlineScript
                         inlineScript: |
-                           set -e
+                           set -euo pipefail
                            python test/integration/k8s-deploy-test.py private=$(clusterName) resourceGroup=$(resourceGroup) namespace=$(namespace) kind=Deployment name=nginx-deployment containerName=nginx:1.14.2 labels=app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:$(workflowFriendlyName) selectorLabels=app:nginx
                            python test/integration/k8s-deploy-test.py private=$(clusterName) resourceGroup=$(resourceGroup) namespace=$(namespace) kind=Service name=nginx-service labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:$(workflowFriendlyName) selectorLabels=app:nginx
 
@@ -144,12 +208,17 @@ extends:
 
                    - task: AzureCLI@2
                      displayName: Clean up AKS cluster
-                     condition: always()
+                     condition: and(always(), eq(variables['releaseCandidateValidated'], 'true'))
                      inputs:
                         azureSubscription: $(serviceConnection)
                         scriptType: bash
                         scriptLocation: inlineScript
                         inlineScript: |
+                           set -euo pipefail
                            # Delete only the cluster; the shared RG persists.
-                           echo "deleting AKS cluster $(clusterName)"
-                           az aks delete --yes --resource-group $(resourceGroup) --name $(clusterName) || true
+                           if az aks show --resource-group $(resourceGroup) --name $(clusterName) >/dev/null 2>&1; then
+                              echo "deleting AKS cluster $(clusterName)"
+                              az aks delete --yes --resource-group $(resourceGroup) --name $(clusterName)
+                           else
+                              echo "AKS cluster $(clusterName) was not created; nothing to delete"
+                           fi
