@@ -36,6 +36,21 @@ describe('Github utils', () => {
       )
    })
 
+   it('normalizes path with a custom server url', () => {
+      const serverUrl = 'https://github.enterprise.com'
+      const repo = 'gh_repo'
+      const sha = 'gh_sha'
+      const path = 'path'
+      process.env.GITHUB_SERVER_URL = serverUrl
+      process.env.GITHUB_REPOSITORY = repo
+      process.env.GITHUB_SHA = sha
+      expect(getNormalizedPath(path)).toBe(
+         `${serverUrl}/${repo}/blob/${sha}/${path}`
+      )
+
+      delete process.env.GITHUB_SERVER_URL
+   })
+
    it('checks if url is http', () => {
       expect(isHttpUrl('www.test.com')).toBe(false)
       expect(isHttpUrl('http.test.com')).toBe(false)

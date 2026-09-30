@@ -44,7 +44,8 @@ export function normalizeWorkflowStrLabel(workflowName: string): string {
 export function getNormalizedPath(pathValue: string) {
    if (!isHttpUrl(pathValue)) {
       //if it is not an http url then convert to link from current repo and commit
-      return `https://github.com/${process.env.GITHUB_REPOSITORY}/blob/${process.env.GITHUB_SHA}/${pathValue}`
+      const serverUrl = process.env.GITHUB_SERVER_URL || 'https://github.com'
+      return `${serverUrl}/${process.env.GITHUB_REPOSITORY}/blob/${process.env.GITHUB_SHA}/${pathValue}`
    }
    return pathValue
 }

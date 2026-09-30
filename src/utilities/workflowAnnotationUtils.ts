@@ -9,6 +9,8 @@ export function getWorkflowAnnotations(
    workflowFilePath: string,
    deploymentConfig: DeploymentConfig
 ): string {
+   const serverUrl = process.env.GITHUB_SERVER_URL || 'https://github.com'
+   const runUri = `${serverUrl}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`
    const annotationObject = {
       run: process.env.GITHUB_RUN_ID,
       repository: process.env.GITHUB_REPOSITORY,
@@ -16,7 +18,7 @@ export function getWorkflowAnnotations(
       workflowFileName: workflowFilePath.replace('.github/workflows/', ''),
       jobName: process.env.GITHUB_JOB,
       createdBy: process.env.GITHUB_ACTOR,
-      runUri: `https://github.com/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID}`,
+      runUri,
       commit: process.env.GITHUB_SHA,
       lastSuccessRunCommit: lastSuccessRunSha,
       branch: process.env.GITHUB_REF,
