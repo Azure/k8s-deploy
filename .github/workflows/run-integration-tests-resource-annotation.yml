@@ -14,6 +14,8 @@ jobs:
    run-integration-test:
       name: Resource Annotation Tests
       runs-on: ubuntu-22.04
+      permissions:
+         contents: read
       env:
          KUBECONFIG: /home/runner/.kube/config
          NAMESPACE: test-${{ github.run_id }}
