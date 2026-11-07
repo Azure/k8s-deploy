@@ -1,15 +1,36 @@
 import {Kubectl} from './kubectl.js'
-import minimist from 'minimist'
 import {ExecOptions, ExecOutput, getExecOutput} from '@actions/exec'
 import * as core from '@actions/core'
 import fs from 'node:fs'
 import * as path from 'path'
 import {getTempDirectory} from '../utilities/fileUtils.js'
 
+const FILENAME_FLAGS = ['-f', '--filename']
+
+/**
+ * POSIX single-quote escaping.
+ *
+ * `az aks command invoke --command <string>` is evaluated by a shell inside
+ * the cluster, so any value we interpolate must be quoted. Wrapping in single
+ * quotes removes the special meaning of every character except `'`, which is
+ * encoded as `'\''`.
+ */
+export function shellQuote(arg: string): string {
+   const value = String(arg)
+   if (value === '') return "''"
+   // Unreserved characters are emitted bare to keep logged commands readable.
+   if (/^[a-zA-Z0-9_@%+=:,./-]+$/.test(value)) return value
+   return `'${value.split("'").join(`'\\''`)}'`
+}
+
+/** Joins an argv array into a string that is safe for a POSIX shell. */
+export function buildShellCommand(args: string[]): string {
+   return args.map(shellQuote).join(' ')
+}
+
 export class PrivateKubectl extends Kubectl {
    protected async execute(args: string[], silent: boolean = false) {
-      args.unshift('kubectl')
-      let kubectlCmd = args.join(' ')
+      let kubectlArgs = ['kubectl', ...args]
       let addFileFlag = false
       let eo = <ExecOptions>{
          silent: true,
@@ -17,8 +38,9 @@ export class PrivateKubectl extends Kubectl {
          ignoreReturnCode: true
       }
 
-      if (this.containsFilenames(kubectlCmd)) {
-         kubectlCmd = replaceFileNamesWithShallowNamesRelativeToTemp(kubectlCmd)
+      if (containsFilenames(kubectlArgs)) {
+         kubectlArgs =
+            replaceFileNamesWithShallowNamesRelativeToTemp(kubectlArgs)
          addFileFlag = true
       }
 
@@ -29,6 +51,12 @@ export class PrivateKubectl extends Kubectl {
          throw Error('Cluster name must be specified for private cluster')
       }
 
+      // Every argument is quoted so that no manifest-derived value (resource
+      // name, namespace, annotation payload, file path) can break out of its
+      // argument and be interpreted as shell syntax by the in-cluster shell.
+      // Do not replace this with a plain join.
+      const kubectlCmd = buildShellCommand(kubectlArgs)
+
       const privateClusterArgs = [
          'aks',
          'command',
@@ -38,7 +66,7 @@ export class PrivateKubectl extends Kubectl {
          '--name',
          this.name,
          '--command',
-         `${kubectlCmd}`
+         kubectlCmd
       ]
 
       if (addFileFlag) {
@@ -52,13 +80,7 @@ export class PrivateKubectl extends Kubectl {
       )
 
       const allArgs = [...privateClusterArgs, '-o', 'json']
-      core.debug(`full form of az command: az ${allArgs.join(' ')}`)
       const runOutput = await getExecOutput('az', allArgs, eo)
-      core.debug(
-         `from kubectl private cluster command got run output ${JSON.stringify(
-            runOutput
-         )}`
-      )
 
       if (runOutput.exitCode !== 0) {
          throw Error(
@@ -69,6 +91,10 @@ export class PrivateKubectl extends Kubectl {
       const runObj: {logs: string; exitCode: number} = JSON.parse(
          runOutput.stdout
       )
+      // Honour the caller's `silent` request. Callers pass silent=true for
+      // commands whose output may contain pod specs and other sensitive
+      // material; that output was previously written to the debug log
+      // unconditionally regardless of `silent`.
       if (!silent) core.info(runObj.logs)
       if (runObj.exitCode !== 0) {
          throw Error(`failed private cluster Kubectl command: ${kubectlCmd}`)
@@ -79,10 +105,6 @@ export class PrivateKubectl extends Kubectl {
          stdout: runObj.logs,
          stderr: ''
       } as ExecOutput
-   }
-
-   private containsFilenames(str: string) {
-      return str.includes('-f ') || str.includes('filename ')
    }
 }
 
@@ -95,75 +117,96 @@ function createTempManifestsDirectory(): string {
    return manifestsDirPath
 }
 
+/**
+ * True when the argv contains a filename flag. Operates on discrete argv
+ * elements rather than a substring search over a flattened command, so a
+ * resource name or annotation value that merely contains "-f " cannot
+ * trigger a false positive.
+ */
+export function containsFilenames(args: string[]): boolean {
+   return args.some(
+      (arg, i) =>
+         (FILENAME_FLAGS.includes(arg) && i < args.length - 1) ||
+         FILENAME_FLAGS.some((flag) => arg.startsWith(`${flag}=`))
+   )
+}
+
+function copyToShallowName(filename: string): string {
+   const relativeName = path.relative(getTempDirectory(), filename)
+   const shallowName = path.basename(relativeName.split(path.sep).join('-'))
+
+   const manifestsTempDir = createTempManifestsDirectory()
+   const shallowPath = path.join(manifestsTempDir, shallowName)
+
+   core.debug(
+      `moving contents from ${filename} to shallow location at ${shallowPath}`
+   )
+   fs.writeFileSync(shallowPath, fs.readFileSync(filename).toString())
+
+   return shallowName
+}
+
+/**
+ * Rewrites the values of any `-f`/`--filename` arguments so they refer to
+ * flattened copies inside RUNNER_TEMP/manifests, which is what gets uploaded
+ * by `az aks command invoke --file .`.
+ *
+ * This works positionally on the argv array. The previous implementation
+ * re-parsed a flattened command string with minimist and substituted paths
+ * with String.replace, which mis-parsed any value containing spaces and could
+ * corrupt unrelated arguments. Doing this before the join is also what makes
+ * quoting possible at all.
+ */
 export function replaceFileNamesWithShallowNamesRelativeToTemp(
-   kubectlCmd: string
-) {
-   let filenames = extractFileNames(kubectlCmd)
-   core.debug(`filenames originally provided in kubectl command: ${filenames}`)
-   let relativeShallowNames = filenames.map((filename) => {
-      const relativeName = path.relative(getTempDirectory(), filename)
+   args: string[]
+): string[] {
+   const result = [...args]
 
-      const relativePathElements = relativeName.split(path.sep)
+   for (let i = 0; i < result.length; i++) {
+      const arg = result[i]
 
-      const shallowName = relativePathElements.join('-')
+      if (FILENAME_FLAGS.includes(arg) && i < result.length - 1) {
+         result[i + 1] = result[i + 1]
+            .split(',')
+            .map(copyToShallowName)
+            .join(',')
+         i++
+         continue
+      }
 
-      // make manifests dir in temp if it doesn't already exist
-      const manifestsTempDir = createTempManifestsDirectory()
-
-      const shallowPath = path.join(manifestsTempDir, shallowName)
-      core.debug(
-         `moving contents from ${filename} to shallow location at ${shallowPath}`
+      const inlineFlag = FILENAME_FLAGS.find((flag) =>
+         arg.startsWith(`${flag}=`)
       )
-
-      core.debug(`reading contents from ${filename}`)
-      const contents = fs.readFileSync(filename).toString()
-
-      core.debug(`writing contents to new path ${shallowPath}`)
-      fs.writeFileSync(shallowPath, contents)
-
-      return shallowName
-   })
-
-   let result = kubectlCmd
-   if (filenames.length != relativeShallowNames.length) {
-      throw Error(
-         'replacing filenames with relative path from temp dir, ' +
-            filenames.length +
-            ' filenames != ' +
-            relativeShallowNames.length +
-            'basenames'
-      )
-   }
-   for (let index = 0; index < filenames.length; index++) {
-      result = result.replace(filenames[index], relativeShallowNames[index])
-   }
-   return result
-}
-
-export function extractFileNames(strToParse: string) {
-   const fileNames: string[] = []
-   const argv = minimist(strToParse.split(' '))
-   const fArg = 'f'
-   const filenameArg = 'filename'
-
-   fileNames.push(...extractFilesFromMinimist(argv, fArg))
-   fileNames.push(...extractFilesFromMinimist(argv, filenameArg))
-
-   return fileNames
-}
-
-export function extractFilesFromMinimist(argv, arg: string): string[] {
-   if (!argv[arg]) {
-      return []
-   }
-   const toReturn: string[] = []
-   if (typeof argv[arg] === 'string') {
-      toReturn.push(...argv[arg].split(','))
-   } else {
-      for (const value of argv[arg] as string[]) {
-         toReturn.push(...value.split(','))
+      if (inlineFlag) {
+         const value = arg.slice(inlineFlag.length + 1)
+         result[i] =
+            `${inlineFlag}=${value.split(',').map(copyToShallowName).join(',')}`
       }
    }
 
-   return toReturn
+   return result
+}
+
+/** Returns every filename referenced by `-f`/`--filename` in an argv array. */
+export function extractFileNames(args: string[]): string[] {
+   const fileNames: string[] = []
+
+   for (let i = 0; i < args.length; i++) {
+      const arg = args[i]
+
+      if (FILENAME_FLAGS.includes(arg) && i < args.length - 1) {
+         fileNames.push(...args[i + 1].split(','))
+         i++
+         continue
+      }
+
+      const inlineFlag = FILENAME_FLAGS.find((flag) =>
+         arg.startsWith(`${flag}=`)
+      )
+      if (inlineFlag) {
+         fileNames.push(...arg.slice(inlineFlag.length + 1).split(','))
+      }
+   }
+
+   return fileNames
 }

@@ -439,6 +439,13 @@ jobs:
 
 ### Use bake action to get manifests deploying to a Kubernetes cluster
 
+> **Requires `azure/k8s-bake@v4.1.1` or later.** Since v7, `k8s-deploy` rejects
+> `manifests:` paths that resolve outside `GITHUB_WORKSPACE`. Earlier versions of
+> `k8s-bake` wrote the baked manifest to `RUNNER_TEMP`, which is a sibling of the
+> workspace on hosted runners, so `manifestsBundle` was rejected. `k8s-bake` v4.1.1
+> writes into the workspace instead ([Azure/k8s-bake#289](https://github.com/Azure/k8s-bake/pull/289)).
+> Workflows that pass `manifestsBundle` need no other changes.
+
 ```yaml
 on: [push]
 env:
@@ -473,7 +480,7 @@ jobs:
               container-registry-password: ${{ secrets.REGISTRY_PASSWORD }}
               secret-name: demo-k8s-secret
 
-         - uses: azure/k8s-bake@v3
+         - uses: azure/k8s-bake@v4
            with:
               renderEngine: 'helm'
               helmChart: './aks-helloworld/'
