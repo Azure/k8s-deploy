@@ -16,6 +16,8 @@ jobs:
    run-integration-test:
       name: Namespace Optional Tests
       runs-on: ubuntu-22.04
+      permissions:
+         contents: read
       env:
          KUBECONFIG: /home/runner/.kube/config
          NAMESPACE1: integration-test-namespace1-${{ github.run_id }}
