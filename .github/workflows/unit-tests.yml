@@ -18,3 +18,5 @@ jobs:
          - run: |
               npm install
               npm test
+         - name: Test private-cluster pipeline without Azure access
+           run: python3 -B -m unittest discover -s .azure-pipelines/tests

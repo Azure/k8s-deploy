@@ -2,8 +2,9 @@
 #
 # Runs the k8s-deploy action against a real private AKS cluster before a release
 # is published. The internal release orchestrator must queue this pipeline for
-# the exact releases/vX.Y.Z commit, pass that SHA as releaseCandidateCommit, and
-# depend on this run succeeding before it tags or publishes the release.
+# a reviewed pipeline-definition revision, pass the release branch and exact
+# candidate SHA, and wait for success before it tags or publishes the release.
+# The candidate is checked out separately; its pipeline YAML is never loaded.
 #
 # This pipeline intentionally has no CI or PR trigger. It uses a governed WIF
 # service connection and must never execute code supplied by a pull request.
@@ -20,6 +21,10 @@
 # group; do not grant subscription-wide Contributor or Owner.
 
 parameters:
+   - name: releaseCandidateBranch
+     displayName: Release candidate branch (releases/vX.Y.Z)
+     type: string
+     default: ''
    - name: releaseCandidateCommit
      displayName: Exact release candidate commit SHA
      type: string
@@ -66,47 +71,32 @@ extends:
                 displayName: Run Private Cluster Integration Tests
                 timeoutInMinutes: 60
                 steps:
+                   - checkout: self
+                     clean: true
+                     persistCredentials: false
+
                    - task: NodeTool@0
                      displayName: Install Node.js
                      inputs:
                         versionSpec: '24.x'
 
-                   - script: |
-                        set -euo pipefail
-
-                        if [[ ! "$BUILD_SOURCEBRANCH" =~ ^refs/heads/releases/v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-                           echo "##vso[task.logissue type=error]This release gate only accepts releases/vX.Y.Z branches; received $BUILD_SOURCEBRANCH"
-                           exit 1
-                        fi
-
-                        if [[ ! "$EXPECTED_RELEASE_COMMIT" =~ ^[0-9a-fA-F]{40}$ ]]; then
-                           echo "##vso[task.logissue type=error]releaseCandidateCommit must be a full 40-character commit SHA"
-                           exit 1
-                        fi
-
-                        checked_out_commit="$(git rev-parse HEAD)"
-                        if [[ "$BUILD_SOURCEVERSION" != "$EXPECTED_RELEASE_COMMIT" || "$checked_out_commit" != "$EXPECTED_RELEASE_COMMIT" ]]; then
-                           echo "##vso[task.logissue type=error]Release candidate mismatch: requested $EXPECTED_RELEASE_COMMIT, source $BUILD_SOURCEVERSION, checked out $checked_out_commit"
-                           exit 1
-                        fi
-
-                        expected_version="${BUILD_SOURCEBRANCH#refs/heads/releases/v}"
-                        actual_version="$(node -p "require('./package.json').version")"
-                        if [[ "$actual_version" != "$expected_version" ]]; then
-                           echo "##vso[task.logissue type=error]Release branch version $expected_version does not match package.json version $actual_version"
-                           exit 1
-                        fi
-
-                        echo "##vso[task.setvariable variable=releaseCandidateValidated]true"
-                     displayName: Validate release candidate
+                   - script: bash "$(Build.SourcesDirectory)/.azure-pipelines/scripts/checkout-release-candidate.sh"
+                     displayName: Check out and validate release candidate
                      env:
-                        EXPECTED_RELEASE_COMMIT: ${{ parameters.releaseCandidateCommit }}
+                        RELEASE_CANDIDATE_BRANCH: ${{ parameters.releaseCandidateBranch }}
+                        RELEASE_CANDIDATE_COMMIT: ${{ parameters.releaseCandidateCommit }}
 
                    - script: npm ci
                      displayName: Install dependencies
+                     workingDirectory: $(releaseCandidateDirectory)
 
-                   - script: npm run build
-                     displayName: Build
+                   - script: |
+                        set -euo pipefail
+                        git ls-files --error-unmatch lib/index.js >/dev/null
+                        test -f lib/index.js
+                        git diff --exit-code HEAD -- lib/index.js
+                     displayName: Verify prepared release bundle
+                     workingDirectory: $(releaseCandidateDirectory)
 
                    - task: KubectlInstaller@0
                      displayName: Install kubectl
@@ -154,6 +144,7 @@ extends:
                         azureSubscription: $(serviceConnection)
                         scriptType: bash
                         scriptLocation: inlineScript
+                        workingDirectory: $(releaseCandidateDirectory)
                         inlineScript: |
                            set -euo pipefail
                            node lib/index.js
@@ -182,11 +173,11 @@ extends:
                         # Emulate the GitHub Action context used in annotations and
                         # manifest path containment. A workflow-style path avoids an
                         # unnecessary GitHub API request for its display name.
-                        GITHUB_WORKSPACE: $(Build.Repository.LocalPath)
+                        GITHUB_WORKSPACE: $(releaseCandidateDirectory)
                         RUNNER_TEMP: $(Agent.TempDirectory)
                         GITHUB_REPOSITORY: Azure/k8s-deploy
-                        GITHUB_SHA: $(Build.SourceVersion)
-                        GITHUB_REF: $(Build.SourceBranch)
+                        GITHUB_SHA: ${{ parameters.releaseCandidateCommit }}
+                        GITHUB_REF: refs/heads/${{ parameters.releaseCandidateBranch }}
                         GITHUB_RUN_ID: $(Build.BuildId)
                         GITHUB_JOB: run_integration_test
                         GITHUB_ACTOR: $(Build.RequestedFor)
@@ -198,6 +189,7 @@ extends:
                         azureSubscription: $(serviceConnection)
                         scriptType: bash
                         scriptLocation: inlineScript
+                        workingDirectory: $(releaseCandidateDirectory)
                         inlineScript: |
                            set -euo pipefail
                            python test/integration/k8s-deploy-test.py private=$(clusterName) resourceGroup=$(resourceGroup) namespace=$(namespace) kind=Deployment name=nginx-deployment containerName=nginx:1.14.2 labels=app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:$(workflowFriendlyName) selectorLabels=app:nginx
@@ -214,11 +206,7 @@ extends:
                         scriptType: bash
                         scriptLocation: inlineScript
                         inlineScript: |
-                           set -euo pipefail
-                           # Delete only the cluster; the shared RG persists.
-                           if az aks show --resource-group $(resourceGroup) --name $(clusterName) >/dev/null 2>&1; then
-                              echo "deleting AKS cluster $(clusterName)"
-                              az aks delete --yes --resource-group $(resourceGroup) --name $(clusterName)
-                           else
-                              echo "AKS cluster $(clusterName) was not created; nothing to delete"
-                           fi
+                           bash "$(Build.SourcesDirectory)/.azure-pipelines/scripts/cleanup-private-cluster.sh"
+                     env:
+                        RESOURCE_GROUP: $(resourceGroup)
+                        CLUSTER_NAME: $(clusterName)
