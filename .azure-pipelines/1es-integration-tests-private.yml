@@ -1,0 +1,212 @@
+# Private-cluster release gate (1ES pipeline).
+#
+# Runs the k8s-deploy action against a real private AKS cluster before a release
+# is published. The internal release orchestrator must queue this pipeline for
+# a reviewed pipeline-definition revision, pass the release branch and exact
+# candidate SHA, and wait for success before it tags or publishes the release.
+# The candidate is checked out separately; its pipeline YAML is never loaded.
+#
+# This pipeline intentionally has no CI or PR trigger. It uses a governed WIF
+# service connection and must never execute code supplied by a pull request.
+#
+# The node24 JS action is invoked as `node lib/index.js` with inputs supplied via
+# INPUT_* env vars. There is no action.yml default injection here, so keep INPUT_*
+# in sync with action.yml; skip-tls-verify (getBooleanInput) and GITHUB_WORKFLOW
+# must be set or the action throws.
+#
+# The pipeline does not create/delete the resource group (it must already exist);
+# it only creates and deletes a per-build cluster inside it. Azure DevOps pipeline
+# UI triggers must also remain disabled because UI settings override this YAML.
+# The service connection must use a custom role scoped to the shared resource
+# group; do not grant subscription-wide Contributor or Owner.
+
+parameters:
+   - name: releaseCandidateBranch
+     displayName: Release candidate branch (releases/vX.Y.Z)
+     type: string
+     default: ''
+   - name: releaseCandidateCommit
+     displayName: Exact release candidate commit SHA
+     type: string
+     default: ''
+
+trigger: none
+pr: none
+
+resources:
+   repositories:
+      - repository: 1esPipelines
+        type: git
+        name: 1ESPipelineTemplates/1ESPipelineTemplates
+        ref: refs/tags/release
+
+variables:
+   serviceConnection: k8s-deploy-intg-test-svc-conn
+   resourceGroup: k8s-deploy-intg-rg
+   location: eastus2
+   kubectlVersion: 1.34.1
+   clusterName: test-$(Build.BuildId)
+   namespace: test-$(Build.BuildId)
+   workflowFriendlyName: k8s-deploy-integration-tests-private
+
+extends:
+   template: v1/1ES.Unofficial.PipelineTemplate.yml@1esPipelines
+   parameters:
+      pool:
+         name: staging-pool-amd64-mariner-2
+         image: 1es-azlinux-3-amd64-custom-disk
+         os: linux
+         hostArchitecture: amd64
+      sdl:
+         sourceAnalysisPool:
+            name: staging-pool-amd64-mariner-2
+            image: azcu-agent-amd64-windows-22-img
+            os: windows
+            hostArchitecture: amd64
+      stages:
+         - stage: integration_test
+           displayName: Private cluster integration tests
+           jobs:
+              - job: run_integration_test
+                displayName: Run Private Cluster Integration Tests
+                timeoutInMinutes: 60
+                steps:
+                   - checkout: self
+                     clean: true
+                     persistCredentials: false
+
+                   - task: NodeTool@0
+                     displayName: Install Node.js
+                     inputs:
+                        versionSpec: '24.x'
+
+                   - script: bash "$(Build.SourcesDirectory)/.azure-pipelines/scripts/checkout-release-candidate.sh"
+                     displayName: Check out and validate release candidate
+                     env:
+                        RELEASE_CANDIDATE_BRANCH: ${{ parameters.releaseCandidateBranch }}
+                        RELEASE_CANDIDATE_COMMIT: ${{ parameters.releaseCandidateCommit }}
+
+                   - script: npm ci
+                     displayName: Install dependencies
+                     workingDirectory: $(releaseCandidateDirectory)
+
+                   - script: |
+                        set -euo pipefail
+                        git ls-files --error-unmatch lib/index.js >/dev/null
+                        test -f lib/index.js
+                        git diff --exit-code HEAD -- lib/index.js
+                     displayName: Verify prepared release bundle
+                     workingDirectory: $(releaseCandidateDirectory)
+
+                   - task: KubectlInstaller@0
+                     displayName: Install kubectl
+                     inputs:
+                        kubectlVersion: $(kubectlVersion)
+
+                   - task: AzureCLI@2
+                     displayName: Create private AKS cluster and set context
+                     inputs:
+                        azureSubscription: $(serviceConnection)
+                        scriptType: bash
+                        scriptLocation: inlineScript
+                        inlineScript: |
+                           set -euo pipefail
+                           set +x
+                           # RG must already exist; do not run `az group create`.
+                           az aks create \
+                              --name $(clusterName) \
+                              --resource-group $(resourceGroup) \
+                              --location $(location) \
+                              --enable-private-cluster \
+                              --generate-ssh-keys \
+                              --node-count 1 \
+                              --tags purpose=k8s-deploy-private-integration build-id=$(Build.BuildId)
+                           az aks get-credentials --resource-group $(resourceGroup) --name $(clusterName)
+
+                   - task: AzureCLI@2
+                     displayName: Create namespace to run tests
+                     inputs:
+                        azureSubscription: $(serviceConnection)
+                        scriptType: bash
+                        scriptLocation: inlineScript
+                        inlineScript: |
+                           set -euo pipefail
+                           az aks command invoke --resource-group $(resourceGroup) --name $(clusterName) --command "kubectl create ns $(namespace)"
+
+                   - task: UsePythonVersion@0
+                     displayName: Install Python
+                     inputs:
+                        versionSpec: '3.x'
+
+                   - task: AzureCLI@2
+                     displayName: Executing deploy action for pod
+                     inputs:
+                        azureSubscription: $(serviceConnection)
+                        scriptType: bash
+                        scriptLocation: inlineScript
+                        workingDirectory: $(releaseCandidateDirectory)
+                        inlineScript: |
+                           set -euo pipefail
+                           node lib/index.js
+                     env:
+                        KUBECONFIG: $(HOME)/.kube/config
+                        # Inputs supplied via INPUT_* (no action.yml injection here).
+                        INPUT_ACTION: deploy
+                        INPUT_STRATEGY: basic
+                        INPUT_TRAFFIC-SPLIT-METHOD: pod
+                        INPUT_SKIP-TLS-VERIFY: 'false'
+                        INPUT_NAMESPACE: $(namespace)
+                        INPUT_IMAGES: nginx:1.14.2
+                        INPUT_MANIFESTS: |
+                           test/integration/manifests/test.yml
+                           test/integration/manifests/test2.yml
+                        INPUT_PRIVATE-CLUSTER: 'true'
+                        INPUT_RESOURCE-GROUP: $(resourceGroup)
+                        INPUT_NAME: $(clusterName)
+                        INPUT_RESOURCE-TYPE: Microsoft.ContainerService/managedClusters
+                        INPUT_PULL-IMAGES: 'false'
+                        INPUT_ANNOTATE-RESOURCES: 'true'
+                        INPUT_ANNOTATE-NAMESPACE: 'true'
+                        INPUT_FORCE: 'false'
+                        INPUT_SERVER-SIDE: 'false'
+                        INPUT_TIMEOUT: 10m
+                        # Emulate the GitHub Action context used in annotations and
+                        # manifest path containment. A workflow-style path avoids an
+                        # unnecessary GitHub API request for its display name.
+                        GITHUB_WORKSPACE: $(releaseCandidateDirectory)
+                        RUNNER_TEMP: $(Agent.TempDirectory)
+                        GITHUB_REPOSITORY: Azure/k8s-deploy
+                        GITHUB_SHA: ${{ parameters.releaseCandidateCommit }}
+                        GITHUB_REF: refs/heads/${{ parameters.releaseCandidateBranch }}
+                        GITHUB_RUN_ID: $(Build.BuildId)
+                        GITHUB_JOB: run_integration_test
+                        GITHUB_ACTOR: $(Build.RequestedFor)
+                        GITHUB_WORKFLOW: .github/workflows/$(workflowFriendlyName)
+
+                   - task: AzureCLI@2
+                     displayName: Checking if deployments and services were created
+                     inputs:
+                        azureSubscription: $(serviceConnection)
+                        scriptType: bash
+                        scriptLocation: inlineScript
+                        workingDirectory: $(releaseCandidateDirectory)
+                        inlineScript: |
+                           set -euo pipefail
+                           python test/integration/k8s-deploy-test.py private=$(clusterName) resourceGroup=$(resourceGroup) namespace=$(namespace) kind=Deployment name=nginx-deployment containerName=nginx:1.14.2 labels=app:nginx,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:$(workflowFriendlyName) selectorLabels=app:nginx
+                           python test/integration/k8s-deploy-test.py private=$(clusterName) resourceGroup=$(resourceGroup) namespace=$(namespace) kind=Service name=nginx-service labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:$(workflowFriendlyName) selectorLabels=app:nginx
+
+                           python test/integration/k8s-deploy-test.py private=$(clusterName) resourceGroup=$(resourceGroup) namespace=$(namespace) kind=Deployment name=nginx-deployment2 containerName=nginx:1.14.2 labels=app:nginx2,workflow:actions.github.com-k8s-deploy,workflowFriendlyName:$(workflowFriendlyName) selectorLabels=app:nginx2
+                           python test/integration/k8s-deploy-test.py private=$(clusterName) resourceGroup=$(resourceGroup) namespace=$(namespace) kind=Service name=nginx-service2 labels=workflow:actions.github.com-k8s-deploy,workflowFriendlyName:$(workflowFriendlyName) selectorLabels=app:nginx2
+
+                   - task: AzureCLI@2
+                     displayName: Clean up AKS cluster
+                     condition: and(always(), eq(variables['releaseCandidateValidated'], 'true'))
+                     inputs:
+                        azureSubscription: $(serviceConnection)
+                        scriptType: bash
+                        scriptLocation: inlineScript
+                        inlineScript: |
+                           bash "$(Build.SourcesDirectory)/.azure-pipelines/scripts/cleanup-private-cluster.sh"
+                     env:
+                        RESOURCE_GROUP: $(resourceGroup)
+                        CLUSTER_NAME: $(clusterName)
